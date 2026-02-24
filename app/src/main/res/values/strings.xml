@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Unstamped Pages</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_country_info">Countries</string>
+    <string name="nav_checklist">Checklist</string>
+    <string name="nav_trip_log">Trip Log</string>
+
+    <!-- Home Screen -->
+    <string name="home_welcome">Welcome, Explorer</string>
+    <string name="home_subtitle">Your adventure awaits</string>
+    <string name="home_tagline">Document your journeys across the globe</string>
+
+    <!-- Country Info -->
+    <string name="country_info_title">Explore the World</string>
+    <string name="country_population">Population</string>
+    <string name="country_safety">Safety Level</string>
+    <string name="country_currency">Currency</string>
+    <string name="country_exchange_rate">Exchange Rate (USD)</string>
+    <string name="country_outlet">Outlet Type</string>
+
+    <!-- Checklist -->
+    <string name="checklist_title">Travel Checklist</string>
+    <string name="checklist_hint">What to bring on your adventure...</string>
+    <string name="checklist_save">Save</string>
+
+    <!-- Trip Log -->
+    <string name="trip_log_title">Trip Log</string>
+    <string name="trip_log_new_entry">New Entry</string>
+    <string name="trip_log_entry_hint">Record your adventure...</string>
+    <string name="trip_log_no_entries">No journal entries yet.\nStart documenting your travels!</string>
+</resources>
