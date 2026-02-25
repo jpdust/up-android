@@ -6,9 +6,11 @@ import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class NavRoute(
@@ -45,7 +47,14 @@ sealed class NavRoute(
         unselectedIcon = Icons.AutoMirrored.Outlined.MenuBook
     )
 
+    data object MyStamps : NavRoute(
+        route = "my_stamps",
+        title = "My Stamps",
+        selectedIcon = Icons.Filled.PhotoLibrary,
+        unselectedIcon = Icons.Outlined.PhotoLibrary
+    )
+
     companion object {
-        val items = listOf(Home, CountryInfo, Checklist, TripLog)
+        val items = listOf(Home, CountryInfo, Checklist, TripLog, MyStamps)
     }
 }

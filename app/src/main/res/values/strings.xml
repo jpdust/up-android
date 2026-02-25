@@ -31,4 +31,14 @@
     <string name="trip_log_new_entry">New Entry</string>
     <string name="trip_log_entry_hint">Record your adventure...</string>
     <string name="trip_log_no_entries">No journal entries yet.\nStart documenting your travels!</string>
+
+    <!-- My Stamps -->
+    <string name="nav_my_stamps">My Stamps</string>
+    <string name="my_stamps_title">My Stamps</string>
+    <string name="my_stamps_subtitle">Collect passport stamps from around the world</string>
+    <string name="my_stamps_country">Country</string>
+    <string name="my_stamps_stamp">Stamp</string>
+    <string name="my_stamps_add_stamp">Add Stamp</string>
+    <string name="my_stamps_choose_image">Choose Image</string>
+    <string name="my_stamps_cancel">Cancel</string>
 </resources>

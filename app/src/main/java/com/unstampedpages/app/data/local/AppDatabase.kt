@@ -5,19 +5,22 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.unstampedpages.app.data.local.dao.ChecklistDao
+import com.unstampedpages.app.data.local.dao.StampDao
 import com.unstampedpages.app.data.local.dao.TripLogDao
 import com.unstampedpages.app.data.local.entity.ChecklistItem
+import com.unstampedpages.app.data.local.entity.StampItem
 import com.unstampedpages.app.data.local.entity.TripLogEntry
 
 @Database(
-    entities = [ChecklistItem::class, TripLogEntry::class],
-    version = 1,
+    entities = [ChecklistItem::class, TripLogEntry::class, StampItem::class],
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun checklistDao(): ChecklistDao
     abstract fun tripLogDao(): TripLogDao
+    abstract fun stampDao(): StampDao
 
     companion object {
         @Volatile

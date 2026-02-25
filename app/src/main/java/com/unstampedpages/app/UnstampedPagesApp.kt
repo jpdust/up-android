@@ -12,6 +12,7 @@ import com.unstampedpages.app.ui.navigation.NavRoute
 import com.unstampedpages.app.ui.screens.checklist.ChecklistScreen
 import com.unstampedpages.app.ui.screens.countryinfo.CountryInfoScreen
 import com.unstampedpages.app.ui.screens.home.HomeScreen
+import com.unstampedpages.app.ui.screens.mystamps.MyStampsScreen
 import com.unstampedpages.app.ui.screens.triplog.TripLogScreen
 
 @Composable
@@ -39,6 +40,9 @@ fun UnstampedPagesApp() {
             }
             composable(NavRoute.TripLog.route) {
                 TripLogScreen()
+            }
+            composable(NavRoute.MyStamps.route) {
+                MyStampsScreen()
             }
         }
     }
