@@ -91,33 +91,6 @@ fun TripLogScreen(
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
             ) {
-                // Header
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Primary)
-                        .padding(16.dp)
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = "TRIP LOG",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            textAlign = TextAlign.Center
-                        )
-                        Text(
-                            text = "Document your adventures",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Secondary,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                }
-
                 // Entries list
                 if (uiState.entries.isEmpty()) {
                     EmptyTripLogMessage(

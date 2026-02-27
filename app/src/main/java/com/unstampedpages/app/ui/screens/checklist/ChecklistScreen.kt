@@ -70,33 +70,6 @@ fun ChecklistScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            // Header
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Primary)
-                    .padding(16.dp)
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = "TRAVEL CHECKLIST",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        text = "Never forget the essentials",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Secondary,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
-
             // Add item field
             AnimatedVisibility(
                 visible = showAddField,
