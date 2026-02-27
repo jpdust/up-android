@@ -2,17 +2,18 @@ package com.unstampedpages.app.ui.screens.countryinfo
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.rememberTransformableState
-import androidx.compose.foundation.gestures.transformable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.ui.input.pointer.positionChanged
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -23,10 +24,8 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.unstampedpages.app.data.model.CountryGeometry
 import com.unstampedpages.app.data.model.LatLng
@@ -123,20 +122,6 @@ fun WorldMapCanvas(
 
     val geometries = remember { CountryGeometryData.getAllGeometries() }
 
-    val transformState = rememberTransformableState { zoomChange, panChange, _ ->
-        val newScale = (scale * zoomChange).coerceIn(1f, 8f)
-
-        // Update scale
-        scale = newScale
-
-        // Update offset with bounds checking
-        val maxOffsetX = (newScale - 1f) * 0.5f
-        val maxOffsetY = (newScale - 1f) * 0.5f
-
-        offsetX = (offsetX + panChange.x / 1000f).coerceIn(-maxOffsetX, maxOffsetX)
-        offsetY = (offsetY + panChange.y / 1000f).coerceIn(-maxOffsetY, maxOffsetY)
-    }
-
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -145,24 +130,80 @@ fun WorldMapCanvas(
         Canvas(
             modifier = Modifier
                 .fillMaxSize()
-                .transformable(state = transformState)
-                .pointerInput(geometries, scale, offsetX, offsetY) {
-                    detectTapGestures { tapOffset ->
-                        // Convert tap position to normalized map coordinates
-                        val mapWidth = size.width.toFloat()
-                        val mapHeight = size.height.toFloat()
+                .pointerInput(geometries) {
+                    coroutineScope {
+                        launch {
+                            awaitEachGesture {
+                                val down = awaitFirstDown(requireUnconsumed = false)
+                                var wasTap = true
+                                var zoom = 1f
+                                var pan = Offset.Zero
+                                val tapTimeout = 200L
+                                val tapSlop = 20f
+                                val downTime = System.currentTimeMillis()
+                                val downPosition = down.position
 
-                        // Reverse the transformation to get map coordinates
-                        val normalizedX = (tapOffset.x / mapWidth - 0.5f) / scale + 0.5f - offsetX
-                        val normalizedY = (tapOffset.y / mapHeight - 0.5f) / scale + 0.5f - offsetY
+                                do {
+                                    val event = awaitPointerEvent()
+                                    val changes = event.changes
 
-                        // Find which country was tapped
-                        val tappedCountry = findCountryAtNormalizedPoint(
-                            normalizedX = normalizedX,
-                            normalizedY = normalizedY,
-                            geometries = geometries
-                        )
-                        onCountryTapped(tappedCountry)
+                                    // Check if this looks like a multi-touch gesture (zoom/pan)
+                                    if (changes.size > 1) {
+                                        wasTap = false
+                                        zoom = event.calculateZoom()
+                                        pan = event.calculatePan()
+
+                                        // Apply zoom
+                                        val newScale = (scale * zoom).coerceIn(1f, 8f)
+                                        scale = newScale
+
+                                        // Apply pan with bounds
+                                        val maxOffsetX = (newScale - 1f) * 0.5f
+                                        val maxOffsetY = (newScale - 1f) * 0.5f
+                                        offsetX = (offsetX + pan.x / size.width).coerceIn(-maxOffsetX, maxOffsetX)
+                                        offsetY = (offsetY + pan.y / size.height).coerceIn(-maxOffsetY, maxOffsetY)
+
+                                        changes.forEach { it.consume() }
+                                    } else if (changes.size == 1) {
+                                        val change = changes.first()
+                                        // Check if finger moved too much for a tap
+                                        val distance = (change.position - downPosition).getDistance()
+                                        if (distance > tapSlop) {
+                                            wasTap = false
+                                            // Single finger pan when zoomed in
+                                            if (scale > 1f && change.positionChanged()) {
+                                                val panDelta = change.position - change.previousPosition
+                                                val maxOffsetX = (scale - 1f) * 0.5f
+                                                val maxOffsetY = (scale - 1f) * 0.5f
+                                                offsetX = (offsetX + panDelta.x / size.width).coerceIn(-maxOffsetX, maxOffsetX)
+                                                offsetY = (offsetY + panDelta.y / size.height).coerceIn(-maxOffsetY, maxOffsetY)
+                                                change.consume()
+                                            }
+                                        }
+                                    }
+                                } while (changes.any { it.pressed })
+
+                                // Handle tap
+                                val upTime = System.currentTimeMillis()
+                                if (wasTap && (upTime - downTime) < tapTimeout) {
+                                    val tapOffset = downPosition
+                                    val mapWidth = size.width.toFloat()
+                                    val mapHeight = size.height.toFloat()
+
+                                    // Reverse the transformation to get map coordinates
+                                    val normalizedX = (tapOffset.x / mapWidth - 0.5f) / scale + 0.5f - offsetX
+                                    val normalizedY = (tapOffset.y / mapHeight - 0.5f) / scale + 0.5f - offsetY
+
+                                    // Find which country was tapped
+                                    val tappedCountry = findCountryAtNormalizedPoint(
+                                        normalizedX = normalizedX,
+                                        normalizedY = normalizedY,
+                                        geometries = geometries
+                                    )
+                                    onCountryTapped(tappedCountry)
+                                }
+                            }
+                        }
                     }
                 }
         ) {

@@ -13,7 +13,10 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -32,6 +35,7 @@ fun CountryInfoScreen(
     val uiState by viewModel.uiState.collectAsState()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
+    var showSheet by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -76,9 +80,7 @@ fun CountryInfoScreen(
                 onCountryTapped = { countryId ->
                     if (countryId != null) {
                         viewModel.selectCountry(countryId)
-                        scope.launch {
-                            sheetState.show()
-                        }
+                        showSheet = true
                     }
                 },
                 modifier = Modifier.fillMaxSize()
@@ -98,17 +100,23 @@ fun CountryInfoScreen(
         }
     }
 
-    // Country Detail Bottom Sheet
-    uiState.selectedCountry?.let { country ->
-        CountryDetailSheet(
-            country = country,
-            sheetState = sheetState,
-            onDismiss = {
-                scope.launch {
-                    sheetState.hide()
-                    viewModel.clearSelection()
+    // Country Detail Bottom Sheet with roll-up animation
+    if (showSheet) {
+        uiState.selectedCountry?.let { country ->
+            CountryDetailSheet(
+                country = country,
+                sheetState = sheetState,
+                onDismiss = {
+                    scope.launch {
+                        sheetState.hide()
+                    }.invokeOnCompletion {
+                        if (!sheetState.isVisible) {
+                            showSheet = false
+                            viewModel.clearSelection()
+                        }
+                    }
                 }
-            }
-        )
+            )
+        }
     }
 }

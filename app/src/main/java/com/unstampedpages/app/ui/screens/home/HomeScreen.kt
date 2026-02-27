@@ -2,6 +2,7 @@ package com.unstampedpages.app.ui.screens.home
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,7 +43,12 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    onNavigateToCountries: () -> Unit = {},
+    onNavigateToChecklist: () -> Unit = {},
+    onNavigateToTripLog: () -> Unit = {},
+    onNavigateToMyStamps: () -> Unit = {}
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -120,19 +126,29 @@ fun HomeScreen() {
         FeatureCard(
             title = "Explore Countries",
             description = "Tap the globe to discover country info, safety levels, and travel tips.",
-            iconContent = { Icon(Icons.Filled.Explore, contentDescription = null, tint = Secondary) }
+            iconContent = { Icon(Icons.Filled.Explore, contentDescription = null, tint = Secondary) },
+            onClick = onNavigateToCountries
         )
 
         FeatureCard(
             title = "Travel Checklist",
             description = "Never forget essentials. Keep track of what to bring on your adventure.",
-            iconContent = { ChecklistIcon() }
+            iconContent = { ChecklistIcon() },
+            onClick = onNavigateToChecklist
         )
 
         FeatureCard(
             title = "Trip Journal",
             description = "Record your memories. Document each day of your journey.",
-            iconContent = { JournalIcon() }
+            iconContent = { JournalIcon() },
+            onClick = onNavigateToTripLog
+        )
+
+        FeatureCard(
+            title = "My Passport Stamps",
+            description = "Upload pictures of your passport stamps to each country you visit as a digital record.",
+            iconContent = { StampIcon() },
+            onClick = onNavigateToMyStamps
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -233,10 +249,13 @@ private fun CompassIcon(modifier: Modifier = Modifier) {
 private fun FeatureCard(
     title: String,
     description: String,
-    iconContent: @Composable () -> Unit
+    iconContent: @Composable () -> Unit,
+    onClick: () -> Unit = {}
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
         ),
@@ -330,6 +349,75 @@ private fun JournalIcon() {
             end = Offset(size.width - 10.dp.toPx(), 20.dp.toPx()),
             strokeWidth = 1.dp.toPx()
         )
+    }
+}
+
+@Composable
+private fun StampIcon() {
+    Canvas(modifier = Modifier.size(32.dp)) {
+        val center = Offset(size.width / 2, size.height / 2)
+        val radius = size.minDimension / 2 - 2.dp.toPx()
+
+        // Outer circle (stamp border)
+        drawCircle(
+            color = Secondary,
+            radius = radius,
+            center = center,
+            style = Stroke(width = 2.dp.toPx())
+        )
+
+        // Inner circle
+        drawCircle(
+            color = Secondary,
+            radius = radius - 4.dp.toPx(),
+            center = center,
+            style = Stroke(width = 1.dp.toPx())
+        )
+
+        // Stamp serrated edge effect (small lines around the circle)
+        val numLines = 16
+        for (i in 0 until numLines) {
+            val angle = Math.toRadians((i * 360.0 / numLines))
+            val innerRadius = radius - 1.dp.toPx()
+            val outerRadius = radius + 1.dp.toPx()
+
+            drawLine(
+                color = Secondary,
+                start = Offset(
+                    center.x + (innerRadius * cos(angle)).toFloat(),
+                    center.y + (innerRadius * sin(angle)).toFloat()
+                ),
+                end = Offset(
+                    center.x + (outerRadius * cos(angle)).toFloat(),
+                    center.y + (outerRadius * sin(angle)).toFloat()
+                ),
+                strokeWidth = 1.5.dp.toPx()
+            )
+        }
+
+        // Star in center
+        val starPath = Path().apply {
+            val starRadius = 6.dp.toPx()
+            val innerStarRadius = 3.dp.toPx()
+            for (i in 0 until 5) {
+                val outerAngle = Math.toRadians((i * 72.0) - 90)
+                val innerAngle = Math.toRadians((i * 72.0) + 36 - 90)
+
+                val outerX = center.x + (starRadius * cos(outerAngle)).toFloat()
+                val outerY = center.y + (starRadius * sin(outerAngle)).toFloat()
+                val innerX = center.x + (innerStarRadius * cos(innerAngle)).toFloat()
+                val innerY = center.y + (innerStarRadius * sin(innerAngle)).toFloat()
+
+                if (i == 0) {
+                    moveTo(outerX, outerY)
+                } else {
+                    lineTo(outerX, outerY)
+                }
+                lineTo(innerX, innerY)
+            }
+            close()
+        }
+        drawPath(starPath, color = Primary)
     }
 }
 

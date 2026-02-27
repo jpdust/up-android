@@ -30,7 +30,36 @@ fun UnstampedPagesApp() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(NavRoute.Home.route) {
-                HomeScreen()
+                HomeScreen(
+                    onNavigateToCountries = {
+                        navController.navigate(NavRoute.CountryInfo.route) {
+                            popUpTo(NavRoute.Home.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onNavigateToChecklist = {
+                        navController.navigate(NavRoute.Checklist.route) {
+                            popUpTo(NavRoute.Home.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onNavigateToTripLog = {
+                        navController.navigate(NavRoute.TripLog.route) {
+                            popUpTo(NavRoute.Home.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onNavigateToMyStamps = {
+                        navController.navigate(NavRoute.MyStamps.route) {
+                            popUpTo(NavRoute.Home.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                )
             }
             composable(NavRoute.CountryInfo.route) {
                 CountryInfoScreen()

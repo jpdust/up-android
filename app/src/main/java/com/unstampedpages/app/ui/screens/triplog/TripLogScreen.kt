@@ -32,7 +32,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -86,25 +85,11 @@ fun TripLogScreen(
         enter = fadeIn(),
         exit = fadeOut()
     ) {
-        Scaffold(
-            floatingActionButton = {
-                FloatingActionButton(
-                    onClick = { viewModel.startNewEntry() },
-                    containerColor = Secondary,
-                    contentColor = Primary
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "New entry"
-                    )
-                }
-            }
-        ) { innerPadding ->
+        Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
-                    .padding(innerPadding)
             ) {
                 // Header
                 Box(
@@ -163,6 +148,21 @@ fun TripLogScreen(
                         }
                     }
                 }
+            }
+
+            // Floating Action Button
+            FloatingActionButton(
+                onClick = { viewModel.startNewEntry() },
+                containerColor = Secondary,
+                contentColor = Primary,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "New entry"
+                )
             }
         }
     }
