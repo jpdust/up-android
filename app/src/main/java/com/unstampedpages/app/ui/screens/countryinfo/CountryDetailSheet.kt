@@ -98,7 +98,7 @@ fun CountryDetailSheet(
                     value = "${country.currency} (${country.currencyCode})"
                 )
 
-                // Exchange rate
+                // Exchange rate (1 USD = X foreign currency)
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
@@ -113,12 +113,17 @@ fun CountryDetailSheet(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "1 ${country.currencyCode} =",
+                            text = "1 USD =",
                             style = MaterialTheme.typography.bodyMedium,
                             color = Primary
                         )
+                        val foreignPerUsd = if (country.exchangeRateToUSD > 0) {
+                            1.0 / country.exchangeRateToUSD
+                        } else {
+                            0.0
+                        }
                         Text(
-                            text = "$${String.format(Locale.US, "%.4f", country.exchangeRateToUSD)} USD",
+                            text = "${String.format(Locale.US, "%.2f", foreignPerUsd)} ${country.currencyCode}",
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Bold,
                             color = Primary

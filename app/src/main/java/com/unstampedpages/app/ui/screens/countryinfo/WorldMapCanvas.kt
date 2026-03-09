@@ -44,32 +44,42 @@ import kotlin.math.tan
  * Mapping from GeoJSON 3-letter ISO codes to repository 2-letter codes
  */
 private val geoJsonToRepoId = mapOf(
-    "USA" to "us",
-    "CAN" to "ca",
-    "MEX" to "mx",
-    "BRA" to "br",
-    "ARG" to "ar",
-    "COL" to "co",
-    "PER" to "pe",
-    "GBR" to "gb",
-    "FRA" to "fr",
-    "DEU" to "de",
-    "ITA" to "it",
-    "ESP" to "es",
-    "EGY" to "eg",
-    "ZAF" to "za",
-    "NGA" to "ng",
-    "KEN" to "ke",
-    "MAR" to "ma",
-    "CHN" to "cn",
-    "JPN" to "jp",
-    "IND" to "in",
-    "THA" to "th",
-    "VNM" to "vn",
-    "KOR" to "kr",
-    "IDN" to "id",
-    "AUS" to "au",
-    "NZL" to "nz"
+    // North America
+    "USA" to "us", "CAN" to "ca", "MEX" to "mx", "GTM" to "gt", "CUB" to "cu",
+    "HTI" to "ht", "DOM" to "do", "HND" to "hn", "NIC" to "ni", "CRI" to "cr",
+    "PAN" to "pa", "JAM" to "jm", "SLV" to "sv", "BLZ" to "bz",
+    // South America
+    "BRA" to "br", "ARG" to "ar", "COL" to "co", "PER" to "pe", "VEN" to "ve",
+    "CHL" to "cl", "ECU" to "ec", "BOL" to "bo", "PRY" to "py", "URY" to "uy",
+    "GUY" to "gy", "SUR" to "sr",
+    // Europe
+    "GBR" to "gb", "FRA" to "fr", "DEU" to "de", "ITA" to "it", "ESP" to "es",
+    "POL" to "pl", "ROU" to "ro", "NLD" to "nl", "BEL" to "be", "CZE" to "cz",
+    "GRC" to "gr", "PRT" to "pt", "SWE" to "se", "HUN" to "hu", "AUT" to "at",
+    "CHE" to "ch", "BGR" to "bg", "DNK" to "dk", "FIN" to "fi", "NOR" to "no",
+    "IRL" to "ie", "HRV" to "hr", "SVK" to "sk", "UKR" to "ua", "RUS" to "ru",
+    "TUR" to "tr", "SRB" to "rs", "LTU" to "lt", "LVA" to "lv", "EST" to "ee",
+    "SVN" to "si", "ISL" to "is", "ALB" to "al", "BLR" to "by", "BIH" to "ba",
+    "CYP" to "cy", "LUX" to "lu", "MDA" to "md", "MNE" to "me", "MKD" to "mk",
+    // Africa
+    "EGY" to "eg", "ZAF" to "za", "NGA" to "ng", "KEN" to "ke", "MAR" to "ma",
+    "ETH" to "et", "TZA" to "tz", "DZA" to "dz", "SDN" to "sd", "UGA" to "ug",
+    "GHA" to "gh", "MOZ" to "mz", "CIV" to "ci", "CMR" to "cm", "AGO" to "ao",
+    "SEN" to "sn", "ZMB" to "zm", "ZWE" to "zw", "TUN" to "tn", "RWA" to "rw",
+    "BWA" to "bw", "NAM" to "na", "LBY" to "ly", "COD" to "cd", "MDG" to "mg",
+    // Asia
+    "CHN" to "cn", "JPN" to "jp", "IND" to "in", "THA" to "th", "VNM" to "vn",
+    "KOR" to "kr", "IDN" to "id", "PHL" to "ph", "PAK" to "pk", "BGD" to "bd",
+    "MYS" to "my", "SGP" to "sg", "MMR" to "mm", "NPL" to "np", "KHM" to "kh",
+    "LAO" to "la", "LKA" to "lk", "TWN" to "tw", "HKG" to "hk", "ARE" to "ae",
+    "SAU" to "sa", "ISR" to "il", "IRQ" to "iq", "IRN" to "ir", "AFG" to "af",
+    "KAZ" to "kz", "UZB" to "uz", "JOR" to "jo", "LBN" to "lb", "KWT" to "kw",
+    "OMN" to "om", "QAT" to "qa", "BHR" to "bh", "AZE" to "az", "GEO" to "ge",
+    "ARM" to "am", "MNG" to "mn", "PRK" to "kp", "BRN" to "bn", "BTN" to "bt",
+    "TLS" to "tl", "SYR" to "sy", "YEM" to "ye",
+    // Oceania
+    "AUS" to "au", "NZL" to "nz", "PNG" to "pg", "FJI" to "fj", "SLB" to "sb",
+    "VUT" to "vu", "NCL" to "nc"
 )
 
 /**
