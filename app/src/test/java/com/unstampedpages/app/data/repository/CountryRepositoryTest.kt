@@ -1,7 +1,6 @@
 package com.unstampedpages.app.data.repository
 
 import com.unstampedpages.app.data.model.Continent
-import com.unstampedpages.app.data.model.SafetyLevel
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -129,9 +128,9 @@ class CountryRepositoryTest {
         val mapData = repository.getMapData()
 
         mapData.forEach { data ->
-            assertTrue(data.x >= 0f && data.x <= 1f)
-            assertTrue(data.y >= 0f && data.y <= 1f)
-            assertTrue(data.size > 0f)
+            assertTrue(data.centerX >= 0f && data.centerX <= 1f)
+            assertTrue(data.centerY >= 0f && data.centerY <= 1f)
+            assertTrue(data.radius > 0f)
         }
     }
 
@@ -156,11 +155,9 @@ class CountryRepositoryTest {
 
         countries.forEach { country ->
             assertNotNull(country.safetyLevel)
-            assertTrue(
-                country.safetyLevel == SafetyLevel.LOW ||
-                country.safetyLevel == SafetyLevel.MEDIUM ||
-                country.safetyLevel == SafetyLevel.HIGH
-            )
+            // Check that safetyLevel name is one of the expected values
+            val validLevels = listOf("LOW", "MEDIUM", "HIGH", "EXTREME")
+            assertTrue(validLevels.contains(country.safetyLevel.name))
         }
     }
 
@@ -213,7 +210,7 @@ class CountryRepositoryTest {
         assertEquals("Japan", japan?.name)
         assertEquals(Continent.ASIA, japan?.continent)
         assertEquals("JPY", japan?.currencyCode)
-        assertEquals(SafetyLevel.LOW, japan?.safetyLevel)
+        assertEquals("LOW", japan?.safetyLevel?.name)
     }
 
     @Test
@@ -223,5 +220,19 @@ class CountryRepositoryTest {
 
         assertTrue(northAmerica.size < allCountries.size)
         assertTrue(allCountries.containsAll(northAmerica))
+    }
+
+    @Test
+    fun `getMapData countryIds exist in countries`() {
+        val countries = repository.getAllCountries()
+        val countryIds = countries.map { it.id }
+        val mapData = repository.getMapData()
+
+        mapData.forEach { data ->
+            assertTrue(
+                "Map data countryId ${data.countryId} should exist in countries",
+                countryIds.contains(data.countryId)
+            )
+        }
     }
 }

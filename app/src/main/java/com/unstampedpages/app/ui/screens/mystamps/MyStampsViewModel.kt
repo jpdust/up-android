@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import androidx.core.content.FileProvider
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.unstampedpages.app.data.Country
@@ -28,13 +29,15 @@ data class MyStampsUiState(
     val countryStamps: List<CountryStamp> = emptyList(),
     val isLoading: Boolean = false,
     val selectedCountry: Country? = null,
-    val showUploadDialog: Boolean = false
+    val showUploadDialog: Boolean = false,
+    val cameraImageUri: Uri? = null
 )
 
 class MyStampsViewModel(application: Application) : AndroidViewModel(application) {
 
     private val context: Context = application.applicationContext
     private var repository: StampRepository? = null
+    private var currentCameraTempFile: File? = null
 
     private val _uiState = MutableStateFlow(MyStampsUiState())
     val uiState: StateFlow<MyStampsUiState> = _uiState.asStateFlow()
@@ -124,6 +127,79 @@ class MyStampsViewModel(application: Application) : AndroidViewModel(application
             } catch (e: Exception) {
                 Log.e("MyStampsViewModel", "Error removing stamp", e)
             }
+        }
+    }
+
+    fun createCameraUri(): Uri? {
+        return try {
+            val cameraTempDir = File(context.cacheDir, "camera_temp")
+            if (!cameraTempDir.exists()) {
+                cameraTempDir.mkdirs()
+            }
+
+            val tempFile = File(cameraTempDir, "stamp_capture_${System.currentTimeMillis()}.jpg")
+            currentCameraTempFile = tempFile
+
+            val uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                tempFile
+            )
+            _uiState.value = _uiState.value.copy(cameraImageUri = uri)
+            uri
+        } catch (e: Exception) {
+            Log.e("MyStampsViewModel", "Error creating camera URI", e)
+            null
+        }
+    }
+
+    fun saveCameraImage(success: Boolean) {
+        if (!success) {
+            currentCameraTempFile?.delete()
+            currentCameraTempFile = null
+            return
+        }
+
+        val country = _uiState.value.selectedCountry ?: return
+        val tempFile = currentCameraTempFile ?: return
+
+        viewModelScope.launch {
+            try {
+                val imagePath = moveCameraImageToStorage(tempFile, country.code)
+                if (imagePath != null) {
+                    val stamp = StampItem(
+                        countryCode = country.code,
+                        countryName = country.name,
+                        imagePath = imagePath
+                    )
+                    repository?.insertStamp(stamp)
+                }
+            } catch (e: Exception) {
+                Log.e("MyStampsViewModel", "Error saving camera image", e)
+            } finally {
+                currentCameraTempFile = null
+                dismissUploadDialog()
+            }
+        }
+    }
+
+    private fun moveCameraImageToStorage(tempFile: File, countryCode: String): String? {
+        return try {
+            val upImagesDir = File(context.filesDir, "upimages")
+            if (!upImagesDir.exists()) {
+                upImagesDir.mkdirs()
+            }
+
+            val fileName = "stamp_${countryCode}_${System.currentTimeMillis()}.jpg"
+            val destFile = File(upImagesDir, fileName)
+
+            tempFile.copyTo(destFile, overwrite = true)
+            tempFile.delete()
+
+            destFile.absolutePath
+        } catch (e: Exception) {
+            Log.e("MyStampsViewModel", "Error moving camera image", e)
+            null
         }
     }
 

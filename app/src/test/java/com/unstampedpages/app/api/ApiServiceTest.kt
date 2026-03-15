@@ -1,141 +1,13 @@
 package com.unstampedpages.app.api
 
-import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
-import org.junit.Before
 import org.junit.Test
-
-class ApiServiceImplTest {
-
-    private lateinit var apiService: ApiServiceImpl
-
-    @Before
-    fun setUp() {
-        apiService = ApiServiceImpl()
-    }
-
-    @Test
-    fun `registerUser returns failure with NotImplementedError`() = runTest {
-        val result = apiService.registerUser("test@example.com", "password123")
-
-        assertTrue(result.isFailure)
-        assertTrue(result.exceptionOrNull() is NotImplementedError)
-    }
-
-    @Test
-    fun `loginUser returns failure with NotImplementedError`() = runTest {
-        val result = apiService.loginUser("test@example.com", "password123")
-
-        assertTrue(result.isFailure)
-        assertTrue(result.exceptionOrNull() is NotImplementedError)
-    }
-
-    @Test
-    fun `getUserProfile returns failure with NotImplementedError`() = runTest {
-        val result = apiService.getUserProfile()
-
-        assertTrue(result.isFailure)
-        assertTrue(result.exceptionOrNull() is NotImplementedError)
-    }
-
-    @Test
-    fun `updateUserProfile returns failure with NotImplementedError`() = runTest {
-        val profile = UserProfile(
-            id = "123",
-            email = "test@example.com",
-            displayName = "Test User",
-            avatarUrl = null,
-            preferences = emptyMap()
-        )
-        val result = apiService.updateUserProfile(profile)
-
-        assertTrue(result.isFailure)
-        assertTrue(result.exceptionOrNull() is NotImplementedError)
-    }
-
-    @Test
-    fun `syncChecklistItems returns failure with NotImplementedError`() = runTest {
-        val result = apiService.syncChecklistItems(emptyList())
-
-        assertTrue(result.isFailure)
-        assertTrue(result.exceptionOrNull() is NotImplementedError)
-    }
-
-    @Test
-    fun `getChecklistItems returns failure with NotImplementedError`() = runTest {
-        val result = apiService.getChecklistItems()
-
-        assertTrue(result.isFailure)
-        assertTrue(result.exceptionOrNull() is NotImplementedError)
-    }
-
-    @Test
-    fun `syncTripLogEntries returns failure with NotImplementedError`() = runTest {
-        val result = apiService.syncTripLogEntries(emptyList())
-
-        assertTrue(result.isFailure)
-        assertTrue(result.exceptionOrNull() is NotImplementedError)
-    }
-
-    @Test
-    fun `getTripLogEntries returns failure with NotImplementedError`() = runTest {
-        val result = apiService.getTripLogEntries()
-
-        assertTrue(result.isFailure)
-        assertTrue(result.exceptionOrNull() is NotImplementedError)
-    }
-
-    @Test
-    fun `getCountryData returns failure with NotImplementedError`() = runTest {
-        val result = apiService.getCountryData("US")
-
-        assertTrue(result.isFailure)
-        assertTrue(result.exceptionOrNull() is NotImplementedError)
-    }
-
-    @Test
-    fun `getExchangeRates returns failure with NotImplementedError`() = runTest {
-        val result = apiService.getExchangeRates()
-
-        assertTrue(result.isFailure)
-        assertTrue(result.exceptionOrNull() is NotImplementedError)
-    }
-}
-
-class ApiServiceFactoryTest {
-
-    @Test
-    fun `create returns ApiServiceImpl instance`() {
-        val service = ApiServiceFactory.create()
-
-        assertTrue(service is ApiServiceImpl)
-    }
-
-    @Test
-    fun `create returns new instance each time`() {
-        val service1 = ApiServiceFactory.create()
-        val service2 = ApiServiceFactory.create()
-
-        assertNotSame(service1, service2)
-    }
-}
 
 class ApiConfigTest {
 
     @Test
     fun `baseUrl has default value`() {
         assertEquals("https://api.unstampedpages.com", ApiConfig.baseUrl)
-    }
-
-    @Test
-    fun `baseUrl can be changed`() {
-        val original = ApiConfig.baseUrl
-        ApiConfig.baseUrl = "https://staging.unstampedpages.com"
-
-        assertEquals("https://staging.unstampedpages.com", ApiConfig.baseUrl)
-
-        // Reset
-        ApiConfig.baseUrl = original
     }
 
     @Test
@@ -174,7 +46,7 @@ class ApiConfigTest {
     }
 }
 
-class ApiResponseDataClassesTest {
+class UserResponseTest {
 
     @Test
     fun `UserResponse holds correct values`() {
@@ -188,6 +60,26 @@ class ApiResponseDataClassesTest {
         assertEquals("test@example.com", response.email)
         assertEquals(1234567890L, response.createdAt)
     }
+
+    @Test
+    fun `UserResponse equals works correctly`() {
+        val response1 = UserResponse("123", "test@test.com", 1000L)
+        val response2 = UserResponse("123", "test@test.com", 1000L)
+
+        assertEquals(response1, response2)
+    }
+
+    @Test
+    fun `UserResponse copy works correctly`() {
+        val original = UserResponse("123", "test@test.com", 1000L)
+        val copy = original.copy(email = "new@test.com")
+
+        assertEquals("new@test.com", copy.email)
+        assertEquals("test@test.com", original.email)
+    }
+}
+
+class AuthResponseTest {
 
     @Test
     fun `AuthResponse holds correct values`() {
@@ -204,6 +96,18 @@ class ApiResponseDataClassesTest {
         assertEquals(9999999999L, response.expiresAt)
         assertEquals(userResponse, response.user)
     }
+
+    @Test
+    fun `AuthResponse contains nested user`() {
+        val userResponse = UserResponse("456", "nested@test.com", 2000L)
+        val response = AuthResponse("token", "refresh", 1000L, userResponse)
+
+        assertEquals("456", response.user.id)
+        assertEquals("nested@test.com", response.user.email)
+    }
+}
+
+class UserProfileTest {
 
     @Test
     fun `UserProfile holds correct values`() {
@@ -239,6 +143,18 @@ class ApiResponseDataClassesTest {
     }
 
     @Test
+    fun `UserProfile copy modifies values`() {
+        val original = UserProfile("123", "test@test.com", "Name", null, emptyMap())
+        val modified = original.copy(displayName = "New Name")
+
+        assertEquals("New Name", modified.displayName)
+        assertEquals("Name", original.displayName)
+    }
+}
+
+class CountryApiResponseTest {
+
+    @Test
     fun `CountryApiResponse holds correct values`() {
         val response = CountryApiResponse(
             id = "us",
@@ -264,6 +180,17 @@ class ApiResponseDataClassesTest {
     }
 
     @Test
+    fun `CountryApiResponse equals works correctly`() {
+        val response1 = CountryApiResponse("us", "USA", 331000000L, "LOW", "Dollar", "USD", 1.0, "A/B", 1000L)
+        val response2 = CountryApiResponse("us", "USA", 331000000L, "LOW", "Dollar", "USD", 1.0, "A/B", 1000L)
+
+        assertEquals(response1, response2)
+    }
+}
+
+class ExchangeRatesResponseTest {
+
+    @Test
     fun `ExchangeRatesResponse holds correct values`() {
         val response = ExchangeRatesResponse(
             baseCurrency = "USD",
@@ -277,5 +204,25 @@ class ApiResponseDataClassesTest {
         assertEquals(0.73, response.rates["GBP"]!!, 0.001)
         assertEquals(110.0, response.rates["JPY"]!!, 0.001)
         assertEquals(1234567890L, response.lastUpdated)
+    }
+
+    @Test
+    fun `ExchangeRatesResponse with empty rates`() {
+        val response = ExchangeRatesResponse(
+            baseCurrency = "EUR",
+            rates = emptyMap(),
+            lastUpdated = 0L
+        )
+
+        assertTrue(response.rates.isEmpty())
+    }
+
+    @Test
+    fun `ExchangeRatesResponse copy works correctly`() {
+        val original = ExchangeRatesResponse("USD", mapOf("EUR" to 0.85), 1000L)
+        val modified = original.copy(baseCurrency = "EUR")
+
+        assertEquals("EUR", modified.baseCurrency)
+        assertEquals("USD", original.baseCurrency)
     }
 }

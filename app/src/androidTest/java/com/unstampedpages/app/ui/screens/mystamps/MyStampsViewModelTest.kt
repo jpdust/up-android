@@ -140,6 +140,96 @@ class MyStampsViewModelTest {
         assertNotNull(usStamp)
         assertEquals("United States", usStamp?.country?.name)
     }
+
+    // Camera functionality tests
+
+    @Test
+    fun initialState_cameraImageUriIsNull() {
+        val state = viewModel.uiState.value
+
+        assertNull(state.cameraImageUri)
+    }
+
+    @Test
+    fun createCameraUri_returnsNonNullUri() {
+        val uri = viewModel.createCameraUri()
+
+        assertNotNull(uri)
+    }
+
+    @Test
+    fun createCameraUri_updatesCameraImageUriInState() {
+        val uri = viewModel.createCameraUri()
+
+        assertEquals(uri, viewModel.uiState.value.cameraImageUri)
+    }
+
+    @Test
+    fun createCameraUri_returnsContentUri() {
+        val uri = viewModel.createCameraUri()
+
+        assertNotNull(uri)
+        assertEquals("content", uri?.scheme)
+    }
+
+    @Test
+    fun createCameraUri_uriContainsFileProvider() {
+        val uri = viewModel.createCameraUri()
+
+        assertNotNull(uri)
+        assertTrue(uri.toString().contains("fileprovider"))
+    }
+
+    @Test
+    fun createCameraUri_calledMultipleTimes_returnsUniqueUris() {
+        val uri1 = viewModel.createCameraUri()
+        Thread.sleep(10) // Ensure different timestamps
+        val uri2 = viewModel.createCameraUri()
+
+        assertNotNull(uri1)
+        assertNotNull(uri2)
+        assertNotEquals(uri1, uri2)
+    }
+
+    @Test
+    fun saveCameraImage_withFailure_doesNotChangeDialogState() {
+        val country = CountryList.countries.first()
+        viewModel.showUploadDialog(country)
+        viewModel.createCameraUri()
+
+        // Simulate camera capture failure
+        viewModel.saveCameraImage(false)
+
+        // Dialog should still be showing (failure doesn't dismiss)
+        assertTrue(viewModel.uiState.value.showUploadDialog)
+    }
+
+    @Test
+    fun saveCameraImage_withSuccess_noSelectedCountry_doesNotCrash() {
+        // Don't show dialog (no selected country)
+        viewModel.createCameraUri()
+
+        // Should not crash when no country selected
+        viewModel.saveCameraImage(true)
+
+        // State should be unchanged
+        assertNull(viewModel.uiState.value.selectedCountry)
+    }
+
+    @Test
+    fun saveCameraImage_withSuccess_dismissesDialog() = runTest {
+        val country = CountryList.countries.first()
+        viewModel.showUploadDialog(country)
+        viewModel.createCameraUri()
+
+        viewModel.saveCameraImage(true)
+
+        // Give coroutine time to complete
+        Thread.sleep(100)
+
+        assertFalse(viewModel.uiState.value.showUploadDialog)
+        assertNull(viewModel.uiState.value.selectedCountry)
+    }
 }
 
 class CountryStampTest {
@@ -231,5 +321,30 @@ class MyStampsUiStateTest {
         val state = MyStampsUiState(countryStamps = stamps)
 
         assertEquals(2, state.countryStamps.size)
+    }
+
+    @Test
+    fun defaultState_cameraImageUriIsNull() {
+        val state = MyStampsUiState()
+
+        assertNull(state.cameraImageUri)
+    }
+
+    @Test
+    fun state_canBeCreatedWithCameraImageUri() {
+        val uri = android.net.Uri.parse("content://com.example/test")
+        val state = MyStampsUiState(cameraImageUri = uri)
+
+        assertEquals(uri, state.cameraImageUri)
+    }
+
+    @Test
+    fun state_cameraImageUriCanBeUpdatedViaCopy() {
+        val uri = android.net.Uri.parse("content://com.example/test")
+        val initialState = MyStampsUiState()
+        val updatedState = initialState.copy(cameraImageUri = uri)
+
+        assertNull(initialState.cameraImageUri)
+        assertEquals(uri, updatedState.cameraImageUri)
     }
 }
