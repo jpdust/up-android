@@ -1,11 +1,20 @@
 package com.unstampedpages.app.ui.screens.countryinfo
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -20,15 +29,14 @@ import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SheetState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,101 +54,138 @@ import com.unstampedpages.app.ui.theme.Secondary
 import java.text.NumberFormat
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
+private const val ANIMATION_DURATION = 300
+
 @Composable
 fun CountryDetailSheet(
-    country: Country,
-    sheetState: SheetState,
+    country: Country?,
+    visible: Boolean,
     onDismiss: () -> Unit
 ) {
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = MaterialTheme.colorScheme.surface,
-        dragHandle = null
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth()
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Scrim (dark overlay)
+        AnimatedVisibility(
+            visible = visible,
+            enter = fadeIn(animationSpec = tween(ANIMATION_DURATION)),
+            exit = fadeOut(animationSpec = tween(ANIMATION_DURATION))
         ) {
-            // Header with country image/gradient
-            CountryHeader(country = country, onClose = onDismiss)
-
-            // Country details
-            Column(
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // Population
-                InfoRow(
-                    icon = Icons.Default.Groups,
-                    label = "Population",
-                    value = formatPopulation(country.population)
-                )
-
-                Divider(color = Primary.copy(alpha = 0.1f))
-
-                // Safety Level
-                InfoRow(
-                    icon = Icons.Default.Shield,
-                    label = "Safety Level",
-                    value = country.safetyLevel.displayName,
-                    valueColor = country.safetyLevel.color
-                )
-
-                Divider(color = Primary.copy(alpha = 0.1f))
-
-                // Currency
-                InfoRow(
-                    icon = Icons.Default.AttachMoney,
-                    label = "Currency",
-                    value = "${country.currency} (${country.currencyCode})"
-                )
-
-                // Exchange rate (1 USD = X foreign currency)
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Secondary.copy(alpha = 0.1f)
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = onDismiss
                     )
+            )
+        }
+
+        // Bottom Sheet Content
+        AnimatedVisibility(
+            visible = visible && country != null,
+            enter = slideInVertically(
+                animationSpec = tween(ANIMATION_DURATION),
+                initialOffsetY = { it }
+            ),
+            exit = slideOutVertically(
+                animationSpec = tween(ANIMATION_DURATION),
+                targetOffsetY = { it }
+            ),
+            modifier = Modifier.align(Alignment.BottomCenter)
+        ) {
+            country?.let {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    shadowElevation = 8.dp
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(
-                            text = "1 USD =",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Primary
-                        )
-                        val foreignPerUsd = if (country.exchangeRateToUSD > 0) {
-                            1.0 / country.exchangeRateToUSD
-                        } else {
-                            0.0
+                        // Header with country image/gradient
+                        CountryHeader(country = it, onClose = onDismiss)
+
+                        // Country details
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            // Population
+                            InfoRow(
+                                icon = Icons.Default.Groups,
+                                label = "Population",
+                                value = formatPopulation(it.population)
+                            )
+
+                            Divider(color = Primary.copy(alpha = 0.1f))
+
+                            // Safety Level
+                            InfoRow(
+                                icon = Icons.Default.Shield,
+                                label = "Safety Level",
+                                value = it.safetyLevel.displayName,
+                                valueColor = it.safetyLevel.color
+                            )
+
+                            Divider(color = Primary.copy(alpha = 0.1f))
+
+                            // Currency
+                            InfoRow(
+                                icon = Icons.Default.AttachMoney,
+                                label = "Currency",
+                                value = "${it.currency} (${it.currencyCode})"
+                            )
+
+                            // Exchange rate (1 USD = X foreign currency)
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Secondary.copy(alpha = 0.1f)
+                                )
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "1 USD =",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Primary
+                                    )
+                                    val foreignPerUsd = if (it.exchangeRateToUSD > 0) {
+                                        1.0 / it.exchangeRateToUSD
+                                    } else {
+                                        0.0
+                                    }
+                                    Text(
+                                        text = "${String.format(Locale.US, "%.2f", foreignPerUsd)} ${it.currencyCode}",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Primary
+                                    )
+                                }
+                            }
+
+                            Divider(color = Primary.copy(alpha = 0.1f))
+
+                            // Outlet Type
+                            InfoRow(
+                                icon = Icons.Default.ElectricalServices,
+                                label = "Power Outlet",
+                                value = it.outletType
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
                         }
-                        Text(
-                            text = "${String.format(Locale.US, "%.2f", foreignPerUsd)} ${country.currencyCode}",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = Primary
-                        )
                     }
                 }
-
-                Divider(color = Primary.copy(alpha = 0.1f))
-
-                // Outlet Type
-                InfoRow(
-                    icon = Icons.Default.ElectricalServices,
-                    label = "Power Outlet",
-                    value = country.outletType
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
