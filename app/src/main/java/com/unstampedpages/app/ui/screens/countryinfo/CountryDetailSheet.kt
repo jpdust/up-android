@@ -83,7 +83,7 @@ fun CountryDetailSheet(
 
         // Bottom Sheet Content
         AnimatedVisibility(
-            visible = visible && country != null,
+            visible = visible,
             enter = slideInVertically(
                 animationSpec = tween(ANIMATION_DURATION),
                 initialOffsetY = { it }

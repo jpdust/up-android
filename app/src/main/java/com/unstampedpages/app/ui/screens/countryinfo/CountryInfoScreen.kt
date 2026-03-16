@@ -29,6 +29,15 @@ fun CountryInfoScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showSheet by remember { mutableStateOf(false) }
 
+    // Keep a local copy of the country for the exit animation
+    // This prevents the content from disappearing before the animation completes
+    var displayedCountry by remember { mutableStateOf(uiState.selectedCountry) }
+
+    // Update displayed country when a new one is selected (but not when cleared)
+    if (uiState.selectedCountry != null) {
+        displayedCountry = uiState.selectedCountry
+    }
+
     // Lock orientation to portrait for this screen
     val context = LocalContext.current
     DisposableEffect(Unit) {
@@ -71,7 +80,7 @@ fun CountryInfoScreen(
 
         // Country Detail Bottom Sheet
         CountryDetailSheet(
-            country = uiState.selectedCountry,
+            country = displayedCountry,
             visible = showSheet,
             onDismiss = {
                 showSheet = false
