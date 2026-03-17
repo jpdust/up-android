@@ -90,16 +90,21 @@ private val geoJsonToRepoId = mapOf(
 )
 
 /**
- * Mercator projection constants
+ * Mercator projection constants and calculations
  */
 private object MercatorProjection {
-    // Standard Mercator latitude limits (cuts off polar regions)
-    const val MAX_LATITUDE = 85.0f
+    // Latitude limits to show all land masses including Antarctica
+    const val MAX_LATITUDE = 83.0f
     const val MIN_LATITUDE = -85.0f
 
     // Longitude bounds
     const val MIN_LONGITUDE = -180f
     const val MAX_LONGITUDE = 180f
+
+    // Pre-calculated Mercator Y bounds
+    private val maxMercatorY = ln(tan(Math.PI / 4 + Math.toRadians(MAX_LATITUDE.toDouble()) / 2))
+    private val minMercatorY = ln(tan(Math.PI / 4 + Math.toRadians(MIN_LATITUDE.toDouble()) / 2))
+    private val mercatorYRange = maxMercatorY - minMercatorY
 
     /**
      * Convert latitude to Mercator Y coordinate (normalized 0-1)
@@ -108,12 +113,7 @@ private object MercatorProjection {
         val clampedLat = lat.coerceIn(MIN_LATITUDE, MAX_LATITUDE)
         val latRad = Math.toRadians(clampedLat.toDouble())
         val mercatorY = ln(tan(Math.PI / 4 + latRad / 2))
-
-        // Normalize to 0-1 range
-        val maxMercatorY = ln(tan(Math.PI / 4 + Math.toRadians(MAX_LATITUDE.toDouble()) / 2))
-        val minMercatorY = ln(tan(Math.PI / 4 + Math.toRadians(MIN_LATITUDE.toDouble()) / 2))
-
-        return (1f - ((mercatorY - minMercatorY) / (maxMercatorY - minMercatorY)).toFloat())
+        return (1f - ((mercatorY - minMercatorY) / mercatorYRange).toFloat())
     }
 
     /**
@@ -124,33 +124,28 @@ private object MercatorProjection {
     }
 
     /**
-     * Convert screen Y to latitude
+     * Convert normalized Y to latitude
      */
-    fun yToLatitude(y: Float): Float {
-        val maxMercatorY = ln(tan(Math.PI / 4 + Math.toRadians(MAX_LATITUDE.toDouble()) / 2))
-        val minMercatorY = ln(tan(Math.PI / 4 + Math.toRadians(MIN_LATITUDE.toDouble()) / 2))
-
-        val mercatorY = minMercatorY + (1f - y) * (maxMercatorY - minMercatorY)
+    fun yToLatitude(normalizedY: Float): Float {
+        val mercatorY = minMercatorY + (1f - normalizedY) * mercatorYRange
         val latRad = 2 * atan(exp(mercatorY)) - Math.PI / 2
         return Math.toDegrees(latRad).toFloat()
     }
 
     /**
-     * Convert screen X to longitude
+     * Convert normalized X to longitude
      */
-    fun xToLongitude(x: Float): Float {
-        return MIN_LONGITUDE + x * (MAX_LONGITUDE - MIN_LONGITUDE)
+    fun xToLongitude(normalizedX: Float): Float {
+        return MIN_LONGITUDE + normalizedX * (MAX_LONGITUDE - MIN_LONGITUDE)
     }
 
     /**
-     * Get the aspect ratio of the Mercator projection
+     * Get the aspect ratio (width/height) of the Mercator projection
      */
     fun getAspectRatio(): Float {
-        val maxMercatorY = ln(tan(Math.PI / 4 + Math.toRadians(MAX_LATITUDE.toDouble()) / 2))
-        val minMercatorY = ln(tan(Math.PI / 4 + Math.toRadians(MIN_LATITUDE.toDouble()) / 2))
-        val mercatorHeight = (maxMercatorY - minMercatorY).toFloat()
-        val mercatorWidth = (MAX_LONGITUDE - MIN_LONGITUDE) / 180f * Math.PI.toFloat()
-        return mercatorWidth / mercatorHeight
+        // Width spans 360 degrees of longitude
+        // Height is the Mercator Y range
+        return (360.0 / mercatorYRange / (180.0 / Math.PI)).toFloat()
     }
 }
 
@@ -179,18 +174,43 @@ fun WorldMapCanvas(
         Canvas(
             modifier = Modifier.fillMaxSize()
         ) {
-            val mapWidth = size.width
-            val mapHeight = size.height
+            val canvasWidth = size.width
+            val canvasHeight = size.height
+
+            // Calculate map dimensions maintaining aspect ratio
+            val mapAspectRatio = MercatorProjection.getAspectRatio()
+            val canvasAspectRatio = canvasWidth / canvasHeight
+
+            val mapWidth: Float
+            val mapHeight: Float
+            val mapOffsetX: Float
+            val mapOffsetY: Float
+
+            if (canvasAspectRatio > mapAspectRatio) {
+                // Canvas is wider than map - fit to height, center horizontally
+                mapHeight = canvasHeight
+                mapWidth = canvasHeight * mapAspectRatio
+                mapOffsetX = (canvasWidth - mapWidth) / 2
+                mapOffsetY = 0f
+            } else {
+                // Canvas is taller than map - fit to width, center vertically
+                mapWidth = canvasWidth
+                mapHeight = canvasWidth / mapAspectRatio
+                mapOffsetX = 0f
+                mapOffsetY = (canvasHeight - mapHeight) / 2
+            }
 
             // Apply zoom and pan transformation
             withTransform({
-                // Center the transformation
+                // Translate to map position
+                translate(mapOffsetX, mapOffsetY)
+                // Center the zoom transformation on the map
                 translate(mapWidth / 2, mapHeight / 2)
                 scale(scale, scale)
                 translate(-mapWidth / 2, -mapHeight / 2)
                 translate(offsetX * mapWidth, offsetY * mapHeight)
             }) {
-                // Draw ocean background (already set on Box)
+                // Draw ocean background for the map area
                 drawRect(
                     color = MapOcean,
                     topLeft = Offset.Zero,
@@ -225,12 +245,37 @@ fun WorldMapCanvas(
                 .fillMaxSize()
                 .pointerInput(Unit) {
                     detectTapGestures { tapOffset ->
-                        val mapWidth = size.width.toFloat()
-                        val mapHeight = size.height.toFloat()
+                        val canvasWidth = size.width.toFloat()
+                        val canvasHeight = size.height.toFloat()
+
+                        // Calculate map dimensions (same as in Canvas)
+                        val mapAspectRatio = MercatorProjection.getAspectRatio()
+                        val canvasAspectRatio = canvasWidth / canvasHeight
+
+                        val mapWidth: Float
+                        val mapHeight: Float
+                        val mapOffsetX: Float
+                        val mapOffsetY: Float
+
+                        if (canvasAspectRatio > mapAspectRatio) {
+                            mapHeight = canvasHeight
+                            mapWidth = canvasHeight * mapAspectRatio
+                            mapOffsetX = (canvasWidth - mapWidth) / 2
+                            mapOffsetY = 0f
+                        } else {
+                            mapWidth = canvasWidth
+                            mapHeight = canvasWidth / mapAspectRatio
+                            mapOffsetX = 0f
+                            mapOffsetY = (canvasHeight - mapHeight) / 2
+                        }
+
+                        // Convert tap position to map-relative coordinates
+                        val mapRelativeX = tapOffset.x - mapOffsetX
+                        val mapRelativeY = tapOffset.y - mapOffsetY
 
                         // Reverse the transformation to get normalized map coordinates
-                        val normalizedX = (tapOffset.x / mapWidth - 0.5f - offsetX) / scale + 0.5f
-                        val normalizedY = (tapOffset.y / mapHeight - 0.5f - offsetY) / scale + 0.5f
+                        val normalizedX = (mapRelativeX / mapWidth - 0.5f - offsetX) / scale + 0.5f
+                        val normalizedY = (mapRelativeY / mapHeight - 0.5f - offsetY) / scale + 0.5f
 
                         // Find the country at this position (returns GeoJSON ID like "USA")
                         val geoJsonId = findCountryAtNormalizedPoint(normalizedX, normalizedY, geometries)
@@ -248,6 +293,22 @@ fun WorldMapCanvas(
                             val event = awaitPointerEvent()
                             val changes = event.changes
 
+                            // Calculate map dimensions for pan calculations
+                            val canvasWidth = size.width.toFloat()
+                            val canvasHeight = size.height.toFloat()
+                            val mapAspectRatio = MercatorProjection.getAspectRatio()
+                            val canvasAspectRatio = canvasWidth / canvasHeight
+                            val mapWidth = if (canvasAspectRatio > mapAspectRatio) {
+                                canvasHeight * mapAspectRatio
+                            } else {
+                                canvasWidth
+                            }
+                            val mapHeight = if (canvasAspectRatio > mapAspectRatio) {
+                                canvasHeight
+                            } else {
+                                canvasWidth / mapAspectRatio
+                            }
+
                             if (changes.size > 1) {
                                 // Multi-touch: zoom and pan
                                 val zoom = event.calculateZoom()
@@ -256,10 +317,22 @@ fun WorldMapCanvas(
                                 val newScale = (scale * zoom).coerceIn(1f, 8f)
                                 scale = newScale
 
-                                val maxOffsetX = (newScale - 1f) * 0.5f
-                                val maxOffsetY = (newScale - 1f) * 0.5f
-                                offsetX = (offsetX + pan.x / size.width).coerceIn(-maxOffsetX, maxOffsetX)
-                                offsetY = (offsetY + pan.y / size.height).coerceIn(-maxOffsetY, maxOffsetY)
+                                // At scale 1, no panning allowed
+                                if (newScale <= 1f) {
+                                    offsetX = 0f
+                                    offsetY = 0f
+                                } else {
+                                    // Calculate max offset to prevent scrolling past edges
+                                    val maxOffsetX = ((newScale - 1f) / (2f * newScale))
+                                    val maxOffsetY = ((newScale - 1f) / (2f * newScale))
+
+                                    // Pan delta must be divided by scale since offset is in scaled coordinates
+                                    val newOffsetX = offsetX + pan.x / (mapWidth * newScale)
+                                    val newOffsetY = offsetY + pan.y / (mapHeight * newScale)
+
+                                    offsetX = newOffsetX.coerceIn(-maxOffsetX, maxOffsetX)
+                                    offsetY = newOffsetY.coerceIn(-maxOffsetY, maxOffsetY)
+                                }
 
                                 changes.forEach { it.consume() }
                             } else if (changes.size == 1 && scale > 1f) {
@@ -267,10 +340,13 @@ fun WorldMapCanvas(
                                 if (change.positionChanged()) {
                                     val panDelta = change.position - change.previousPosition
                                     if (panDelta.getDistance() > 5f) {
-                                        val maxOffsetX = (scale - 1f) * 0.5f
-                                        val maxOffsetY = (scale - 1f) * 0.5f
-                                        offsetX = (offsetX + panDelta.x / size.width).coerceIn(-maxOffsetX, maxOffsetX)
-                                        offsetY = (offsetY + panDelta.y / size.height).coerceIn(-maxOffsetY, maxOffsetY)
+                                        // Calculate max offset to prevent scrolling past edges
+                                        val maxOffsetX = ((scale - 1f) / (2f * scale))
+                                        val maxOffsetY = ((scale - 1f) / (2f * scale))
+
+                                        // Pan delta must be divided by scale
+                                        offsetX = (offsetX + panDelta.x / (mapWidth * scale)).coerceIn(-maxOffsetX, maxOffsetX)
+                                        offsetY = (offsetY + panDelta.y / (mapHeight * scale)).coerceIn(-maxOffsetY, maxOffsetY)
                                     }
                                 }
                             }
