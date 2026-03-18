@@ -140,40 +140,42 @@ fun CountryDetailSheet(
                                 value = "${it.currency} (${it.currencyCode})"
                             )
 
-                            // Exchange rate (1 USD = X foreign currency)
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = Secondary.copy(alpha = 0.1f)
-                                )
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(12.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                            // Exchange rate (1 USD = X foreign currency) - hide for USD countries
+                            if (it.currencyCode != "USD") {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = Secondary.copy(alpha = 0.1f)
+                                    )
                                 ) {
-                                    Text(
-                                        text = "1 USD =",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Primary
-                                    )
-                                    val foreignPerUsd = if (it.exchangeRateToUSD > 0) {
-                                        1.0 / it.exchangeRateToUSD
-                                    } else {
-                                        0.0
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(12.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "1 USD =",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = Primary
+                                        )
+                                        val foreignPerUsd = if (it.exchangeRateToUSD > 0) {
+                                            1.0 / it.exchangeRateToUSD
+                                        } else {
+                                            0.0
+                                        }
+                                        Text(
+                                            text = "${String.format(Locale.US, "%.2f", foreignPerUsd)} ${it.currencyCode}",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Primary
+                                        )
                                     }
-                                    Text(
-                                        text = "${String.format(Locale.US, "%.2f", foreignPerUsd)} ${it.currencyCode}",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Primary
-                                    )
                                 }
-                            }
 
-                            Divider(color = Primary.copy(alpha = 0.1f))
+                                Divider(color = Primary.copy(alpha = 0.1f))
+                            }
 
                             // Outlet Type
                             InfoRow(
