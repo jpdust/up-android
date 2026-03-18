@@ -35,10 +35,12 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.unstampedpages.app.ui.theme.Primary
 import com.unstampedpages.app.ui.theme.PrimaryDark
 import com.unstampedpages.app.ui.theme.Secondary
 import com.unstampedpages.app.ui.theme.SecondaryLight
+import com.unstampedpages.app.ui.theme.StencilFontFamily
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -70,13 +72,14 @@ fun HomeScreen(
         // Compass Icon
         CompassIcon(modifier = Modifier.size(120.dp))
 
-        // App Title
+        // App Title - Stencil Font
         Text(
             text = "UNSTAMPED PAGES",
-            style = MaterialTheme.typography.headlineLarge,
+            fontFamily = StencilFontFamily,
             fontWeight = FontWeight.Bold,
+            fontSize = 35.sp,
+            letterSpacing = 2.sp,
             color = Primary,
-            letterSpacing = 4.sp,
             textAlign = TextAlign.Center
         )
 
@@ -421,5 +424,3 @@ private fun StampIcon() {
     }
 }
 
-private val Int.sp: androidx.compose.ui.unit.TextUnit
-    get() = androidx.compose.ui.unit.TextUnit(this.toFloat(), androidx.compose.ui.unit.TextUnitType.Sp)

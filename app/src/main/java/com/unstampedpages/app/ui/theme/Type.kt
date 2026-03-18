@@ -6,9 +6,12 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.unstampedpages.app.R
 
-// Using system fonts with adventurous styling
-// In production, consider adding custom fonts like Cinzel, Playfair Display, or similar
+// Stencil font family for display titles
+val StencilFontFamily = FontFamily(
+    Font(R.font.stardos_stencil_bold, FontWeight.Bold)
+)
 
 val Typography = Typography(
     // Large display text - for dramatic headers

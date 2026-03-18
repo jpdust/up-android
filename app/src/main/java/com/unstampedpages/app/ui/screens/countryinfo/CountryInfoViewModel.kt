@@ -10,7 +10,9 @@ import kotlinx.coroutines.flow.asStateFlow
 data class CountryInfoUiState(
     val countries: List<Country> = emptyList(),
     val selectedCountry: Country? = null,
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val searchQuery: String = "",
+    val searchResults: List<Country> = emptyList()
 )
 
 class CountryInfoViewModel : ViewModel() {
@@ -38,5 +40,26 @@ class CountryInfoViewModel : ViewModel() {
 
     fun clearSelection() {
         _uiState.value = _uiState.value.copy(selectedCountry = null)
+    }
+
+    fun updateSearchQuery(query: String) {
+        val results = if (query.isBlank()) {
+            emptyList()
+        } else {
+            repository.getAllCountries().filter { country ->
+                country.name.contains(query, ignoreCase = true)
+            }.take(5) // Limit to 5 suggestions
+        }
+        _uiState.value = _uiState.value.copy(
+            searchQuery = query,
+            searchResults = results
+        )
+    }
+
+    fun clearSearch() {
+        _uiState.value = _uiState.value.copy(
+            searchQuery = "",
+            searchResults = emptyList()
+        )
     }
 }
