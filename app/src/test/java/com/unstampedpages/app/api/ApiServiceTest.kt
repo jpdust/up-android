@@ -159,7 +159,6 @@ class CountryApiResponseTest {
         val response = CountryApiResponse(
             id = "us",
             name = "United States",
-            population = 331000000L,
             safetyLevel = "LOW",
             currency = "US Dollar",
             currencyCode = "USD",
@@ -170,7 +169,6 @@ class CountryApiResponseTest {
 
         assertEquals("us", response.id)
         assertEquals("United States", response.name)
-        assertEquals(331000000L, response.population)
         assertEquals("LOW", response.safetyLevel)
         assertEquals("US Dollar", response.currency)
         assertEquals("USD", response.currencyCode)
@@ -181,8 +179,8 @@ class CountryApiResponseTest {
 
     @Test
     fun `CountryApiResponse equals works correctly`() {
-        val response1 = CountryApiResponse("us", "USA", 331000000L, "LOW", "Dollar", "USD", 1.0, "A/B", 1000L)
-        val response2 = CountryApiResponse("us", "USA", 331000000L, "LOW", "Dollar", "USD", 1.0, "A/B", 1000L)
+        val response1 = CountryApiResponse("us", "USA", "LOW", "Dollar", "USD", 1.0, "A/B", 1000L)
+        val response2 = CountryApiResponse("us", "USA", "LOW", "Dollar", "USD", 1.0, "A/B", 1000L)
 
         assertEquals(response1, response2)
     }

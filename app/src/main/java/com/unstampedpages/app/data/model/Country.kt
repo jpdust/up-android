@@ -5,8 +5,8 @@ import androidx.compose.ui.graphics.Color
 data class Country(
     val id: String,
     val name: String,
-    val population: Long,
     val safetyLevel: SafetyLevel,
+    val visaRequirement: String,
     val currency: String,
     val currencyCode: String,
     val exchangeRateToUSD: Double,

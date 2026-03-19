@@ -115,7 +115,6 @@ class CountryInfoViewModelTest {
 
         assertEquals("us", country.id)
         assertEquals("United States", country.name)
-        assertTrue(country.population > 0)
         assertNotNull(country.currency)
         assertNotNull(country.currencyCode)
         assertTrue(country.exchangeRateToUSD > 0)

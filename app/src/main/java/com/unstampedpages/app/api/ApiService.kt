@@ -70,7 +70,6 @@ data class UserProfile(
 data class CountryApiResponse(
     val id: String,
     val name: String,
-    val population: Long,
     val safetyLevel: String,
     val currency: String,
     val currencyCode: String,

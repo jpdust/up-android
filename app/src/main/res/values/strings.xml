@@ -15,7 +15,6 @@
 
     <!-- Country Info -->
     <string name="country_info_title">Explore the World</string>
-    <string name="country_population">Population</string>
     <string name="country_safety">Safety Level</string>
     <string name="country_currency">Currency</string>
     <string name="country_exchange_rate">Exchange Rate (USD)</string>

@@ -10,8 +10,8 @@ class CountryTest {
         val country = Country(
             id = "us",
             name = "United States",
-            population = 331000000L,
             safetyLevel = SafetyLevel.LOW,
+            visaRequirement = "N/A",
             currency = "US Dollar",
             currencyCode = "USD",
             exchangeRateToUSD = 1.0,
@@ -22,8 +22,8 @@ class CountryTest {
 
         assertEquals("us", country.id)
         assertEquals("United States", country.name)
-        assertEquals(331000000L, country.population)
         assertEquals(SafetyLevel.LOW, country.safetyLevel)
+        assertEquals("N/A", country.visaRequirement)
         assertEquals("US Dollar", country.currency)
         assertEquals("USD", country.currencyCode)
         assertEquals(1.0, country.exchangeRateToUSD, 0.001)
@@ -37,8 +37,8 @@ class CountryTest {
         val country = Country(
             id = "fr",
             name = "France",
-            population = 67000000L,
             safetyLevel = SafetyLevel.LOW,
+            visaRequirement = "Visa not required",
             currency = "Euro",
             currencyCode = "EUR",
             exchangeRateToUSD = 1.1,
@@ -56,8 +56,8 @@ class CountryTest {
         val original = Country(
             id = "jp",
             name = "Japan",
-            population = 126000000L,
             safetyLevel = SafetyLevel.LOW,
+            visaRequirement = "Visa not required",
             currency = "Yen",
             currencyCode = "JPY",
             exchangeRateToUSD = 0.0067,
@@ -66,10 +66,10 @@ class CountryTest {
             flagEmoji = "\uD83C\uDDEF\uD83C\uDDF5"
         )
 
-        val copy = original.copy(population = 125000000L)
+        val copy = original.copy(name = "Nippon")
 
-        assertEquals(126000000L, original.population)
-        assertEquals(125000000L, copy.population)
+        assertEquals("Japan", original.name)
+        assertEquals("Nippon", copy.name)
         assertEquals(original.id, copy.id)
     }
 
@@ -78,8 +78,8 @@ class CountryTest {
         val country1 = Country(
             id = "de",
             name = "Germany",
-            population = 83000000L,
             safetyLevel = SafetyLevel.LOW,
+            visaRequirement = "Visa not required",
             currency = "Euro",
             currencyCode = "EUR",
             exchangeRateToUSD = 1.1,
@@ -91,8 +91,8 @@ class CountryTest {
         val country2 = Country(
             id = "de",
             name = "Germany",
-            population = 83000000L,
             safetyLevel = SafetyLevel.LOW,
+            visaRequirement = "Visa not required",
             currency = "Euro",
             currencyCode = "EUR",
             exchangeRateToUSD = 1.1,

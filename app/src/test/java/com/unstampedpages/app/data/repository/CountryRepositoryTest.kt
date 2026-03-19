@@ -30,7 +30,6 @@ class CountryRepositoryTest {
             assertTrue(country.id.isNotEmpty())
             assertNotNull(country.name)
             assertTrue(country.name.isNotEmpty())
-            assertTrue(country.population > 0)
         }
     }
 
@@ -191,6 +190,16 @@ class CountryRepositoryTest {
         countries.forEach { country ->
             assertNotNull(country.flagEmoji)
             assertTrue(country.flagEmoji.isNotEmpty())
+        }
+    }
+
+    @Test
+    fun `countries have valid visa requirements`() {
+        val countries = repository.getAllCountries()
+
+        countries.forEach { country ->
+            assertNotNull(country.visaRequirement)
+            assertTrue(country.visaRequirement.isNotEmpty())
         }
     }
 

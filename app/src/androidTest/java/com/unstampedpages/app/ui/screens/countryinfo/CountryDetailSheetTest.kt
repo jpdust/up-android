@@ -22,12 +22,13 @@ class CountryDetailSheetTest {
         name: String = "Test Country",
         currencyCode: String = "USD",
         currency: String = "US Dollar",
-        exchangeRateToUSD: Double = 1.0
+        exchangeRateToUSD: Double = 1.0,
+        visaRequirement: String = "Visa not required"
     ) = Country(
         id = id,
         name = name,
-        population = 1_000_000L,
         safetyLevel = SafetyLevel.LOW,
+        visaRequirement = visaRequirement,
         currency = currency,
         currencyCode = currencyCode,
         exchangeRateToUSD = exchangeRateToUSD,

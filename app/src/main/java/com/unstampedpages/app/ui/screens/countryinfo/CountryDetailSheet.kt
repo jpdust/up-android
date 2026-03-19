@@ -23,9 +23,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ElectricalServices
-import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -51,7 +51,6 @@ import com.unstampedpages.app.data.model.Country
 import com.unstampedpages.app.ui.theme.Primary
 import com.unstampedpages.app.ui.theme.PrimaryDark
 import com.unstampedpages.app.ui.theme.Secondary
-import java.text.NumberFormat
 import java.util.Locale
 
 private const val ANIMATION_DURATION = 300
@@ -114,21 +113,21 @@ fun CountryDetailSheet(
                                 .padding(24.dp),
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            // Population
-                            InfoRow(
-                                icon = Icons.Default.Groups,
-                                label = "Population",
-                                value = formatPopulation(it.population)
-                            )
-
-                            Divider(color = Primary.copy(alpha = 0.1f))
-
                             // Safety Level
                             InfoRow(
                                 icon = Icons.Default.Shield,
                                 label = "Safety Level",
                                 value = it.safetyLevel.displayName,
                                 valueColor = it.safetyLevel.color
+                            )
+
+                            Divider(color = Primary.copy(alpha = 0.1f))
+
+                            // Entry Requirement
+                            InfoRow(
+                                icon = Icons.Default.Badge,
+                                label = "Entry Requirement",
+                                value = it.visaRequirement
                             )
 
                             Divider(color = Primary.copy(alpha = 0.1f))
@@ -296,10 +295,3 @@ private fun InfoRow(
     }
 }
 
-private fun formatPopulation(population: Long): String {
-    return when {
-        population >= 1_000_000_000 -> String.format(Locale.US, "%.2f billion", population / 1_000_000_000.0)
-        population >= 1_000_000 -> String.format(Locale.US, "%.1f million", population / 1_000_000.0)
-        else -> NumberFormat.getNumberInstance(Locale.US).format(population)
-    }
-}

@@ -332,8 +332,8 @@ fun WorldMapCanvas(
                                 val current = currentTransform
                                 val newScale = (current.scale * zoom).coerceIn(1f, 8f)
 
-                                // Calculate max pan to prevent scrolling past top/bottom edges
-                                val maxPanY = if (newScale <= 1f) 0f else ((newScale - 1f) / (2f * newScale))
+                                // Allow full vertical panning when zoomed to see entire map
+                                val maxPanY = if (newScale <= 1f) 0f else 0.5f
 
                                 // Pan delta: convert screen pixels to normalized map units
                                 val newPanX = current.panX + pan.x / (mapWidth * newScale)
@@ -358,8 +358,8 @@ fun WorldMapCanvas(
                                         wasDragged = true
 
                                         val current = currentTransform
-                                        // Calculate max pan
-                                        val maxPanY = if (current.scale <= 1f) 0f else ((current.scale - 1f) / (2f * current.scale))
+                                        // Allow full vertical panning when zoomed to see entire map
+                                        val maxPanY = if (current.scale <= 1f) 0f else 0.5f
 
                                         // Pan delta: convert screen pixels to normalized map units
                                         val newPanX = current.panX + panDelta.x / (mapWidth * current.scale)
