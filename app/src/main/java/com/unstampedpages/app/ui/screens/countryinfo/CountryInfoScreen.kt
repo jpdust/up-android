@@ -4,8 +4,10 @@ import android.app.Activity
 import android.content.pm.ActivityInfo
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -23,6 +25,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -50,6 +54,12 @@ fun CountryInfoScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showSheet by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
+    var selectedColorMode by remember { mutableStateOf(MapColorMode.DEFAULT) }
+
+    // Create a map of country ID to Country for efficient lookup
+    val countriesMap = remember(uiState.countries) {
+        uiState.countries.associateBy { it.id }
+    }
 
     // Keep a local copy of the country for the exit animation
     // This prevents the content from disappearing before the animation completes
@@ -123,7 +133,7 @@ fun CountryInfoScreen(
                     .padding(horizontal = 16.dp, vertical = 12.dp)
             )
 
-            // World Map - fills remaining space below search
+            // World Map
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -139,6 +149,8 @@ fun CountryInfoScreen(
                             showSheet = true
                         }
                     },
+                    colorMode = selectedColorMode,
+                    countries = countriesMap,
                     modifier = Modifier.fillMaxSize()
                 )
 
@@ -154,6 +166,15 @@ fun CountryInfoScreen(
                     )
                 }
             }
+
+            // Map Color Mode Selection
+            MapColorModeSelector(
+                selectedMode = selectedColorMode,
+                onModeSelected = { selectedColorMode = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            )
         }
 
         // Autocomplete Dropdown - overlays on top of map
@@ -220,5 +241,60 @@ private fun CountrySearchItem(
             style = MaterialTheme.typography.bodySmall,
             color = Primary.copy(alpha = 0.6f)
         )
+    }
+}
+
+@Composable
+private fun MapColorModeSelector(
+    selectedMode: MapColorMode,
+    onModeSelected: (MapColorMode) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp)
+        ) {
+            Text(
+                text = "Map View",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = Primary,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            MapColorMode.entries.forEach { mode ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onModeSelected(mode) }
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    RadioButton(
+                        selected = selectedMode == mode,
+                        onClick = { onModeSelected(mode) },
+                        colors = RadioButtonDefaults.colors(
+                            selectedColor = Secondary,
+                            unselectedColor = Primary.copy(alpha = 0.5f)
+                        )
+                    )
+                    Text(
+                        text = mode.displayName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Primary
+                    )
+                }
+            }
+        }
     }
 }

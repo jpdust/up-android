@@ -77,7 +77,7 @@ fun HomeScreen(
             text = "UNSTAMPED PAGES",
             fontFamily = StencilFontFamily,
             fontWeight = FontWeight.Bold,
-            fontSize = 35.sp,
+            fontSize = 32.sp,
             letterSpacing = 2.sp,
             color = Primary,
             textAlign = TextAlign.Center

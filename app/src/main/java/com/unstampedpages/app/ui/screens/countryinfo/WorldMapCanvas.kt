@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.unit.dp
+import com.unstampedpages.app.data.model.Country
 import com.unstampedpages.app.data.model.CountryGeometry
 import com.unstampedpages.app.data.model.LatLng
 import com.unstampedpages.app.data.model.isPointInPolygon
@@ -41,6 +42,28 @@ import kotlin.math.exp
 import kotlin.math.ln
 import kotlin.math.sinh
 import kotlin.math.tan
+
+/**
+ * Color modes for the world map
+ */
+enum class MapColorMode(val displayName: String) {
+    DEFAULT("Default"),
+    SECURITY_RISK("Security Risk"),
+    VISA_REQUIREMENTS("Visa Requirements")
+}
+
+/**
+ * Get color for visa requirement status
+ */
+private fun getVisaRequirementColor(visaRequirement: String): Color {
+    return when {
+        visaRequirement.equals("Visa not required", ignoreCase = true) -> Color(0xFF4CAF50) // Green
+        visaRequirement.equals("eVisa", ignoreCase = true) -> Color(0xFF00BCD4) // Turquoise
+        visaRequirement.contains("Visa on arrival", ignoreCase = true) -> Color(0xFFFFC107) // Yellow
+        visaRequirement.equals("Visa required", ignoreCase = true) -> Color(0xFF9E9E9E) // Gray
+        else -> Color(0xFFFF9800) // Orange for all others
+    }
+}
 
 /**
  * Mapping from GeoJSON 3-letter ISO codes to repository 2-letter codes
@@ -171,6 +194,8 @@ private fun normalizeOffsetX(offset: Float): Float {
 fun WorldMapCanvas(
     selectedCountryId: String?,
     onCountryTapped: (countryId: String?) -> Unit,
+    colorMode: MapColorMode = MapColorMode.DEFAULT,
+    countries: Map<String, Country> = emptyMap(),
     modifier: Modifier = Modifier
 ) {
     // Bundle transform state into a single object for atomic updates
@@ -269,9 +294,14 @@ fun WorldMapCanvas(
                     // Draw all countries
                     geometries.forEach { geometry ->
                         val isSelected = geometry.countryId == selectedCountryId
+                        // Look up country by converting GeoJSON ID to repo ID
+                        val repoId = geoJsonToRepoId[geometry.countryId]
+                        val country = repoId?.let { countries[it] }
                         drawCountryMercator(
                             geometry = geometry,
                             isSelected = isSelected,
+                            colorMode = colorMode,
+                            country = country,
                             mapWidth = mapWidth,
                             mapHeight = mapHeight
                         )
@@ -479,10 +509,18 @@ private fun latLngToMercator(latLng: LatLng, mapWidth: Float, mapHeight: Float):
 private fun DrawScope.drawCountryMercator(
     geometry: CountryGeometry,
     isSelected: Boolean,
+    colorMode: MapColorMode,
+    country: Country?,
     mapWidth: Float,
     mapHeight: Float
 ) {
-    val fillColor = if (isSelected) MapHighlight else MapLand
+    // Determine fill color based on color mode
+    val fillColor = when {
+        isSelected -> MapHighlight
+        colorMode == MapColorMode.SECURITY_RISK && country != null -> country.safetyLevel.color
+        colorMode == MapColorMode.VISA_REQUIREMENTS && country != null -> getVisaRequirementColor(country.visaRequirement)
+        else -> MapLand
+    }
     val strokeColor = if (isSelected) MapHighlight.copy(alpha = 0.9f) else MapBorder
     val strokeWidth = if (isSelected) 2.dp.toPx() else 0.8f.dp.toPx()
 

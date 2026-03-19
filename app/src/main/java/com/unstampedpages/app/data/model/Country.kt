@@ -19,7 +19,7 @@ data class Country(
 enum class SafetyLevel(val displayName: String, val color: Color) {
     LOW("Low Risk", Color(0xFF4CAF50)),
     MEDIUM("Medium Risk", Color(0xFFFFC107)),
-    HIGH("High Risk", Color(0xFFFF9800)),
+    HIGH("High Risk", Color(0xFF8B0000)),
     EXTREME("Extreme Risk", Color(0xFFFF5722))
 }
 
