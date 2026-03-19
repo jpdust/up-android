@@ -6,15 +6,16 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -34,6 +35,7 @@ import com.unstampedpages.app.ui.theme.MapBorder
 import com.unstampedpages.app.ui.theme.MapHighlight
 import com.unstampedpages.app.ui.theme.MapLand
 import com.unstampedpages.app.ui.theme.MapOcean
+import androidx.compose.ui.graphics.nativeCanvas
 import kotlin.math.atan
 import kotlin.math.exp
 import kotlin.math.ln
@@ -150,8 +152,20 @@ private object MercatorProjection {
 }
 
 /**
+ * Normalize offset to wrap around horizontally.
+ * Keeps the value in the range [-0.5, 0.5) for seamless wrapping.
+ */
+private fun normalizeOffsetX(offset: Float): Float {
+    var normalized = offset
+    while (normalized >= 0.5f) normalized -= 1f
+    while (normalized < -0.5f) normalized += 1f
+    return normalized
+}
+
+/**
  * Realistic world map canvas with Mercator projection.
  * Scales to device width while maintaining proper aspect ratio.
+ * Supports horizontal wrapping for continuous panning.
  */
 @Composable
 fun WorldMapCanvas(
@@ -159,15 +173,31 @@ fun WorldMapCanvas(
     onCountryTapped: (countryId: String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var scale by remember { mutableFloatStateOf(1f) }
-    var offsetX by remember { mutableFloatStateOf(0f) }
-    var offsetY by remember { mutableFloatStateOf(0f) }
+    // Bundle transform state into a single object for atomic updates
+    data class TransformState(
+        val scale: Float = 1f,
+        val panX: Float = 0f,
+        val panY: Float = 0f
+    )
+    var transform by remember { mutableStateOf(TransformState()) }
+
+    // Use rememberUpdatedState to ensure gesture handlers always have current transform
+    val currentTransform by rememberUpdatedState(transform)
+
+    // Store map layout dimensions so gesture handler uses same values as Canvas
+    var mapLayoutWidth by remember { mutableStateOf(0f) }
+    var mapLayoutHeight by remember { mutableStateOf(0f) }
+
+    // Store the inverse transformation matrix for tap detection
+    val inverseMatrix = remember { android.graphics.Matrix() }
+    var matrixValid by remember { mutableStateOf(false) }
 
     val geometries = remember { CountryGeometryData.getAllGeometries() }
 
     Box(
         modifier = modifier
             .fillMaxSize()
+            .clipToBounds()
             .background(MapOcean)
     ) {
         // Canvas for drawing the map
@@ -183,52 +213,75 @@ fun WorldMapCanvas(
 
             val mapWidth: Float
             val mapHeight: Float
-            val mapOffsetX: Float
-            val mapOffsetY: Float
+            val canvasOffsetX: Float
+            val canvasOffsetY: Float
 
             if (canvasAspectRatio > mapAspectRatio) {
                 // Canvas is wider than map - fit to height, center horizontally
                 mapHeight = canvasHeight
                 mapWidth = canvasHeight * mapAspectRatio
-                mapOffsetX = (canvasWidth - mapWidth) / 2
-                mapOffsetY = 0f
+                canvasOffsetX = (canvasWidth - mapWidth) / 2
+                canvasOffsetY = 0f
             } else {
-                // Canvas is taller than map - fit to width, center vertically
+                // Canvas is taller than map - fit to width, align to top
                 mapWidth = canvasWidth
                 mapHeight = canvasWidth / mapAspectRatio
-                mapOffsetX = 0f
-                mapOffsetY = (canvasHeight - mapHeight) / 2
+                canvasOffsetX = 0f
+                canvasOffsetY = 0f // Top-aligned instead of centered
             }
 
-            // Apply zoom and pan transformation
-            withTransform({
-                // Translate to map position
-                translate(mapOffsetX, mapOffsetY)
-                // Center the zoom transformation on the map
-                translate(mapWidth / 2, mapHeight / 2)
-                scale(scale, scale)
-                translate(-mapWidth / 2, -mapHeight / 2)
-                translate(offsetX * mapWidth, offsetY * mapHeight)
-            }) {
-                // Draw ocean background for the map area
-                drawRect(
-                    color = MapOcean,
-                    topLeft = Offset.Zero,
-                    size = Size(mapWidth, mapHeight)
-                )
+            // Store these values for gesture handler to use
+            mapLayoutWidth = mapWidth
+            mapLayoutHeight = mapHeight
 
-                // Draw grid lines
-                drawMercatorGrid(mapWidth, mapHeight)
+            // Draw the map with horizontal wrapping (draw 3 copies: left, center, right)
+            val wrapOffsets = listOf(-1f, 0f, 1f)
 
-                // Draw all countries
-                geometries.forEach { geometry ->
-                    val isSelected = geometry.countryId == selectedCountryId
-                    drawCountryMercator(
-                        geometry = geometry,
-                        isSelected = isSelected,
-                        mapWidth = mapWidth,
-                        mapHeight = mapHeight
+            wrapOffsets.forEach { wrapOffset ->
+                // Read current values from State objects
+                val currentScale = transform.scale
+                val currentPanX = transform.panX
+                val currentPanY = transform.panY
+
+                // Effective panX with wrap offset for this copy
+                val effectivePanX = currentPanX + wrapOffset
+
+                // Transform matches screenToMap exactly:
+                // screenX = ((nx + panX - 0.5) * scale + 0.5) * mapW + canvasOffsetX
+                withTransform({
+                    // Step 3: Final position on canvas + center offset
+                    translate(canvasOffsetX + 0.5f * mapWidth, canvasOffsetY + 0.5f * mapHeight)
+                    // Step 2: Apply zoom
+                    scale(currentScale, currentScale)
+                    // Step 1: Apply pan and shift to center coordinates
+                    translate((effectivePanX - 0.5f) * mapWidth, (currentPanY - 0.5f) * mapHeight)
+                }) {
+                    // Draw ocean background for the map area
+                    drawRect(
+                        color = MapOcean,
+                        topLeft = Offset.Zero,
+                        size = Size(mapWidth, mapHeight)
                     )
+
+                    // Draw grid lines
+                    drawMercatorGrid(mapWidth, mapHeight)
+
+                    // Draw all countries
+                    geometries.forEach { geometry ->
+                        val isSelected = geometry.countryId == selectedCountryId
+                        drawCountryMercator(
+                            geometry = geometry,
+                            isSelected = isSelected,
+                            mapWidth = mapWidth,
+                            mapHeight = mapHeight
+                        )
+                    }
+
+                    // Store the inverse matrix for tap detection (only for center copy)
+                    if (wrapOffset == 0f) {
+                        val matrix = drawContext.canvas.nativeCanvas.getMatrix()
+                        matrixValid = matrix.invert(inverseMatrix)
+                    }
                 }
             }
 
@@ -236,59 +289,20 @@ fun WorldMapCanvas(
             drawCompassRose()
 
             // Draw zoom indicator
-            drawZoomIndicator(scale)
+            drawZoomIndicator(transform.scale)
         }
 
-        // Transparent overlay for gesture handling
+        // Transparent overlay for gesture handling (unified tap + pan/zoom)
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .pointerInput(Unit) {
-                    detectTapGestures { tapOffset ->
-                        val canvasWidth = size.width.toFloat()
-                        val canvasHeight = size.height.toFloat()
-
-                        // Calculate map dimensions (same as in Canvas)
-                        val mapAspectRatio = MercatorProjection.getAspectRatio()
-                        val canvasAspectRatio = canvasWidth / canvasHeight
-
-                        val mapWidth: Float
-                        val mapHeight: Float
-                        val mapOffsetX: Float
-                        val mapOffsetY: Float
-
-                        if (canvasAspectRatio > mapAspectRatio) {
-                            mapHeight = canvasHeight
-                            mapWidth = canvasHeight * mapAspectRatio
-                            mapOffsetX = (canvasWidth - mapWidth) / 2
-                            mapOffsetY = 0f
-                        } else {
-                            mapWidth = canvasWidth
-                            mapHeight = canvasWidth / mapAspectRatio
-                            mapOffsetX = 0f
-                            mapOffsetY = (canvasHeight - mapHeight) / 2
-                        }
-
-                        // Convert tap position to map-relative coordinates
-                        val mapRelativeX = tapOffset.x - mapOffsetX
-                        val mapRelativeY = tapOffset.y - mapOffsetY
-
-                        // Reverse the transformation to get normalized map coordinates
-                        val normalizedX = (mapRelativeX / mapWidth - 0.5f - offsetX) / scale + 0.5f
-                        val normalizedY = (mapRelativeY / mapHeight - 0.5f - offsetY) / scale + 0.5f
-
-                        // Find the country at this position (returns GeoJSON ID like "USA")
-                        val geoJsonId = findCountryAtNormalizedPoint(normalizedX, normalizedY, geometries)
-
-                        // Convert to repository ID (like "us")
-                        val repoId = geoJsonId?.let { geoJsonToRepoId[it] }
-
-                        onCountryTapped(repoId)
-                    }
-                }
-                .pointerInput(Unit) {
                     awaitEachGesture {
-                        awaitFirstDown(requireUnconsumed = false)
+                        val down = awaitFirstDown(requireUnconsumed = false)
+                        val downPosition = down.position
+                        var totalDragDistance = 0f
+                        var wasDragged = false
+
                         do {
                             val event = awaitPointerEvent()
                             val changes = event.changes
@@ -311,46 +325,92 @@ fun WorldMapCanvas(
 
                             if (changes.size > 1) {
                                 // Multi-touch: zoom and pan
+                                wasDragged = true
                                 val zoom = event.calculateZoom()
                                 val pan = event.calculatePan()
 
-                                val newScale = (scale * zoom).coerceIn(1f, 8f)
-                                scale = newScale
+                                val current = currentTransform
+                                val newScale = (current.scale * zoom).coerceIn(1f, 8f)
 
-                                // At scale 1, no panning allowed
-                                if (newScale <= 1f) {
-                                    offsetX = 0f
-                                    offsetY = 0f
-                                } else {
-                                    // Calculate max offset to prevent scrolling past edges
-                                    val maxOffsetX = ((newScale - 1f) / (2f * newScale))
-                                    val maxOffsetY = ((newScale - 1f) / (2f * newScale))
+                                // Calculate max pan to prevent scrolling past top/bottom edges
+                                val maxPanY = if (newScale <= 1f) 0f else ((newScale - 1f) / (2f * newScale))
 
-                                    // Pan delta must be divided by scale since offset is in scaled coordinates
-                                    val newOffsetX = offsetX + pan.x / (mapWidth * newScale)
-                                    val newOffsetY = offsetY + pan.y / (mapHeight * newScale)
+                                // Pan delta: convert screen pixels to normalized map units
+                                val newPanX = current.panX + pan.x / (mapWidth * newScale)
+                                val newPanY = current.panY + pan.y / (mapHeight * newScale)
 
-                                    offsetX = newOffsetX.coerceIn(-maxOffsetX, maxOffsetX)
-                                    offsetY = newOffsetY.coerceIn(-maxOffsetY, maxOffsetY)
-                                }
+                                transform = TransformState(
+                                    scale = newScale,
+                                    panX = normalizeOffsetX(newPanX),
+                                    panY = newPanY.coerceIn(-maxPanY, maxPanY)
+                                )
 
                                 changes.forEach { it.consume() }
-                            } else if (changes.size == 1 && scale > 1f) {
+                            } else if (changes.size == 1) {
                                 val change = changes.first()
                                 if (change.positionChanged()) {
                                     val panDelta = change.position - change.previousPosition
-                                    if (panDelta.getDistance() > 5f) {
-                                        // Calculate max offset to prevent scrolling past edges
-                                        val maxOffsetX = ((scale - 1f) / (2f * scale))
-                                        val maxOffsetY = ((scale - 1f) / (2f * scale))
+                                    val distance = panDelta.getDistance()
+                                    totalDragDistance += distance
 
-                                        // Pan delta must be divided by scale
-                                        offsetX = (offsetX + panDelta.x / (mapWidth * scale)).coerceIn(-maxOffsetX, maxOffsetX)
-                                        offsetY = (offsetY + panDelta.y / (mapHeight * scale)).coerceIn(-maxOffsetY, maxOffsetY)
+                                    // Only start panning after moving a minimum distance (tap threshold)
+                                    if (totalDragDistance > 15f) {
+                                        wasDragged = true
+
+                                        val current = currentTransform
+                                        // Calculate max pan
+                                        val maxPanY = if (current.scale <= 1f) 0f else ((current.scale - 1f) / (2f * current.scale))
+
+                                        // Pan delta: convert screen pixels to normalized map units
+                                        val newPanX = current.panX + panDelta.x / (mapWidth * current.scale)
+                                        val newPanY = current.panY + panDelta.y / (mapHeight * current.scale)
+
+                                        transform = current.copy(
+                                            panX = normalizeOffsetX(newPanX),
+                                            panY = newPanY.coerceIn(-maxPanY, maxPanY)
+                                        )
                                     }
                                 }
                             }
                         } while (changes.any { it.pressed })
+
+                        // If finger lifted without much movement, treat as tap
+                        if (!wasDragged) {
+                            // Skip if matrix hasn't been set yet
+                            if (!matrixValid) {
+                                return@awaitEachGesture
+                            }
+
+                            val mapWidth = mapLayoutWidth
+                            val mapHeight = mapLayoutHeight
+
+                            // Skip if Canvas hasn't drawn yet
+                            if (mapWidth <= 0f || mapHeight <= 0f) {
+                                return@awaitEachGesture
+                            }
+
+                            // Use the inverse matrix to convert screen coords to local coords
+                            val screenPts = floatArrayOf(downPosition.x, downPosition.y)
+                            inverseMatrix.mapPoints(screenPts)
+                            val localX = screenPts[0]
+                            val localY = screenPts[1]
+
+                            // Convert local pixel coords to normalized (0-1) coords
+                            var normalizedX = localX / mapWidth
+                            val normalizedY = localY / mapHeight
+
+                            // Wrap X for horizontal continuity
+                            while (normalizedX < 0f) normalizedX += 1f
+                            while (normalizedX >= 1f) normalizedX -= 1f
+
+                            // Find the country at this position (returns GeoJSON ID like "USA")
+                            val geoJsonId = findCountryAtNormalizedPoint(normalizedX, normalizedY, geometries)
+
+                            // Convert to repository ID (like "us")
+                            val repoId = geoJsonId?.let { geoJsonToRepoId[it] }
+
+                            onCountryTapped(repoId)
+                        }
                     }
                 }
         )
