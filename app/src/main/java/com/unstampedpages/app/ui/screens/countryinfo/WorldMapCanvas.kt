@@ -1,5 +1,7 @@
 package com.unstampedpages.app.ui.screens.countryinfo
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -9,6 +11,7 @@ import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -24,6 +27,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.unit.dp
@@ -219,6 +223,32 @@ fun WorldMapCanvas(
 
     val geometries = remember { CountryGeometryData.getAllGeometries() }
 
+    // Track previous color mode for cross-dissolve animation
+    var previousColorMode by remember { mutableStateOf(colorMode) }
+    var animationTarget by remember { mutableStateOf(0f) }
+
+    // When color mode changes, trigger animation
+    LaunchedEffect(colorMode) {
+        if (colorMode != previousColorMode) {
+            animationTarget = 1f
+        }
+    }
+
+    // Animate the transition progress
+    val animationProgress by animateFloatAsState(
+        targetValue = animationTarget,
+        animationSpec = tween(durationMillis = 400),
+        finishedListener = {
+            // Animation complete, update previous mode and reset
+            previousColorMode = colorMode
+            animationTarget = 0f
+        },
+        label = "colorModeTransition"
+    )
+
+    // Calculate effective progress (0 = previous mode, 1 = new mode)
+    val transitionProgress = if (previousColorMode == colorMode) 1f else animationProgress
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -301,6 +331,8 @@ fun WorldMapCanvas(
                             geometry = geometry,
                             isSelected = isSelected,
                             colorMode = colorMode,
+                            previousColorMode = previousColorMode,
+                            transitionProgress = transitionProgress,
                             country = country,
                             mapWidth = mapWidth,
                             mapHeight = mapHeight
@@ -510,17 +542,26 @@ private fun DrawScope.drawCountryMercator(
     geometry: CountryGeometry,
     isSelected: Boolean,
     colorMode: MapColorMode,
+    previousColorMode: MapColorMode,
+    transitionProgress: Float,
     country: Country?,
     mapWidth: Float,
     mapHeight: Float
 ) {
-    // Determine fill color based on color mode
-    val fillColor = when {
-        isSelected -> MapHighlight
-        colorMode == MapColorMode.SECURITY_RISK && country != null -> country.safetyLevel.color
-        colorMode == MapColorMode.VISA_REQUIREMENTS && country != null -> getVisaRequirementColor(country.visaRequirement)
-        else -> MapLand
+    // Helper function to get color for a specific mode
+    fun getColorForMode(mode: MapColorMode): Color {
+        return when {
+            isSelected -> MapHighlight
+            mode == MapColorMode.SECURITY_RISK && country != null -> country.safetyLevel.color
+            mode == MapColorMode.VISA_REQUIREMENTS && country != null -> getVisaRequirementColor(country.visaRequirement)
+            else -> MapLand
+        }
     }
+
+    // Get colors for previous and current modes, then blend based on transition progress
+    val previousColor = getColorForMode(previousColorMode)
+    val currentColor = getColorForMode(colorMode)
+    val fillColor = if (isSelected) MapHighlight else lerp(previousColor, currentColor, transitionProgress)
     val strokeColor = if (isSelected) MapHighlight.copy(alpha = 0.9f) else MapBorder
     val strokeWidth = if (isSelected) 2.dp.toPx() else 0.8f.dp.toPx()
 
