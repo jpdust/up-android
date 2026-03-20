@@ -42,8 +42,8 @@ object DateUtils {
     }
 
     private fun isSameDay(cal1: Calendar, cal2: Calendar): Boolean {
-        return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
-                cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
+        return cal1[Calendar.YEAR] == cal2[Calendar.YEAR] &&
+                cal1[Calendar.DAY_OF_YEAR] == cal2[Calendar.DAY_OF_YEAR]
     }
 
     private fun isYesterday(now: Calendar, date: Calendar): Boolean {
@@ -55,12 +55,12 @@ object DateUtils {
     }
 
     private fun isSameWeek(cal1: Calendar, cal2: Calendar): Boolean {
-        return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
-                cal1.get(Calendar.WEEK_OF_YEAR) == cal2.get(Calendar.WEEK_OF_YEAR)
+        return cal1[Calendar.YEAR] == cal2[Calendar.YEAR] &&
+                cal1[Calendar.WEEK_OF_YEAR] == cal2[Calendar.WEEK_OF_YEAR]
     }
 
     private fun isSameYear(cal1: Calendar, cal2: Calendar): Boolean {
-        return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR)
+        return cal1[Calendar.YEAR] == cal2[Calendar.YEAR]
     }
 
     fun getStartOfDay(timestamp: Long): Long {
