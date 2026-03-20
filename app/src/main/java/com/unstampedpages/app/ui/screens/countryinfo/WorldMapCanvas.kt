@@ -58,6 +58,129 @@ enum class MapColorMode(val displayName: String) {
 }
 
 /**
+ * Transform state for map zoom and pan
+ */
+private data class TransformState(
+    val scale: Float = 1f,
+    val panX: Float = 0f,
+    val panY: Float = 0f
+)
+
+/**
+ * Layout dimensions for the map
+ */
+private data class MapLayout(
+    val mapWidth: Float,
+    val mapHeight: Float,
+    val canvasOffsetX: Float,
+    val canvasOffsetY: Float
+)
+
+/**
+ * Calculate map layout dimensions based on canvas size
+ */
+private fun calculateMapLayout(canvasWidth: Float, canvasHeight: Float): MapLayout {
+    val mapAspectRatio = MercatorProjection.getAspectRatio()
+    val canvasAspectRatio = canvasWidth / canvasHeight
+
+    return if (canvasAspectRatio > mapAspectRatio) {
+        // Canvas is wider than map - fit to height, center horizontally
+        val mapHeight = canvasHeight
+        val mapWidth = canvasHeight * mapAspectRatio
+        MapLayout(
+            mapWidth = mapWidth,
+            mapHeight = mapHeight,
+            canvasOffsetX = (canvasWidth - mapWidth) / 2,
+            canvasOffsetY = 0f
+        )
+    } else {
+        // Canvas is taller than map - fit to width, align to top
+        val mapWidth = canvasWidth
+        val mapHeight = canvasWidth / mapAspectRatio
+        MapLayout(
+            mapWidth = mapWidth,
+            mapHeight = mapHeight,
+            canvasOffsetX = 0f,
+            canvasOffsetY = 0f
+        )
+    }
+}
+
+/**
+ * Calculate new transform state for multi-touch zoom/pan gesture
+ */
+private fun calculateMultiTouchTransform(
+    current: TransformState,
+    zoom: Float,
+    pan: Offset,
+    mapWidth: Float,
+    mapHeight: Float
+): TransformState {
+    val newScale = (current.scale * zoom).coerceIn(1f, 8f)
+    val maxPanY = if (newScale <= 1f) 0f else 0.5f
+    val newPanX = current.panX + pan.x / (mapWidth * newScale)
+    val newPanY = current.panY + pan.y / (mapHeight * newScale)
+
+    return TransformState(
+        scale = newScale,
+        panX = normalizeOffsetX(newPanX),
+        panY = newPanY.coerceIn(-maxPanY, maxPanY)
+    )
+}
+
+/**
+ * Calculate new transform state for single-touch pan gesture
+ */
+private fun calculateSingleTouchTransform(
+    current: TransformState,
+    panDelta: Offset,
+    mapWidth: Float,
+    mapHeight: Float
+): TransformState {
+    val maxPanY = if (current.scale <= 1f) 0f else 0.5f
+    val newPanX = current.panX + panDelta.x / (mapWidth * current.scale)
+    val newPanY = current.panY + panDelta.y / (mapHeight * current.scale)
+
+    return current.copy(
+        panX = normalizeOffsetX(newPanX),
+        panY = newPanY.coerceIn(-maxPanY, maxPanY)
+    )
+}
+
+/**
+ * Convert screen tap position to country ID
+ */
+private fun screenPositionToCountryId(
+    screenPosition: Offset,
+    inverseMatrix: android.graphics.Matrix,
+    mapWidth: Float,
+    mapHeight: Float,
+    geometries: List<CountryGeometry>
+): String? {
+    val screenPts = floatArrayOf(screenPosition.x, screenPosition.y)
+    inverseMatrix.mapPoints(screenPts)
+
+    var normalizedX = screenPts[0] / mapWidth
+    val normalizedY = screenPts[1] / mapHeight
+
+    // Wrap X for horizontal continuity
+    normalizedX = normalizeNormalizedX(normalizedX)
+
+    val geoJsonId = findCountryAtNormalizedPoint(normalizedX, normalizedY, geometries)
+    return geoJsonId?.let { geoJsonToRepoId[it] }
+}
+
+/**
+ * Normalize X coordinate to 0-1 range
+ */
+private fun normalizeNormalizedX(x: Float): Float {
+    var normalized = x
+    while (normalized < 0f) normalized += 1f
+    while (normalized >= 1f) normalized -= 1f
+    return normalized
+}
+
+/**
  * Get color for visa requirement status
  */
 private fun getVisaRequirementColor(visaRequirement: VisaRequirement): Color {
@@ -197,12 +320,7 @@ fun WorldMapCanvas(
     countries: Map<String, Country> = emptyMap(),
     modifier: Modifier = Modifier
 ) {
-    // Bundle transform state into a single object for atomic updates
-    data class TransformState(
-        val scale: Float = 1f,
-        val panX: Float = 0f,
-        val panY: Float = 0f
-    )
+    // Transform state for zoom and pan (uses top-level TransformState)
     var transform by remember { mutableStateOf(TransformState()) }
 
     // Use rememberUpdatedState to ensure gesture handlers always have current transform
@@ -254,31 +372,12 @@ fun WorldMapCanvas(
         Canvas(
             modifier = Modifier.fillMaxSize()
         ) {
-            val canvasWidth = size.width
-            val canvasHeight = size.height
-
-            // Calculate map dimensions maintaining aspect ratio
-            val mapAspectRatio = MercatorProjection.getAspectRatio()
-            val canvasAspectRatio = canvasWidth / canvasHeight
-
-            val mapWidth: Float
-            val mapHeight: Float
-            val canvasOffsetX: Float
-            val canvasOffsetY: Float
-
-            if (canvasAspectRatio > mapAspectRatio) {
-                // Canvas is wider than map - fit to height, center horizontally
-                mapHeight = canvasHeight
-                mapWidth = canvasHeight * mapAspectRatio
-                canvasOffsetX = (canvasWidth - mapWidth) / 2
-                canvasOffsetY = 0f
-            } else {
-                // Canvas is taller than map - fit to width, align to top
-                mapWidth = canvasWidth
-                mapHeight = canvasWidth / mapAspectRatio
-                canvasOffsetX = 0f
-                canvasOffsetY = 0f // Top-aligned instead of centered
-            }
+            // Calculate map layout dimensions
+            val layout = calculateMapLayout(size.width, size.height)
+            val mapWidth = layout.mapWidth
+            val mapHeight = layout.mapHeight
+            val canvasOffsetX = layout.canvasOffsetX
+            val canvasOffsetY = layout.canvasOffsetY
 
             // Store these values for gesture handler to use
             mapLayoutWidth = mapWidth
@@ -360,72 +459,42 @@ fun WorldMapCanvas(
                         var totalDragDistance = 0f
                         var wasDragged = false
 
+                        // Calculate map layout once for this gesture
+                        val layout = calculateMapLayout(size.width.toFloat(), size.height.toFloat())
+
                         do {
                             val event = awaitPointerEvent()
                             val changes = event.changes
 
-                            // Calculate map dimensions for pan calculations
-                            val canvasWidth = size.width.toFloat()
-                            val canvasHeight = size.height.toFloat()
-                            val mapAspectRatio = MercatorProjection.getAspectRatio()
-                            val canvasAspectRatio = canvasWidth / canvasHeight
-                            val mapWidth = if (canvasAspectRatio > mapAspectRatio) {
-                                canvasHeight * mapAspectRatio
-                            } else {
-                                canvasWidth
-                            }
-                            val mapHeight = if (canvasAspectRatio > mapAspectRatio) {
-                                canvasHeight
-                            } else {
-                                canvasWidth / mapAspectRatio
-                            }
+                            when {
+                                changes.size > 1 -> {
+                                    // Multi-touch: zoom and pan
+                                    wasDragged = true
+                                    transform = calculateMultiTouchTransform(
+                                        current = currentTransform,
+                                        zoom = event.calculateZoom(),
+                                        pan = event.calculatePan(),
+                                        mapWidth = layout.mapWidth,
+                                        mapHeight = layout.mapHeight
+                                    )
+                                    changes.forEach { it.consume() }
+                                }
+                                changes.size == 1 -> {
+                                    val change = changes.first()
+                                    if (change.positionChanged()) {
+                                        val panDelta = change.position - change.previousPosition
+                                        totalDragDistance += panDelta.getDistance()
 
-                            if (changes.size > 1) {
-                                // Multi-touch: zoom and pan
-                                wasDragged = true
-                                val zoom = event.calculateZoom()
-                                val pan = event.calculatePan()
-
-                                val current = currentTransform
-                                val newScale = (current.scale * zoom).coerceIn(1f, 8f)
-
-                                // Allow full vertical panning when zoomed to see entire map
-                                val maxPanY = if (newScale <= 1f) 0f else 0.5f
-
-                                // Pan delta: convert screen pixels to normalized map units
-                                val newPanX = current.panX + pan.x / (mapWidth * newScale)
-                                val newPanY = current.panY + pan.y / (mapHeight * newScale)
-
-                                transform = TransformState(
-                                    scale = newScale,
-                                    panX = normalizeOffsetX(newPanX),
-                                    panY = newPanY.coerceIn(-maxPanY, maxPanY)
-                                )
-
-                                changes.forEach { it.consume() }
-                            } else if (changes.size == 1) {
-                                val change = changes.first()
-                                if (change.positionChanged()) {
-                                    val panDelta = change.position - change.previousPosition
-                                    val distance = panDelta.getDistance()
-                                    totalDragDistance += distance
-
-                                    // Only start panning after moving a minimum distance (tap threshold)
-                                    if (totalDragDistance > 15f) {
-                                        wasDragged = true
-
-                                        val current = currentTransform
-                                        // Allow full vertical panning when zoomed to see entire map
-                                        val maxPanY = if (current.scale <= 1f) 0f else 0.5f
-
-                                        // Pan delta: convert screen pixels to normalized map units
-                                        val newPanX = current.panX + panDelta.x / (mapWidth * current.scale)
-                                        val newPanY = current.panY + panDelta.y / (mapHeight * current.scale)
-
-                                        transform = current.copy(
-                                            panX = normalizeOffsetX(newPanX),
-                                            panY = newPanY.coerceIn(-maxPanY, maxPanY)
-                                        )
+                                        // Only start panning after minimum drag distance
+                                        if (totalDragDistance > 15f) {
+                                            wasDragged = true
+                                            transform = calculateSingleTouchTransform(
+                                                current = currentTransform,
+                                                panDelta = panDelta,
+                                                mapWidth = layout.mapWidth,
+                                                mapHeight = layout.mapHeight
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -433,40 +502,19 @@ fun WorldMapCanvas(
 
                         // If finger lifted without much movement, treat as tap
                         if (!wasDragged) {
-                            // Skip if matrix hasn't been set yet
-                            if (!matrixValid) {
+                            // Skip if Canvas hasn't drawn or matrix isn't valid
+                            if (!matrixValid || mapLayoutWidth <= 0f || mapLayoutHeight <= 0f) {
                                 return@awaitEachGesture
                             }
 
-                            val mapWidth = mapLayoutWidth
-                            val mapHeight = mapLayoutHeight
-
-                            // Skip if Canvas hasn't drawn yet
-                            if (mapWidth <= 0f || mapHeight <= 0f) {
-                                return@awaitEachGesture
-                            }
-
-                            // Use the inverse matrix to convert screen coords to local coords
-                            val screenPts = floatArrayOf(downPosition.x, downPosition.y)
-                            inverseMatrix.mapPoints(screenPts)
-                            val localX = screenPts[0]
-                            val localY = screenPts[1]
-
-                            // Convert local pixel coords to normalized (0-1) coords
-                            var normalizedX = localX / mapWidth
-                            val normalizedY = localY / mapHeight
-
-                            // Wrap X for horizontal continuity
-                            while (normalizedX < 0f) normalizedX += 1f
-                            while (normalizedX >= 1f) normalizedX -= 1f
-
-                            // Find the country at this position (returns GeoJSON ID like "USA")
-                            val geoJsonId = findCountryAtNormalizedPoint(normalizedX, normalizedY, geometries)
-
-                            // Convert to repository ID (like "us")
-                            val repoId = geoJsonId?.let { geoJsonToRepoId[it] }
-
-                            onCountryTapped(repoId)
+                            val countryId = screenPositionToCountryId(
+                                screenPosition = downPosition,
+                                inverseMatrix = inverseMatrix,
+                                mapWidth = mapLayoutWidth,
+                                mapHeight = mapLayoutHeight,
+                                geometries = geometries
+                            )
+                            onCountryTapped(countryId)
                         }
                     }
                 }
