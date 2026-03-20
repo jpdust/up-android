@@ -21,6 +21,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Badge
@@ -36,14 +38,24 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -139,39 +151,12 @@ fun CountryDetailSheet(
                                 value = "${it.currency} (${it.currencyCode})"
                             )
 
-                            // Exchange rate (1 USD = X foreign currency) - hide for USD countries
+                            // Currency converter - hide for USD countries
                             if (it.currencyCode != "USD") {
-                                Card(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = Secondary.copy(alpha = 0.1f)
-                                    )
-                                ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(12.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = "1 USD =",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = Primary
-                                        )
-                                        val foreignPerUsd = if (it.exchangeRateToUSD > 0) {
-                                            1.0 / it.exchangeRateToUSD
-                                        } else {
-                                            0.0
-                                        }
-                                        Text(
-                                            text = "${String.format(Locale.US, "%.2f", foreignPerUsd)} ${it.currencyCode}",
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Primary
-                                        )
-                                    }
-                                }
+                                CurrencyConverter(
+                                    exchangeRateToUSD = it.exchangeRateToUSD,
+                                    currencyCode = it.currencyCode
+                                )
 
                                 Divider(color = Primary.copy(alpha = 0.1f))
                             }
@@ -293,5 +278,151 @@ private fun InfoRow(
             )
         }
     }
+}
+
+@Composable
+private fun CurrencyConverter(
+    exchangeRateToUSD: Double,
+    currencyCode: String
+) {
+    // Calculate foreign currency per USD
+    val foreignPerUsd = if (exchangeRateToUSD > 0) 1.0 / exchangeRateToUSD else 0.0
+
+    // State for the input amounts
+    var usdAmount by remember { mutableStateOf("1") }
+    var foreignAmount by remember { mutableStateOf(String.format(Locale.US, "%.2f", foreignPerUsd)) }
+
+    // Reset amounts when country changes (exchange rate changes)
+    LaunchedEffect(exchangeRateToUSD) {
+        usdAmount = "1"
+        foreignAmount = String.format(Locale.US, "%.2f", foreignPerUsd)
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = Secondary.copy(alpha = 0.1f)
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // USD Input
+            CurrencyInputField(
+                value = usdAmount,
+                onValueChange = { newValue ->
+                    usdAmount = newValue
+                    val usdValue = newValue.toDoubleOrNull() ?: 0.0
+                    foreignAmount = if (usdValue > 0 && foreignPerUsd > 0) {
+                        String.format(Locale.US, "%.2f", usdValue * foreignPerUsd)
+                    } else {
+                        "0.00"
+                    }
+                },
+                modifier = Modifier.weight(1f)
+            )
+
+            Text(
+                text = "USD",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = Primary
+            )
+
+            Text(
+                text = "=",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                color = Secondary
+            )
+
+            // Foreign Currency Input
+            CurrencyInputField(
+                value = foreignAmount,
+                onValueChange = { newValue ->
+                    foreignAmount = newValue
+                    val foreignValue = newValue.toDoubleOrNull() ?: 0.0
+                    usdAmount = if (foreignValue > 0 && exchangeRateToUSD > 0) {
+                        String.format(Locale.US, "%.2f", foreignValue * exchangeRateToUSD)
+                    } else {
+                        "0.00"
+                    }
+                },
+                modifier = Modifier.weight(1f)
+            )
+
+            Text(
+                text = currencyCode,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = Primary
+            )
+        }
+    }
+}
+
+@Composable
+private fun CurrencyInputField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // Use TextFieldValue to control cursor position - always at the end
+    var textFieldValue by remember(value) {
+        mutableStateOf(TextFieldValue(text = value, selection = TextRange(value.length)))
+    }
+
+    // Update textFieldValue when external value changes, cursor always at end
+    LaunchedEffect(value) {
+        if (textFieldValue.text != value) {
+            textFieldValue = TextFieldValue(text = value, selection = TextRange(value.length))
+        }
+    }
+
+    BasicTextField(
+        value = textFieldValue,
+        onValueChange = { newValue ->
+            val newText = newValue.text
+            // Only allow valid decimal input
+            if (newText.isEmpty() || newText.matches(Regex("^\\d*\\.?\\d{0,2}$"))) {
+                // Always force cursor to the end
+                textFieldValue = TextFieldValue(
+                    text = newText,
+                    selection = TextRange(newText.length)
+                )
+                onValueChange(newText)
+            } else {
+                // Invalid input - keep current text but force cursor to end
+                textFieldValue = textFieldValue.copy(selection = TextRange(textFieldValue.text.length))
+            }
+        },
+        textStyle = TextStyle(
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = Primary,
+            textAlign = TextAlign.End
+        ),
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Decimal
+        ),
+        singleLine = true,
+        cursorBrush = SolidColor(Secondary),
+        modifier = modifier
+            .background(
+                color = Color.White.copy(alpha = 0.5f),
+                shape = RoundedCornerShape(8.dp)
+            )
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .onFocusChanged { focusState ->
+                if (focusState.isFocused) {
+                    // Place cursor at the end when focused
+                    textFieldValue = textFieldValue.copy(selection = TextRange(textFieldValue.text.length))
+                }
+            }
+    )
 }
 
