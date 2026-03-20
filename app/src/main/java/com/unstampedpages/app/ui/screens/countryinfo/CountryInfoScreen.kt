@@ -56,6 +56,11 @@ fun CountryInfoScreen(
     val focusManager = LocalFocusManager.current
     var selectedColorMode by remember { mutableStateOf(MapColorMode.DEFAULT) }
 
+    // Pre-compute state-derived values to reduce complexity
+    val hasSearchQuery = uiState.searchQuery.isNotEmpty()
+    val hasSearchResults = uiState.searchResults.isNotEmpty()
+    val showInstructions = !showSheet && !hasSearchResults
+
     // Create a map of country ID to Country for efficient lookup
     val countriesMap = remember(uiState.countries) {
         uiState.countries.associateBy { it.id }
@@ -66,9 +71,7 @@ fun CountryInfoScreen(
     var displayedCountry by remember { mutableStateOf(uiState.selectedCountry) }
 
     // Update displayed country when a new one is selected (but not when cleared)
-    if (uiState.selectedCountry != null) {
-        displayedCountry = uiState.selectedCountry
-    }
+    uiState.selectedCountry?.let { displayedCountry = it }
 
     // Lock orientation to portrait for this screen
     val context = LocalContext.current
@@ -106,8 +109,8 @@ fun CountryInfoScreen(
                         tint = Secondary
                     )
                 },
-                trailingIcon = {
-                    if (uiState.searchQuery.isNotEmpty()) {
+                trailingIcon = if (hasSearchQuery) {
+                    {
                         IconButton(onClick = {
                             viewModel.clearSearch()
                             focusManager.clearFocus()
@@ -119,7 +122,7 @@ fun CountryInfoScreen(
                             )
                         }
                     }
-                },
+                } else null,
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -155,7 +158,7 @@ fun CountryInfoScreen(
                 )
 
                 // Instructions overlay
-                if (!showSheet && uiState.searchResults.isEmpty()) {
+                if (showInstructions) {
                     Text(
                         text = "Pinch to zoom • Drag to pan",
                         style = MaterialTheme.typography.labelSmall,
@@ -178,7 +181,7 @@ fun CountryInfoScreen(
         }
 
         // Autocomplete Dropdown - overlays on top of map
-        if (uiState.searchResults.isNotEmpty()) {
+        if (hasSearchResults) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
