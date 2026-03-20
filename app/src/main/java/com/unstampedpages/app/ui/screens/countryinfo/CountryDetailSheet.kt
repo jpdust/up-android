@@ -139,7 +139,7 @@ fun CountryDetailSheet(
                             InfoRow(
                                 icon = Icons.Default.Badge,
                                 label = "Entry Requirement",
-                                value = it.visaRequirement
+                                value = it.visaRequirement.displayName
                             )
 
                             Divider(color = Primary.copy(alpha = 0.1f))

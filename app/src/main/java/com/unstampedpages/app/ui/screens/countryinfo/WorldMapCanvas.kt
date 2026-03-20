@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.unstampedpages.app.data.model.Country
 import com.unstampedpages.app.data.model.CountryGeometry
 import com.unstampedpages.app.data.model.LatLng
+import com.unstampedpages.app.data.model.VisaRequirement
 import com.unstampedpages.app.data.model.isPointInPolygon
 import com.unstampedpages.app.data.repository.CountryGeometryData
 import com.unstampedpages.app.ui.theme.MapBorder
@@ -59,14 +60,8 @@ enum class MapColorMode(val displayName: String) {
 /**
  * Get color for visa requirement status
  */
-private fun getVisaRequirementColor(visaRequirement: String): Color {
-    return when {
-        visaRequirement.equals("Visa not required", ignoreCase = true) -> Color(0xFF4CAF50) // Green
-        visaRequirement.equals("eVisa", ignoreCase = true) -> Color(0xFF00BCD4) // Turquoise
-        visaRequirement.contains("Visa on arrival", ignoreCase = true) -> Color(0xFFFFC107) // Yellow
-        visaRequirement.equals("Visa required", ignoreCase = true) -> Color(0xFF9E9E9E) // Gray
-        else -> Color(0xFFFF9800) // Orange for all others
-    }
+private fun getVisaRequirementColor(visaRequirement: VisaRequirement): Color {
+    return visaRequirement.color
 }
 
 /**

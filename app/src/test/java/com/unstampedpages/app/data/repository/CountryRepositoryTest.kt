@@ -1,6 +1,7 @@
 package com.unstampedpages.app.data.repository
 
 import com.unstampedpages.app.data.model.Continent
+import com.unstampedpages.app.data.model.VisaRequirement
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -196,10 +197,11 @@ class CountryRepositoryTest {
     @Test
     fun `countries have valid visa requirements`() {
         val countries = repository.getAllCountries()
+        val validRequirements = VisaRequirement.values().toList()
 
         countries.forEach { country ->
             assertNotNull(country.visaRequirement)
-            assertTrue(country.visaRequirement.isNotEmpty())
+            assertTrue(validRequirements.contains(country.visaRequirement))
         }
     }
 
