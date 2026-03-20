@@ -192,15 +192,18 @@ private fun ChecklistItemCard(
     onToggle: () -> Unit,
     onDelete: () -> Unit
 ) {
+    // Pre-compute checked state values to reduce complexity
+    val isChecked = item.isChecked
+    val containerColor = if (isChecked) SecondaryLight.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surface
+    val checkIcon = if (isChecked) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked
+    val checkIconDescription = if (isChecked) "Uncheck" else "Check"
+    val checkIconTint = if (isChecked) Secondary else Primary.copy(alpha = 0.5f)
+    val textAlpha = if (isChecked) 0.6f else 1f
+    val textDecoration = if (isChecked) TextDecoration.LineThrough else TextDecoration.None
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = if (item.isChecked) {
-                SecondaryLight.copy(alpha = 0.2f)
-            } else {
-                MaterialTheme.colorScheme.surface
-            }
-        ),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
         shape = RoundedCornerShape(12.dp)
     ) {
         Row(
@@ -211,13 +214,9 @@ private fun ChecklistItemCard(
         ) {
             IconButton(onClick = onToggle) {
                 Icon(
-                    imageVector = if (item.isChecked) {
-                        Icons.Default.CheckCircle
-                    } else {
-                        Icons.Default.RadioButtonUnchecked
-                    },
-                    contentDescription = if (item.isChecked) "Uncheck" else "Check",
-                    tint = if (item.isChecked) Secondary else Primary.copy(alpha = 0.5f)
+                    imageVector = checkIcon,
+                    contentDescription = checkIconDescription,
+                    tint = checkIconTint
                 )
             }
 
@@ -226,8 +225,8 @@ private fun ChecklistItemCard(
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier
                     .weight(1f)
-                    .alpha(if (item.isChecked) 0.6f else 1f),
-                textDecoration = if (item.isChecked) TextDecoration.LineThrough else TextDecoration.None,
+                    .alpha(textAlpha),
+                textDecoration = textDecoration,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
