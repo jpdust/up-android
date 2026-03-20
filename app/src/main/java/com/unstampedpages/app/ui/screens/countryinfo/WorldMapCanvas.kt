@@ -607,34 +607,30 @@ private fun DrawScope.drawCountryMercator(
     val fillColor = if (isSelected) MapHighlight else lerp(previousColor, currentColor, transitionProgress)
     val strokeColor = if (isSelected) MapHighlight.copy(alpha = 0.9f) else MapBorder
     val strokeWidth = if (isSelected) 2.dp.toPx() else 0.8f.dp.toPx()
+    val glowStyle = Stroke(width = 4.dp.toPx())
 
-    geometry.polygons.forEach { polygon ->
-        if (polygon.size >= 3) {
-            val path = Path().apply {
-                val firstPoint = latLngToMercator(polygon[0], mapWidth, mapHeight)
-                moveTo(firstPoint.x, firstPoint.y)
+    // Filter valid polygons and draw each one
+    geometry.polygons.filter { it.size >= 3 }.forEach { polygon ->
+        val path = Path().apply {
+            val firstPoint = latLngToMercator(polygon[0], mapWidth, mapHeight)
+            moveTo(firstPoint.x, firstPoint.y)
 
-                for (i in 1 until polygon.size) {
-                    val point = latLngToMercator(polygon[i], mapWidth, mapHeight)
-                    lineTo(point.x, point.y)
-                }
-                close()
+            for (i in 1 until polygon.size) {
+                val point = latLngToMercator(polygon[i], mapWidth, mapHeight)
+                lineTo(point.x, point.y)
             }
+            close()
+        }
 
-            // Draw fill
-            drawPath(path, fillColor, style = Fill)
+        // Draw fill
+        drawPath(path, fillColor, style = Fill)
 
-            // Draw border
-            drawPath(path, strokeColor, style = Stroke(width = strokeWidth))
+        // Draw border
+        drawPath(path, strokeColor, style = Stroke(width = strokeWidth))
 
-            // Draw glow effect if selected
-            if (isSelected) {
-                drawPath(
-                    path,
-                    MapHighlight.copy(alpha = 0.4f),
-                    style = Stroke(width = 4.dp.toPx())
-                )
-            }
+        // Draw glow effect if selected
+        if (isSelected) {
+            drawPath(path, MapHighlight.copy(alpha = 0.4f), style = glowStyle)
         }
     }
 }
