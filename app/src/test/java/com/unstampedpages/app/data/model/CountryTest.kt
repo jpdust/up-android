@@ -11,7 +11,7 @@ class CountryTest {
             id = "us",
             name = "United States",
             safetyLevel = SafetyLevel.LOW,
-            visaRequirement = "N/A",
+            visaRequirement = VisaRequirement.RESTRICTED,
             currency = "US Dollar",
             currencyCode = "USD",
             exchangeRateToUSD = 1.0,
@@ -23,7 +23,7 @@ class CountryTest {
         assertEquals("us", country.id)
         assertEquals("United States", country.name)
         assertEquals(SafetyLevel.LOW, country.safetyLevel)
-        assertEquals("N/A", country.visaRequirement)
+        assertEquals(VisaRequirement.RESTRICTED, country.visaRequirement)
         assertEquals("US Dollar", country.currency)
         assertEquals("USD", country.currencyCode)
         assertEquals(1.0, country.exchangeRateToUSD, 0.001)
@@ -38,7 +38,7 @@ class CountryTest {
             id = "fr",
             name = "France",
             safetyLevel = SafetyLevel.LOW,
-            visaRequirement = "Visa not required",
+            visaRequirement = VisaRequirement.VISA_NOT_REQUIRED,
             currency = "Euro",
             currencyCode = "EUR",
             exchangeRateToUSD = 1.1,
@@ -57,7 +57,7 @@ class CountryTest {
             id = "jp",
             name = "Japan",
             safetyLevel = SafetyLevel.LOW,
-            visaRequirement = "Visa not required",
+            visaRequirement = VisaRequirement.VISA_NOT_REQUIRED,
             currency = "Yen",
             currencyCode = "JPY",
             exchangeRateToUSD = 0.0067,
@@ -79,7 +79,7 @@ class CountryTest {
             id = "de",
             name = "Germany",
             safetyLevel = SafetyLevel.LOW,
-            visaRequirement = "Visa not required",
+            visaRequirement = VisaRequirement.VISA_NOT_REQUIRED,
             currency = "Euro",
             currencyCode = "EUR",
             exchangeRateToUSD = 1.1,
@@ -92,7 +92,7 @@ class CountryTest {
             id = "de",
             name = "Germany",
             safetyLevel = SafetyLevel.LOW,
-            visaRequirement = "Visa not required",
+            visaRequirement = VisaRequirement.VISA_NOT_REQUIRED,
             currency = "Euro",
             currencyCode = "EUR",
             exchangeRateToUSD = 1.1,
@@ -144,6 +144,54 @@ class SafetyLevelTest {
         assertEquals(SafetyLevel.MEDIUM, SafetyLevel.valueOf("MEDIUM"))
         assertEquals(SafetyLevel.HIGH, SafetyLevel.valueOf("HIGH"))
         assertEquals(SafetyLevel.EXTREME, SafetyLevel.valueOf("EXTREME"))
+    }
+}
+
+class VisaRequirementTest {
+
+    @Test
+    fun `VisaRequirement NOT_REQUIRED has correct displayName`() {
+        assertEquals("Visa not required", VisaRequirement.VISA_NOT_REQUIRED.displayName)
+    }
+
+    @Test
+    fun `VisaRequirement EVISA has correct displayName`() {
+        assertEquals("eVisa", VisaRequirement.EVISA.displayName)
+    }
+
+    @Test
+    fun `VisaRequirement ON_ARRIVAL has correct displayName`() {
+        assertEquals("Visa on arrival", VisaRequirement.VISA_ON_ARRIVAL.displayName)
+    }
+
+    @Test
+    fun `VisaRequirement REQUIRED has correct displayName`() {
+        assertEquals("Visa required", VisaRequirement.VISA_REQUIRED.displayName)
+    }
+
+    @Test
+    fun `VisaRequirement OTHER has correct displayName`() {
+        assertEquals("Restricted", VisaRequirement.RESTRICTED.displayName)
+    }
+
+    @Test
+    fun `VisaRequirement values returns all requirements`() {
+        val values = VisaRequirement.values()
+        assertEquals(5, values.size)
+        assertTrue(values.contains(VisaRequirement.VISA_NOT_REQUIRED))
+        assertTrue(values.contains(VisaRequirement.EVISA))
+        assertTrue(values.contains(VisaRequirement.VISA_ON_ARRIVAL))
+        assertTrue(values.contains(VisaRequirement.VISA_REQUIRED))
+        assertTrue(values.contains(VisaRequirement.RESTRICTED))
+    }
+
+    @Test
+    fun `VisaRequirement valueOf returns correct enum`() {
+        assertEquals(VisaRequirement.VISA_NOT_REQUIRED, VisaRequirement.valueOf("VISA_NOT_REQUIRED"))
+        assertEquals(VisaRequirement.EVISA, VisaRequirement.valueOf("EVISA"))
+        assertEquals(VisaRequirement.VISA_ON_ARRIVAL, VisaRequirement.valueOf("VISA_ON_ARRIVAL"))
+        assertEquals(VisaRequirement.VISA_REQUIRED, VisaRequirement.valueOf("VISA_REQUIRED"))
+        assertEquals(VisaRequirement.RESTRICTED, VisaRequirement.valueOf("RESTRICTED"))
     }
 }
 

@@ -6,7 +6,7 @@ data class Country(
     val id: String,
     val name: String,
     val safetyLevel: SafetyLevel,
-    val visaRequirement: String,
+    val visaRequirement: VisaRequirement,
     val currency: String,
     val currencyCode: String,
     val exchangeRateToUSD: Double,
@@ -21,6 +21,14 @@ enum class SafetyLevel(val displayName: String, val color: Color) {
     MEDIUM("Medium Risk", Color(0xFFFFC107)),
     HIGH("High Risk", Color(0xFF8B0000)),
     EXTREME("Extreme Risk", Color(0xFFFF5722))
+}
+
+enum class VisaRequirement(val displayName: String, val color: Color) {
+    VISA_NOT_REQUIRED("Visa not required", Color(0xFF4CAF50)),      // Green
+    EVISA("eVisa", Color(0xFF00BCD4)),                          // Turquoise
+    VISA_ON_ARRIVAL("Visa on arrival", Color(0xFFFFC107)),           // Yellow
+    VISA_REQUIRED("Visa required", Color(0xFF9E9E9E)),               // Gray
+    RESTRICTED("Restricted", Color(0xFF000000))                           // Black
 }
 
 enum class Continent(val displayName: String) {

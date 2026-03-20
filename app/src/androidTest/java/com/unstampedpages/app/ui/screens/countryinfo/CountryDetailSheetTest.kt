@@ -3,12 +3,11 @@ package com.unstampedpages.app.ui.screens.countryinfo
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performTextClearance
-import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.unstampedpages.app.data.model.Continent
 import com.unstampedpages.app.data.model.Country
 import com.unstampedpages.app.data.model.SafetyLevel
+import com.unstampedpages.app.data.model.VisaRequirement
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -25,7 +24,7 @@ class CountryDetailSheetTest {
         currencyCode: String = "USD",
         currency: String = "US Dollar",
         exchangeRateToUSD: Double = 1.0,
-        visaRequirement: String = "Visa not required",
+        visaRequirement: VisaRequirement = VisaRequirement.VISA_NOT_REQUIRED,
         safetyLevel: SafetyLevel = SafetyLevel.LOW,
         outletType: String = "Type A/B (120V)",
         continent: Continent = Continent.NORTH_AMERICA,
@@ -470,7 +469,7 @@ class CountryDetailSheetTest {
     @Test
     fun countryDetailSheet_showsVisaNotRequired() {
         val country = createCountry(
-            visaRequirement = "Visa not required"
+            visaRequirement = VisaRequirement.VISA_NOT_REQUIRED
         )
 
         composeTestRule.setContent {
@@ -488,7 +487,7 @@ class CountryDetailSheetTest {
     @Test
     fun countryDetailSheet_showsVisaRequired() {
         val country = createCountry(
-            visaRequirement = "Visa required"
+            visaRequirement = VisaRequirement.VISA_REQUIRED
         )
 
         composeTestRule.setContent {
@@ -506,7 +505,7 @@ class CountryDetailSheetTest {
     @Test
     fun countryDetailSheet_showsEVisa() {
         val country = createCountry(
-            visaRequirement = "eVisa"
+            visaRequirement = VisaRequirement.EVISA
         )
 
         composeTestRule.setContent {
@@ -524,7 +523,7 @@ class CountryDetailSheetTest {
     @Test
     fun countryDetailSheet_showsVisaOnArrival() {
         val country = createCountry(
-            visaRequirement = "Visa on arrival"
+            visaRequirement = VisaRequirement.VISA_ON_ARRIVAL
         )
 
         composeTestRule.setContent {
@@ -900,7 +899,7 @@ class CountryDetailSheetTest {
         val country = createCountry(
             name = "Germany",
             safetyLevel = SafetyLevel.LOW,
-            visaRequirement = "Visa not required",
+            visaRequirement = VisaRequirement.VISA_NOT_REQUIRED,
             currency = "Euro",
             currencyCode = "EUR",
             exchangeRateToUSD = 1.08,
