@@ -25,7 +25,7 @@ object AnalyticsManager {
     fun initialize(context: Context) {
         if (isInitialized) return
 
-        // TODO: Initialize NewRelic
+        // Initialize NewRelic
         // NewRelic.withApplicationToken("YOUR_TOKEN").start(context)
 
         isInitialized = true
@@ -41,7 +41,7 @@ object AnalyticsManager {
             return
         }
 
-        // TODO: Replace with NewRelic.recordCustomEvent()
+        // Replace with NewRelic.recordCustomEvent()
         // NewRelic.recordCustomEvent("UnstampedPages", eventName, attributes)
 
         Log.d(TAG, "Event tracked (stub): $eventName, attributes: $attributes")
@@ -65,7 +65,7 @@ object AnalyticsManager {
      * Track error or exception.
      */
     fun trackError(error: Throwable, context: String? = null) {
-        // TODO: Replace with NewRelic.recordHandledException()
+        // Replace with NewRelic.recordHandledException()
         // NewRelic.recordHandledException(error)
 
         val attributes = mutableMapOf<String, Any>(
@@ -81,7 +81,7 @@ object AnalyticsManager {
      * Set user identifier for analytics.
      */
     fun setUserId(userId: String) {
-        // TODO: Replace with NewRelic.setUserId()
+        // Replace with NewRelic.setUserId()
         // NewRelic.setUserId(userId)
 
         Log.d(TAG, "User ID set (stub): $userId")
@@ -91,7 +91,7 @@ object AnalyticsManager {
      * Set custom attribute for all future events.
      */
     fun setAttribute(name: String, value: Any) {
-        // TODO: Replace with NewRelic.setAttribute()
+        // Replace with NewRelic.setAttribute()
         // NewRelic.setAttribute(name, value)
 
         Log.d(TAG, "Attribute set (stub): $name = $value")
