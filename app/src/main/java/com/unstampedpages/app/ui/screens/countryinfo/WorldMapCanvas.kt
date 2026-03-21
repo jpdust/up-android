@@ -195,7 +195,8 @@ private val geoJsonToRepoId = mapOf(
     "USA" to "us", "CAN" to "ca", "MEX" to "mx", "GTM" to "gt", "CUB" to "cu",
     "HTI" to "ht", "DOM" to "do", "HND" to "hn", "NIC" to "ni", "CRI" to "cr",
     "PAN" to "pa", "JAM" to "jm", "SLV" to "sv", "BLZ" to "bz", "GRL" to "gl",
-    "BHS" to "bs", "TTO" to "tt",
+    "BHS" to "bs", "TTO" to "tt", "ATG" to "ag", "BRB" to "bb", "DMA" to "dm",
+    "GRD" to "gd", "KNA" to "kn", "LCA" to "lc", "VCT" to "vc",
     // South America
     "BRA" to "br", "ARG" to "ar", "COL" to "co", "PER" to "pe", "VEN" to "ve",
     "CHL" to "cl", "ECU" to "ec", "BOL" to "bo", "PRY" to "py", "URY" to "uy",
@@ -209,6 +210,7 @@ private val geoJsonToRepoId = mapOf(
     "TUR" to "tr", "SRB" to "rs", "LTU" to "lt", "LVA" to "lv", "EST" to "ee",
     "SVN" to "si", "ISL" to "is", "ALB" to "al", "BLR" to "by", "BIH" to "ba",
     "CYP" to "cy", "LUX" to "lu", "MDA" to "md", "MNE" to "me", "MKD" to "mk",
+    "AND" to "ad", "LIE" to "li", "MLT" to "mt", "MCO" to "mc", "SMR" to "sm", "VAT" to "va",
     // Africa
     "EGY" to "eg", "ZAF" to "za", "NGA" to "ng", "KEN" to "ke", "MAR" to "ma",
     "ETH" to "et", "TZA" to "tz", "DZA" to "dz", "SDN" to "sd", "UGA" to "ug",
@@ -220,10 +222,11 @@ private val geoJsonToRepoId = mapOf(
     "GIN" to "gn", "GMB" to "gm", "GNB" to "gw", "GNQ" to "gq", "LBR" to "lr",
     "LSO" to "ls", "MLI" to "ml", "MRT" to "mr", "MWI" to "mw", "NER" to "ne",
     "SDS" to "ss", "SLE" to "sl", "SWZ" to "sz", "TCD" to "td", "TGO" to "tg",
+    "CPV" to "cv", "COM" to "km", "MUS" to "mu", "STP" to "st", "SYC" to "sc",
     // Asia
     "CHN" to "cn", "JPN" to "jp", "IND" to "in", "THA" to "th", "VNM" to "vn",
     "KOR" to "kr", "IDN" to "id", "PHL" to "ph", "PAK" to "pk", "BGD" to "bd",
-    "MYS" to "my", "SGP" to "sg", "MMR" to "mm", "NPL" to "np", "KHM" to "kh",
+    "MYS" to "my", "SGP" to "sg", "MMR" to "mm", "MDV" to "mv", "NPL" to "np", "KHM" to "kh",
     "LAO" to "la", "LKA" to "lk", "TWN" to "tw", "HKG" to "hk", "ARE" to "ae",
     "SAU" to "sa", "ISR" to "il", "IRQ" to "iq", "IRN" to "ir", "AFG" to "af",
     "KAZ" to "kz", "UZB" to "uz", "KGZ" to "kg", "TJK" to "tj", "TKM" to "tm",
@@ -233,7 +236,8 @@ private val geoJsonToRepoId = mapOf(
     "TLS" to "tl", "SYR" to "sy", "YEM" to "ye",
     // Oceania
     "AUS" to "au", "NZL" to "nz", "PNG" to "pg", "FJI" to "fj", "SLB" to "sb",
-    "VUT" to "vu", "NCL" to "nc"
+    "VUT" to "vu", "NCL" to "nc", "KIR" to "ki", "MHL" to "mh", "FSM" to "fm",
+    "NRU" to "nr", "PLW" to "pw", "WSM" to "ws", "TON" to "to", "TUV" to "tv"
 )
 
 /**
