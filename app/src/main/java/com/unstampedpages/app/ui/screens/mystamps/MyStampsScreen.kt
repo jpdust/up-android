@@ -54,6 +54,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -113,13 +114,15 @@ fun MyStampsScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .testTag("my_stamps_screen")
     ) {
         // Table Header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Primary.copy(alpha = 0.1f))
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .testTag("header_row"),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
@@ -127,14 +130,18 @@ fun MyStampsScreen(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = Primary,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag("column_header_country")
             )
             Text(
                 text = "Stamp",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = Primary,
-                modifier = Modifier.width(80.dp),
+                modifier = Modifier
+                    .width(80.dp)
+                    .testTag("column_header_stamp"),
                 textAlign = TextAlign.Center
             )
         }
@@ -147,7 +154,9 @@ fun MyStampsScreen(
         )
 
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .testTag("country_stamps_list"),
             contentPadding = PaddingValues(bottom = 80.dp)
         ) {
             items(
@@ -157,7 +166,8 @@ fun MyStampsScreen(
                 CountryStampRow(
                     countryStamp = countryStamp,
                     onAddClick = { viewModel.showUploadDialog(countryStamp.country) },
-                    onRemoveClick = { viewModel.removeStamp(countryStamp.country.code) }
+                    onRemoveClick = { viewModel.removeStamp(countryStamp.country.code) },
+                    testTag = "country_row_${countryStamp.country.code}"
                 )
                 Box(
                     modifier = Modifier
@@ -173,11 +183,13 @@ fun MyStampsScreen(
     if (uiState.showUploadDialog && uiState.selectedCountry != null) {
         AlertDialog(
             onDismissRequest = { viewModel.dismissUploadDialog() },
+            modifier = Modifier.testTag("add_stamp_dialog"),
             title = {
                 Text(
                     text = "Add Stamp",
                     fontWeight = FontWeight.Bold,
-                    color = Primary
+                    color = Primary,
+                    modifier = Modifier.testTag("dialog_title")
                 )
             },
             text = {
@@ -199,7 +211,9 @@ fun MyStampsScreen(
                     ) {
                         OutlinedButton(
                             onClick = { launchCamera() },
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("camera_button"),
                             colors = ButtonDefaults.outlinedButtonColors(
                                 contentColor = Primary
                             )
@@ -214,7 +228,9 @@ fun MyStampsScreen(
                         }
                         Button(
                             onClick = { imagePickerLauncher.launch("image/*") },
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("gallery_button"),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Secondary,
                                 contentColor = Primary
@@ -233,7 +249,10 @@ fun MyStampsScreen(
             },
             confirmButton = {},
             dismissButton = {
-                TextButton(onClick = { viewModel.dismissUploadDialog() }) {
+                TextButton(
+                    onClick = { viewModel.dismissUploadDialog() },
+                    modifier = Modifier.testTag("cancel_button")
+                ) {
                     Text("Cancel", color = Primary)
                 }
             },
@@ -246,12 +265,14 @@ fun MyStampsScreen(
 private fun CountryStampRow(
     countryStamp: CountryStamp,
     onAddClick: () -> Unit,
-    onRemoveClick: () -> Unit
+    onRemoveClick: () -> Unit,
+    testTag: String = ""
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .testTag(testTag),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -269,10 +290,14 @@ private fun CountryStampRow(
                 StampThumbnail(
                     imagePath = countryStamp.imagePath,
                     countryName = countryStamp.country.name,
-                    onRemoveClick = onRemoveClick
+                    onRemoveClick = onRemoveClick,
+                    testTag = "stamp_${countryStamp.country.code}"
                 )
             } else {
-                AddStampButton(onClick = onAddClick)
+                AddStampButton(
+                    onClick = onAddClick,
+                    testTag = "add_stamp_${countryStamp.country.code}"
+                )
             }
         }
     }
@@ -282,7 +307,8 @@ private fun CountryStampRow(
 private fun StampThumbnail(
     imagePath: String,
     countryName: String,
-    onRemoveClick: () -> Unit
+    onRemoveClick: () -> Unit,
+    testTag: String = ""
 ) {
     val bitmap = remember(imagePath) {
         try {
@@ -292,7 +318,7 @@ private fun StampThumbnail(
         }
     }
 
-    Box {
+    Box(modifier = Modifier.testTag(testTag)) {
         Card(
             modifier = Modifier.size(60.dp),
             shape = RoundedCornerShape(8.dp),
@@ -319,6 +345,7 @@ private fun StampThumbnail(
                     color = Color.Red.copy(alpha = 0.8f),
                     shape = RoundedCornerShape(10.dp)
                 )
+                .testTag("${testTag}_remove")
         ) {
             Icon(
                 imageVector = Icons.Default.Close,
@@ -331,7 +358,10 @@ private fun StampThumbnail(
 }
 
 @Composable
-private fun AddStampButton(onClick: () -> Unit) {
+private fun AddStampButton(
+    onClick: () -> Unit,
+    testTag: String = ""
+) {
     Box(
         modifier = Modifier
             .size(60.dp)
@@ -341,7 +371,8 @@ private fun AddStampButton(onClick: () -> Unit) {
                 color = Secondary.copy(alpha = 0.5f),
                 shape = RoundedCornerShape(8.dp)
             )
-            .clickable(onClick = onClick),
+            .clickable(onClick = onClick)
+            .testTag(testTag),
         contentAlignment = Alignment.Center
     ) {
         Icon(
