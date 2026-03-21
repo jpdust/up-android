@@ -61,6 +61,7 @@ fun JournalEntryEditor(
     onCancel: () -> Unit
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
+    val dismissDatePicker = { showDatePicker = false }
     val datePickerState = rememberDatePickerState(initialSelectedDateMillis = date)
 
     Column(
@@ -191,17 +192,17 @@ fun JournalEntryEditor(
     // Date Picker Dialog
     if (showDatePicker) {
         DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
+            onDismissRequest = dismissDatePicker,
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { onDateChange(it) }
-                    showDatePicker = false
+                    dismissDatePicker()
                 }) {
                     Text("OK", color = Primary)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
+                TextButton(onClick = dismissDatePicker) {
                     Text("Cancel", color = Primary)
                 }
             }

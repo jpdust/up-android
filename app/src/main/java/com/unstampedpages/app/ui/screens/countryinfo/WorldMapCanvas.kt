@@ -356,9 +356,8 @@ fun WorldMapCanvas(
         targetValue = animationTarget,
         animationSpec = tween(durationMillis = 400),
         finishedListener = {
-            // Animation complete, update previous mode and reset
+            // Animation complete, update previous mode
             previousColorMode = colorMode
-            animationTarget = 0f
         },
         label = "colorModeTransition"
     )

@@ -155,7 +155,11 @@ class MyStampsViewModel(application: Application) : AndroidViewModel(application
 
     fun saveCameraImage(success: Boolean) {
         if (!success) {
-            currentCameraTempFile?.delete()
+            currentCameraTempFile?.let { file ->
+                if (!file.delete()) {
+                    Log.w("MyStampsViewModel", "Failed to delete temp file: ${file.absolutePath}")
+                }
+            }
             currentCameraTempFile = null
             return
         }
@@ -194,7 +198,9 @@ class MyStampsViewModel(application: Application) : AndroidViewModel(application
             val destFile = File(upImagesDir, fileName)
 
             tempFile.copyTo(destFile, overwrite = true)
-            tempFile.delete()
+            if (!tempFile.delete()) {
+                Log.w("MyStampsViewModel", "Failed to delete temp file: ${tempFile.absolutePath}")
+            }
 
             destFile.absolutePath
         } catch (e: Exception) {
