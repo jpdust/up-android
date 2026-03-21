@@ -18,10 +18,6 @@ object AnalyticsManager {
     private const val TAG = "AnalyticsManager"
     private var isInitialized = false
 
-    /**
-     * Initialize analytics SDK.
-     * Call this in Application.onCreate() or MainActivity.onCreate()
-     */
     fun initialize(context: Context) {
         if (isInitialized) return
 
@@ -32,41 +28,24 @@ object AnalyticsManager {
         Log.d(TAG, "Analytics initialized (stub)")
     }
 
-    /**
-     * Track a custom event with optional attributes.
-     */
     fun trackEvent(eventName: String, attributes: Map<String, Any> = emptyMap()) {
         if (!isInitialized) {
             Log.w(TAG, "Analytics not initialized, skipping event: $eventName")
             return
         }
 
-        // Replace with NewRelic.recordCustomEvent()
-        // NewRelic.recordCustomEvent("UnstampedPages", eventName, attributes)
-
         Log.d(TAG, "Event tracked (stub): $eventName, attributes: $attributes")
     }
 
-    /**
-     * Track screen view.
-     */
     fun trackScreenView(screenName: String) {
         trackEvent("screen_view", mapOf("screen_name" to screenName))
     }
 
-    /**
-     * Track user action.
-     */
     fun trackUserAction(action: String, details: Map<String, Any> = emptyMap()) {
         trackEvent("user_action", mapOf("action" to action) + details)
     }
 
-    /**
-     * Track error or exception.
-     */
     fun trackError(error: Throwable, context: String? = null) {
-        // Replace with NewRelic.recordHandledException()
-        // NewRelic.recordHandledException(error)
 
         val attributes = mutableMapOf<String, Any>(
             "error_type" to (error::class.simpleName ?: "Unknown"),
@@ -77,30 +56,16 @@ object AnalyticsManager {
         trackEvent("error", attributes)
     }
 
-    /**
-     * Set user identifier for analytics.
-     */
     fun setUserId(userId: String) {
-        // Replace with NewRelic.setUserId()
-        // NewRelic.setUserId(userId)
-
         Log.d(TAG, "User ID set (stub): $userId")
     }
 
-    /**
-     * Set custom attribute for all future events.
-     */
     fun setAttribute(name: String, value: Any) {
-        // Replace with NewRelic.setAttribute()
-        // NewRelic.setAttribute(name, value)
 
         Log.d(TAG, "Attribute set (stub): $name = $value")
     }
 }
 
-/**
- * Pre-defined analytics events for the app.
- */
 object AnalyticsEvents {
     // Navigation events
     const val HOME_VIEWED = "home_viewed"
