@@ -51,6 +51,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -89,6 +90,7 @@ fun CountryDetailSheet(
                         indication = null,
                         onClick = onDismiss
                     )
+                    .testTag("bottom_sheet_scrim")
             )
         }
 
@@ -107,7 +109,9 @@ fun CountryDetailSheet(
         ) {
             country?.let {
                 Surface(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("country_detail_sheet"),
                     shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
                     color = MaterialTheme.colorScheme.surface,
                     shadowElevation = 8.dp
@@ -122,7 +126,8 @@ fun CountryDetailSheet(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(24.dp),
+                                .padding(24.dp)
+                                .testTag("country_details_content"),
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             // Safety Level
@@ -130,7 +135,8 @@ fun CountryDetailSheet(
                                 icon = Icons.Default.Shield,
                                 label = "Safety Level",
                                 value = it.safetyLevel.displayName,
-                                valueColor = it.safetyLevel.color
+                                valueColor = it.safetyLevel.color,
+                                testTag = "info_safety_level"
                             )
 
                             Divider(color = Primary.copy(alpha = 0.1f))
@@ -139,7 +145,8 @@ fun CountryDetailSheet(
                             InfoRow(
                                 icon = Icons.Default.Badge,
                                 label = "Entry Requirement",
-                                value = it.visaRequirement.displayName
+                                value = it.visaRequirement.displayName,
+                                testTag = "info_entry_requirement"
                             )
 
                             Divider(color = Primary.copy(alpha = 0.1f))
@@ -148,7 +155,8 @@ fun CountryDetailSheet(
                             InfoRow(
                                 icon = Icons.Default.AttachMoney,
                                 label = "Currency",
-                                value = "${it.currency} (${it.currencyCode})"
+                                value = "${it.currency} (${it.currencyCode})",
+                                testTag = "info_currency"
                             )
 
                             // Currency converter - hide for USD countries
@@ -165,7 +173,8 @@ fun CountryDetailSheet(
                             InfoRow(
                                 icon = Icons.Default.ElectricalServices,
                                 label = "Power Outlet",
-                                value = it.outletType
+                                value = it.outletType,
+                                testTag = "info_power_outlet"
                             )
 
                             Spacer(modifier = Modifier.height(16.dp))
@@ -195,6 +204,7 @@ private fun CountryHeader(
                     )
                 )
             )
+            .testTag("country_header")
     ) {
         // Close button
         IconButton(
@@ -202,6 +212,7 @@ private fun CountryHeader(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(8.dp)
+                .testTag("bottom_sheet_close_button")
         ) {
             Icon(
                 imageVector = Icons.Default.Close,
@@ -220,7 +231,8 @@ private fun CountryHeader(
             // Flag emoji
             Text(
                 text = country.flagEmoji,
-                fontSize = 64.sp
+                fontSize = 64.sp,
+                modifier = Modifier.testTag("country_flag")
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -231,14 +243,16 @@ private fun CountryHeader(
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier.testTag("country_name")
             )
 
             // Continent
             Text(
                 text = country.continent.displayName,
                 style = MaterialTheme.typography.bodyMedium,
-                color = Secondary
+                color = Secondary,
+                modifier = Modifier.testTag("country_continent")
             )
         }
     }
@@ -249,10 +263,13 @@ private fun InfoRow(
     icon: ImageVector,
     label: String,
     value: String,
-    valueColor: Color = MaterialTheme.colorScheme.onSurface
+    valueColor: Color = MaterialTheme.colorScheme.onSurface,
+    testTag: String = ""
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(testTag),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
@@ -274,7 +291,8 @@ private fun InfoRow(
                 text = value,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
-                color = valueColor
+                color = valueColor,
+                modifier = Modifier.testTag("${testTag}_value")
             )
         }
     }
@@ -299,7 +317,9 @@ private fun CurrencyConverter(
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("currency_converter"),
         colors = CardDefaults.cardColors(
             containerColor = Secondary.copy(alpha = 0.1f)
         )
