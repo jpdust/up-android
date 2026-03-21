@@ -39,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -88,6 +89,7 @@ fun CountryInfoScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .testTag("countries_screen")
     ) {
         Column(
             modifier = Modifier.fillMaxSize()
@@ -111,10 +113,13 @@ fun CountryInfoScreen(
                 },
                 trailingIcon = if (hasSearchQuery) {
                     {
-                        IconButton(onClick = {
-                            viewModel.clearSearch()
-                            focusManager.clearFocus()
-                        }) {
+                        IconButton(
+                            onClick = {
+                                viewModel.clearSearch()
+                                focusManager.clearFocus()
+                            },
+                            modifier = Modifier.testTag("search_clear_button")
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = "Clear",
@@ -134,6 +139,7 @@ fun CountryInfoScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .testTag("search_bar")
             )
 
             // World Map
@@ -141,6 +147,7 @@ fun CountryInfoScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
+                    .testTag("world_map_container")
             ) {
                 WorldMapCanvas(
                     selectedCountryId = uiState.selectedCountry?.id,
@@ -154,7 +161,9 @@ fun CountryInfoScreen(
                     },
                     colorMode = selectedColorMode,
                     countries = countriesMap,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .testTag("world_map")
                 )
 
                 // Instructions overlay
@@ -177,6 +186,7 @@ fun CountryInfoScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .testTag("map_color_mode_selector")
             )
         }
 
@@ -187,14 +197,17 @@ fun CountryInfoScreen(
                     .fillMaxWidth()
                     .padding(start = 16.dp, end = 16.dp, top = 72.dp)
                     .heightIn(max = 200.dp)
-                    .zIndex(1f),
+                    .zIndex(1f)
+                    .testTag("search_results_dropdown"),
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
-                LazyColumn {
+                LazyColumn(
+                    modifier = Modifier.testTag("search_results_list")
+                ) {
                     items(uiState.searchResults) { country ->
                         CountrySearchItem(
                             country = country,
@@ -203,7 +216,8 @@ fun CountryInfoScreen(
                                 viewModel.clearSearch()
                                 focusManager.clearFocus()
                                 showSheet = true
-                            }
+                            },
+                            testTag = "search_result_${country.id}"
                         )
                     }
                 }
@@ -225,13 +239,15 @@ fun CountryInfoScreen(
 @Composable
 private fun CountrySearchItem(
     country: Country,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    testTag: String = ""
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 12.dp)
+            .testTag(testTag)
     ) {
         Text(
             text = "${country.flagEmoji} ${country.name}",
@@ -271,7 +287,9 @@ private fun MapColorModeSelector(
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
                 color = Primary,
-                modifier = Modifier.padding(bottom = 8.dp)
+                modifier = Modifier
+                    .padding(bottom = 8.dp)
+                    .testTag("map_view_label")
             )
 
             MapColorMode.entries.forEach { mode ->
@@ -279,7 +297,8 @@ private fun MapColorModeSelector(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onModeSelected(mode) }
-                        .padding(vertical = 4.dp),
+                        .padding(vertical = 4.dp)
+                        .testTag("map_mode_${mode.name.lowercase()}"),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -289,7 +308,8 @@ private fun MapColorModeSelector(
                         colors = RadioButtonDefaults.colors(
                             selectedColor = Secondary,
                             unselectedColor = Primary.copy(alpha = 0.5f)
-                        )
+                        ),
+                        modifier = Modifier.testTag("map_mode_radio_${mode.name.lowercase()}")
                     )
                     Text(
                         text = mode.displayName,
