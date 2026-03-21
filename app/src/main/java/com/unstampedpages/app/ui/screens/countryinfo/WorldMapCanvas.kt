@@ -208,6 +208,67 @@ private fun MapGestureState.processTap(position: Offset): String? {
 }
 
 /**
+ * Result of processing a pointer event
+ */
+private data class GestureResult(
+    val wasDragged: Boolean,
+    val dragDistance: Float
+)
+
+/**
+ * Handle multi-touch gesture (pinch to zoom)
+ */
+private fun handleMultiTouch(
+    event: androidx.compose.ui.input.pointer.PointerEvent,
+    layout: MapLayout,
+    currentTransform: () -> TransformState,
+    onTransformChange: (TransformState) -> Unit
+) {
+    onTransformChange(
+        calculateMultiTouchTransform(
+            current = currentTransform(),
+            zoom = event.calculateZoom(),
+            pan = event.calculatePan(),
+            mapWidth = layout.mapWidth,
+            mapHeight = layout.mapHeight
+        )
+    )
+    event.changes.forEach { it.consume() }
+}
+
+/**
+ * Handle single-touch gesture (pan). Returns updated drag distance.
+ */
+private fun handleSingleTouch(
+    change: androidx.compose.ui.input.pointer.PointerInputChange,
+    currentDragDistance: Float,
+    layout: MapLayout,
+    currentTransform: () -> TransformState,
+    onTransformChange: (TransformState) -> Unit
+): GestureResult {
+    if (!change.positionChanged()) {
+        return GestureResult(wasDragged = false, dragDistance = currentDragDistance)
+    }
+
+    val panDelta = change.position - change.previousPosition
+    val newDragDistance = currentDragDistance + panDelta.getDistance()
+
+    if (newDragDistance <= 15f) {
+        return GestureResult(wasDragged = false, dragDistance = newDragDistance)
+    }
+
+    onTransformChange(
+        calculateSingleTouchTransform(
+            current = currentTransform(),
+            panDelta = panDelta,
+            mapWidth = layout.mapWidth,
+            mapHeight = layout.mapHeight
+        )
+    )
+    return GestureResult(wasDragged = true, dragDistance = newDragDistance)
+}
+
+/**
  * Modifier extension for map gesture handling (pan, zoom, tap)
  */
 private fun Modifier.mapGestures(
@@ -221,42 +282,23 @@ private fun Modifier.mapGestures(
         val downPosition = down.position
         var totalDragDistance = 0f
         var wasDragged = false
-
         val layout = calculateMapLayout(size.width.toFloat(), size.height.toFloat())
 
         do {
             val event = awaitPointerEvent()
             val changes = event.changes
 
-            if (changes.size > 1) {
-                wasDragged = true
-                onTransformChange(
-                    calculateMultiTouchTransform(
-                        current = currentTransform(),
-                        zoom = event.calculateZoom(),
-                        pan = event.calculatePan(),
-                        mapWidth = layout.mapWidth,
-                        mapHeight = layout.mapHeight
+            when {
+                changes.size > 1 -> {
+                    wasDragged = true
+                    handleMultiTouch(event, layout, currentTransform, onTransformChange)
+                }
+                changes.size == 1 -> {
+                    val result = handleSingleTouch(
+                        changes.first(), totalDragDistance, layout, currentTransform, onTransformChange
                     )
-                )
-                changes.forEach { it.consume() }
-            } else if (changes.size == 1) {
-                val change = changes.first()
-                if (change.positionChanged()) {
-                    val panDelta = change.position - change.previousPosition
-                    totalDragDistance += panDelta.getDistance()
-
-                    if (totalDragDistance > 15f) {
-                        wasDragged = true
-                        onTransformChange(
-                            calculateSingleTouchTransform(
-                                current = currentTransform(),
-                                panDelta = panDelta,
-                                mapWidth = layout.mapWidth,
-                                mapHeight = layout.mapHeight
-                            )
-                        )
-                    }
+                    totalDragDistance = result.dragDistance
+                    wasDragged = wasDragged || result.wasDragged
                 }
             }
         } while (changes.any { it.pressed })
