@@ -181,10 +181,162 @@ private fun normalizeNormalizedX(x: Float): Float {
 }
 
 /**
+ * State holder for map gesture handling
+ */
+private class MapGestureState(
+    val geometries: List<CountryGeometry>,
+    val inverseMatrix: android.graphics.Matrix,
+    var matrixValid: Boolean = false,
+    var mapLayoutWidth: Float = 0f,
+    var mapLayoutHeight: Float = 0f
+)
+
+/**
+ * Process a tap gesture and return the tapped country ID
+ */
+private fun MapGestureState.processTap(position: Offset): String? {
+    if (!matrixValid || mapLayoutWidth <= 0f || mapLayoutHeight <= 0f) {
+        return null
+    }
+    return screenPositionToCountryId(
+        screenPosition = position,
+        inverseMatrix = inverseMatrix,
+        mapWidth = mapLayoutWidth,
+        mapHeight = mapLayoutHeight,
+        geometries = geometries
+    )
+}
+
+/**
+ * Modifier extension for map gesture handling (pan, zoom, tap)
+ */
+private fun Modifier.mapGestures(
+    gestureState: MapGestureState,
+    currentTransform: () -> TransformState,
+    onTransformChange: (TransformState) -> Unit,
+    onCountryTapped: (String?) -> Unit
+): Modifier = this.pointerInput(Unit) {
+    awaitEachGesture {
+        val down = awaitFirstDown(requireUnconsumed = false)
+        val downPosition = down.position
+        var totalDragDistance = 0f
+        var wasDragged = false
+
+        val layout = calculateMapLayout(size.width.toFloat(), size.height.toFloat())
+
+        do {
+            val event = awaitPointerEvent()
+            val changes = event.changes
+
+            if (changes.size > 1) {
+                wasDragged = true
+                onTransformChange(
+                    calculateMultiTouchTransform(
+                        current = currentTransform(),
+                        zoom = event.calculateZoom(),
+                        pan = event.calculatePan(),
+                        mapWidth = layout.mapWidth,
+                        mapHeight = layout.mapHeight
+                    )
+                )
+                changes.forEach { it.consume() }
+            } else if (changes.size == 1) {
+                val change = changes.first()
+                if (change.positionChanged()) {
+                    val panDelta = change.position - change.previousPosition
+                    totalDragDistance += panDelta.getDistance()
+
+                    if (totalDragDistance > 15f) {
+                        wasDragged = true
+                        onTransformChange(
+                            calculateSingleTouchTransform(
+                                current = currentTransform(),
+                                panDelta = panDelta,
+                                mapWidth = layout.mapWidth,
+                                mapHeight = layout.mapHeight
+                            )
+                        )
+                    }
+                }
+            }
+        } while (changes.any { it.pressed })
+
+        if (!wasDragged) {
+            onCountryTapped(gestureState.processTap(downPosition))
+        }
+    }
+}
+
+/**
  * Get color for visa requirement status
  */
 private fun getVisaRequirementColor(visaRequirement: VisaRequirement): Color {
     return visaRequirement.color
+}
+
+/**
+ * Parameters for drawing the map content
+ */
+private data class MapDrawParams(
+    val geometries: List<CountryGeometry>,
+    val selectedCountryId: String?,
+    val colorMode: MapColorMode,
+    val previousColorMode: MapColorMode,
+    val transitionProgress: Float,
+    val countries: Map<String, Country>
+)
+
+/**
+ * Draw a single copy of the map (used for horizontal wrapping)
+ */
+private fun DrawScope.drawMapCopy(
+    wrapOffset: Float,
+    transform: TransformState,
+    layout: MapLayout,
+    params: MapDrawParams,
+    inverseMatrix: android.graphics.Matrix,
+    onMatrixCaptured: (Boolean) -> Unit
+) {
+    val effectivePanX = transform.panX + wrapOffset
+
+    withTransform({
+        translate(layout.canvasOffsetX + 0.5f * layout.mapWidth, layout.canvasOffsetY + 0.5f * layout.mapHeight)
+        scale(transform.scale, transform.scale)
+        translate((effectivePanX - 0.5f) * layout.mapWidth, (transform.panY - 0.5f) * layout.mapHeight)
+    }) {
+        // Ocean background
+        drawRect(
+            color = MapOcean,
+            topLeft = Offset.Zero,
+            size = Size(layout.mapWidth, layout.mapHeight)
+        )
+
+        // Grid lines
+        drawMercatorGrid(layout.mapWidth, layout.mapHeight)
+
+        // Countries
+        params.geometries.forEach { geometry ->
+            val isSelected = geometry.countryId == params.selectedCountryId
+            val repoId = geoJsonToRepoId[geometry.countryId]
+            val country = repoId?.let { params.countries[it] }
+            drawCountryMercator(
+                geometry = geometry,
+                isSelected = isSelected,
+                colorMode = params.colorMode,
+                previousColorMode = params.previousColorMode,
+                transitionProgress = params.transitionProgress,
+                country = country,
+                mapWidth = layout.mapWidth,
+                mapHeight = layout.mapHeight
+            )
+        }
+
+        // Capture inverse matrix for tap detection (center copy only)
+        if (wrapOffset == 0f) {
+            val matrix = drawContext.canvas.nativeCanvas.getMatrix()
+            onMatrixCaptured(matrix.invert(inverseMatrix))
+        }
+    }
 }
 
 /**
@@ -324,46 +476,42 @@ fun WorldMapCanvas(
     countries: Map<String, Country> = emptyMap(),
     modifier: Modifier = Modifier
 ) {
-    // Transform state for zoom and pan (uses top-level TransformState)
     var transform by remember { mutableStateOf(TransformState()) }
-
-    // Use rememberUpdatedState to ensure gesture handlers always have current transform
     val currentTransform by rememberUpdatedState(transform)
-
-    // Store map layout dimensions so gesture handler uses same values as Canvas
-    var mapLayoutWidth by remember { mutableStateOf(0f) }
-    var mapLayoutHeight by remember { mutableStateOf(0f) }
-
-    // Store the inverse transformation matrix for tap detection
-    val inverseMatrix = remember { android.graphics.Matrix() }
-    var matrixValid by remember { mutableStateOf(false) }
-
     val geometries = remember { CountryGeometryData.getAllGeometries() }
+    val gestureState = remember { MapGestureState(geometries, android.graphics.Matrix()) }
 
-    // Track previous color mode for cross-dissolve animation
+    // Animation state for color mode transitions
     var previousColorMode by remember { mutableStateOf(colorMode) }
     var animationTarget by remember { mutableStateOf(0f) }
 
-    // When color mode changes, trigger animation
     LaunchedEffect(colorMode) {
         if (colorMode != previousColorMode) {
             animationTarget = 1f
         }
     }
 
-    // Animate the transition progress
     val animationProgress by animateFloatAsState(
         targetValue = animationTarget,
         animationSpec = tween(durationMillis = 400),
         finishedListener = {
-            // Animation complete, update previous mode
             previousColorMode = colorMode
+            animationTarget = 0f  // Reset for next transition
         },
         label = "colorModeTransition"
     )
 
-    // Calculate effective progress (0 = previous mode, 1 = new mode)
     val transitionProgress = if (previousColorMode == colorMode) 1f else animationProgress
+
+    // Don't use remember here - animated values need to trigger Canvas redraw on each frame
+    val drawParams = MapDrawParams(
+        geometries = geometries,
+        selectedCountryId = selectedCountryId,
+        colorMode = colorMode,
+        previousColorMode = previousColorMode,
+        transitionProgress = transitionProgress,
+        countries = countries
+    )
 
     Box(
         modifier = modifier
@@ -371,156 +519,37 @@ fun WorldMapCanvas(
             .clipToBounds()
             .background(MapOcean)
     ) {
-        // Canvas for drawing the map
-        Canvas(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // Calculate map layout dimensions
+        Canvas(modifier = Modifier.fillMaxSize()) {
             val layout = calculateMapLayout(size.width, size.height)
-            val mapWidth = layout.mapWidth
-            val mapHeight = layout.mapHeight
-            val canvasOffsetX = layout.canvasOffsetX
-            val canvasOffsetY = layout.canvasOffsetY
+            gestureState.mapLayoutWidth = layout.mapWidth
+            gestureState.mapLayoutHeight = layout.mapHeight
 
-            // Store these values for gesture handler to use
-            mapLayoutWidth = mapWidth
-            mapLayoutHeight = mapHeight
-
-            // Draw the map with horizontal wrapping (draw 3 copies: left, center, right)
-            val wrapOffsets = listOf(-1f, 0f, 1f)
-
-            wrapOffsets.forEach { wrapOffset ->
-                // Read current values from State objects
-                val currentScale = transform.scale
-                val currentPanX = transform.panX
-                val currentPanY = transform.panY
-
-                // Effective panX with wrap offset for this copy
-                val effectivePanX = currentPanX + wrapOffset
-
-                // Transform matches screenToMap exactly:
-                // screenX = ((nx + panX - 0.5) * scale + 0.5) * mapW + canvasOffsetX
-                withTransform({
-                    // Step 3: Final position on canvas + center offset
-                    translate(canvasOffsetX + 0.5f * mapWidth, canvasOffsetY + 0.5f * mapHeight)
-                    // Step 2: Apply zoom
-                    scale(currentScale, currentScale)
-                    // Step 1: Apply pan and shift to center coordinates
-                    translate((effectivePanX - 0.5f) * mapWidth, (currentPanY - 0.5f) * mapHeight)
-                }) {
-                    // Draw ocean background for the map area
-                    drawRect(
-                        color = MapOcean,
-                        topLeft = Offset.Zero,
-                        size = Size(mapWidth, mapHeight)
-                    )
-
-                    // Draw grid lines
-                    drawMercatorGrid(mapWidth, mapHeight)
-
-                    // Draw all countries
-                    geometries.forEach { geometry ->
-                        val isSelected = geometry.countryId == selectedCountryId
-                        // Look up country by converting GeoJSON ID to repo ID
-                        val repoId = geoJsonToRepoId[geometry.countryId]
-                        val country = repoId?.let { countries[it] }
-                        drawCountryMercator(
-                            geometry = geometry,
-                            isSelected = isSelected,
-                            colorMode = colorMode,
-                            previousColorMode = previousColorMode,
-                            transitionProgress = transitionProgress,
-                            country = country,
-                            mapWidth = mapWidth,
-                            mapHeight = mapHeight
-                        )
-                    }
-
-                    // Store the inverse matrix for tap detection (only for center copy)
-                    if (wrapOffset == 0f) {
-                        val matrix = drawContext.canvas.nativeCanvas.getMatrix()
-                        matrixValid = matrix.invert(inverseMatrix)
-                    }
-                }
+            // Draw 3 copies for horizontal wrapping (left, center, right)
+            listOf(-1f, 0f, 1f).forEach { wrapOffset ->
+                drawMapCopy(
+                    wrapOffset = wrapOffset,
+                    transform = transform,
+                    layout = layout,
+                    params = drawParams,
+                    inverseMatrix = gestureState.inverseMatrix,
+                    onMatrixCaptured = { gestureState.matrixValid = it }
+                )
             }
 
-            // Draw compass rose (not affected by zoom)
             drawCompassRose()
-
-            // Draw zoom indicator
             drawZoomIndicator(transform.scale)
         }
 
-        // Transparent overlay for gesture handling (unified tap + pan/zoom)
+        // Gesture handling overlay
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .pointerInput(Unit) {
-                    awaitEachGesture {
-                        val down = awaitFirstDown(requireUnconsumed = false)
-                        val downPosition = down.position
-                        var totalDragDistance = 0f
-                        var wasDragged = false
-
-                        // Calculate map layout once for this gesture
-                        val layout = calculateMapLayout(size.width.toFloat(), size.height.toFloat())
-
-                        do {
-                            val event = awaitPointerEvent()
-                            val changes = event.changes
-
-                            when {
-                                changes.size > 1 -> {
-                                    // Multi-touch: zoom and pan
-                                    wasDragged = true
-                                    transform = calculateMultiTouchTransform(
-                                        current = currentTransform,
-                                        zoom = event.calculateZoom(),
-                                        pan = event.calculatePan(),
-                                        mapWidth = layout.mapWidth,
-                                        mapHeight = layout.mapHeight
-                                    )
-                                    changes.forEach { it.consume() }
-                                }
-                                changes.size == 1 -> {
-                                    val change = changes.first()
-                                    if (change.positionChanged()) {
-                                        val panDelta = change.position - change.previousPosition
-                                        totalDragDistance += panDelta.getDistance()
-
-                                        // Only start panning after minimum drag distance
-                                        if (totalDragDistance > 15f) {
-                                            wasDragged = true
-                                            transform = calculateSingleTouchTransform(
-                                                current = currentTransform,
-                                                panDelta = panDelta,
-                                                mapWidth = layout.mapWidth,
-                                                mapHeight = layout.mapHeight
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        } while (changes.any { it.pressed })
-
-                        // If finger lifted without much movement, treat as tap
-                        if (!wasDragged) {
-                            // Skip if Canvas hasn't drawn or matrix isn't valid
-                            if (!matrixValid || mapLayoutWidth <= 0f || mapLayoutHeight <= 0f) {
-                                return@awaitEachGesture
-                            }
-
-                            val countryId = screenPositionToCountryId(
-                                screenPosition = downPosition,
-                                inverseMatrix = inverseMatrix,
-                                mapWidth = mapLayoutWidth,
-                                mapHeight = mapLayoutHeight,
-                                geometries = geometries
-                            )
-                            onCountryTapped(countryId)
-                        }
-                    }
-                }
+                .mapGestures(
+                    gestureState = gestureState,
+                    currentTransform = { currentTransform },
+                    onTransformChange = { transform = it },
+                    onCountryTapped = onCountryTapped
+                )
         )
     }
 }
