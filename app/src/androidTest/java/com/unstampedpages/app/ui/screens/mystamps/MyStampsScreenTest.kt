@@ -94,7 +94,7 @@ class MyStampsScreenTest {
     fun myStampsScreen_hasCorrectCountryCount() {
         composeTestRule.myStampsRobot {
             verifyScreenDisplayed()
-            verifyCountryCount(195)
+            verifyCountryCount(196)
         }
     }
 
