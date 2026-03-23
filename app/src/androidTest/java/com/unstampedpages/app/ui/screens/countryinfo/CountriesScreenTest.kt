@@ -179,6 +179,41 @@ class CountriesScreenTest {
     }
 
     @Test
+    fun countriesScreen_selectCountry_displaysPassportValidity() {
+        composeTestRule.countriesRobot {
+            searchAndSelectCountry("Japan", "jp")
+            verifyPassportValidityDisplayed()
+        }
+    }
+
+    @Test
+    fun countriesScreen_japanPassportValidity_displaysPlannedStay() {
+        composeTestRule.countriesRobot {
+            searchAndSelectCountry("Japan", "jp")
+            verifyPassportValidityDisplayed()
+            verifyPassportValidityValue("Planned length of stay")
+        }
+    }
+
+    @Test
+    fun countriesScreen_germanyPassportValidity_displays3Months() {
+        composeTestRule.countriesRobot {
+            searchAndSelectCountry("Germany", "de")
+            verifyPassportValidityDisplayed()
+            verifyPassportValidityValue("3 months")
+        }
+    }
+
+    @Test
+    fun countriesScreen_canadaPassportValidity_displays6Months() {
+        composeTestRule.countriesRobot {
+            searchAndSelectCountry("Canada", "ca")
+            verifyPassportValidityDisplayed()
+            verifyPassportValidityValue("6 months")
+        }
+    }
+
+    @Test
     fun countriesScreen_selectCountry_displaysAllCountryInfo() {
         composeTestRule.countriesRobot {
             searchAndSelectCountry("Japan", "jp")
@@ -233,6 +268,15 @@ class CountriesScreenTest {
     }
 
     @Test
+    fun countriesScreen_selectPassportValidityMode_modeChanges() {
+        composeTestRule.countriesRobot {
+            verifyMapViewSelectorDisplayed()
+            selectPassportValidityMapMode()
+            verifyPassportValidityMapModeSelected()
+        }
+    }
+
+    @Test
     fun countriesScreen_toggleBetweenModes_allModesWork() {
         composeTestRule.countriesRobot {
             verifyMapViewSelectorDisplayed()
@@ -247,7 +291,12 @@ class CountriesScreenTest {
             verifyVisaRequirementsMapModeSelected()
             waitForAnimation()
 
-            // Visa Requirements -> Default
+            // Visa Requirements -> Passport Validity
+            selectPassportValidityMapMode()
+            verifyPassportValidityMapModeSelected()
+            waitForAnimation()
+
+            // Passport Validity -> Default
             selectDefaultMapMode()
             verifyDefaultMapModeSelected()
             waitForAnimation()
@@ -282,6 +331,10 @@ class CountriesScreenTest {
             selectVisaRequirementsMapMode()
             waitForAnimation()
             verifyVisaRequirementsMapModeSelected()
+
+            selectPassportValidityMapMode()
+            waitForAnimation()
+            verifyPassportValidityMapModeSelected()
         }
     }
 
@@ -325,6 +378,26 @@ class CountriesScreenTest {
             waitForAnimation()
             searchAndSelectCountry("United States", "us")
             verifyEntryRequirementDisplayed()
+            verifyAllCountryInfoDisplayed()
+        }
+    }
+
+    @Test
+    fun countriesScreen_japan_displaysCorrectInfoInPassportValidityMode() {
+        composeTestRule.countriesRobot {
+            selectPassportValidityMapMode()
+            waitForAnimation()
+            searchAndSelectCountry("Japan", "jp")
+            verifyAllCountryInfoDisplayed()
+        }
+    }
+
+    @Test
+    fun countriesScreen_germany_displaysCorrectInfoInPassportValidityMode() {
+        composeTestRule.countriesRobot {
+            selectPassportValidityMapMode()
+            waitForAnimation()
+            searchAndSelectCountry("Germany", "de")
             verifyAllCountryInfoDisplayed()
         }
     }

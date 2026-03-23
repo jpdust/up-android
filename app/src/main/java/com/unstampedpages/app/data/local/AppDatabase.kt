@@ -13,7 +13,7 @@ import com.unstampedpages.app.data.local.entity.TripLogEntry
 
 @Database(
     entities = [ChecklistItem::class, TripLogEntry::class, StampItem::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

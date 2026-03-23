@@ -222,6 +222,44 @@ class CountryRepositoryTest {
         assertEquals(Continent.ASIA, japan?.continent)
         assertEquals("JPY", japan?.currencyCode)
         assertEquals("LOW", japan?.safetyLevel?.name)
+        assertEquals("Planned length of stay", japan?.passportValidity)
+    }
+
+    @Test
+    fun `countries have passport validity data`() {
+        val countries = repository.getAllCountries()
+        val countriesWithValidity = countries.filter { it.passportValidity != null }
+
+        // Most countries should have passport validity data
+        assertTrue(
+            "Expected most countries to have passport validity data",
+            countriesWithValidity.size > countries.size / 2
+        )
+    }
+
+    @Test
+    fun `passport validity has expected values`() {
+        val countries = repository.getAllCountries()
+        val validValidities = listOf(
+            "6 months",
+            "3 months",
+            "Planned length of stay",
+            "150 days upon arrival",
+            "120 Days Upon Arrival",
+            "30 days after departure",
+            "3-6 months",
+            "At least 1 day after departure",
+            "Must expire after departure date"
+        )
+
+        countries.forEach { country ->
+            if (country.passportValidity != null) {
+                assertTrue(
+                    "Unexpected passport validity: ${country.passportValidity} for ${country.name}",
+                    validValidities.contains(country.passportValidity)
+                )
+            }
+        }
     }
 
     @Test

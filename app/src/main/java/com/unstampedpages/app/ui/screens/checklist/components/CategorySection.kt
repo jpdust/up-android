@@ -1,0 +1,134 @@
+package com.unstampedpages.app.ui.screens.checklist.components
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.unstampedpages.app.data.local.entity.ChecklistItem
+import com.unstampedpages.app.data.model.ChecklistCategory
+import com.unstampedpages.app.ui.theme.Primary
+import com.unstampedpages.app.ui.theme.Secondary
+
+@Composable
+fun CategorySection(
+    category: ChecklistCategory,
+    items: List<ChecklistItem>,
+    isExpanded: Boolean,
+    isMultiSelectMode: Boolean,
+    selectedItemIds: Set<Long>,
+    onToggleExpanded: () -> Unit,
+    onItemChecked: (ChecklistItem) -> Unit,
+    onItemDeleted: (ChecklistItem) -> Unit,
+    onItemPinned: (ChecklistItem) -> Unit,
+    onQuantityChanged: (ChecklistItem, Int) -> Unit,
+    onItemLongPress: (Long) -> Unit,
+    onItemSelected: (Long) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val rotationAngle by animateFloatAsState(
+        targetValue = if (isExpanded) 180f else 0f,
+        label = "rotation"
+    )
+
+    val checkedCount = items.count { it.isChecked }
+    val totalCount = items.size
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .testTag("category_section_${category.name.lowercase()}")
+    ) {
+        // Category Header
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onToggleExpanded() }
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .testTag("category_header_${category.name.lowercase()}"),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = category.icon,
+                contentDescription = null,
+                tint = Secondary,
+                modifier = Modifier.size(24.dp)
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Text(
+                text = category.displayName,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = Primary,
+                modifier = Modifier.weight(1f)
+            )
+
+            Text(
+                text = "$checkedCount/$totalCount",
+                style = MaterialTheme.typography.labelMedium,
+                color = Primary.copy(alpha = 0.6f)
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Icon(
+                imageVector = Icons.Default.ExpandMore,
+                contentDescription = if (isExpanded) "Collapse" else "Expand",
+                tint = Primary.copy(alpha = 0.6f),
+                modifier = Modifier
+                    .size(24.dp)
+                    .rotate(rotationAngle)
+            )
+        }
+
+        // Category Items
+        AnimatedVisibility(
+            visible = isExpanded,
+            enter = expandVertically(),
+            exit = shrinkVertically()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp)
+            ) {
+                items.forEach { item ->
+                    SwipeableChecklistItem(
+                        item = item,
+                        isMultiSelectMode = isMultiSelectMode,
+                        isSelected = selectedItemIds.contains(item.id),
+                        onCheckedChange = { onItemChecked(item) },
+                        onDelete = { onItemDeleted(item) },
+                        onPin = { onItemPinned(item) },
+                        onQuantityChange = { quantity -> onQuantityChanged(item, quantity) },
+                        onLongPress = { onItemLongPress(item.id) },
+                        onSelect = { onItemSelected(item.id) },
+                        modifier = Modifier.testTag("checklist_item_${item.id}")
+                    )
+                }
+            }
+        }
+    }
+}

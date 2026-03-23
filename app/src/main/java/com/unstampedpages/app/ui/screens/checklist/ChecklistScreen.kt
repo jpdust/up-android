@@ -1,40 +1,26 @@
 package com.unstampedpages.app.ui.screens.checklist
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.RadioButtonUnchecked
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.automirrored.filled.ViewList
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -44,72 +30,143 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.unstampedpages.app.data.local.entity.ChecklistItem
+import com.unstampedpages.app.data.model.ChecklistCategory
+import com.unstampedpages.app.ui.screens.checklist.components.AddItemDialog
+import com.unstampedpages.app.ui.screens.checklist.components.CategorySection
+import com.unstampedpages.app.ui.screens.checklist.components.MultiSelectActionBar
+import com.unstampedpages.app.ui.screens.checklist.components.ProgressHeader
+import com.unstampedpages.app.ui.screens.checklist.components.TemplateSelector
 import com.unstampedpages.app.ui.theme.Primary
 import com.unstampedpages.app.ui.theme.Secondary
-import com.unstampedpages.app.ui.theme.SecondaryLight
 
 @Composable
 fun ChecklistScreen(
     viewModel: ChecklistViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var showAddField by remember { mutableStateOf(false) }
+    var showOverflowMenu by remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag("checklist_screen")
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            // Add item field
-            AnimatedVisibility(
-                visible = showAddField,
-                enter = slideInVertically() + fadeIn(),
-                exit = slideOutVertically() + fadeOut()
-            ) {
-                AddItemField(
-                    value = uiState.newItemText,
-                    onValueChange = { viewModel.updateNewItemText(it) },
-                    onAdd = {
-                        viewModel.addItem()
-                        showAddField = false
-                    },
-                    modifier = Modifier.padding(16.dp)
+            // Multi-select action bar or Progress header
+            if (uiState.isMultiSelectMode) {
+                MultiSelectActionBar(
+                    selectedCount = uiState.selectedItemIds.size,
+                    onCancel = { viewModel.exitMultiSelectMode() },
+                    onDelete = { viewModel.deleteSelectedItems() }
                 )
+            } else {
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    ProgressHeader(
+                        progress = uiState.progress,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    // Overflow menu button
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(top = 8.dp, end = 8.dp)
+                    ) {
+                        IconButton(
+                            onClick = { showOverflowMenu = true },
+                            modifier = Modifier.testTag("overflow_menu_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "More options",
+                                tint = Primary
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = showOverflowMenu,
+                            onDismissRequest = { showOverflowMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Load Template") },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ViewList,
+                                        contentDescription = null
+                                    )
+                                },
+                                onClick = {
+                                    showOverflowMenu = false
+                                    viewModel.showTemplateDialog()
+                                },
+                                modifier = Modifier.testTag("menu_load_template")
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Reset List") },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Refresh,
+                                        contentDescription = null
+                                    )
+                                },
+                                onClick = {
+                                    showOverflowMenu = false
+                                    viewModel.uncheckAllItems()
+                                },
+                                modifier = Modifier.testTag("menu_reset_list")
+                            )
+                        }
+                    }
+                }
             }
 
-            // Checklist
+            // Checklist content
             if (uiState.items.isEmpty()) {
                 EmptyChecklistMessage(
+                    onLoadTemplate = { viewModel.showTemplateDialog() },
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(32.dp)
                 )
             } else {
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .testTag("checklist_content")
                 ) {
-                    items(
-                        items = uiState.items,
-                        key = { it.id }
-                    ) { item ->
-                        ChecklistItemCard(
-                            item = item,
-                            onToggle = { viewModel.toggleItemChecked(item) },
-                            onDelete = { viewModel.deleteItem(item) }
-                        )
-                    }
+                    // Render categories with items
+                    ChecklistCategory.entries
+                        .filter { uiState.groupedItems.containsKey(it) }
+                        .sortedBy { it.sortOrder }
+                        .forEach { category ->
+                            val items = uiState.groupedItems[category] ?: emptyList()
+
+                            item(key = "category_${category.name}") {
+                                CategorySection(
+                                    category = category,
+                                    items = items,
+                                    isExpanded = uiState.expandedCategories.contains(category),
+                                    isMultiSelectMode = uiState.isMultiSelectMode,
+                                    selectedItemIds = uiState.selectedItemIds,
+                                    onToggleExpanded = { viewModel.toggleCategoryExpanded(category) },
+                                    onItemChecked = { viewModel.toggleItemChecked(it) },
+                                    onItemDeleted = { viewModel.deleteItem(it) },
+                                    onItemPinned = { viewModel.toggleItemPinned(it) },
+                                    onQuantityChanged = { item, qty -> viewModel.updateQuantity(item, qty) },
+                                    onItemLongPress = { viewModel.enterMultiSelectMode(it) },
+                                    onItemSelected = { viewModel.toggleItemSelection(it) }
+                                )
+                            }
+                        }
 
                     item {
                         Spacer(modifier = Modifier.height(80.dp))
@@ -119,130 +176,48 @@ fun ChecklistScreen(
         }
 
         // Floating Action Button
-        FloatingActionButton(
-            onClick = { showAddField = !showAddField },
-            containerColor = Secondary,
-            contentColor = Primary,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "Add item"
-            )
-        }
-    }
-}
-
-@Composable
-private fun AddItemField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    onAdd: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            OutlinedTextField(
-                value = value,
-                onValueChange = onValueChange,
-                placeholder = { Text("What to bring on your adventure...") },
-                modifier = Modifier.weight(1f),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { onAdd() }),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Secondary,
-                    unfocusedBorderColor = Primary.copy(alpha = 0.3f),
-                    cursorColor = Secondary
-                )
-            )
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            IconButton(
-                onClick = onAdd,
-                enabled = value.isNotBlank()
+        if (!uiState.isMultiSelectMode) {
+            FloatingActionButton(
+                onClick = { viewModel.showAddItemDialog() },
+                containerColor = Secondary,
+                contentColor = Primary,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp)
+                    .testTag("add_item_fab")
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Add",
-                    tint = if (value.isNotBlank()) Secondary else Primary.copy(alpha = 0.3f)
+                    contentDescription = "Add item"
                 )
             }
         }
     }
+
+    // Add Item Dialog
+    if (uiState.showAddItemDialog) {
+        AddItemDialog(
+            onDismiss = { viewModel.hideAddItemDialog() },
+            onAdd = { name, category, quantity ->
+                viewModel.addItemWithDetails(name, category, quantity)
+            }
+        )
+    }
+
+    // Template Selector Dialog
+    if (uiState.showTemplateDialog) {
+        TemplateSelector(
+            onDismiss = { viewModel.hideTemplateDialog() },
+            onTemplateSelected = { viewModel.loadTemplate(it) }
+        )
+    }
 }
 
 @Composable
-private fun ChecklistItemCard(
-    item: ChecklistItem,
-    onToggle: () -> Unit,
-    onDelete: () -> Unit
+private fun EmptyChecklistMessage(
+    onLoadTemplate: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    // Pre-compute checked state values to reduce complexity
-    val isChecked = item.isChecked
-    val containerColor = if (isChecked) SecondaryLight.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surface
-    val checkIcon = if (isChecked) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked
-    val checkIconDescription = if (isChecked) "Uncheck" else "Check"
-    val checkIconTint = if (isChecked) Secondary else Primary.copy(alpha = 0.5f)
-    val textAlpha = if (isChecked) 0.6f else 1f
-    val textDecoration = if (isChecked) TextDecoration.LineThrough else TextDecoration.None
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = containerColor),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onToggle) {
-                Icon(
-                    imageVector = checkIcon,
-                    contentDescription = checkIconDescription,
-                    tint = checkIconTint
-                )
-            }
-
-            Text(
-                text = item.content,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier
-                    .weight(1f)
-                    .alpha(textAlpha),
-                textDecoration = textDecoration,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            IconButton(onClick = onDelete) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete",
-                    tint = Primary.copy(alpha = 0.5f)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun EmptyChecklistMessage(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -252,14 +227,33 @@ private fun EmptyChecklistMessage(modifier: Modifier = Modifier) {
             text = "Your checklist is empty",
             style = MaterialTheme.typography.titleMedium,
             color = Primary,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.testTag("empty_message_title")
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Tap the + button to add items\nfor your next adventure",
+            text = "Tap the + button to add items\nor load a template to get started",
             style = MaterialTheme.typography.bodyMedium,
             color = Primary.copy(alpha = 0.6f),
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            modifier = Modifier.testTag("empty_message_subtitle")
         )
+        Spacer(modifier = Modifier.height(16.dp))
+        androidx.compose.material3.TextButton(
+            onClick = onLoadTemplate,
+            modifier = Modifier.testTag("load_template_button")
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ViewList,
+                contentDescription = null,
+                tint = Secondary
+            )
+            Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+            Text(
+                text = "Load Template",
+                color = Secondary,
+                fontWeight = FontWeight.Bold
+            )
+        }
     }
 }
