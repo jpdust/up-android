@@ -413,7 +413,7 @@ class CountriesRobot(private val composeTestRule: ComposeTestRule) {
      * Verifies the safety level info is displayed
      */
     fun verifySafetyLevelDisplayed(): CountriesRobot {
-        composeTestRule.onNodeWithTag("info_safety_level").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("info_safety_level").performScrollTo().assertIsDisplayed()
         composeTestRule.onNodeWithText("Safety Level").assertIsDisplayed()
         return this
     }
@@ -430,7 +430,7 @@ class CountriesRobot(private val composeTestRule: ComposeTestRule) {
      * Verifies the entry requirement info is displayed
      */
     fun verifyEntryRequirementDisplayed(): CountriesRobot {
-        composeTestRule.onNodeWithTag("info_entry_requirement").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("info_entry_requirement").performScrollTo().assertIsDisplayed()
         composeTestRule.onNodeWithText("Entry Requirement").assertIsDisplayed()
         return this
     }
@@ -447,8 +447,8 @@ class CountriesRobot(private val composeTestRule: ComposeTestRule) {
      * Verifies the passport validity info is displayed
      */
     fun verifyPassportValidityDisplayed(): CountriesRobot {
-        composeTestRule.onNodeWithTag("info_passport_validity").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Passport Validity").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("info_passport_validity").performScrollTo().assertIsDisplayed()
+        // Note: We don't verify text "Passport Validity" separately as it also exists in the map mode selector
         return this
     }
 
@@ -464,7 +464,7 @@ class CountriesRobot(private val composeTestRule: ComposeTestRule) {
      * Verifies the currency info is displayed
      */
     fun verifyCurrencyInfoDisplayed(): CountriesRobot {
-        composeTestRule.onNodeWithTag("info_currency").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("info_currency").performScrollTo().assertIsDisplayed()
         composeTestRule.onNodeWithText("Currency").assertIsDisplayed()
         return this
     }
@@ -481,7 +481,7 @@ class CountriesRobot(private val composeTestRule: ComposeTestRule) {
      * Verifies the power outlet info is displayed
      */
     fun verifyPowerOutletDisplayed(): CountriesRobot {
-        composeTestRule.onNodeWithTag("info_power_outlet").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("info_power_outlet").performScrollTo().assertIsDisplayed()
         composeTestRule.onNodeWithText("Power Outlet").assertIsDisplayed()
         return this
     }
@@ -512,7 +512,7 @@ class CountriesRobot(private val composeTestRule: ComposeTestRule) {
      * Verifies the currency converter is displayed
      */
     fun verifyCurrencyConverterDisplayed(): CountriesRobot {
-        composeTestRule.onNodeWithTag("currency_converter").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("currency_converter").performScrollTo().assertIsDisplayed()
         return this
     }
 
