@@ -9,6 +9,10 @@ data class ChecklistItem(
     val id: Long = 0,
     val content: String,
     val isChecked: Boolean = false,
+    val category: String = "OTHER",
+    val quantity: Int = 1,
+    val isPinned: Boolean = false,
+    val sortOrder: Int = 0,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )

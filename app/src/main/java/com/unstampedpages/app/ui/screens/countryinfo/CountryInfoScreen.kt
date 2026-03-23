@@ -185,7 +185,7 @@ fun CountryInfoScreen(
                 onModeSelected = { selectedColorMode = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
                     .testTag("map_color_mode_selector")
             )
         }
@@ -280,7 +280,7 @@ private fun MapColorModeSelector(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp)
+                .padding(horizontal = 12.dp, vertical = 8.dp)
         ) {
             Text(
                 text = "Map View",
@@ -288,7 +288,7 @@ private fun MapColorModeSelector(
                 fontWeight = FontWeight.Bold,
                 color = Primary,
                 modifier = Modifier
-                    .padding(bottom = 8.dp)
+                    .padding(bottom = 4.dp)
                     .testTag("map_view_label")
             )
 
@@ -297,10 +297,10 @@ private fun MapColorModeSelector(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onModeSelected(mode) }
-                        .padding(vertical = 4.dp)
+                        .padding(vertical = 1.dp)
                         .testTag("map_mode_${mode.name.lowercase()}"),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     RadioButton(
                         selected = selectedMode == mode,
@@ -313,7 +313,7 @@ private fun MapColorModeSelector(
                     )
                     Text(
                         text = mode.displayName,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
                         color = Primary
                     )
                 }

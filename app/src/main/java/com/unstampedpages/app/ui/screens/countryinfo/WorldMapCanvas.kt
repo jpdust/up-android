@@ -54,7 +54,18 @@ import kotlin.math.tan
 enum class MapColorMode(val displayName: String) {
     DEFAULT("Default"),
     SECURITY_RISK("Security Risk"),
-    VISA_REQUIREMENTS("Visa Requirements")
+    VISA_REQUIREMENTS("Visa Requirements"),
+    PASSPORT_VALIDITY("Passport Validity")
+}
+
+/**
+ * Colors for passport validity map mode
+ */
+private object PassportValidityColors {
+    val SixMonths = Color(0xFF9E9E9E)      // Gray
+    val ThreeMonths = Color(0xFF00BCD4)    // Teal
+    val PlannedStay = Color(0xFF4CAF50)    // Green
+    val Other = Color(0xFFFFC107)          // Yellow
 }
 
 /**
@@ -314,6 +325,19 @@ private fun Modifier.mapGestures(
  */
 private fun getVisaRequirementColor(visaRequirement: VisaRequirement): Color {
     return visaRequirement.color
+}
+
+/**
+ * Get color for passport validity requirement
+ */
+private fun getPassportValidityColor(passportValidity: String?): Color {
+    return when (passportValidity) {
+        "6 months" -> PassportValidityColors.SixMonths
+        "3 months" -> PassportValidityColors.ThreeMonths
+        "Planned length of stay" -> PassportValidityColors.PlannedStay
+        null -> PassportValidityColors.Other
+        else -> PassportValidityColors.Other
+    }
 }
 
 /**
@@ -671,6 +695,7 @@ private fun DrawScope.drawCountryMercator(
             isSelected -> MapHighlight
             mode == MapColorMode.SECURITY_RISK && country != null -> country.safetyLevel.color
             mode == MapColorMode.VISA_REQUIREMENTS && country != null -> getVisaRequirementColor(country.visaRequirement)
+            mode == MapColorMode.PASSPORT_VALIDITY -> getPassportValidityColor(country?.passportValidity)
             else -> MapLand
         }
     }

@@ -13,7 +13,8 @@ data class Country(
     val outletType: String,
     val continent: Continent,
     val flagEmoji: String,
-    val imageUrl: String? = null
+    val imageUrl: String? = null,
+    val passportValidity: String? = null
 )
 
 enum class SafetyLevel(val displayName: String, val color: Color) {

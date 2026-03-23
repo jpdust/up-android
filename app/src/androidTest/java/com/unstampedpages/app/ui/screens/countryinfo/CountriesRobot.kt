@@ -75,6 +75,7 @@ class CountriesRobot(private val composeTestRule: ComposeTestRule) {
         composeTestRule.onNodeWithText("Default").assertIsDisplayed()
         composeTestRule.onNodeWithText("Security Risk").assertIsDisplayed()
         composeTestRule.onNodeWithText("Visa Requirements").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Passport Validity").assertIsDisplayed()
         return this
     }
 
@@ -316,6 +317,15 @@ class CountriesRobot(private val composeTestRule: ComposeTestRule) {
     }
 
     /**
+     * Selects the Passport Validity map mode
+     */
+    fun selectPassportValidityMapMode(): CountriesRobot {
+        composeTestRule.onNodeWithTag("map_mode_passport_validity").performClick()
+        composeTestRule.waitForIdle()
+        return this
+    }
+
+    /**
      * Verifies Default map mode is selected
      */
     fun verifyDefaultMapModeSelected(): CountriesRobot {
@@ -336,6 +346,14 @@ class CountriesRobot(private val composeTestRule: ComposeTestRule) {
      */
     fun verifyVisaRequirementsMapModeSelected(): CountriesRobot {
         composeTestRule.onNodeWithTag("map_mode_radio_visa_requirements").assertIsSelected()
+        return this
+    }
+
+    /**
+     * Verifies Passport Validity map mode is selected
+     */
+    fun verifyPassportValidityMapModeSelected(): CountriesRobot {
+        composeTestRule.onNodeWithTag("map_mode_radio_passport_validity").assertIsSelected()
         return this
     }
 
@@ -426,6 +444,23 @@ class CountriesRobot(private val composeTestRule: ComposeTestRule) {
     }
 
     /**
+     * Verifies the passport validity info is displayed
+     */
+    fun verifyPassportValidityDisplayed(): CountriesRobot {
+        composeTestRule.onNodeWithTag("info_passport_validity").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Passport Validity").assertIsDisplayed()
+        return this
+    }
+
+    /**
+     * Verifies the passport validity has a specific value
+     */
+    fun verifyPassportValidityValue(value: String): CountriesRobot {
+        composeTestRule.onNodeWithTag("info_passport_validity_value").assertTextEquals(value)
+        return this
+    }
+
+    /**
      * Verifies the currency info is displayed
      */
     fun verifyCurrencyInfoDisplayed(): CountriesRobot {
@@ -465,6 +500,7 @@ class CountriesRobot(private val composeTestRule: ComposeTestRule) {
     fun verifyAllCountryInfoDisplayed(): CountriesRobot {
         verifySafetyLevelDisplayed()
         verifyEntryRequirementDisplayed()
+        verifyPassportValidityDisplayed()
         verifyCurrencyInfoDisplayed()
         verifyPowerOutletDisplayed()
         return this

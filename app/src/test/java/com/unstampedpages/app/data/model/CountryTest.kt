@@ -30,6 +30,7 @@ class CountryTest {
         assertEquals("Type A/B", country.outletType)
         assertEquals(Continent.NORTH_AMERICA, country.continent)
         assertNull(country.imageUrl)
+        assertNull(country.passportValidity)
     }
 
     @Test
@@ -49,6 +50,25 @@ class CountryTest {
         )
 
         assertEquals("https://example.com/france.jpg", country.imageUrl)
+    }
+
+    @Test
+    fun `Country with passportValidity`() {
+        val country = Country(
+            id = "jp",
+            name = "Japan",
+            safetyLevel = SafetyLevel.LOW,
+            visaRequirement = VisaRequirement.VISA_NOT_REQUIRED,
+            currency = "Yen",
+            currencyCode = "JPY",
+            exchangeRateToUSD = 0.0067,
+            outletType = "Type A/B",
+            continent = Continent.ASIA,
+            flagEmoji = "\uD83C\uDDEF\uD83C\uDDF5",
+            passportValidity = "Planned length of stay"
+        )
+
+        assertEquals("Planned length of stay", country.passportValidity)
     }
 
     @Test

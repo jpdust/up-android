@@ -26,6 +26,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ElectricalServices
 import androidx.compose.material.icons.filled.Shield
@@ -147,6 +148,16 @@ fun CountryDetailSheet(
                                 label = "Entry Requirement",
                                 value = it.visaRequirement.displayName,
                                 testTag = "info_entry_requirement"
+                            )
+
+                            Divider(color = Primary.copy(alpha = 0.1f))
+
+                            // Passport Validity
+                            InfoRow(
+                                icon = Icons.Default.CalendarMonth,
+                                label = "Passport Validity",
+                                value = it.passportValidity ?: "Not specified",
+                                testTag = "info_passport_validity"
                             )
 
                             Divider(color = Primary.copy(alpha = 0.1f))
