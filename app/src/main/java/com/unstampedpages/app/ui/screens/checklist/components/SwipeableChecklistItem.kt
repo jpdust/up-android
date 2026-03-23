@@ -172,33 +172,20 @@ private fun ChecklistItemContent(
     onSelect: () -> Unit
 ) {
     val hapticFeedback = LocalHapticFeedback.current
-    val containerColor = when {
-        isSelected -> Secondary.copy(alpha = 0.2f)
-        item.isChecked -> SecondaryLight.copy(alpha = 0.2f)
-        else -> MaterialTheme.colorScheme.surface
-    }
-    val textAlpha = if (item.isChecked) 0.6f else 1f
-    val textDecoration = if (item.isChecked) TextDecoration.LineThrough else TextDecoration.None
+    val visualState = computeVisualState(isSelected, item.isChecked)
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .height(52.dp)
             .combinedClickable(
-                onClick = {
-                    if (isMultiSelectMode) {
-                        onSelect()
-                    } else {
-                        hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        onCheckedChange()
-                    }
-                },
+                onClick = createClickHandler(isMultiSelectMode, onSelect, onCheckedChange, hapticFeedback),
                 onLongClick = {
                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                     onLongPress()
                 }
             ),
-        colors = CardDefaults.cardColors(containerColor = containerColor),
+        colors = CardDefaults.cardColors(containerColor = visualState.containerColor),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -208,65 +195,139 @@ private fun ChecklistItemContent(
                 .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Checkbox or selection indicator
-            if (isMultiSelectMode) {
-                Checkbox(
-                    checked = isSelected,
-                    onCheckedChange = { onSelect() },
-                    colors = CheckboxDefaults.colors(
-                        checkedColor = Secondary,
-                        uncheckedColor = Primary.copy(alpha = 0.5f)
-                    ),
-                    modifier = Modifier.testTag("item_checkbox")
-                )
-            } else {
-                IconButton(
-                    onClick = onCheckedChange,
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(
-                        imageVector = if (item.isChecked) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
-                        contentDescription = if (item.isChecked) "Uncheck" else "Check",
-                        tint = if (item.isChecked) Secondary else Primary.copy(alpha = 0.5f),
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
+            SelectionIndicator(
+                isMultiSelectMode = isMultiSelectMode,
+                isSelected = isSelected,
+                isChecked = item.isChecked,
+                onCheckedChange = onCheckedChange,
+                onSelect = onSelect
+            )
 
-            // Pin indicator
-            if (item.isPinned) {
-                Icon(
-                    imageVector = Icons.Default.PushPin,
-                    contentDescription = "Pinned",
-                    tint = Secondary,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-            }
+            PinIndicator(isPinned = item.isPinned)
 
-            // Item name
             Text(
                 text = item.content,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier
                     .weight(1f)
-                    .alpha(textAlpha),
-                textDecoration = textDecoration,
+                    .alpha(visualState.textAlpha),
+                textDecoration = visualState.textDecoration,
                 color = Primary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
 
-            // Quantity badge and controls
-            if (item.quantity > 1 || !item.isChecked) {
-                QuantityPicker(
-                    quantity = item.quantity,
-                    onQuantityChange = onQuantityChange,
-                    enabled = !isMultiSelectMode && !item.isChecked,
-                    modifier = Modifier.testTag("quantity_picker_${item.id}")
-                )
-            }
+            QuantitySection(
+                item = item,
+                isMultiSelectMode = isMultiSelectMode,
+                onQuantityChange = onQuantityChange
+            )
         }
     }
+}
+
+private data class ChecklistItemVisualState(
+    val containerColor: Color,
+    val textAlpha: Float,
+    val textDecoration: TextDecoration
+)
+
+@Composable
+private fun computeVisualState(isSelected: Boolean, isChecked: Boolean): ChecklistItemVisualState {
+    val containerColor = when {
+        isSelected -> Secondary.copy(alpha = 0.2f)
+        isChecked -> SecondaryLight.copy(alpha = 0.2f)
+        else -> MaterialTheme.colorScheme.surface
+    }
+    val textAlpha = if (isChecked) 0.6f else 1f
+    val textDecoration = if (isChecked) TextDecoration.LineThrough else TextDecoration.None
+    return ChecklistItemVisualState(containerColor, textAlpha, textDecoration)
+}
+
+private fun createClickHandler(
+    isMultiSelectMode: Boolean,
+    onSelect: () -> Unit,
+    onCheckedChange: () -> Unit,
+    hapticFeedback: androidx.compose.ui.hapticfeedback.HapticFeedback
+): () -> Unit = {
+    if (isMultiSelectMode) {
+        onSelect()
+    } else {
+        hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        onCheckedChange()
+    }
+}
+
+@Composable
+private fun SelectionIndicator(
+    isMultiSelectMode: Boolean,
+    isSelected: Boolean,
+    isChecked: Boolean,
+    onCheckedChange: () -> Unit,
+    onSelect: () -> Unit
+) {
+    if (isMultiSelectMode) {
+        MultiSelectCheckbox(isSelected = isSelected, onSelect = onSelect)
+    } else {
+        CheckToggleButton(isChecked = isChecked, onCheckedChange = onCheckedChange)
+    }
+}
+
+@Composable
+private fun MultiSelectCheckbox(isSelected: Boolean, onSelect: () -> Unit) {
+    Checkbox(
+        checked = isSelected,
+        onCheckedChange = { onSelect() },
+        colors = CheckboxDefaults.colors(
+            checkedColor = Secondary,
+            uncheckedColor = Primary.copy(alpha = 0.5f)
+        ),
+        modifier = Modifier.testTag("item_checkbox")
+    )
+}
+
+@Composable
+private fun CheckToggleButton(isChecked: Boolean, onCheckedChange: () -> Unit) {
+    val icon = if (isChecked) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked
+    val contentDescription = if (isChecked) "Uncheck" else "Check"
+    val tint = if (isChecked) Secondary else Primary.copy(alpha = 0.5f)
+
+    IconButton(onClick = onCheckedChange, modifier = Modifier.size(48.dp)) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = tint,
+            modifier = Modifier.size(24.dp)
+        )
+    }
+}
+
+@Composable
+private fun PinIndicator(isPinned: Boolean) {
+    if (!isPinned) return
+    Icon(
+        imageVector = Icons.Default.PushPin,
+        contentDescription = "Pinned",
+        tint = Secondary,
+        modifier = Modifier.size(16.dp)
+    )
+    Spacer(modifier = Modifier.width(4.dp))
+}
+
+@Composable
+private fun QuantitySection(
+    item: ChecklistItem,
+    isMultiSelectMode: Boolean,
+    onQuantityChange: (Int) -> Unit
+) {
+    val showQuantityPicker = item.quantity > 1 || !item.isChecked
+    if (!showQuantityPicker) return
+
+    QuantityPicker(
+        quantity = item.quantity,
+        onQuantityChange = onQuantityChange,
+        enabled = !isMultiSelectMode && !item.isChecked,
+        modifier = Modifier.testTag("quantity_picker_${item.id}")
+    )
 }

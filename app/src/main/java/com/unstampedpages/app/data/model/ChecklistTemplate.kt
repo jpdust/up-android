@@ -6,6 +6,8 @@ data class ChecklistTemplateItem(
     val quantity: Int = 1
 )
 
+private const val PHONE_CHARGER = "Phone charger"
+
 enum class ChecklistTemplate(
     val displayName: String,
     val items: List<ChecklistTemplateItem>
@@ -15,7 +17,7 @@ enum class ChecklistTemplate(
         items = listOf(
             ChecklistTemplateItem("Laptop", ChecklistCategory.ELECTRONICS),
             ChecklistTemplateItem("Laptop charger", ChecklistCategory.ELECTRONICS),
-            ChecklistTemplateItem("Phone charger", ChecklistCategory.ELECTRONICS),
+            ChecklistTemplateItem(PHONE_CHARGER, ChecklistCategory.ELECTRONICS),
             ChecklistTemplateItem("Portable battery", ChecklistCategory.ELECTRONICS),
             ChecklistTemplateItem("Business cards", ChecklistCategory.DOCUMENTS),
             ChecklistTemplateItem("Passport", ChecklistCategory.DOCUMENTS),
@@ -43,7 +45,7 @@ enum class ChecklistTemplate(
             ChecklistTemplateItem("Sunscreen", ChecklistCategory.TOILETRIES),
             ChecklistTemplateItem("Aloe vera gel", ChecklistCategory.TOILETRIES),
             ChecklistTemplateItem("Passport", ChecklistCategory.DOCUMENTS),
-            ChecklistTemplateItem("Phone charger", ChecklistCategory.ELECTRONICS),
+            ChecklistTemplateItem(PHONE_CHARGER, ChecklistCategory.ELECTRONICS),
             ChecklistTemplateItem("Camera", ChecklistCategory.ELECTRONICS),
             ChecklistTemplateItem("Waterproof phone case", ChecklistCategory.ELECTRONICS),
             ChecklistTemplateItem("Shorts", ChecklistCategory.CLOTHING, 3),
@@ -66,7 +68,7 @@ enum class ChecklistTemplate(
             ChecklistTemplateItem("Bug spray", ChecklistCategory.TOILETRIES),
             ChecklistTemplateItem("Rain jacket", ChecklistCategory.CLOTHING),
             ChecklistTemplateItem("Flashlight", ChecklistCategory.ELECTRONICS),
-            ChecklistTemplateItem("Phone charger", ChecklistCategory.ELECTRONICS),
+            ChecklistTemplateItem(PHONE_CHARGER, ChecklistCategory.ELECTRONICS),
             ChecklistTemplateItem("Portable battery", ChecklistCategory.ELECTRONICS),
             ChecklistTemplateItem("Energy bars", ChecklistCategory.SNACKS, 5),
             ChecklistTemplateItem("Trail mix", ChecklistCategory.SNACKS, 2),
