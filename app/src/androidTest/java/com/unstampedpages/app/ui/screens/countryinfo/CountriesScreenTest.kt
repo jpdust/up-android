@@ -1,6 +1,7 @@
 package com.unstampedpages.app.ui.screens.countryinfo
 
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -727,6 +728,163 @@ class CountriesScreenTest {
             // Zoom the map
             zoomInMap()
             verifyLegendDisplayed()
+        }
+    }
+
+    // ==================== Instructions Text Visibility Tests ====================
+
+    @Test
+    fun countriesScreen_pageLoad_instructionsTextDisplayed() {
+        composeTestRule.countriesRobot {
+            verifyPageLoad()
+            verifyInstructionsTextDisplayed()
+        }
+    }
+
+    @Test
+    fun countriesScreen_bottomSheetOpen_instructionsTextHidden() {
+        composeTestRule.countriesRobot {
+            verifyInstructionsTextDisplayed()
+            searchAndSelectCountry("Japan", "jp")
+            verifyBottomSheetDisplayed()
+            verifyInstructionsTextNotDisplayed()
+        }
+    }
+
+    @Test
+    fun countriesScreen_bottomSheetClosed_instructionsTextReappears() {
+        composeTestRule.countriesRobot {
+            searchAndSelectCountry("Japan", "jp")
+            verifyBottomSheetDisplayed()
+            verifyInstructionsTextNotDisplayed()
+            closeBottomSheet()
+            verifyBottomSheetNotDisplayed()
+            verifyInstructionsTextDisplayed()
+        }
+    }
+
+    @Test
+    fun countriesScreen_searchResultsShowing_instructionsTextHidden() {
+        composeTestRule.countriesRobot {
+            verifyInstructionsTextDisplayed()
+            typeInSearchBar("Japan")
+            verifySearchResultsDisplayed()
+            verifyInstructionsTextNotDisplayed()
+        }
+    }
+
+    @Test
+    fun countriesScreen_searchResultsCleared_instructionsTextReappears() {
+        composeTestRule.countriesRobot {
+            typeInSearchBar("Japan")
+            verifySearchResultsDisplayed()
+            verifyInstructionsTextNotDisplayed()
+            clickSearchClearButton()
+            verifySearchResultsNotDisplayed()
+            verifyInstructionsTextDisplayed()
+        }
+    }
+
+    @Test
+    fun countriesScreen_legendShowing_instructionsTextHidden() {
+        composeTestRule.countriesRobot {
+            verifyInstructionsTextDisplayed()
+            selectSecurityRiskMapMode()
+            waitForAnimation()
+            tapCompassIcon()
+            verifyLegendDisplayed()
+            verifyInstructionsTextNotDisplayed()
+        }
+    }
+
+    @Test
+    fun countriesScreen_legendClosed_instructionsTextReappears() {
+        composeTestRule.countriesRobot {
+            selectSecurityRiskMapMode()
+            waitForAnimation()
+            tapCompassIcon()
+            verifyLegendDisplayed()
+            verifyInstructionsTextNotDisplayed()
+            closeLegend()
+            waitForAnimation()
+            verifyLegendNotDisplayed()
+            verifyInstructionsTextDisplayed()
+        }
+    }
+
+    // ==================== Search Result Item Content Tests ====================
+
+    @Test
+    fun countriesScreen_searchResults_showCountryWithContinent() {
+        composeTestRule.countriesRobot {
+            typeInSearchBar("Jap")
+            verifySearchResultsDisplayed()
+            verifyCountryInSearchResults("Japan")
+            verifySearchResultContinent("Asia")
+        }
+    }
+
+    @Test
+    fun countriesScreen_searchResults_showMultipleCountriesWithContinents() {
+        composeTestRule.countriesRobot {
+            typeInSearchBar("United")
+            verifySearchResultsDisplayed()
+            verifyCountryInSearchResults("United States")
+            verifyCountryInSearchResults("United Kingdom")
+            verifySearchResultContinent("North America")
+            verifySearchResultContinent("Europe")
+        }
+    }
+
+    // ==================== Map Mode Radio Button Direct Click Tests ====================
+
+    @Test
+    fun countriesScreen_clickSecurityRiskRadioButton_modeChanges() {
+        composeTestRule.countriesRobot {
+            verifyDefaultMapModeSelected()
+        }
+        // Click the radio button directly
+        composeTestRule.onNodeWithTag("map_mode_radio_security_risk").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.countriesRobot {
+            verifySecurityRiskMapModeSelected()
+        }
+    }
+
+    @Test
+    fun countriesScreen_clickVisaRequirementsRadioButton_modeChanges() {
+        composeTestRule.countriesRobot {
+            verifyDefaultMapModeSelected()
+        }
+        composeTestRule.onNodeWithTag("map_mode_radio_visa_requirements").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.countriesRobot {
+            verifyVisaRequirementsMapModeSelected()
+        }
+    }
+
+    @Test
+    fun countriesScreen_clickPassportValidityRadioButton_modeChanges() {
+        composeTestRule.countriesRobot {
+            verifyDefaultMapModeSelected()
+        }
+        composeTestRule.onNodeWithTag("map_mode_radio_passport_validity").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.countriesRobot {
+            verifyPassportValidityMapModeSelected()
+        }
+    }
+
+    @Test
+    fun countriesScreen_clickDefaultRadioButton_modeChanges() {
+        composeTestRule.countriesRobot {
+            selectSecurityRiskMapMode()
+            verifySecurityRiskMapModeSelected()
+        }
+        composeTestRule.onNodeWithTag("map_mode_radio_default").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.countriesRobot {
+            verifyDefaultMapModeSelected()
         }
     }
 }

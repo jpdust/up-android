@@ -463,6 +463,34 @@ class CountriesRobot(private val composeTestRule: ComposeTestRule) {
         return this
     }
 
+    // ==================== Instructions Text ====================
+
+    /**
+     * Verifies the instructions text "Pinch to zoom • Drag to pan" is displayed
+     */
+    fun verifyInstructionsTextDisplayed(): CountriesRobot {
+        composeTestRule.onNodeWithText("Pinch to zoom • Drag to pan").assertIsDisplayed()
+        return this
+    }
+
+    /**
+     * Verifies the instructions text is NOT displayed
+     */
+    fun verifyInstructionsTextNotDisplayed(): CountriesRobot {
+        composeTestRule.onNodeWithText("Pinch to zoom • Drag to pan").assertDoesNotExist()
+        return this
+    }
+
+    // ==================== Search Result Item Content ====================
+
+    /**
+     * Verifies a search result item shows the country's continent
+     */
+    fun verifySearchResultContinent(continent: String): CountriesRobot {
+        composeTestRule.onNodeWithText(continent).assertIsDisplayed()
+        return this
+    }
+
     // ==================== Bottom Sheet Verification ====================
 
     /**

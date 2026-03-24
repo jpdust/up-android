@@ -24,6 +24,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
@@ -45,6 +46,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,7 +56,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -65,6 +69,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.unstampedpages.app.data.model.Country
 import com.unstampedpages.app.ui.theme.Primary
+import kotlinx.coroutines.launch
 import com.unstampedpages.app.ui.theme.PrimaryDark
 import com.unstampedpages.app.ui.theme.Secondary
 import java.util.Locale
@@ -119,6 +124,9 @@ fun CountryDetailSheet(
                     color = MaterialTheme.colorScheme.surface,
                     shadowElevation = 8.dp
                 ) {
+                    val scrollState = rememberScrollState()
+                    val coroutineScope = rememberCoroutineScope()
+
                     Column(
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -129,7 +137,7 @@ fun CountryDetailSheet(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .verticalScroll(rememberScrollState())
+                                .verticalScroll(scrollState)
                                 .padding(24.dp)
                                 .testTag("country_details_content"),
                             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -177,7 +185,19 @@ fun CountryDetailSheet(
                             if (it.currencyCode != "USD") {
                                 CurrencyConverter(
                                     exchangeRateToUSD = it.exchangeRateToUSD,
-                                    currencyCode = it.currencyCode
+                                    currencyCode = it.currencyCode,
+                                    onFieldFocused = {
+                                        // Scroll to bottom when field is focused
+                                        coroutineScope.launch {
+                                            scrollState.animateScrollTo(scrollState.maxValue)
+                                        }
+                                    },
+                                    onDone = {
+                                        // Scroll to top when Done is pressed
+                                        coroutineScope.launch {
+                                            scrollState.animateScrollTo(0)
+                                        }
+                                    }
                                 )
 
                                 Divider(color = Primary.copy(alpha = 0.1f))
@@ -315,7 +335,9 @@ private fun InfoRow(
 @Composable
 private fun CurrencyConverter(
     exchangeRateToUSD: Double,
-    currencyCode: String
+    currencyCode: String,
+    onFieldFocused: () -> Unit = {},
+    onDone: () -> Unit = {}
 ) {
     // Calculate foreign currency per USD
     val foreignPerUsd = if (exchangeRateToUSD > 0) 1.0 / exchangeRateToUSD else 0.0
@@ -357,7 +379,10 @@ private fun CurrencyConverter(
                         "0.00"
                     }
                 },
-                modifier = Modifier.weight(1f)
+                onFieldFocused = onFieldFocused,
+                onDone = onDone,
+                modifier = Modifier.weight(1f),
+                testTag = "currency_input_usd"
             )
 
             Text(
@@ -386,7 +411,10 @@ private fun CurrencyConverter(
                         "0.00"
                     }
                 },
-                modifier = Modifier.weight(1f)
+                onFieldFocused = onFieldFocused,
+                onDone = onDone,
+                modifier = Modifier.weight(1f),
+                testTag = "currency_input_foreign"
             )
 
             Text(
@@ -403,12 +431,20 @@ private fun CurrencyConverter(
 private fun CurrencyInputField(
     value: String,
     onValueChange: (String) -> Unit,
-    modifier: Modifier = Modifier
+    onFieldFocused: () -> Unit = {},
+    onDone: () -> Unit = {},
+    modifier: Modifier = Modifier,
+    testTag: String = ""
 ) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+
     // Use TextFieldValue to control cursor position - always at the end
     var textFieldValue by remember(value) {
         mutableStateOf(TextFieldValue(text = value, selection = TextRange(value.length)))
     }
+
+    // Track if this is the first keystroke after focus (to clear existing value)
+    var isFirstKeystrokeAfterFocus by remember { mutableStateOf(false) }
 
     // Update textFieldValue when external value changes, cursor always at end
     LaunchedEffect(value) {
@@ -421,14 +457,29 @@ private fun CurrencyInputField(
         value = textFieldValue,
         onValueChange = { newValue ->
             val newText = newValue.text
+
+            // If first keystroke after focus, replace entire value with new input
+            val processedText = if (isFirstKeystrokeAfterFocus && newText.isNotEmpty()) {
+                isFirstKeystrokeAfterFocus = false
+                // Get only the newly typed character(s)
+                val typedChar = if (newText.length > textFieldValue.text.length) {
+                    newText.last().toString()
+                } else {
+                    newText
+                }
+                typedChar
+            } else {
+                newText
+            }
+
             // Only allow valid decimal input
-            if (newText.isEmpty() || newText.matches(Regex("^\\d*\\.?\\d{0,2}$"))) {
+            if (processedText.isEmpty() || processedText.matches(Regex("^\\d*\\.?\\d{0,2}$"))) {
                 // Always force cursor to the end
                 textFieldValue = TextFieldValue(
-                    text = newText,
-                    selection = TextRange(newText.length)
+                    text = processedText,
+                    selection = TextRange(processedText.length)
                 )
-                onValueChange(newText)
+                onValueChange(processedText)
             } else {
                 // Invalid input - keep current text but force cursor to end
                 textFieldValue = textFieldValue.copy(selection = TextRange(textFieldValue.text.length))
@@ -441,11 +492,19 @@ private fun CurrencyInputField(
             textAlign = TextAlign.End
         ),
         keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Decimal
+            keyboardType = KeyboardType.Decimal,
+            imeAction = ImeAction.Done
+        ),
+        keyboardActions = KeyboardActions(
+            onDone = {
+                keyboardController?.hide()
+                onDone()
+            }
         ),
         singleLine = true,
         cursorBrush = SolidColor(Secondary),
         modifier = modifier
+            .testTag(testTag)
             .background(
                 color = Color.White.copy(alpha = 0.5f),
                 shape = RoundedCornerShape(8.dp)
@@ -453,8 +512,14 @@ private fun CurrencyInputField(
             .padding(horizontal = 12.dp, vertical = 8.dp)
             .onFocusChanged { focusState ->
                 if (focusState.isFocused) {
+                    // Mark that the next keystroke should clear the field
+                    isFirstKeystrokeAfterFocus = true
                     // Place cursor at the end when focused
                     textFieldValue = textFieldValue.copy(selection = TextRange(textFieldValue.text.length))
+                    // Notify parent to scroll
+                    onFieldFocused()
+                } else {
+                    isFirstKeystrokeAfterFocus = false
                 }
             }
     )
