@@ -1,0 +1,462 @@
+package com.unstampedpages.app.ui.screens.countryinfo
+
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.*
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+
+@RunWith(AndroidJUnit4::class)
+class WorldMapCanvasTest {
+
+    @get:Rule
+    val composeTestRule = createComposeRule()
+
+    // ==================== Legend Visibility Tests ====================
+
+    @Test
+    fun worldMapCanvas_legendNotShown_whenShowLegendFalse() {
+        composeTestRule.setContent {
+            WorldMapCanvas(
+                selectedCountryId = null,
+                onCountryTapped = {},
+                colorMode = MapColorMode.SECURITY_RISK,
+                showLegend = false,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        composeTestRule.onNodeWithTag("map_legend").assertDoesNotExist()
+    }
+
+    @Test
+    fun worldMapCanvas_legendShown_whenShowLegendTrueAndNonDefaultMode() {
+        composeTestRule.setContent {
+            WorldMapCanvas(
+                selectedCountryId = null,
+                onCountryTapped = {},
+                colorMode = MapColorMode.SECURITY_RISK,
+                showLegend = true,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        composeTestRule.onNodeWithTag("map_legend").assertIsDisplayed()
+    }
+
+    @Test
+    fun worldMapCanvas_legendNotShown_whenShowLegendTrueButDefaultMode() {
+        composeTestRule.setContent {
+            WorldMapCanvas(
+                selectedCountryId = null,
+                onCountryTapped = {},
+                colorMode = MapColorMode.DEFAULT,
+                showLegend = true,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        composeTestRule.onNodeWithTag("map_legend").assertDoesNotExist()
+    }
+
+    // ==================== Security Risk Legend Content Tests ====================
+
+    @Test
+    fun worldMapCanvas_securityRiskLegend_showsLowRisk() {
+        composeTestRule.setContent {
+            WorldMapCanvas(
+                selectedCountryId = null,
+                onCountryTapped = {},
+                colorMode = MapColorMode.SECURITY_RISK,
+                showLegend = true,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        composeTestRule.onNodeWithTag("legend_item_low_risk").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Low Risk").assertIsDisplayed()
+    }
+
+    @Test
+    fun worldMapCanvas_securityRiskLegend_showsMediumRisk() {
+        composeTestRule.setContent {
+            WorldMapCanvas(
+                selectedCountryId = null,
+                onCountryTapped = {},
+                colorMode = MapColorMode.SECURITY_RISK,
+                showLegend = true,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        composeTestRule.onNodeWithTag("legend_item_medium_risk").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Medium Risk").assertIsDisplayed()
+    }
+
+    @Test
+    fun worldMapCanvas_securityRiskLegend_showsHighRisk() {
+        composeTestRule.setContent {
+            WorldMapCanvas(
+                selectedCountryId = null,
+                onCountryTapped = {},
+                colorMode = MapColorMode.SECURITY_RISK,
+                showLegend = true,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        composeTestRule.onNodeWithTag("legend_item_high_risk").assertIsDisplayed()
+        composeTestRule.onNodeWithText("High Risk").assertIsDisplayed()
+    }
+
+    @Test
+    fun worldMapCanvas_securityRiskLegend_showsAllThreeItems() {
+        composeTestRule.setContent {
+            WorldMapCanvas(
+                selectedCountryId = null,
+                onCountryTapped = {},
+                colorMode = MapColorMode.SECURITY_RISK,
+                showLegend = true,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        composeTestRule.onNodeWithTag("legend_item_low_risk").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("legend_item_medium_risk").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("legend_item_high_risk").assertIsDisplayed()
+    }
+
+    // ==================== Visa Requirements Legend Content Tests ====================
+
+    @Test
+    fun worldMapCanvas_visaRequirementsLegend_showsVisaNotRequired() {
+        composeTestRule.setContent {
+            WorldMapCanvas(
+                selectedCountryId = null,
+                onCountryTapped = {},
+                colorMode = MapColorMode.VISA_REQUIREMENTS,
+                showLegend = true,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        composeTestRule.onNodeWithTag("legend_item_visa_not_required").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Visa Not Required").assertIsDisplayed()
+    }
+
+    @Test
+    fun worldMapCanvas_visaRequirementsLegend_showsEvisa() {
+        composeTestRule.setContent {
+            WorldMapCanvas(
+                selectedCountryId = null,
+                onCountryTapped = {},
+                colorMode = MapColorMode.VISA_REQUIREMENTS,
+                showLegend = true,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        composeTestRule.onNodeWithTag("legend_item_evisa").assertIsDisplayed()
+        composeTestRule.onNodeWithText("eVisa").assertIsDisplayed()
+    }
+
+    @Test
+    fun worldMapCanvas_visaRequirementsLegend_showsVisaOnArrival() {
+        composeTestRule.setContent {
+            WorldMapCanvas(
+                selectedCountryId = null,
+                onCountryTapped = {},
+                colorMode = MapColorMode.VISA_REQUIREMENTS,
+                showLegend = true,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        composeTestRule.onNodeWithTag("legend_item_visa_on_arrival").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Visa On Arrival").assertIsDisplayed()
+    }
+
+    @Test
+    fun worldMapCanvas_visaRequirementsLegend_showsVisaRequired() {
+        composeTestRule.setContent {
+            WorldMapCanvas(
+                selectedCountryId = null,
+                onCountryTapped = {},
+                colorMode = MapColorMode.VISA_REQUIREMENTS,
+                showLegend = true,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        composeTestRule.onNodeWithTag("legend_item_visa_required").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Visa Required").assertIsDisplayed()
+    }
+
+    @Test
+    fun worldMapCanvas_visaRequirementsLegend_showsRestricted() {
+        composeTestRule.setContent {
+            WorldMapCanvas(
+                selectedCountryId = null,
+                onCountryTapped = {},
+                colorMode = MapColorMode.VISA_REQUIREMENTS,
+                showLegend = true,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        composeTestRule.onNodeWithTag("legend_item_restricted").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Restricted").assertIsDisplayed()
+    }
+
+    @Test
+    fun worldMapCanvas_visaRequirementsLegend_showsAllFiveItems() {
+        composeTestRule.setContent {
+            WorldMapCanvas(
+                selectedCountryId = null,
+                onCountryTapped = {},
+                colorMode = MapColorMode.VISA_REQUIREMENTS,
+                showLegend = true,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        composeTestRule.onNodeWithTag("legend_item_visa_not_required").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("legend_item_evisa").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("legend_item_visa_on_arrival").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("legend_item_visa_required").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("legend_item_restricted").assertIsDisplayed()
+    }
+
+    // ==================== Passport Validity Legend Content Tests ====================
+
+    @Test
+    fun worldMapCanvas_passportValidityLegend_shows6Months() {
+        composeTestRule.setContent {
+            WorldMapCanvas(
+                selectedCountryId = null,
+                onCountryTapped = {},
+                colorMode = MapColorMode.PASSPORT_VALIDITY,
+                showLegend = true,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        composeTestRule.onNodeWithTag("legend_item_6_months").assertIsDisplayed()
+        composeTestRule.onNodeWithText("6 Months").assertIsDisplayed()
+    }
+
+    @Test
+    fun worldMapCanvas_passportValidityLegend_shows3Months() {
+        composeTestRule.setContent {
+            WorldMapCanvas(
+                selectedCountryId = null,
+                onCountryTapped = {},
+                colorMode = MapColorMode.PASSPORT_VALIDITY,
+                showLegend = true,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        composeTestRule.onNodeWithTag("legend_item_3_months").assertIsDisplayed()
+        composeTestRule.onNodeWithText("3 Months").assertIsDisplayed()
+    }
+
+    @Test
+    fun worldMapCanvas_passportValidityLegend_showsDurationOfStay() {
+        composeTestRule.setContent {
+            WorldMapCanvas(
+                selectedCountryId = null,
+                onCountryTapped = {},
+                colorMode = MapColorMode.PASSPORT_VALIDITY,
+                showLegend = true,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        composeTestRule.onNodeWithTag("legend_item_duration_of_stay").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Duration of Stay").assertIsDisplayed()
+    }
+
+    @Test
+    fun worldMapCanvas_passportValidityLegend_showsOther() {
+        composeTestRule.setContent {
+            WorldMapCanvas(
+                selectedCountryId = null,
+                onCountryTapped = {},
+                colorMode = MapColorMode.PASSPORT_VALIDITY,
+                showLegend = true,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        composeTestRule.onNodeWithTag("legend_item_other").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Other").assertIsDisplayed()
+    }
+
+    @Test
+    fun worldMapCanvas_passportValidityLegend_showsAllFourItems() {
+        composeTestRule.setContent {
+            WorldMapCanvas(
+                selectedCountryId = null,
+                onCountryTapped = {},
+                colorMode = MapColorMode.PASSPORT_VALIDITY,
+                showLegend = true,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        composeTestRule.onNodeWithTag("legend_item_6_months").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("legend_item_3_months").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("legend_item_duration_of_stay").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("legend_item_other").assertIsDisplayed()
+    }
+
+    // ==================== Legend UI Elements Tests ====================
+
+    @Test
+    fun worldMapCanvas_legend_showsMapKeyTitle() {
+        composeTestRule.setContent {
+            WorldMapCanvas(
+                selectedCountryId = null,
+                onCountryTapped = {},
+                colorMode = MapColorMode.SECURITY_RISK,
+                showLegend = true,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        composeTestRule.onNodeWithText("Map Key").assertIsDisplayed()
+    }
+
+    @Test
+    fun worldMapCanvas_legend_showsCloseButton() {
+        composeTestRule.setContent {
+            WorldMapCanvas(
+                selectedCountryId = null,
+                onCountryTapped = {},
+                colorMode = MapColorMode.SECURITY_RISK,
+                showLegend = true,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        composeTestRule.onNodeWithTag("legend_close_button").assertIsDisplayed()
+    }
+
+    @Test
+    fun worldMapCanvas_legend_closeButtonCallsOnLegendClose() {
+        var closeCalled = false
+
+        composeTestRule.setContent {
+            WorldMapCanvas(
+                selectedCountryId = null,
+                onCountryTapped = {},
+                colorMode = MapColorMode.SECURITY_RISK,
+                showLegend = true,
+                onLegendClose = { closeCalled = true },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        composeTestRule.onNodeWithTag("legend_close_button").performClick()
+
+        assert(closeCalled) { "onLegendClose should be called when close button is clicked" }
+    }
+
+    // ==================== Legend Content Changes Tests ====================
+
+    @Test
+    fun worldMapCanvas_securityRiskMode_doesNotShowVisaItems() {
+        composeTestRule.setContent {
+            WorldMapCanvas(
+                selectedCountryId = null,
+                onCountryTapped = {},
+                colorMode = MapColorMode.SECURITY_RISK,
+                showLegend = true,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        // Should show security risk items
+        composeTestRule.onNodeWithTag("legend_item_low_risk").assertIsDisplayed()
+
+        // Should NOT show visa items
+        composeTestRule.onNodeWithTag("legend_item_visa_not_required").assertDoesNotExist()
+        composeTestRule.onNodeWithTag("legend_item_evisa").assertDoesNotExist()
+    }
+
+    @Test
+    fun worldMapCanvas_visaMode_doesNotShowSecurityItems() {
+        composeTestRule.setContent {
+            WorldMapCanvas(
+                selectedCountryId = null,
+                onCountryTapped = {},
+                colorMode = MapColorMode.VISA_REQUIREMENTS,
+                showLegend = true,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        // Should show visa items
+        composeTestRule.onNodeWithTag("legend_item_visa_not_required").assertIsDisplayed()
+
+        // Should NOT show security risk items
+        composeTestRule.onNodeWithTag("legend_item_low_risk").assertDoesNotExist()
+        composeTestRule.onNodeWithTag("legend_item_medium_risk").assertDoesNotExist()
+    }
+
+    @Test
+    fun worldMapCanvas_passportValidityMode_doesNotShowOtherItems() {
+        composeTestRule.setContent {
+            WorldMapCanvas(
+                selectedCountryId = null,
+                onCountryTapped = {},
+                colorMode = MapColorMode.PASSPORT_VALIDITY,
+                showLegend = true,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        // Should show passport validity items
+        composeTestRule.onNodeWithTag("legend_item_6_months").assertIsDisplayed()
+
+        // Should NOT show other mode items
+        composeTestRule.onNodeWithTag("legend_item_low_risk").assertDoesNotExist()
+        composeTestRule.onNodeWithTag("legend_item_visa_not_required").assertDoesNotExist()
+    }
+
+    // ==================== Map Display Tests ====================
+
+    @Test
+    fun worldMapCanvas_displaysWorldMap() {
+        composeTestRule.setContent {
+            WorldMapCanvas(
+                selectedCountryId = null,
+                onCountryTapped = {},
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        // The canvas should be displayed (it fills the modifier)
+        composeTestRule.onRoot().assertIsDisplayed()
+    }
+
+    @Test
+    fun worldMapCanvas_defaultMode_noLegendItems() {
+        composeTestRule.setContent {
+            WorldMapCanvas(
+                selectedCountryId = null,
+                onCountryTapped = {},
+                colorMode = MapColorMode.DEFAULT,
+                showLegend = true,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        // Legend should not be displayed in default mode
+        composeTestRule.onNodeWithTag("map_legend").assertDoesNotExist()
+    }
+}

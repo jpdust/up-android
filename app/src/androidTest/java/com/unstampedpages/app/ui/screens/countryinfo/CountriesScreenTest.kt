@@ -645,7 +645,7 @@ class CountriesScreenTest {
     }
 
     @Test
-    fun countriesScreen_switchModes_legendClosesAutomatically() {
+    fun countriesScreen_switchToDefaultMode_legendClosesAutomatically() {
         composeTestRule.countriesRobot {
             selectSecurityRiskMapMode()
             waitForAnimation()
@@ -654,6 +654,46 @@ class CountriesScreenTest {
 
             // Switch to default mode - legend should close
             selectDefaultMapMode()
+            waitForAnimation()
+            verifyLegendNotDisplayed()
+        }
+    }
+
+    @Test
+    fun countriesScreen_switchFromDefaultToNonDefault_legendReopens() {
+        composeTestRule.countriesRobot {
+            // Enable legend on Security Risk mode
+            selectSecurityRiskMapMode()
+            waitForAnimation()
+            tapCompassIcon()
+            verifyLegendDisplayed()
+
+            // Switch to default mode - legend should close
+            selectDefaultMapMode()
+            waitForAnimation()
+            verifyLegendNotDisplayed()
+
+            // Switch back to non-default mode - legend should reopen
+            selectVisaRequirementsMapMode()
+            waitForAnimation()
+            verifyLegendDisplayed()
+            verifyVisaRequirementsLegendContent()
+        }
+    }
+
+    @Test
+    fun countriesScreen_legendDisabled_switchingModesDoesNotShowLegend() {
+        composeTestRule.countriesRobot {
+            // Don't tap compass - legend is disabled
+            selectSecurityRiskMapMode()
+            waitForAnimation()
+            verifyLegendNotDisplayed()
+
+            selectVisaRequirementsMapMode()
+            waitForAnimation()
+            verifyLegendNotDisplayed()
+
+            selectPassportValidityMapMode()
             waitForAnimation()
             verifyLegendNotDisplayed()
         }
