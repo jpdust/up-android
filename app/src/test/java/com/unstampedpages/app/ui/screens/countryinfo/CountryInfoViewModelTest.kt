@@ -141,6 +141,152 @@ class CountryInfoViewModelTest {
 
         assertEquals(initialCount, viewModel.uiState.value.countries.size)
     }
+
+    // ==================== Search Functionality Tests ====================
+
+    @Test
+    fun `initial state has empty search query`() {
+        val state = viewModel.uiState.value
+
+        assertEquals("", state.searchQuery)
+        assertTrue(state.searchResults.isEmpty())
+    }
+
+    @Test
+    fun `updateSearchQuery with valid query returns results`() {
+        viewModel.updateSearchQuery("Japan")
+
+        val state = viewModel.uiState.value
+
+        assertEquals("Japan", state.searchQuery)
+        assertTrue(state.searchResults.isNotEmpty())
+        assertTrue(state.searchResults.any { it.name == "Japan" })
+    }
+
+    @Test
+    fun `updateSearchQuery with partial match returns results`() {
+        viewModel.updateSearchQuery("Uni")
+
+        val state = viewModel.uiState.value
+
+        assertTrue(state.searchResults.isNotEmpty())
+        assertTrue(state.searchResults.any { it.name.contains("United") })
+    }
+
+    @Test
+    fun `updateSearchQuery is case insensitive`() {
+        viewModel.updateSearchQuery("japan")
+
+        val state = viewModel.uiState.value
+
+        assertTrue(state.searchResults.any { it.name == "Japan" })
+    }
+
+    @Test
+    fun `updateSearchQuery with uppercase returns results`() {
+        viewModel.updateSearchQuery("FRANCE")
+
+        val state = viewModel.uiState.value
+
+        assertTrue(state.searchResults.any { it.name == "France" })
+    }
+
+    @Test
+    fun `updateSearchQuery with empty string returns no results`() {
+        viewModel.updateSearchQuery("Japan")
+        assertTrue(viewModel.uiState.value.searchResults.isNotEmpty())
+
+        viewModel.updateSearchQuery("")
+
+        val state = viewModel.uiState.value
+
+        assertEquals("", state.searchQuery)
+        assertTrue(state.searchResults.isEmpty())
+    }
+
+    @Test
+    fun `updateSearchQuery with blank string returns no results`() {
+        viewModel.updateSearchQuery("   ")
+
+        val state = viewModel.uiState.value
+
+        assertTrue(state.searchResults.isEmpty())
+    }
+
+    @Test
+    fun `updateSearchQuery limits results to 5`() {
+        // Search for something that would match many countries
+        viewModel.updateSearchQuery("a")
+
+        val state = viewModel.uiState.value
+
+        assertTrue(state.searchResults.size <= 5)
+    }
+
+    @Test
+    fun `updateSearchQuery with no matches returns empty list`() {
+        viewModel.updateSearchQuery("xyznonexistent")
+
+        val state = viewModel.uiState.value
+
+        assertEquals("xyznonexistent", state.searchQuery)
+        assertTrue(state.searchResults.isEmpty())
+    }
+
+    @Test
+    fun `clearSearch resets search query and results`() {
+        viewModel.updateSearchQuery("Japan")
+        assertTrue(viewModel.uiState.value.searchResults.isNotEmpty())
+
+        viewModel.clearSearch()
+
+        val state = viewModel.uiState.value
+
+        assertEquals("", state.searchQuery)
+        assertTrue(state.searchResults.isEmpty())
+    }
+
+    @Test
+    fun `search preserves selected country`() {
+        viewModel.selectCountry("us")
+        assertNotNull(viewModel.uiState.value.selectedCountry)
+
+        viewModel.updateSearchQuery("Japan")
+
+        assertNotNull(viewModel.uiState.value.selectedCountry)
+        assertEquals("us", viewModel.uiState.value.selectedCountry?.id)
+    }
+
+    @Test
+    fun `clearSearch preserves selected country`() {
+        viewModel.selectCountry("us")
+        viewModel.updateSearchQuery("Japan")
+        viewModel.clearSearch()
+
+        assertNotNull(viewModel.uiState.value.selectedCountry)
+        assertEquals("us", viewModel.uiState.value.selectedCountry?.id)
+    }
+
+    @Test
+    fun `search results contain correct country data`() {
+        viewModel.updateSearchQuery("Germany")
+
+        val germany = viewModel.uiState.value.searchResults.find { it.name == "Germany" }
+
+        assertNotNull(germany)
+        assertEquals("de", germany?.id)
+        assertEquals(Continent.EUROPE, germany?.continent)
+    }
+
+    @Test
+    fun `multiple searches update results correctly`() {
+        viewModel.updateSearchQuery("Japan")
+        assertTrue(viewModel.uiState.value.searchResults.any { it.name == "Japan" })
+
+        viewModel.updateSearchQuery("France")
+        assertFalse(viewModel.uiState.value.searchResults.any { it.name == "Japan" })
+        assertTrue(viewModel.uiState.value.searchResults.any { it.name == "France" })
+    }
 }
 
 class CountryInfoUiStateTest {
