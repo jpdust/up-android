@@ -1,15 +1,35 @@
 package com.unstampedpages.app.ui.screens.countryinfo
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -17,7 +37,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -30,7 +52,10 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.unstampedpages.app.data.model.Country
 import com.unstampedpages.app.data.model.CountryGeometry
 import com.unstampedpages.app.data.model.LatLng
@@ -199,7 +224,12 @@ private class MapGestureState(
     val inverseMatrix: android.graphics.Matrix,
     var matrixValid: Boolean = false,
     var mapLayoutWidth: Float = 0f,
-    var mapLayoutHeight: Float = 0f
+    var mapLayoutHeight: Float = 0f,
+    var canvasWidth: Float = 0f,
+    var canvasHeight: Float = 0f,
+    var compassCenterX: Float = 0f,
+    var compassCenterY: Float = 0f,
+    var compassRadius: Float = 0f
 )
 
 /**
@@ -216,6 +246,16 @@ private fun MapGestureState.processTap(position: Offset): String? {
         mapHeight = mapLayoutHeight,
         geometries = geometries
     )
+}
+
+/**
+ * Check if a tap position is within the compass area
+ */
+private fun MapGestureState.isCompassTap(position: Offset): Boolean {
+    if (compassRadius <= 0f) return false
+    val dx = position.x - compassCenterX
+    val dy = position.y - compassCenterY
+    return (dx * dx + dy * dy) <= (compassRadius * compassRadius)
 }
 
 /**
@@ -286,8 +326,10 @@ private fun Modifier.mapGestures(
     gestureState: MapGestureState,
     currentTransform: () -> TransformState,
     onTransformChange: (TransformState) -> Unit,
-    onCountryTapped: (String?) -> Unit
-): Modifier = this.pointerInput(Unit) {
+    onCountryTapped: (String?) -> Unit,
+    colorMode: MapColorMode,
+    onCompassTapped: () -> Unit
+): Modifier = this.pointerInput(colorMode) {
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false)
         val downPosition = down.position
@@ -315,7 +357,12 @@ private fun Modifier.mapGestures(
         } while (changes.any { it.pressed })
 
         if (!wasDragged) {
-            onCountryTapped(gestureState.processTap(downPosition))
+            // Check if compass was tapped (only for non-default modes)
+            if (colorMode != MapColorMode.DEFAULT && gestureState.isCompassTap(downPosition)) {
+                onCompassTapped()
+            } else {
+                onCountryTapped(gestureState.processTap(downPosition))
+            }
         }
     }
 }
@@ -540,6 +587,9 @@ fun WorldMapCanvas(
     onCountryTapped: (countryId: String?) -> Unit,
     colorMode: MapColorMode = MapColorMode.DEFAULT,
     countries: Map<String, Country> = emptyMap(),
+    showLegend: Boolean = false,
+    onCompassTapped: () -> Unit = {},
+    onLegendClose: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var transform by remember { mutableStateOf(TransformState()) }
@@ -589,6 +639,14 @@ fun WorldMapCanvas(
             val layout = calculateMapLayout(size.width, size.height)
             gestureState.mapLayoutWidth = layout.mapWidth
             gestureState.mapLayoutHeight = layout.mapHeight
+            gestureState.canvasWidth = size.width
+            gestureState.canvasHeight = size.height
+
+            // Store compass bounds for tap detection
+            val roseSize = 44.dp.toPx()
+            gestureState.compassCenterX = size.width - roseSize / 2 - 12.dp.toPx()
+            gestureState.compassCenterY = size.height - roseSize / 2 - 12.dp.toPx()
+            gestureState.compassRadius = roseSize / 2
 
             // Draw 3 copies for horizontal wrapping (left, center, right)
             listOf(-1f, 0f, 1f).forEach { wrapOffset ->
@@ -614,9 +672,24 @@ fun WorldMapCanvas(
                     gestureState = gestureState,
                     currentTransform = { currentTransform },
                     onTransformChange = { transform = it },
-                    onCountryTapped = onCountryTapped
+                    onCountryTapped = onCountryTapped,
+                    colorMode = colorMode,
+                    onCompassTapped = onCompassTapped
                 )
         )
+
+        // Map Legend
+        AnimatedVisibility(
+            visible = showLegend && colorMode != MapColorMode.DEFAULT,
+            enter = slideInVertically(initialOffsetY = { it }),
+            exit = slideOutVertically(targetOffsetY = { it }),
+            modifier = Modifier.align(Alignment.BottomCenter)
+        ) {
+            MapLegend(
+                colorMode = colorMode,
+                onClose = onLegendClose
+            )
+        }
     }
 }
 
@@ -852,5 +925,139 @@ private fun DrawScope.drawZoomIndicator(scale: Float) {
                 cornerRadius = androidx.compose.ui.geometry.CornerRadius(2.dp.toPx())
             )
         }
+    }
+}
+
+/**
+ * Data class for legend items
+ */
+private data class LegendItem(
+    val color: Color,
+    val label: String,
+    val testTag: String
+)
+
+/**
+ * Get legend items for a specific map color mode
+ */
+private fun getLegendItems(colorMode: MapColorMode): List<LegendItem> {
+    return when (colorMode) {
+        MapColorMode.DEFAULT -> emptyList()
+        MapColorMode.SECURITY_RISK -> listOf(
+            LegendItem(Color(0xFF4CAF50), "Low Risk", "legend_item_low_risk"),
+            LegendItem(Color(0xFFFFC107), "Medium Risk", "legend_item_medium_risk"),
+            LegendItem(Color(0xFF8B0000), "High Risk", "legend_item_high_risk")
+        )
+        MapColorMode.VISA_REQUIREMENTS -> listOf(
+            LegendItem(Color(0xFF4CAF50), "Visa Not Required", "legend_item_visa_not_required"),
+            LegendItem(Color(0xFF00BCD4), "eVisa", "legend_item_evisa"),
+            LegendItem(Color(0xFFFFC107), "Visa On Arrival", "legend_item_visa_on_arrival"),
+            LegendItem(Color(0xFF9E9E9E), "Visa Required", "legend_item_visa_required"),
+            LegendItem(Color(0xFF000000), "Restricted", "legend_item_restricted")
+        )
+        MapColorMode.PASSPORT_VALIDITY -> listOf(
+            LegendItem(Color(0xFF9E9E9E), "6 Months", "legend_item_6_months"),
+            LegendItem(Color(0xFF00BCD4), "3 Months", "legend_item_3_months"),
+            LegendItem(Color(0xFF4CAF50), "Duration of Stay", "legend_item_duration_of_stay"),
+            LegendItem(Color(0xFFFFC107), "Other", "legend_item_other")
+        )
+    }
+}
+
+/**
+ * Map legend composable showing color meanings for the current map mode
+ */
+@Composable
+private fun MapLegend(
+    colorMode: MapColorMode,
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val legendItems = getLegendItems(colorMode)
+
+    if (legendItems.isEmpty()) return
+
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .testTag("map_legend"),
+        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+        color = Color(0xE6F4E4BC), // Parchment with 90% opacity
+        shadowElevation = 8.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp)
+        ) {
+            // Header with close button
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Map Key",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = Color(0xFF4A2F18)
+                )
+                IconButton(
+                    onClick = onClose,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .testTag("legend_close_button")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close legend",
+                        tint = Color(0xFF4A2F18),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+
+            // Legend items in a flexible row layout
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                legendItems.forEach { item ->
+                    LegendItemView(
+                        item = item,
+                        modifier = Modifier.testTag(item.testTag)
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Individual legend item showing a color swatch and label
+ */
+@Composable
+private fun LegendItemView(
+    item: LegendItem,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.padding(horizontal = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Color swatch
+        Box(
+            modifier = Modifier
+                .size(16.dp)
+                .clip(CircleShape)
+                .background(item.color)
+        )
+        // Label
+        Text(
+            text = item.label,
+            fontSize = 10.sp,
+            color = Color(0xFF4A2F18),
+            modifier = Modifier.padding(top = 4.dp)
+        )
     }
 }

@@ -525,4 +525,168 @@ class CountriesScreenTest {
             verifyAllCountryInfoDisplayed()
         }
     }
+
+    // ==================== Map Legend Tests ====================
+
+    @Test
+    fun countriesScreen_defaultMode_tapCompass_legendNotDisplayed() {
+        composeTestRule.countriesRobot {
+            verifyPageLoad()
+            verifyDefaultMapModeSelected()
+            tapCompassIcon()
+            verifyLegendNotDisplayed()
+        }
+    }
+
+    @Test
+    fun countriesScreen_securityRiskMode_tapCompass_legendDisplayed() {
+        composeTestRule.countriesRobot {
+            verifyPageLoad()
+            selectSecurityRiskMapMode()
+            waitForAnimation()
+            tapCompassIcon()
+            verifyLegendDisplayed()
+            verifyLegendTitleDisplayed()
+            verifyLegendCloseButtonDisplayed()
+        }
+    }
+
+    @Test
+    fun countriesScreen_securityRiskMode_legendShowsCorrectContent() {
+        composeTestRule.countriesRobot {
+            selectSecurityRiskMapMode()
+            waitForAnimation()
+            tapCompassIcon()
+            verifyLegendDisplayed()
+            verifySecurityRiskLegendContent()
+        }
+    }
+
+    @Test
+    fun countriesScreen_visaRequirementsMode_tapCompass_legendDisplayed() {
+        composeTestRule.countriesRobot {
+            verifyPageLoad()
+            selectVisaRequirementsMapMode()
+            waitForAnimation()
+            tapCompassIcon()
+            verifyLegendDisplayed()
+            verifyLegendTitleDisplayed()
+            verifyLegendCloseButtonDisplayed()
+        }
+    }
+
+    @Test
+    fun countriesScreen_visaRequirementsMode_legendShowsCorrectContent() {
+        composeTestRule.countriesRobot {
+            selectVisaRequirementsMapMode()
+            waitForAnimation()
+            tapCompassIcon()
+            verifyLegendDisplayed()
+            verifyVisaRequirementsLegendContent()
+        }
+    }
+
+    @Test
+    fun countriesScreen_passportValidityMode_tapCompass_legendDisplayed() {
+        composeTestRule.countriesRobot {
+            verifyPageLoad()
+            selectPassportValidityMapMode()
+            waitForAnimation()
+            tapCompassIcon()
+            verifyLegendDisplayed()
+            verifyLegendTitleDisplayed()
+            verifyLegendCloseButtonDisplayed()
+        }
+    }
+
+    @Test
+    fun countriesScreen_passportValidityMode_legendShowsCorrectContent() {
+        composeTestRule.countriesRobot {
+            selectPassportValidityMapMode()
+            waitForAnimation()
+            tapCompassIcon()
+            verifyLegendDisplayed()
+            verifyPassportValidityLegendContent()
+        }
+    }
+
+    @Test
+    fun countriesScreen_closeLegend_legendCloses() {
+        composeTestRule.countriesRobot {
+            selectSecurityRiskMapMode()
+            waitForAnimation()
+            tapCompassIcon()
+            verifyLegendDisplayed()
+            closeLegend()
+            waitForAnimation()
+            verifyLegendNotDisplayed()
+        }
+    }
+
+    @Test
+    fun countriesScreen_legendOpenClose_multipleTimesWorks() {
+        composeTestRule.countriesRobot {
+            selectSecurityRiskMapMode()
+            waitForAnimation()
+
+            // Open and close multiple times
+            tapCompassIcon()
+            verifyLegendDisplayed()
+            closeLegend()
+            waitForAnimation()
+            verifyLegendNotDisplayed()
+
+            tapCompassIcon()
+            verifyLegendDisplayed()
+            closeLegend()
+            waitForAnimation()
+            verifyLegendNotDisplayed()
+        }
+    }
+
+    @Test
+    fun countriesScreen_switchModes_legendClosesAutomatically() {
+        composeTestRule.countriesRobot {
+            selectSecurityRiskMapMode()
+            waitForAnimation()
+            tapCompassIcon()
+            verifyLegendDisplayed()
+
+            // Switch to default mode - legend should close
+            selectDefaultMapMode()
+            waitForAnimation()
+            verifyLegendNotDisplayed()
+        }
+    }
+
+    @Test
+    fun countriesScreen_switchBetweenNonDefaultModes_legendStaysOpen() {
+        composeTestRule.countriesRobot {
+            selectSecurityRiskMapMode()
+            waitForAnimation()
+            tapCompassIcon()
+            verifyLegendDisplayed()
+            verifySecurityRiskLegendContent()
+
+            // Switch to visa requirements mode - legend should update
+            selectVisaRequirementsMapMode()
+            waitForAnimation()
+            verifyLegendDisplayed()
+            verifyVisaRequirementsLegendContent()
+        }
+    }
+
+    @Test
+    fun countriesScreen_zoomWhileLegendOpen_legendRemainsDisplayed() {
+        composeTestRule.countriesRobot {
+            selectSecurityRiskMapMode()
+            waitForAnimation()
+            tapCompassIcon()
+            verifyLegendDisplayed()
+
+            // Zoom the map
+            zoomInMap()
+            verifyLegendDisplayed()
+        }
+    }
 }
