@@ -1,10 +1,14 @@
 package com.unstampedpages.app.ui.screens.countryinfo
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -973,10 +977,6 @@ private fun MapLegend(
     onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val legendItems = getLegendItems(colorMode)
-
-    if (legendItems.isEmpty()) return
-
     Surface(
         modifier = modifier
             .fillMaxWidth()
@@ -1015,18 +1015,28 @@ private fun MapLegend(
                 }
             }
 
-            // Legend items in a flexible row layout
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                legendItems.forEach { item ->
-                    LegendItemView(
-                        item = item,
-                        modifier = Modifier.testTag(item.testTag)
-                    )
+            // Legend items with cross-dissolve animation when mode changes
+            AnimatedContent(
+                targetState = colorMode,
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(300)) togetherWith
+                        fadeOut(animationSpec = tween(300))
+                },
+                label = "legendContentTransition"
+            ) { mode ->
+                val legendItems = getLegendItems(mode)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    legendItems.forEach { item ->
+                        LegendItemView(
+                            item = item,
+                            modifier = Modifier.testTag(item.testTag)
+                        )
+                    }
                 }
             }
         }
