@@ -1,8 +1,7 @@
 package com.unstampedpages.app.ui.screens.countryinfo
 
-import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.unstampedpages.app.data.model.Continent
 import com.unstampedpages.app.data.model.Country
@@ -953,5 +952,386 @@ class CountryDetailSheetTest {
         }
 
         composeTestRule.onNodeWithText("United Arab Emirates Dirham (AED)").assertIsDisplayed()
+    }
+
+    // ============================================================
+    // Currency Input Field Tests
+    // ============================================================
+
+    @Test
+    fun currencyInput_usdFieldExists() {
+        val euroCountry = createCountry(
+            id = "fr",
+            name = "France",
+            currencyCode = "EUR",
+            currency = "Euro",
+            exchangeRateToUSD = 1.08
+        )
+
+        composeTestRule.setContent {
+            CountryDetailSheet(
+                country = euroCountry,
+                visible = true,
+                onDismiss = {}
+            )
+        }
+
+        composeTestRule.onNodeWithTag("currency_input_usd").assertExists()
+    }
+
+    @Test
+    fun currencyInput_foreignFieldExists() {
+        val euroCountry = createCountry(
+            id = "fr",
+            name = "France",
+            currencyCode = "EUR",
+            currency = "Euro",
+            exchangeRateToUSD = 1.08
+        )
+
+        composeTestRule.setContent {
+            CountryDetailSheet(
+                country = euroCountry,
+                visible = true,
+                onDismiss = {}
+            )
+        }
+
+        composeTestRule.onNodeWithTag("currency_input_foreign").assertExists()
+    }
+
+    @Test
+    fun currencyInput_usdFieldCanBeFocused() {
+        val euroCountry = createCountry(
+            id = "fr",
+            name = "France",
+            currencyCode = "EUR",
+            currency = "Euro",
+            exchangeRateToUSD = 1.08
+        )
+
+        composeTestRule.setContent {
+            CountryDetailSheet(
+                country = euroCountry,
+                visible = true,
+                onDismiss = {}
+            )
+        }
+
+        composeTestRule.onNodeWithTag("currency_input_usd").performClick()
+        composeTestRule.onNodeWithTag("currency_input_usd").assertIsFocused()
+    }
+
+    @Test
+    fun currencyInput_foreignFieldCanBeFocused() {
+        val euroCountry = createCountry(
+            id = "fr",
+            name = "France",
+            currencyCode = "EUR",
+            currency = "Euro",
+            exchangeRateToUSD = 1.08
+        )
+
+        composeTestRule.setContent {
+            CountryDetailSheet(
+                country = euroCountry,
+                visible = true,
+                onDismiss = {}
+            )
+        }
+
+        composeTestRule.onNodeWithTag("currency_input_foreign").performClick()
+        composeTestRule.onNodeWithTag("currency_input_foreign").assertIsFocused()
+    }
+
+    @Test
+    fun currencyInput_clearAndTypingInUsdFieldUpdatesValue() {
+        val euroCountry = createCountry(
+            id = "fr",
+            name = "France",
+            currencyCode = "EUR",
+            currency = "Euro",
+            exchangeRateToUSD = 1.08
+        )
+
+        composeTestRule.setContent {
+            CountryDetailSheet(
+                country = euroCountry,
+                visible = true,
+                onDismiss = {}
+            )
+        }
+
+        // Clear and type a new value
+        composeTestRule.onNodeWithTag("currency_input_usd").performClick()
+        composeTestRule.onNodeWithTag("currency_input_usd").performTextClearance()
+        composeTestRule.onNodeWithTag("currency_input_usd").performTextInput("5")
+        composeTestRule.waitForIdle()
+
+        // Value should be "5"
+        composeTestRule.onNodeWithText("5").assertExists()
+    }
+
+    @Test
+    fun currencyInput_clearAndTypingInForeignFieldUpdatesUsd() {
+        val euroCountry = createCountry(
+            id = "fr",
+            name = "France",
+            currencyCode = "EUR",
+            currency = "Euro",
+            exchangeRateToUSD = 1.08
+        )
+
+        composeTestRule.setContent {
+            CountryDetailSheet(
+                country = euroCountry,
+                visible = true,
+                onDismiss = {}
+            )
+        }
+
+        // Clear and type a new value in foreign field
+        composeTestRule.onNodeWithTag("currency_input_foreign").performClick()
+        composeTestRule.onNodeWithTag("currency_input_foreign").performTextClearance()
+        composeTestRule.onNodeWithTag("currency_input_foreign").performTextInput("2")
+        composeTestRule.waitForIdle()
+
+        // Value should be "2"
+        // USD should be recalculated: 2 EUR * 1.08 = 2.16 USD
+        composeTestRule.onNodeWithText("2").assertExists()
+        composeTestRule.onNodeWithText("2.16").assertExists()
+    }
+
+    @Test
+    fun currencyInput_usdFieldAcceptsTextInput() {
+        val jpyCountry = createCountry(
+            id = "jp",
+            name = "Japan",
+            currencyCode = "JPY",
+            currency = "Japanese Yen",
+            exchangeRateToUSD = 0.0067
+        )
+
+        composeTestRule.setContent {
+            CountryDetailSheet(
+                country = jpyCountry,
+                visible = true,
+                onDismiss = {}
+            )
+        }
+
+        // Initial value should be "1"
+        composeTestRule.onNodeWithText("1").assertExists()
+
+        // Clear and type a new value
+        composeTestRule.onNodeWithTag("currency_input_usd").performClick()
+        composeTestRule.onNodeWithTag("currency_input_usd").performTextClearance()
+        composeTestRule.onNodeWithTag("currency_input_usd").performTextInput("3")
+        composeTestRule.waitForIdle()
+
+        // Value should be "3"
+        composeTestRule.onNodeWithText("3").assertExists()
+    }
+
+    @Test
+    fun currencyInput_foreignFieldAcceptsTextInput() {
+        val euroCountry = createCountry(
+            id = "fr",
+            name = "France",
+            currencyCode = "EUR",
+            currency = "Euro",
+            exchangeRateToUSD = 1.08
+        )
+
+        composeTestRule.setContent {
+            CountryDetailSheet(
+                country = euroCountry,
+                visible = true,
+                onDismiss = {}
+            )
+        }
+
+        // Initial EUR value should be ~0.93
+        composeTestRule.onNodeWithText("0.93").assertExists()
+
+        // Clear and type a new value
+        composeTestRule.onNodeWithTag("currency_input_foreign").performClick()
+        composeTestRule.onNodeWithTag("currency_input_foreign").performTextClearance()
+        composeTestRule.onNodeWithTag("currency_input_foreign").performTextInput("5")
+        composeTestRule.waitForIdle()
+
+        // Value should be "5"
+        composeTestRule.onNodeWithText("5").assertExists()
+    }
+
+    @Test
+    fun currencyInput_imeActionDone_canBeTriggered() {
+        val euroCountry = createCountry(
+            id = "fr",
+            name = "France",
+            currencyCode = "EUR",
+            currency = "Euro",
+            exchangeRateToUSD = 1.08
+        )
+
+        composeTestRule.setContent {
+            CountryDetailSheet(
+                country = euroCountry,
+                visible = true,
+                onDismiss = {}
+            )
+        }
+
+        // Focus field
+        composeTestRule.onNodeWithTag("currency_input_usd").performClick()
+        composeTestRule.onNodeWithTag("currency_input_usd").assertIsFocused()
+
+        // Perform IME action - this should not throw
+        composeTestRule.onNodeWithTag("currency_input_usd").performImeAction()
+        composeTestRule.waitForIdle()
+
+        // After IME action completes without error, the test passes
+        // (keyboard dismissal is handled by the system)
+    }
+
+    @Test
+    fun currencyInput_acceptsDecimalInput() {
+        val euroCountry = createCountry(
+            id = "fr",
+            name = "France",
+            currencyCode = "EUR",
+            currency = "Euro",
+            exchangeRateToUSD = 1.08
+        )
+
+        composeTestRule.setContent {
+            CountryDetailSheet(
+                country = euroCountry,
+                visible = true,
+                onDismiss = {}
+            )
+        }
+
+        // Clear and type a decimal value
+        composeTestRule.onNodeWithTag("currency_input_usd").performClick()
+        composeTestRule.onNodeWithTag("currency_input_usd").performTextClearance()
+        composeTestRule.onNodeWithTag("currency_input_usd").performTextInput("2.5")
+        composeTestRule.waitForIdle()
+
+        // Value should be accepted
+        composeTestRule.onNodeWithText("2.5").assertExists()
+    }
+
+    @Test
+    fun currencyInput_multipleDigitsCanBeTyped() {
+        val euroCountry = createCountry(
+            id = "fr",
+            name = "France",
+            currencyCode = "EUR",
+            currency = "Euro",
+            exchangeRateToUSD = 1.08
+        )
+
+        composeTestRule.setContent {
+            CountryDetailSheet(
+                country = euroCountry,
+                visible = true,
+                onDismiss = {}
+            )
+        }
+
+        // Clear and type multiple digits
+        composeTestRule.onNodeWithTag("currency_input_usd").performClick()
+        composeTestRule.onNodeWithTag("currency_input_usd").performTextClearance()
+        composeTestRule.onNodeWithTag("currency_input_usd").performTextInput("10")
+        composeTestRule.waitForIdle()
+
+        // Value should be "10"
+        composeTestRule.onNodeWithText("10").assertExists()
+    }
+
+    @Test
+    fun currencyInput_bidirectionalConversion_usdToForeign() {
+        // GBP with rate 1.27 means 1 GBP = 1.27 USD
+        // So 10 USD = 10 / 1.27 = 7.87 GBP
+        val gbpCountry = createCountry(
+            id = "gb",
+            name = "United Kingdom",
+            currencyCode = "GBP",
+            currency = "British Pound",
+            exchangeRateToUSD = 1.27
+        )
+
+        composeTestRule.setContent {
+            CountryDetailSheet(
+                country = gbpCountry,
+                visible = true,
+                onDismiss = {}
+            )
+        }
+
+        // Clear and type in USD field
+        composeTestRule.onNodeWithTag("currency_input_usd").performClick()
+        composeTestRule.onNodeWithTag("currency_input_usd").performTextClearance()
+        composeTestRule.onNodeWithTag("currency_input_usd").performTextInput("10")
+        composeTestRule.waitForIdle()
+
+        // 10 USD should convert to ~7.87 GBP (10 * (1/1.27))
+        composeTestRule.onNodeWithText("10").assertExists()
+        composeTestRule.onNodeWithText("7.87").assertExists()
+    }
+
+    @Test
+    fun currencyInput_bidirectionalConversion_foreignToUsd() {
+        // MXN with rate 0.058 means 1 MXN = 0.058 USD
+        // So 100 MXN = 100 * 0.058 = 5.80 USD
+        val mxnCountry = createCountry(
+            id = "mx",
+            name = "Mexico",
+            currencyCode = "MXN",
+            currency = "Mexican Peso",
+            exchangeRateToUSD = 0.058
+        )
+
+        composeTestRule.setContent {
+            CountryDetailSheet(
+                country = mxnCountry,
+                visible = true,
+                onDismiss = {}
+            )
+        }
+
+        // Clear and type in foreign (MXN) field
+        composeTestRule.onNodeWithTag("currency_input_foreign").performClick()
+        composeTestRule.onNodeWithTag("currency_input_foreign").performTextClearance()
+        composeTestRule.onNodeWithTag("currency_input_foreign").performTextInput("100")
+        composeTestRule.waitForIdle()
+
+        // 100 MXN should convert to 5.80 USD (100 * 0.058)
+        composeTestRule.onNodeWithText("100").assertExists()
+        composeTestRule.onNodeWithText("5.80").assertExists()
+    }
+
+    @Test
+    fun currencyInput_usdCountry_noInputFieldsDisplayed() {
+        val usdCountry = createCountry(
+            id = "us",
+            name = "United States",
+            currencyCode = "USD",
+            currency = "US Dollar",
+            exchangeRateToUSD = 1.0
+        )
+
+        composeTestRule.setContent {
+            CountryDetailSheet(
+                country = usdCountry,
+                visible = true,
+                onDismiss = {}
+            )
+        }
+
+        // Currency converter should not be shown for USD countries
+        composeTestRule.onNodeWithTag("currency_input_usd").assertDoesNotExist()
+        composeTestRule.onNodeWithTag("currency_input_foreign").assertDoesNotExist()
     }
 }

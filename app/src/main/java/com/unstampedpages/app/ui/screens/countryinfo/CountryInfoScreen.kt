@@ -54,7 +54,8 @@ fun CountryInfoScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showSheet by remember { mutableStateOf(false) }
-    var legendEnabled by remember { mutableStateOf(false) }
+    // Used in showLegend derivation (line 63) and callback lambdas (lines 123-124)
+    var legendEnabled by remember { mutableStateOf(false) } // NOSONAR - false positive
     val focusManager = LocalFocusManager.current
     var selectedColorMode by remember { mutableStateOf(MapColorMode.DEFAULT) }
 
@@ -62,7 +63,6 @@ fun CountryInfoScreen(
     val showLegend = legendEnabled && selectedColorMode != MapColorMode.DEFAULT
 
     // Pre-compute state-derived values to reduce complexity
-    val hasSearchQuery = uiState.searchQuery.isNotEmpty()
     val hasSearchResults = uiState.searchResults.isNotEmpty()
     val showInstructions = !showSheet && !hasSearchResults && !showLegend
 
@@ -79,15 +79,7 @@ fun CountryInfoScreen(
     uiState.selectedCountry?.let { displayedCountry = it }
 
     // Lock orientation to portrait for this screen
-    val context = LocalContext.current
-    DisposableEffect(Unit) {
-        val activity = context as? Activity
-        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-
-        onDispose {
-            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-        }
-    }
+    LockOrientationPortrait()
 
     Box(
         modifier = Modifier
@@ -99,51 +91,13 @@ fun CountryInfoScreen(
             modifier = Modifier.fillMaxSize()
         ) {
             // Search Bar Section
-            OutlinedTextField(
-                value = uiState.searchQuery,
-                onValueChange = { viewModel.updateSearchQuery(it) },
-                placeholder = {
-                    Text(
-                        text = "Search for a country/territory...",
-                        color = Primary.copy(alpha = 0.5f)
-                    )
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Search",
-                        tint = Secondary
-                    )
-                },
-                trailingIcon = if (hasSearchQuery) {
-                    {
-                        IconButton(
-                            onClick = {
-                                viewModel.clearSearch()
-                                focusManager.clearFocus()
-                            },
-                            modifier = Modifier.testTag("search_clear_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Clear",
-                                tint = Primary.copy(alpha = 0.6f)
-                            )
-                        }
-                    }
-                } else null,
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Secondary,
-                    unfocusedBorderColor = Primary.copy(alpha = 0.3f),
-                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .testTag("search_bar")
+            CountrySearchBar(
+                searchQuery = uiState.searchQuery,
+                onSearchQueryChange = { viewModel.updateSearchQuery(it) },
+                onClearSearch = {
+                    viewModel.clearSearch()
+                    focusManager.clearFocus()
+                }
             )
 
             // World Map
@@ -156,8 +110,8 @@ fun CountryInfoScreen(
                 WorldMapCanvas(
                     selectedCountryId = uiState.selectedCountry?.id,
                     onCountryTapped = { countryId ->
-                        if (countryId != null) {
-                            viewModel.selectCountry(countryId)
+                        countryId?.let {
+                            viewModel.selectCountry(it)
                             focusManager.clearFocus()
                             viewModel.clearSearch()
                             showSheet = true
@@ -198,38 +152,15 @@ fun CountryInfoScreen(
         }
 
         // Autocomplete Dropdown - overlays on top of map
-        if (hasSearchResults) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, top = 72.dp)
-                    .heightIn(max = 200.dp)
-                    .zIndex(1f)
-                    .testTag("search_results_dropdown"),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-            ) {
-                LazyColumn(
-                    modifier = Modifier.testTag("search_results_list")
-                ) {
-                    items(uiState.searchResults) { country ->
-                        CountrySearchItem(
-                            country = country,
-                            onClick = {
-                                viewModel.selectCountry(country.id)
-                                viewModel.clearSearch()
-                                focusManager.clearFocus()
-                                showSheet = true
-                            },
-                            testTag = "search_result_${country.id}"
-                        )
-                    }
-                }
+        SearchResultsDropdown(
+            searchResults = uiState.searchResults,
+            onCountrySelected = { country ->
+                viewModel.selectCountry(country.id)
+                viewModel.clearSearch()
+                focusManager.clearFocus()
+                showSheet = true
             }
-        }
+        )
 
         // Country Detail Bottom Sheet - overlays everything
         CountryDetailSheet(
@@ -240,6 +171,104 @@ fun CountryInfoScreen(
                 viewModel.clearSelection()
             }
         )
+    }
+}
+
+@Composable
+private fun LockOrientationPortrait() {
+    val context = LocalContext.current
+    DisposableEffect(Unit) {
+        val activity = context as? Activity
+        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+
+        onDispose {
+            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
+    }
+}
+
+@Composable
+private fun CountrySearchBar(
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    onClearSearch: () -> Unit
+) {
+    OutlinedTextField(
+        value = searchQuery,
+        onValueChange = onSearchQueryChange,
+        placeholder = {
+            Text(
+                text = "Search for a country/territory...",
+                color = Primary.copy(alpha = 0.5f)
+            )
+        },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = "Search",
+                tint = Secondary
+            )
+        },
+        trailingIcon = if (searchQuery.isNotEmpty()) {
+            {
+                IconButton(
+                    onClick = onClearSearch,
+                    modifier = Modifier.testTag("search_clear_button")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Clear",
+                        tint = Primary.copy(alpha = 0.6f)
+                    )
+                }
+            }
+        } else null,
+        singleLine = true,
+        shape = RoundedCornerShape(12.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = Secondary,
+            unfocusedBorderColor = Primary.copy(alpha = 0.3f),
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .testTag("search_bar")
+    )
+}
+
+@Composable
+private fun SearchResultsDropdown(
+    searchResults: List<Country>,
+    onCountrySelected: (Country) -> Unit
+) {
+    if (searchResults.isEmpty()) return
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, top = 72.dp)
+            .heightIn(max = 200.dp)
+            .zIndex(1f)
+            .testTag("search_results_dropdown"),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+    ) {
+        LazyColumn(
+            modifier = Modifier.testTag("search_results_list")
+        ) {
+            items(searchResults) { country ->
+                CountrySearchItem(
+                    country = country,
+                    onClick = { onCountrySelected(country) },
+                    testTag = "search_result_${country.id}"
+                )
+            }
+        }
     }
 }
 
