@@ -427,6 +427,14 @@ private fun CurrencyConverter(
     }
 }
 
+private val DECIMAL_INPUT_REGEX = Regex("^\\d*\\.?\\d{0,2}$")
+
+private fun isValidDecimalInput(text: String): Boolean =
+    text.isEmpty() || text.matches(DECIMAL_INPUT_REGEX)
+
+private fun extractTypedCharacter(newText: String, oldText: String): String =
+    if (newText.length > oldText.length) newText.last().toString() else newText
+
 @Composable
 private fun CurrencyInputField(
     value: String,
@@ -456,32 +464,22 @@ private fun CurrencyInputField(
     BasicTextField(
         value = textFieldValue,
         onValueChange = { newValue ->
-            val newText = newValue.text
-
-            // If first keystroke after focus, replace entire value with new input
-            val processedText = if (isFirstKeystrokeAfterFocus && newText.isNotEmpty()) {
+            val result = processInputChange(
+                newText = newValue.text,
+                oldText = textFieldValue.text,
+                isFirstKeystroke = isFirstKeystrokeAfterFocus
+            )
+            if (result.shouldClearFirstKeystrokeFlag) {
                 isFirstKeystrokeAfterFocus = false
-                // Get only the newly typed character(s)
-                val typedChar = if (newText.length > textFieldValue.text.length) {
-                    newText.last().toString()
-                } else {
-                    newText
-                }
-                typedChar
-            } else {
-                newText
             }
 
-            // Only allow valid decimal input
-            if (processedText.isEmpty() || processedText.matches(Regex("^\\d*\\.?\\d{0,2}$"))) {
-                // Always force cursor to the end
+            if (result.isValid) {
                 textFieldValue = TextFieldValue(
-                    text = processedText,
-                    selection = TextRange(processedText.length)
+                    text = result.processedText,
+                    selection = TextRange(result.processedText.length)
                 )
-                onValueChange(processedText)
+                onValueChange(result.processedText)
             } else {
-                // Invalid input - keep current text but force cursor to end
                 textFieldValue = textFieldValue.copy(selection = TextRange(textFieldValue.text.length))
             }
         },
@@ -511,17 +509,37 @@ private fun CurrencyInputField(
             )
             .padding(horizontal = 12.dp, vertical = 8.dp)
             .onFocusChanged { focusState ->
+                isFirstKeystrokeAfterFocus = focusState.isFocused
                 if (focusState.isFocused) {
-                    // Mark that the next keystroke should clear the field
-                    isFirstKeystrokeAfterFocus = true
-                    // Place cursor at the end when focused
                     textFieldValue = textFieldValue.copy(selection = TextRange(textFieldValue.text.length))
-                    // Notify parent to scroll
                     onFieldFocused()
-                } else {
-                    isFirstKeystrokeAfterFocus = false
                 }
             }
+    )
+}
+
+private data class InputChangeResult(
+    val processedText: String,
+    val isValid: Boolean,
+    val shouldClearFirstKeystrokeFlag: Boolean
+)
+
+private fun processInputChange(
+    newText: String,
+    oldText: String,
+    isFirstKeystroke: Boolean
+): InputChangeResult {
+    val usedFirstKeystroke = isFirstKeystroke && newText.isNotEmpty()
+    val processedText = if (usedFirstKeystroke) {
+        extractTypedCharacter(newText, oldText)
+    } else {
+        newText
+    }
+
+    return InputChangeResult(
+        processedText = processedText,
+        isValid = isValidDecimalInput(processedText),
+        shouldClearFirstKeystrokeFlag = usedFirstKeystroke
     )
 }
 
