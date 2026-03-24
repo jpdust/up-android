@@ -357,6 +357,112 @@ class CountriesRobot(private val composeTestRule: ComposeTestRule) {
         return this
     }
 
+    // ==================== Map Legend ====================
+
+    /**
+     * Taps the compass icon in the bottom-right corner of the map.
+     * The compass icon is positioned at (width - 34dp, height - 34dp) from the canvas origin.
+     * Using percentage-based calculation to handle different screen densities.
+     */
+    fun tapCompassIcon(): CountriesRobot {
+        composeTestRule.onNodeWithTag("world_map").performTouchInput {
+            // Tap in the bottom-right area where the compass is located
+            // Compass center is at approximately 90% from left edge and 95% from top edge
+            // (accounting for typical screen dimensions and 34dp offset from corner)
+            val compassX = right - (width * 0.08f).coerceAtLeast(50f)
+            val compassY = bottom - (height * 0.08f).coerceAtLeast(50f)
+            click(Offset(compassX, compassY))
+        }
+        composeTestRule.waitForIdle()
+        return this
+    }
+
+    /**
+     * Verifies the map legend is displayed
+     */
+    fun verifyLegendDisplayed(): CountriesRobot {
+        composeTestRule.onNodeWithTag("map_legend").assertIsDisplayed()
+        return this
+    }
+
+    /**
+     * Verifies the map legend is NOT displayed
+     */
+    fun verifyLegendNotDisplayed(): CountriesRobot {
+        composeTestRule.onNodeWithTag("map_legend").assertDoesNotExist()
+        return this
+    }
+
+    /**
+     * Verifies the legend close button is displayed
+     */
+    fun verifyLegendCloseButtonDisplayed(): CountriesRobot {
+        composeTestRule.onNodeWithTag("legend_close_button").assertIsDisplayed()
+        return this
+    }
+
+    /**
+     * Closes the map legend by clicking the close button
+     */
+    fun closeLegend(): CountriesRobot {
+        composeTestRule.onNodeWithTag("legend_close_button").performClick()
+        composeTestRule.waitForIdle()
+        return this
+    }
+
+    /**
+     * Verifies the Security Risk legend content
+     */
+    fun verifySecurityRiskLegendContent(): CountriesRobot {
+        composeTestRule.onNodeWithTag("legend_item_low_risk").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("legend_item_medium_risk").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("legend_item_high_risk").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Low Risk").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Medium Risk").assertIsDisplayed()
+        composeTestRule.onNodeWithText("High Risk").assertIsDisplayed()
+        return this
+    }
+
+    /**
+     * Verifies the Visa Requirements legend content
+     */
+    fun verifyVisaRequirementsLegendContent(): CountriesRobot {
+        composeTestRule.onNodeWithTag("legend_item_visa_not_required").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("legend_item_evisa").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("legend_item_visa_on_arrival").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("legend_item_visa_required").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("legend_item_restricted").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Visa Not Required").assertIsDisplayed()
+        composeTestRule.onNodeWithText("eVisa").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Visa On Arrival").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Visa Required").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Restricted").assertIsDisplayed()
+        return this
+    }
+
+    /**
+     * Verifies the Passport Validity legend content
+     */
+    fun verifyPassportValidityLegendContent(): CountriesRobot {
+        composeTestRule.onNodeWithTag("legend_item_6_months").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("legend_item_3_months").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("legend_item_duration_of_stay").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("legend_item_other").assertIsDisplayed()
+        composeTestRule.onNodeWithText("6 Months").assertIsDisplayed()
+        composeTestRule.onNodeWithText("3 Months").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Duration of Stay").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Other").assertIsDisplayed()
+        return this
+    }
+
+    /**
+     * Verifies the Map Key title is displayed in the legend
+     */
+    fun verifyLegendTitleDisplayed(): CountriesRobot {
+        composeTestRule.onNodeWithText("Map Key").assertIsDisplayed()
+        return this
+    }
+
     // ==================== Bottom Sheet Verification ====================
 
     /**

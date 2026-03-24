@@ -54,13 +54,14 @@ fun CountryInfoScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showSheet by remember { mutableStateOf(false) }
+    var showLegend by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
     var selectedColorMode by remember { mutableStateOf(MapColorMode.DEFAULT) }
 
     // Pre-compute state-derived values to reduce complexity
     val hasSearchQuery = uiState.searchQuery.isNotEmpty()
     val hasSearchResults = uiState.searchResults.isNotEmpty()
-    val showInstructions = !showSheet && !hasSearchResults
+    val showInstructions = !showSheet && !hasSearchResults && !showLegend
 
     // Create a map of country ID to Country for efficient lookup
     val countriesMap = remember(uiState.countries) {
@@ -161,6 +162,9 @@ fun CountryInfoScreen(
                     },
                     colorMode = selectedColorMode,
                     countries = countriesMap,
+                    showLegend = showLegend,
+                    onCompassTapped = { showLegend = true },
+                    onLegendClose = { showLegend = false },
                     modifier = Modifier
                         .fillMaxSize()
                         .testTag("world_map")
