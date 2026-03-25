@@ -156,7 +156,7 @@ private fun calculateMultiTouchTransform(
     mapWidth: Float,
     mapHeight: Float
 ): TransformState {
-    val newScale = (current.scale * zoom).coerceIn(1f, 8f)
+    val newScale = (current.scale * zoom).coerceIn(1f, 25f)
     val maxPanY = if (newScale <= 1f) 0f else 0.5f
     val newPanX = current.panX + pan.x / (mapWidth * newScale)
     val newPanY = current.panY + pan.y / (mapHeight * newScale)
@@ -400,7 +400,8 @@ private data class MapDrawParams(
     val colorMode: MapColorMode,
     val previousColorMode: MapColorMode,
     val transitionProgress: Float,
-    val countries: Map<String, Country>
+    val countries: Map<String, Country>,
+    val scale: Float
 )
 
 /**
@@ -429,7 +430,7 @@ private fun DrawScope.drawMapCopy(
         )
 
         // Grid lines
-        drawMercatorGrid(layout.mapWidth, layout.mapHeight)
+        drawMercatorGrid(layout.mapWidth, layout.mapHeight, params.scale)
 
         // Countries
         params.geometries.forEach { geometry ->
@@ -444,7 +445,8 @@ private fun DrawScope.drawMapCopy(
                 transitionProgress = params.transitionProgress,
                 country = country,
                 mapWidth = layout.mapWidth,
-                mapHeight = layout.mapHeight
+                mapHeight = layout.mapHeight,
+                scale = params.scale
             )
         }
 
@@ -630,7 +632,8 @@ fun WorldMapCanvas(
         colorMode = colorMode,
         previousColorMode = previousColorMode,
         transitionProgress = transitionProgress,
-        countries = countries
+        countries = countries,
+        scale = transform.scale
     )
 
     Box(
@@ -764,7 +767,8 @@ private fun DrawScope.drawCountryMercator(
     transitionProgress: Float,
     country: Country?,
     mapWidth: Float,
-    mapHeight: Float
+    mapHeight: Float,
+    scale: Float
 ) {
     // Helper function to get color for a specific mode
     fun getColorForMode(mode: MapColorMode): Color {
@@ -782,8 +786,13 @@ private fun DrawScope.drawCountryMercator(
     val currentColor = getColorForMode(colorMode)
     val fillColor = if (isSelected) MapHighlight else lerp(previousColor, currentColor, transitionProgress)
     val strokeColor = if (isSelected) MapHighlight.copy(alpha = 0.9f) else MapBorder
-    val strokeWidth = if (isSelected) 2.dp.toPx() else 0.8f.dp.toPx()
-    val glowStyle = Stroke(width = 4.dp.toPx())
+    // Scale border width inversely with zoom - thinner borders at higher zoom levels
+    // Base width is 0.4dp, scales down to 0.1dp at max zoom (25x)
+    val baseStrokeWidth = 0.4f.dp.toPx()
+    val scaledStrokeWidth = (baseStrokeWidth / scale).coerceAtLeast(0.1f.dp.toPx())
+    val strokeWidth = if (isSelected) (1.5f.dp.toPx() / scale).coerceAtLeast(0.5f.dp.toPx()) else scaledStrokeWidth
+    val glowWidth = (3.dp.toPx() / scale).coerceAtLeast(1.dp.toPx())
+    val glowStyle = Stroke(width = glowWidth)
 
     // Filter valid polygons and draw each one
     geometry.polygons.filter { it.size >= 3 }.forEach { polygon ->
@@ -814,11 +823,12 @@ private fun DrawScope.drawCountryMercator(
 /**
  * Draw Mercator grid lines.
  */
-private fun DrawScope.drawMercatorGrid(mapWidth: Float, mapHeight: Float) {
+private fun DrawScope.drawMercatorGrid(mapWidth: Float, mapHeight: Float, scale: Float) {
     val gridColor = Color(0x25FFFFFF)
     val majorGridColor = Color(0x40FFFFFF)
-    val lineWidth = 0.5f.dp.toPx()
-    val majorLineWidth = 1f.dp.toPx()
+    // Scale grid line widths inversely with zoom
+    val lineWidth = (0.3f.dp.toPx() / scale).coerceAtLeast(0.1f.dp.toPx())
+    val majorLineWidth = (0.6f.dp.toPx() / scale).coerceAtLeast(0.15f.dp.toPx())
 
     // Latitude lines (every 20 degrees)
     val latitudes = listOf(-80f, -60f, -40f, -20f, 0f, 20f, 40f, 60f, 80f)
@@ -915,7 +925,8 @@ private fun DrawScope.drawZoomIndicator(scale: Float) {
         val y = size.height - 12.dp.toPx()
 
         // Zoom indicator bars (more bars = more zoom)
-        val barCount = ((scale - 1f) / 1.5f).toInt().coerceIn(1, 5)
+        // Max zoom is 25x, so scale appropriately for 5 bars
+        val barCount = ((scale - 1f) / 5f).toInt().coerceIn(1, 5)
         val barWidth = 4.dp.toPx()
         val barSpacing = 3.dp.toPx()
         val maxBarHeight = 16.dp.toPx()
