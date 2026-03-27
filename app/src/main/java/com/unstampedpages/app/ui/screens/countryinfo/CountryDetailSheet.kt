@@ -432,9 +432,6 @@ private val DECIMAL_INPUT_REGEX = Regex("^\\d*\\.?\\d{0,2}$")
 private fun isValidDecimalInput(text: String): Boolean =
     text.isEmpty() || text.matches(DECIMAL_INPUT_REGEX)
 
-private fun extractTypedCharacter(newText: String, oldText: String): String =
-    if (newText.length > oldText.length) newText.last().toString() else newText
-
 @Composable
 private fun CurrencyInputField(
     value: String,
@@ -446,15 +443,12 @@ private fun CurrencyInputField(
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    // Use TextFieldValue to control cursor position - always at the end
+    // Use TextFieldValue to control cursor/selection
     var textFieldValue by remember(value) {
         mutableStateOf(TextFieldValue(text = value, selection = TextRange(value.length)))
     }
 
-    // Track if this is the first keystroke after focus (to clear existing value)
-    var isFirstKeystrokeAfterFocus by remember { mutableStateOf(false) }
-
-    // Update textFieldValue when external value changes, cursor always at end
+    // Update textFieldValue when external value changes
     LaunchedEffect(value) {
         if (textFieldValue.text != value) {
             textFieldValue = TextFieldValue(text = value, selection = TextRange(value.length))
@@ -464,23 +458,13 @@ private fun CurrencyInputField(
     BasicTextField(
         value = textFieldValue,
         onValueChange = { newValue ->
-            val result = processInputChange(
-                newText = newValue.text,
-                oldText = textFieldValue.text,
-                isFirstKeystroke = isFirstKeystrokeAfterFocus
-            )
-            if (result.shouldClearFirstKeystrokeFlag) {
-                isFirstKeystrokeAfterFocus = false
-            }
-
-            if (result.isValid) {
+            // Validate decimal input (digits with optional decimal point, max 2 decimal places)
+            if (isValidDecimalInput(newValue.text)) {
                 textFieldValue = TextFieldValue(
-                    text = result.processedText,
-                    selection = TextRange(result.processedText.length)
+                    text = newValue.text,
+                    selection = TextRange(newValue.text.length)
                 )
-                onValueChange(result.processedText)
-            } else {
-                textFieldValue = textFieldValue.copy(selection = TextRange(textFieldValue.text.length))
+                onValueChange(newValue.text)
             }
         },
         textStyle = TextStyle(
@@ -490,7 +474,7 @@ private fun CurrencyInputField(
             textAlign = TextAlign.End
         ),
         keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Decimal,
+            keyboardType = KeyboardType.Number,
             imeAction = ImeAction.Done
         ),
         keyboardActions = KeyboardActions(
@@ -509,37 +493,15 @@ private fun CurrencyInputField(
             )
             .padding(horizontal = 12.dp, vertical = 8.dp)
             .onFocusChanged { focusState ->
-                isFirstKeystrokeAfterFocus = focusState.isFocused
                 if (focusState.isFocused) {
-                    textFieldValue = textFieldValue.copy(selection = TextRange(textFieldValue.text.length))
+                    // Select all text so first keystroke replaces everything
+                    textFieldValue = textFieldValue.copy(
+                        selection = TextRange(0, textFieldValue.text.length)
+                    )
                     onFieldFocused()
                 }
             }
     )
 }
 
-private data class InputChangeResult(
-    val processedText: String,
-    val isValid: Boolean,
-    val shouldClearFirstKeystrokeFlag: Boolean
-)
-
-private fun processInputChange(
-    newText: String,
-    oldText: String,
-    isFirstKeystroke: Boolean
-): InputChangeResult {
-    val usedFirstKeystroke = isFirstKeystroke && newText.isNotEmpty()
-    val processedText = if (usedFirstKeystroke) {
-        extractTypedCharacter(newText, oldText)
-    } else {
-        newText
-    }
-
-    return InputChangeResult(
-        processedText = processedText,
-        isValid = isValidDecimalInput(processedText),
-        shouldClearFirstKeystrokeFlag = usedFirstKeystroke
-    )
-}
 

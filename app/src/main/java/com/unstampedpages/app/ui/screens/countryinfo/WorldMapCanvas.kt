@@ -157,7 +157,10 @@ private fun calculateMultiTouchTransform(
     mapHeight: Float
 ): TransformState {
     val newScale = (current.scale * zoom).coerceIn(1f, 25f)
-    val maxPanY = if (newScale <= 1f) 0f else 0.5f
+    // Scale maxPanY with zoom level to allow panning to map edges at high zoom
+    // At scale 1: maxPanY = 0 (no panning needed, full map visible)
+    // At scale 25: maxPanY ≈ 0.98 (can pan to see top/bottom edges)
+    val maxPanY = if (newScale <= 1f) 0f else (1f - 0.5f / newScale)
     val newPanX = current.panX + pan.x / (mapWidth * newScale)
     val newPanY = current.panY + pan.y / (mapHeight * newScale)
 
@@ -177,7 +180,8 @@ private fun calculateSingleTouchTransform(
     mapWidth: Float,
     mapHeight: Float
 ): TransformState {
-    val maxPanY = if (current.scale <= 1f) 0f else 0.5f
+    // Scale maxPanY with zoom level to allow panning to map edges at high zoom
+    val maxPanY = if (current.scale <= 1f) 0f else (1f - 0.5f / current.scale)
     val newPanX = current.panX + panDelta.x / (mapWidth * current.scale)
     val newPanY = current.panY + panDelta.y / (mapHeight * current.scale)
 
