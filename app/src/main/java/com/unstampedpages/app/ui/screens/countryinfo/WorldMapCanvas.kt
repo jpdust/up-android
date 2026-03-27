@@ -409,6 +409,24 @@ private data class MapDrawParams(
 )
 
 /**
+ * Color transition state for animated color mode changes
+ */
+private data class ColorTransitionState(
+    val colorMode: MapColorMode,
+    val previousColorMode: MapColorMode,
+    val transitionProgress: Float
+)
+
+/**
+ * Drawing context with map dimensions and scale
+ */
+private data class CountryDrawContext(
+    val mapWidth: Float,
+    val mapHeight: Float,
+    val scale: Float
+)
+
+/**
  * Draw a single copy of the map (used for horizontal wrapping)
  */
 private fun DrawScope.drawMapCopy(
@@ -437,6 +455,16 @@ private fun DrawScope.drawMapCopy(
         drawMercatorGrid(layout.mapWidth, layout.mapHeight, params.scale)
 
         // Countries
+        val colorTransition = ColorTransitionState(
+            colorMode = params.colorMode,
+            previousColorMode = params.previousColorMode,
+            transitionProgress = params.transitionProgress
+        )
+        val countryDrawContext = CountryDrawContext(
+            mapWidth = layout.mapWidth,
+            mapHeight = layout.mapHeight,
+            scale = params.scale
+        )
         params.geometries.forEach { geometry ->
             val isSelected = geometry.countryId == params.selectedCountryId
             val repoId = geoJsonToRepoId[geometry.countryId]
@@ -444,13 +472,9 @@ private fun DrawScope.drawMapCopy(
             drawCountryMercator(
                 geometry = geometry,
                 isSelected = isSelected,
-                colorMode = params.colorMode,
-                previousColorMode = params.previousColorMode,
-                transitionProgress = params.transitionProgress,
+                colorTransition = colorTransition,
                 country = country,
-                mapWidth = layout.mapWidth,
-                mapHeight = layout.mapHeight,
-                scale = params.scale
+                drawContext = countryDrawContext
             )
         }
 
@@ -766,13 +790,9 @@ private fun latLngToMercator(latLng: LatLng, mapWidth: Float, mapHeight: Float):
 private fun DrawScope.drawCountryMercator(
     geometry: CountryGeometry,
     isSelected: Boolean,
-    colorMode: MapColorMode,
-    previousColorMode: MapColorMode,
-    transitionProgress: Float,
+    colorTransition: ColorTransitionState,
     country: Country?,
-    mapWidth: Float,
-    mapHeight: Float,
-    scale: Float
+    drawContext: CountryDrawContext
 ) {
     // Helper function to get color for a specific mode
     fun getColorForMode(mode: MapColorMode): Color {
@@ -786,26 +806,26 @@ private fun DrawScope.drawCountryMercator(
     }
 
     // Get colors for previous and current modes, then blend based on transition progress
-    val previousColor = getColorForMode(previousColorMode)
-    val currentColor = getColorForMode(colorMode)
-    val fillColor = if (isSelected) MapHighlight else lerp(previousColor, currentColor, transitionProgress)
+    val previousColor = getColorForMode(colorTransition.previousColorMode)
+    val currentColor = getColorForMode(colorTransition.colorMode)
+    val fillColor = if (isSelected) MapHighlight else lerp(previousColor, currentColor, colorTransition.transitionProgress)
     val strokeColor = if (isSelected) MapHighlight.copy(alpha = 0.9f) else MapBorder
     // Scale border width inversely with zoom - thinner borders at higher zoom levels
     // Base width is 0.4dp, scales down to 0.1dp at max zoom (25x)
     val baseStrokeWidth = 0.4f.dp.toPx()
-    val scaledStrokeWidth = (baseStrokeWidth / scale).coerceAtLeast(0.1f.dp.toPx())
-    val strokeWidth = if (isSelected) (1.5f.dp.toPx() / scale).coerceAtLeast(0.5f.dp.toPx()) else scaledStrokeWidth
-    val glowWidth = (3.dp.toPx() / scale).coerceAtLeast(1.dp.toPx())
+    val scaledStrokeWidth = (baseStrokeWidth / drawContext.scale).coerceAtLeast(0.1f.dp.toPx())
+    val strokeWidth = if (isSelected) (1.5f.dp.toPx() / drawContext.scale).coerceAtLeast(0.5f.dp.toPx()) else scaledStrokeWidth
+    val glowWidth = (3.dp.toPx() / drawContext.scale).coerceAtLeast(1.dp.toPx())
     val glowStyle = Stroke(width = glowWidth)
 
     // Filter valid polygons and draw each one
     geometry.polygons.filter { it.size >= 3 }.forEach { polygon ->
         val path = Path().apply {
-            val firstPoint = latLngToMercator(polygon[0], mapWidth, mapHeight)
+            val firstPoint = latLngToMercator(polygon[0], drawContext.mapWidth, drawContext.mapHeight)
             moveTo(firstPoint.x, firstPoint.y)
 
             for (i in 1 until polygon.size) {
-                val point = latLngToMercator(polygon[i], mapWidth, mapHeight)
+                val point = latLngToMercator(polygon[i], drawContext.mapWidth, drawContext.mapHeight)
                 lineTo(point.x, point.y)
             }
             close()

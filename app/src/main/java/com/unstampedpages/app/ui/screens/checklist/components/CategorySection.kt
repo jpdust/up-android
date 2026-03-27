@@ -30,24 +30,38 @@ import com.unstampedpages.app.data.model.ChecklistCategory
 import com.unstampedpages.app.ui.theme.Primary
 import com.unstampedpages.app.ui.theme.Secondary
 
+/**
+ * State for a category section
+ */
+data class CategorySectionState(
+    val isExpanded: Boolean,
+    val isMultiSelectMode: Boolean,
+    val selectedItemIds: Set<Long>
+)
+
+/**
+ * Callbacks for category section interactions
+ */
+data class CategorySectionCallbacks(
+    val onToggleExpanded: () -> Unit,
+    val onItemChecked: (ChecklistItem) -> Unit,
+    val onItemDeleted: (ChecklistItem) -> Unit,
+    val onItemPinned: (ChecklistItem) -> Unit,
+    val onQuantityChanged: (ChecklistItem, Int) -> Unit,
+    val onItemLongPress: (Long) -> Unit,
+    val onItemSelected: (Long) -> Unit
+)
+
 @Composable
 fun CategorySection(
     category: ChecklistCategory,
     items: List<ChecklistItem>,
-    isExpanded: Boolean,
-    isMultiSelectMode: Boolean,
-    selectedItemIds: Set<Long>,
-    onToggleExpanded: () -> Unit,
-    onItemChecked: (ChecklistItem) -> Unit,
-    onItemDeleted: (ChecklistItem) -> Unit,
-    onItemPinned: (ChecklistItem) -> Unit,
-    onQuantityChanged: (ChecklistItem, Int) -> Unit,
-    onItemLongPress: (Long) -> Unit,
-    onItemSelected: (Long) -> Unit,
+    state: CategorySectionState,
+    callbacks: CategorySectionCallbacks,
     modifier: Modifier = Modifier
 ) {
     val rotationAngle by animateFloatAsState(
-        targetValue = if (isExpanded) 180f else 0f,
+        targetValue = if (state.isExpanded) 180f else 0f,
         label = "rotation"
     )
 
@@ -63,7 +77,7 @@ fun CategorySection(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onToggleExpanded() }
+                .clickable { callbacks.onToggleExpanded() }
                 .padding(horizontal = 16.dp, vertical = 12.dp)
                 .testTag("category_header_${category.name.lowercase()}"),
             verticalAlignment = Alignment.CenterVertically
@@ -95,7 +109,7 @@ fun CategorySection(
 
             Icon(
                 imageVector = Icons.Default.ExpandMore,
-                contentDescription = if (isExpanded) "Collapse" else "Expand",
+                contentDescription = if (state.isExpanded) "Collapse" else "Expand",
                 tint = Primary.copy(alpha = 0.6f),
                 modifier = Modifier
                     .size(24.dp)
@@ -105,7 +119,7 @@ fun CategorySection(
 
         // Category Items
         AnimatedVisibility(
-            visible = isExpanded,
+            visible = state.isExpanded,
             enter = expandVertically(),
             exit = shrinkVertically()
         ) {
@@ -117,14 +131,18 @@ fun CategorySection(
                 items.forEach { item ->
                     SwipeableChecklistItem(
                         item = item,
-                        isMultiSelectMode = isMultiSelectMode,
-                        isSelected = selectedItemIds.contains(item.id),
-                        onCheckedChange = { onItemChecked(item) },
-                        onDelete = { onItemDeleted(item) },
-                        onPin = { onItemPinned(item) },
-                        onQuantityChange = { quantity -> onQuantityChanged(item, quantity) },
-                        onLongPress = { onItemLongPress(item.id) },
-                        onSelect = { onItemSelected(item.id) },
+                        state = SwipeableItemState(
+                            isMultiSelectMode = state.isMultiSelectMode,
+                            isSelected = state.selectedItemIds.contains(item.id)
+                        ),
+                        callbacks = SwipeableItemCallbacks(
+                            onCheckedChange = { callbacks.onItemChecked(item) },
+                            onDelete = { callbacks.onItemDeleted(item) },
+                            onPin = { callbacks.onItemPinned(item) },
+                            onQuantityChange = { quantity -> callbacks.onQuantityChanged(item, quantity) },
+                            onLongPress = { callbacks.onItemLongPress(item.id) },
+                            onSelect = { callbacks.onItemSelected(item.id) }
+                        ),
                         modifier = Modifier.testTag("checklist_item_${item.id}")
                     )
                 }
