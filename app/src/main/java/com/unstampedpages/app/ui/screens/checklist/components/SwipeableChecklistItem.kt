@@ -51,18 +51,32 @@ import com.unstampedpages.app.ui.theme.Primary
 import com.unstampedpages.app.ui.theme.Secondary
 import com.unstampedpages.app.ui.theme.SecondaryLight
 
+/**
+ * State for a swipeable checklist item
+ */
+data class SwipeableItemState(
+    val isMultiSelectMode: Boolean,
+    val isSelected: Boolean
+)
+
+/**
+ * Callbacks for swipeable checklist item interactions
+ */
+data class SwipeableItemCallbacks(
+    val onCheckedChange: () -> Unit,
+    val onDelete: () -> Unit,
+    val onPin: () -> Unit,
+    val onQuantityChange: (Int) -> Unit,
+    val onLongPress: () -> Unit,
+    val onSelect: () -> Unit
+)
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun SwipeableChecklistItem(
     item: ChecklistItem,
-    isMultiSelectMode: Boolean,
-    isSelected: Boolean,
-    onCheckedChange: () -> Unit,
-    onDelete: () -> Unit,
-    onPin: () -> Unit,
-    onQuantityChange: (Int) -> Unit,
-    onLongPress: () -> Unit,
-    onSelect: () -> Unit,
+    state: SwipeableItemState,
+    callbacks: SwipeableItemCallbacks,
     modifier: Modifier = Modifier
 ) {
     val hapticFeedback = LocalHapticFeedback.current
@@ -72,12 +86,12 @@ fun SwipeableChecklistItem(
             when (dismissValue) {
                 DismissValue.DismissedToStart -> {
                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                    onDelete()
+                    callbacks.onDelete()
                     true
                 }
                 DismissValue.DismissedToEnd -> {
                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                    onPin()
+                    callbacks.onPin()
                     false // Don't dismiss, just toggle pin
                 }
                 DismissValue.Default -> false
@@ -85,7 +99,7 @@ fun SwipeableChecklistItem(
         }
     )
 
-    val directions = if (isMultiSelectMode) {
+    val directions = if (state.isMultiSelectMode) {
         emptySet()
     } else {
         setOf(DismissDirection.StartToEnd, DismissDirection.EndToStart)
@@ -102,12 +116,12 @@ fun SwipeableChecklistItem(
         dismissContent = {
             ChecklistItemContent(
                 item = item,
-                isMultiSelectMode = isMultiSelectMode,
-                isSelected = isSelected,
-                onCheckedChange = onCheckedChange,
-                onQuantityChange = onQuantityChange,
-                onLongPress = onLongPress,
-                onSelect = onSelect
+                isMultiSelectMode = state.isMultiSelectMode,
+                isSelected = state.isSelected,
+                onCheckedChange = callbacks.onCheckedChange,
+                onQuantityChange = callbacks.onQuantityChange,
+                onLongPress = callbacks.onLongPress,
+                onSelect = callbacks.onSelect
             )
         },
         modifier = modifier.padding(vertical = 4.dp),

@@ -45,24 +45,38 @@ import com.unstampedpages.app.ui.theme.Primary
 import com.unstampedpages.app.ui.theme.Secondary
 import com.unstampedpages.app.util.DateUtils
 
+/**
+ * State for the journal entry editor
+ */
+data class JournalEntryState(
+    val title: String,
+    val content: String,
+    val location: String,
+    val date: Long,
+    val isNewEntry: Boolean
+)
+
+/**
+ * Callbacks for journal entry editor interactions
+ */
+data class JournalEntryCallbacks(
+    val onTitleChange: (String) -> Unit,
+    val onContentChange: (String) -> Unit,
+    val onLocationChange: (String) -> Unit,
+    val onDateChange: (Long) -> Unit,
+    val onSave: () -> Unit,
+    val onCancel: () -> Unit
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JournalEntryEditor(
-    title: String,
-    content: String,
-    location: String,
-    date: Long,
-    isNewEntry: Boolean,
-    onTitleChange: (String) -> Unit,
-    onContentChange: (String) -> Unit,
-    onLocationChange: (String) -> Unit,
-    onDateChange: (Long) -> Unit,
-    onSave: () -> Unit,
-    onCancel: () -> Unit
+    state: JournalEntryState,
+    callbacks: JournalEntryCallbacks
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     val dismissDatePicker = { showDatePicker = false }
-    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = date)
+    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = state.date)
 
     Column(
         modifier = Modifier
@@ -73,12 +87,12 @@ fun JournalEntryEditor(
         TopAppBar(
             title = {
                 Text(
-                    text = if (isNewEntry) "New Entry" else "Edit Entry",
+                    text = if (state.isNewEntry) "New Entry" else "Edit Entry",
                     fontWeight = FontWeight.SemiBold
                 )
             },
             navigationIcon = {
-                IconButton(onClick = onCancel) {
+                IconButton(onClick = callbacks.onCancel) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Cancel"
@@ -86,7 +100,7 @@ fun JournalEntryEditor(
                 }
             },
             actions = {
-                IconButton(onClick = onSave) {
+                IconButton(onClick = callbacks.onSave) {
                     Icon(
                         imageVector = Icons.Default.Check,
                         contentDescription = "Save",
@@ -120,7 +134,7 @@ fun JournalEntryEditor(
                 Spacer(modifier = Modifier.width(8.dp))
                 TextButton(onClick = { showDatePicker = true }) {
                     Text(
-                        text = DateUtils.formatFullDate(date),
+                        text = DateUtils.formatFullDate(state.date),
                         style = MaterialTheme.typography.bodyLarge,
                         color = Primary
                     )
@@ -131,8 +145,8 @@ fun JournalEntryEditor(
 
             // Title
             OutlinedTextField(
-                value = title,
-                onValueChange = onTitleChange,
+                value = state.title,
+                onValueChange = callbacks.onTitleChange,
                 label = { Text("Title") },
                 placeholder = { Text("Give your entry a title...") },
                 modifier = Modifier.fillMaxWidth(),
@@ -148,8 +162,8 @@ fun JournalEntryEditor(
 
             // Location
             OutlinedTextField(
-                value = location,
-                onValueChange = onLocationChange,
+                value = state.location,
+                onValueChange = callbacks.onLocationChange,
                 label = { Text("Location (optional)") },
                 placeholder = { Text("Where are you?") },
                 modifier = Modifier.fillMaxWidth(),
@@ -172,8 +186,8 @@ fun JournalEntryEditor(
 
             // Content
             OutlinedTextField(
-                value = content,
-                onValueChange = onContentChange,
+                value = state.content,
+                onValueChange = callbacks.onContentChange,
                 label = { Text("Your story") },
                 placeholder = { Text("Record your adventure...") },
                 modifier = Modifier
@@ -195,7 +209,7 @@ fun JournalEntryEditor(
             onDismissRequest = dismissDatePicker,
             confirmButton = {
                 TextButton(onClick = {
-                    datePickerState.selectedDateMillis?.let { onDateChange(it) }
+                    datePickerState.selectedDateMillis?.let { callbacks.onDateChange(it) }
                     dismissDatePicker()
                 }) {
                     Text("OK", color = Primary)
