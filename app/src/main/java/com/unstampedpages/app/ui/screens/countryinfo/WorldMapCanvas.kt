@@ -88,9 +88,18 @@ enum class MapColorMode(val displayName: String) {
 }
 
 /**
+ * Legend state and callbacks for the map
+ */
+data class MapLegendConfig(
+    val showLegend: Boolean = false,
+    val onCompassTapped: () -> Unit = {},
+    val onLegendClose: () -> Unit = {}
+)
+
+/**
  * Colors for passport validity map mode
  */
-private object PassportValidityColors {
+internal object PassportValidityColors {
     val SixMonths = Color(0xFF9E9E9E)      // Gray
     val ThreeMonths = Color(0xFF00BCD4)    // Teal
     val PlannedStay = Color(0xFF4CAF50)    // Green
@@ -217,7 +226,7 @@ private fun screenPositionToCountryId(
 /**
  * Normalize X coordinate to 0-1 range
  */
-private fun normalizeNormalizedX(x: Float): Float {
+internal fun normalizeNormalizedX(x: Float): Float {
     var normalized = x
     while (normalized < 0f) normalized += 1f
     while (normalized >= 1f) normalized -= 1f
@@ -385,7 +394,7 @@ private fun getVisaRequirementColor(visaRequirement: VisaRequirement): Color {
 /**
  * Get color for passport validity requirement
  */
-private fun getPassportValidityColor(passportValidity: String?): Color {
+internal fun getPassportValidityColor(passportValidity: String?): Color {
     return when (passportValidity) {
         "6 months" -> PassportValidityColors.SixMonths
         "3 months" -> PassportValidityColors.ThreeMonths
@@ -465,7 +474,7 @@ private fun DrawScope.drawMapCopy(
 /**
  * Mapping from GeoJSON 3-letter ISO codes to repository 2-letter codes
  */
-private val geoJsonToRepoId = mapOf(
+internal val geoJsonToRepoId = mapOf(
     // North America & Caribbean
     "USA" to "us", "CAN" to "ca", "MEX" to "mx", "GTM" to "gt", "CUB" to "cu",
     "HTI" to "ht", "DOM" to "do", "HND" to "hn", "NIC" to "ni", "CRI" to "cr",
@@ -518,7 +527,7 @@ private val geoJsonToRepoId = mapOf(
 /**
  * Mercator projection constants and calculations
  */
-private object MercatorProjection {
+internal object MercatorProjection {
     // Latitude limits to show all land masses including Antarctica
     const val MAX_LATITUDE = 83.0f
     const val MIN_LATITUDE = -85.0f
@@ -579,7 +588,7 @@ private object MercatorProjection {
  * Normalize offset to wrap around horizontally.
  * Keeps the value in the range [-0.5, 0.5) for seamless wrapping.
  */
-private fun normalizeOffsetX(offset: Float): Float {
+internal fun normalizeOffsetX(offset: Float): Float {
     var normalized = offset
     while (normalized >= 0.5f) normalized -= 1f
     while (normalized < -0.5f) normalized += 1f
@@ -597,9 +606,7 @@ fun WorldMapCanvas(
     onCountryTapped: (countryId: String?) -> Unit,
     colorMode: MapColorMode = MapColorMode.DEFAULT,
     countries: Map<String, Country> = emptyMap(),
-    showLegend: Boolean = false,
-    onCompassTapped: () -> Unit = {},
-    onLegendClose: () -> Unit = {},
+    legendConfig: MapLegendConfig = MapLegendConfig(),
     modifier: Modifier = Modifier
 ) {
     var transform by remember { mutableStateOf(TransformState()) }
@@ -685,20 +692,20 @@ fun WorldMapCanvas(
                     onTransformChange = { transform = it },
                     onCountryTapped = onCountryTapped,
                     colorMode = colorMode,
-                    onCompassTapped = onCompassTapped
+                    onCompassTapped = legendConfig.onCompassTapped
                 )
         )
 
         // Map Legend
         AnimatedVisibility(
-            visible = showLegend && colorMode != MapColorMode.DEFAULT,
+            visible = legendConfig.showLegend && colorMode != MapColorMode.DEFAULT,
             enter = slideInVertically(initialOffsetY = { it }),
             exit = slideOutVertically(targetOffsetY = { it }),
             modifier = Modifier.align(Alignment.BottomCenter)
         ) {
             MapLegend(
                 colorMode = colorMode,
-                onClose = onLegendClose
+                onClose = legendConfig.onLegendClose
             )
         }
     }
@@ -950,7 +957,7 @@ private fun DrawScope.drawZoomIndicator(scale: Float) {
 /**
  * Data class for legend items
  */
-private data class LegendItem(
+internal data class LegendItem(
     val color: Color,
     val label: String,
     val testTag: String
@@ -959,7 +966,7 @@ private data class LegendItem(
 /**
  * Get legend items for a specific map color mode
  */
-private fun getLegendItems(colorMode: MapColorMode): List<LegendItem> {
+internal fun getLegendItems(colorMode: MapColorMode): List<LegendItem> {
     return when (colorMode) {
         MapColorMode.DEFAULT -> emptyList()
         MapColorMode.SECURITY_RISK -> listOf(
