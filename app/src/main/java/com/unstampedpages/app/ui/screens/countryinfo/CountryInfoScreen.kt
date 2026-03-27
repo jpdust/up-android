@@ -54,13 +54,9 @@ fun CountryInfoScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showSheet by remember { mutableStateOf(false) }
-    // Used in showLegend derivation (line 63) and callback lambdas (lines 123-124)
-    var legendEnabled by remember { mutableStateOf(false) } // NOSONAR - false positive
+    var showLegend by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
     var selectedColorMode by remember { mutableStateOf(MapColorMode.DEFAULT) }
-
-    // Legend is visible when enabled AND not in default mode
-    val showLegend = legendEnabled && selectedColorMode != MapColorMode.DEFAULT
 
     // Pre-compute state-derived values to reduce complexity
     val hasSearchResults = uiState.searchResults.isNotEmpty()
@@ -119,9 +115,11 @@ fun CountryInfoScreen(
                     },
                     colorMode = selectedColorMode,
                     countries = countriesMap,
-                    showLegend = showLegend,
-                    onCompassTapped = { legendEnabled = true },
-                    onLegendClose = { legendEnabled = false },
+                    legendConfig = MapLegendConfig(
+                        showLegend = showLegend,
+                        onCompassTapped = { showLegend = true },
+                        onLegendClose = { showLegend = false }
+                    ),
                     modifier = Modifier
                         .fillMaxSize()
                         .testTag("world_map")

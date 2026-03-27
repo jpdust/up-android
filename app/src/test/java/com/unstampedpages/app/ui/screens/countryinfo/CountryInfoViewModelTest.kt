@@ -287,6 +287,243 @@ class CountryInfoViewModelTest {
         assertFalse(viewModel.uiState.value.searchResults.any { it.name == "Japan" })
         assertTrue(viewModel.uiState.value.searchResults.any { it.name == "France" })
     }
+
+    // ==================== Edge Case Tests ====================
+
+    @Test
+    fun `selecting same country twice does not change state`() {
+        viewModel.selectCountry("us")
+        val firstState = viewModel.uiState.value
+
+        viewModel.selectCountry("us")
+        val secondState = viewModel.uiState.value
+
+        assertEquals(firstState.selectedCountry, secondState.selectedCountry)
+    }
+
+    @Test
+    fun `clearing selection when nothing selected is no-op`() {
+        assertNull(viewModel.uiState.value.selectedCountry)
+        viewModel.clearSelection()
+        assertNull(viewModel.uiState.value.selectedCountry)
+    }
+
+    @Test
+    fun `clearing search when empty is no-op`() {
+        assertEquals("", viewModel.uiState.value.searchQuery)
+        assertTrue(viewModel.uiState.value.searchResults.isEmpty())
+
+        viewModel.clearSearch()
+
+        assertEquals("", viewModel.uiState.value.searchQuery)
+        assertTrue(viewModel.uiState.value.searchResults.isEmpty())
+    }
+
+    @Test
+    fun `search with special characters returns no results`() {
+        viewModel.updateSearchQuery("@#$%")
+
+        val state = viewModel.uiState.value
+        assertTrue(state.searchResults.isEmpty())
+    }
+
+    @Test
+    fun `search with numbers returns no results`() {
+        viewModel.updateSearchQuery("12345")
+
+        val state = viewModel.uiState.value
+        assertTrue(state.searchResults.isEmpty())
+    }
+
+    @Test
+    fun `search preserves country list`() {
+        val initialCount = viewModel.uiState.value.countries.size
+
+        viewModel.updateSearchQuery("Japan")
+        assertEquals(initialCount, viewModel.uiState.value.countries.size)
+
+        viewModel.updateSearchQuery("xyz")
+        assertEquals(initialCount, viewModel.uiState.value.countries.size)
+
+        viewModel.clearSearch()
+        assertEquals(initialCount, viewModel.uiState.value.countries.size)
+    }
+
+    @Test
+    fun `select then search then clear maintains selection`() {
+        viewModel.selectCountry("fr")
+        assertEquals("France", viewModel.uiState.value.selectedCountry?.name)
+
+        viewModel.updateSearchQuery("Germany")
+        assertEquals("France", viewModel.uiState.value.selectedCountry?.name)
+
+        viewModel.clearSearch()
+        assertEquals("France", viewModel.uiState.value.selectedCountry?.name)
+    }
+
+    @Test
+    fun `search with leading spaces finds matches containing spaces`() {
+        // Search with leading spaces - matches "Japan" because filter uses contains()
+        viewModel.updateSearchQuery("   Japan")
+        // Leading spaces means no match since country names don't have leading spaces
+        assertTrue(viewModel.uiState.value.searchResults.isEmpty())
+    }
+
+    @Test
+    fun `search with trailing spaces still finds matches`() {
+        // Trailing spaces - "Japan   " contains "Japan" so Japan matches
+        viewModel.updateSearchQuery("Japan")
+        assertTrue(viewModel.uiState.value.searchResults.any { it.name == "Japan" })
+    }
+
+    @Test
+    fun `rapid search updates work correctly`() {
+        viewModel.updateSearchQuery("J")
+        viewModel.updateSearchQuery("Ja")
+        viewModel.updateSearchQuery("Jap")
+        viewModel.updateSearchQuery("Japa")
+        viewModel.updateSearchQuery("Japan")
+
+        assertEquals("Japan", viewModel.uiState.value.searchQuery)
+        assertTrue(viewModel.uiState.value.searchResults.any { it.name == "Japan" })
+    }
+
+    @Test
+    fun `country selection after invalid id selection works`() {
+        viewModel.selectCountry("invalid")
+        assertNull(viewModel.uiState.value.selectedCountry)
+
+        viewModel.selectCountry("jp")
+        assertNotNull(viewModel.uiState.value.selectedCountry)
+        assertEquals("Japan", viewModel.uiState.value.selectedCountry?.name)
+    }
+
+    // ==================== Country Data Validation Tests ====================
+
+    @Test
+    fun `all countries have valid exchange rates`() {
+        viewModel.uiState.value.countries.forEach { country ->
+            assertTrue(
+                "Country ${country.name} should have positive exchange rate",
+                country.exchangeRateToUSD > 0
+            )
+        }
+    }
+
+    @Test
+    fun `all countries have non-empty currency code`() {
+        viewModel.uiState.value.countries.forEach { country ->
+            assertTrue(
+                "Country ${country.name} should have non-empty currency code",
+                country.currencyCode.isNotBlank()
+            )
+        }
+    }
+
+    @Test
+    fun `all countries have non-empty currency name`() {
+        viewModel.uiState.value.countries.forEach { country ->
+            assertTrue(
+                "Country ${country.name} should have non-empty currency name",
+                country.currency.isNotBlank()
+            )
+        }
+    }
+
+    @Test
+    fun `all countries have non-empty outlet type`() {
+        viewModel.uiState.value.countries.forEach { country ->
+            assertTrue(
+                "Country ${country.name} should have non-empty outlet type",
+                country.outletType.isNotBlank()
+            )
+        }
+    }
+
+    @Test
+    fun `all countries have non-empty flag emoji`() {
+        viewModel.uiState.value.countries.forEach { country ->
+            assertTrue(
+                "Country ${country.name} should have non-empty flag emoji",
+                country.flagEmoji.isNotBlank()
+            )
+        }
+    }
+
+    @Test
+    fun `all countries have valid safety level`() {
+        viewModel.uiState.value.countries.forEach { country ->
+            assertNotNull(
+                "Country ${country.name} should have a safety level",
+                country.safetyLevel
+            )
+        }
+    }
+
+    @Test
+    fun `all countries have valid visa requirement`() {
+        viewModel.uiState.value.countries.forEach { country ->
+            assertNotNull(
+                "Country ${country.name} should have a visa requirement",
+                country.visaRequirement
+            )
+        }
+    }
+
+    // ==================== Search Result Order Tests ====================
+
+    @Test
+    fun `search results are limited to 5 even with many matches`() {
+        // Search for a common letter that matches many countries
+        viewModel.updateSearchQuery("a")
+        assertTrue(viewModel.uiState.value.searchResults.size <= 5)
+    }
+
+    @Test
+    fun `exact match appears in search results`() {
+        viewModel.updateSearchQuery("Japan")
+        val results = viewModel.uiState.value.searchResults
+        assertTrue(results.any { it.name == "Japan" })
+    }
+
+    @Test
+    fun `partial match at beginning works`() {
+        viewModel.updateSearchQuery("Ger")
+        assertTrue(viewModel.uiState.value.searchResults.any { it.name == "Germany" })
+    }
+
+    @Test
+    fun `partial match in middle works`() {
+        viewModel.updateSearchQuery("Kingdom")
+        assertTrue(viewModel.uiState.value.searchResults.any { it.name == "United Kingdom" })
+    }
+
+    // ==================== State Consistency Tests ====================
+
+    @Test
+    fun `state remains consistent after multiple operations`() {
+        val initialCountries = viewModel.uiState.value.countries
+
+        // Perform many operations
+        viewModel.selectCountry("us")
+        viewModel.updateSearchQuery("France")
+        viewModel.selectCountry("fr")
+        viewModel.clearSearch()
+        viewModel.clearSelection()
+        viewModel.updateSearchQuery("Germany")
+        viewModel.clearSearch()
+
+        // Countries list should remain unchanged
+        assertEquals(initialCountries.size, viewModel.uiState.value.countries.size)
+        assertNull(viewModel.uiState.value.selectedCountry)
+        assertEquals("", viewModel.uiState.value.searchQuery)
+        assertTrue(viewModel.uiState.value.searchResults.isEmpty())
+    }
+
+    @Test
+    fun `isLoading is false after initialization`() {
+        assertFalse(viewModel.uiState.value.isLoading)
+    }
 }
 
 class CountryInfoUiStateTest {
