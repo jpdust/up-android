@@ -38,6 +38,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.unstampedpages.app.data.model.ChecklistCategory
 import com.unstampedpages.app.ui.screens.checklist.components.AddItemDialog
 import com.unstampedpages.app.ui.screens.checklist.components.CategorySection
+import com.unstampedpages.app.ui.screens.checklist.components.CategorySectionCallbacks
+import com.unstampedpages.app.ui.screens.checklist.components.CategorySectionState
 import com.unstampedpages.app.ui.screens.checklist.components.MultiSelectActionBar
 import com.unstampedpages.app.ui.screens.checklist.components.ProgressHeader
 import com.unstampedpages.app.ui.screens.checklist.components.TemplateSelector
@@ -154,16 +156,20 @@ fun ChecklistScreen(
                                 CategorySection(
                                     category = category,
                                     items = items,
-                                    isExpanded = uiState.expandedCategories.contains(category),
-                                    isMultiSelectMode = uiState.isMultiSelectMode,
-                                    selectedItemIds = uiState.selectedItemIds,
-                                    onToggleExpanded = { viewModel.toggleCategoryExpanded(category) },
-                                    onItemChecked = { viewModel.toggleItemChecked(it) },
-                                    onItemDeleted = { viewModel.deleteItem(it) },
-                                    onItemPinned = { viewModel.toggleItemPinned(it) },
-                                    onQuantityChanged = { item, qty -> viewModel.updateQuantity(item, qty) },
-                                    onItemLongPress = { viewModel.enterMultiSelectMode(it) },
-                                    onItemSelected = { viewModel.toggleItemSelection(it) }
+                                    state = CategorySectionState(
+                                        isExpanded = uiState.expandedCategories.contains(category),
+                                        isMultiSelectMode = uiState.isMultiSelectMode,
+                                        selectedItemIds = uiState.selectedItemIds
+                                    ),
+                                    callbacks = CategorySectionCallbacks(
+                                        onToggleExpanded = { viewModel.toggleCategoryExpanded(category) },
+                                        onItemChecked = { viewModel.toggleItemChecked(it) },
+                                        onItemDeleted = { viewModel.deleteItem(it) },
+                                        onItemPinned = { viewModel.toggleItemPinned(it) },
+                                        onQuantityChanged = { item, qty -> viewModel.updateQuantity(item, qty) },
+                                        onItemLongPress = { viewModel.enterMultiSelectMode(it) },
+                                        onItemSelected = { viewModel.toggleItemSelection(it) }
+                                    )
                                 )
                             }
                         }

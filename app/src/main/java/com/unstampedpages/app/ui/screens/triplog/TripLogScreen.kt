@@ -65,17 +65,21 @@ fun TripLogScreen(
         exit = fadeOut()
     ) {
         JournalEntryEditor(
-            title = uiState.editingTitle,
-            content = uiState.editingContent,
-            location = uiState.editingLocation,
-            date = uiState.editingDate,
-            isNewEntry = uiState.selectedEntry == null,
-            onTitleChange = { viewModel.updateEditingTitle(it) },
-            onContentChange = { viewModel.updateEditingContent(it) },
-            onLocationChange = { viewModel.updateEditingLocation(it) },
-            onDateChange = { viewModel.updateEditingDate(it) },
-            onSave = { viewModel.saveEntry() },
-            onCancel = { viewModel.cancelEditing() }
+            state = JournalEntryState(
+                title = uiState.editingTitle,
+                content = uiState.editingContent,
+                location = uiState.editingLocation,
+                date = uiState.editingDate,
+                isNewEntry = uiState.selectedEntry == null
+            ),
+            callbacks = JournalEntryCallbacks(
+                onTitleChange = { viewModel.updateEditingTitle(it) },
+                onContentChange = { viewModel.updateEditingContent(it) },
+                onLocationChange = { viewModel.updateEditingLocation(it) },
+                onDateChange = { viewModel.updateEditingDate(it) },
+                onSave = { viewModel.saveEntry() },
+                onCancel = { viewModel.cancelEditing() }
+            )
         )
     }
 
