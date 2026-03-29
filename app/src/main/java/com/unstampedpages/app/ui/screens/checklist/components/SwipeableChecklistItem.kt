@@ -98,11 +98,8 @@ fun SwipeableChecklistItem(
         }
     )
 
-    val directions = if (state.isMultiSelectMode) {
-        emptySet()
-    } else {
-        setOf(DismissDirection.StartToEnd, DismissDirection.EndToStart)
-    }
+    val enableDismissFromStartToEnd = !state.isMultiSelectMode
+    val enableDismissFromEndToStart = !state.isMultiSelectMode
 
     SwipeToDismissBox(
         state = dismissState,
