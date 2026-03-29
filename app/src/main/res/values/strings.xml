@@ -22,13 +22,13 @@
 
     <!-- Checklist -->
     <string name="checklist_title">Travel Checklist</string>
-    <string name="checklist_hint">What to bring on your adventure...</string>
+    <string name="checklist_hint">What to bring on your adventure…</string>
     <string name="checklist_save">Save</string>
 
     <!-- Trip Log -->
     <string name="trip_log_title">Trip Log</string>
     <string name="trip_log_new_entry">New Entry</string>
-    <string name="trip_log_entry_hint">Record your adventure...</string>
+    <string name="trip_log_entry_hint">Record your adventure…</string>
     <string name="trip_log_no_entries">No journal entries yet.\nStart documenting your travels!</string>
 
     <!-- My Stamps -->

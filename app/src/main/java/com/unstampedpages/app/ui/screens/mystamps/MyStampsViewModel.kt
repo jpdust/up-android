@@ -1,7 +1,6 @@
 package com.unstampedpages.app.ui.screens.mystamps
 
 import android.app.Application
-import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.core.content.FileProvider
@@ -35,7 +34,6 @@ data class MyStampsUiState(
 
 class MyStampsViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val context: Context = application.applicationContext
     private var repository: StampRepository? = null
     private var currentCameraTempFile: File? = null
 
@@ -132,7 +130,8 @@ class MyStampsViewModel(application: Application) : AndroidViewModel(application
 
     fun createCameraUri(): Uri? {
         return try {
-            val cameraTempDir = File(context.cacheDir, "camera_temp")
+            val app = getApplication<Application>()
+            val cameraTempDir = File(app.cacheDir, "camera_temp")
             if (!cameraTempDir.exists()) {
                 cameraTempDir.mkdirs()
             }
@@ -141,8 +140,8 @@ class MyStampsViewModel(application: Application) : AndroidViewModel(application
             currentCameraTempFile = tempFile
 
             val uri = FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileprovider",
+                app,
+                "${app.packageName}.fileprovider",
                 tempFile
             )
             _uiState.value = _uiState.value.copy(cameraImageUri = uri)
@@ -189,7 +188,8 @@ class MyStampsViewModel(application: Application) : AndroidViewModel(application
 
     private fun moveCameraImageToStorage(tempFile: File, countryCode: String): String? {
         return try {
-            val upImagesDir = File(context.filesDir, "upimages")
+            val app = getApplication<Application>()
+            val upImagesDir = File(app.filesDir, "upimages")
             if (!upImagesDir.exists()) {
                 upImagesDir.mkdirs()
             }
@@ -211,7 +211,8 @@ class MyStampsViewModel(application: Application) : AndroidViewModel(application
 
     private fun copyImageToLocalStorage(uri: Uri, countryCode: String): String? {
         return try {
-            val upImagesDir = File(context.filesDir, "upimages")
+            val app = getApplication<Application>()
+            val upImagesDir = File(app.filesDir, "upimages")
             if (!upImagesDir.exists()) {
                 upImagesDir.mkdirs()
             }
@@ -219,7 +220,7 @@ class MyStampsViewModel(application: Application) : AndroidViewModel(application
             val fileName = "stamp_${countryCode}_${System.currentTimeMillis()}.jpg"
             val destFile = File(upImagesDir, fileName)
 
-            context.contentResolver.openInputStream(uri)?.use { inputStream ->
+            app.contentResolver.openInputStream(uri)?.use { inputStream ->
                 FileOutputStream(destFile).use { outputStream ->
                     inputStream.copyTo(outputStream)
                 }

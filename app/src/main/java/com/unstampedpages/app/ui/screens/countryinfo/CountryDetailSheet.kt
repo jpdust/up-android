@@ -35,7 +35,7 @@ import androidx.compose.material.icons.filled.ElectricalServices
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -151,7 +151,7 @@ fun CountryDetailSheet(
                                 testTag = "info_safety_level"
                             )
 
-                            Divider(color = Primary.copy(alpha = 0.1f))
+                            HorizontalDivider(color = Primary.copy(alpha = 0.1f))
 
                             // Entry Requirement
                             InfoRow(
@@ -161,7 +161,7 @@ fun CountryDetailSheet(
                                 testTag = "info_entry_requirement"
                             )
 
-                            Divider(color = Primary.copy(alpha = 0.1f))
+                            HorizontalDivider(color = Primary.copy(alpha = 0.1f))
 
                             // Passport Validity
                             InfoRow(
@@ -171,7 +171,7 @@ fun CountryDetailSheet(
                                 testTag = "info_passport_validity"
                             )
 
-                            Divider(color = Primary.copy(alpha = 0.1f))
+                            HorizontalDivider(color = Primary.copy(alpha = 0.1f))
 
                             // Currency
                             InfoRow(
@@ -200,7 +200,7 @@ fun CountryDetailSheet(
                                     }
                                 )
 
-                                Divider(color = Primary.copy(alpha = 0.1f))
+                                HorizontalDivider(color = Primary.copy(alpha = 0.1f))
                             }
 
                             // Outlet Type

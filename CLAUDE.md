@@ -24,9 +24,9 @@ java -version
 
 ### Requirements
 - **Java:** 17
-- **Android SDK:** 34 (compile), 26 (min)
-- **Gradle:** 8.5.0
-- **Kotlin:** 1.9.24
+- **Android SDK:** 36 (compile/target), 26 (min)
+- **Gradle:** 8.9.3
+- **Kotlin:** 2.1.20
 
 ## Project Structure
 
