@@ -35,7 +35,6 @@ import com.unstampedpages.app.ui.screens.countryinfo.CountryInfoScreen
 import com.unstampedpages.app.ui.screens.home.HomeScreen
 import com.unstampedpages.app.ui.screens.mystamps.MyStampsScreen
 import com.unstampedpages.app.ui.screens.triplog.TripLogScreen
-import com.unstampedpages.app.ui.theme.Primary
 import com.unstampedpages.app.ui.theme.Secondary
 
 private data class HeaderContent(
@@ -83,7 +82,7 @@ fun UnstampedPagesApp() {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Primary)
+                        .background(MaterialTheme.colorScheme.primary)
                         .padding(16.dp)
                 ) {
                     Column(
