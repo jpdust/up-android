@@ -26,7 +26,7 @@ enum class SafetyLevel(val displayName: String, val color: Color) {
 
 enum class VisaRequirement(val displayName: String, val color: Color) {
     VISA_NOT_REQUIRED("Visa not required", Color(0xFF4CAF50)),      // Green
-    EVISA("eVisa", Color(0xFF00BCD4)),                          // Turquoise
+    E_VISA("eVisa", Color(0xFF00BCD4)),                          // Turquoise
     VISA_ON_ARRIVAL("Visa on arrival", Color(0xFFFFC107)),           // Yellow
     VISA_REQUIRED("Visa required", Color(0xFF9E9E9E)),               // Gray
     RESTRICTED("Restricted", Color(0xFF000000))                           // Black
