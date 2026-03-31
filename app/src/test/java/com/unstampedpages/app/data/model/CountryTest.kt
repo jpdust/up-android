@@ -176,7 +176,7 @@ class VisaRequirementTest {
 
     @Test
     fun `VisaRequirement EVISA has correct displayName`() {
-        assertEquals("eVisa", VisaRequirement.EVISA.displayName)
+        assertEquals("eVisa", VisaRequirement.E_VISA.displayName)
     }
 
     @Test
@@ -199,7 +199,7 @@ class VisaRequirementTest {
         val values = VisaRequirement.values()
         assertEquals(5, values.size)
         assertTrue(values.contains(VisaRequirement.VISA_NOT_REQUIRED))
-        assertTrue(values.contains(VisaRequirement.EVISA))
+        assertTrue(values.contains(VisaRequirement.E_VISA))
         assertTrue(values.contains(VisaRequirement.VISA_ON_ARRIVAL))
         assertTrue(values.contains(VisaRequirement.VISA_REQUIRED))
         assertTrue(values.contains(VisaRequirement.RESTRICTED))
@@ -208,7 +208,7 @@ class VisaRequirementTest {
     @Test
     fun `VisaRequirement valueOf returns correct enum`() {
         assertEquals(VisaRequirement.VISA_NOT_REQUIRED, VisaRequirement.valueOf("VISA_NOT_REQUIRED"))
-        assertEquals(VisaRequirement.EVISA, VisaRequirement.valueOf("EVISA"))
+        assertEquals(VisaRequirement.E_VISA, VisaRequirement.valueOf("EVISA"))
         assertEquals(VisaRequirement.VISA_ON_ARRIVAL, VisaRequirement.valueOf("VISA_ON_ARRIVAL"))
         assertEquals(VisaRequirement.VISA_REQUIRED, VisaRequirement.valueOf("VISA_REQUIRED"))
         assertEquals(VisaRequirement.RESTRICTED, VisaRequirement.valueOf("RESTRICTED"))

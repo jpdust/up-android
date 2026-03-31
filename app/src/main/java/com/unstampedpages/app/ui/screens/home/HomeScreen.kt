@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,6 +24,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,9 +33,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.unstampedpages.app.ui.theme.Primary
@@ -72,15 +78,10 @@ fun HomeScreen(
         // Compass Icon
         CompassIcon(modifier = Modifier.size(120.dp))
 
-        // App Title - Stencil Font
-        Text(
+        // App Title - Stencil Font (auto-sized to fit width)
+        AutoSizeTitle(
             text = "UNSTAMPED PAGES",
-            fontFamily = StencilFontFamily,
-            fontWeight = FontWeight.Bold,
-            fontSize = 32.sp,
-            letterSpacing = 2.sp,
-            color = MaterialTheme.colorScheme.primary,
-            textAlign = TextAlign.Center
+            modifier = Modifier.fillMaxWidth()
         )
 
         Text(
@@ -421,6 +422,53 @@ private fun StampIcon() {
             close()
         }
         drawPath(starPath, color = Primary)
+    }
+}
+
+@Composable
+private fun AutoSizeTitle(
+    text: String,
+    modifier: Modifier = Modifier,
+    maxFontSize: TextUnit = 36.sp,
+    minFontSize: TextUnit = 16.sp
+) {
+    val textMeasurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+
+    BoxWithConstraints(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        val maxWidthPx = constraints.maxWidth
+
+        val optimalFontSize = remember(text, maxWidthPx, maxFontSize, minFontSize) {
+            var fontSize = maxFontSize
+            while (fontSize > minFontSize) {
+                val textStyle = TextStyle(
+                    fontFamily = StencilFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = fontSize,
+                    letterSpacing = with(density) { (fontSize.value * 0.06f).sp }
+                )
+                val result = textMeasurer.measure(text = text, style = textStyle)
+                if (result.size.width <= maxWidthPx) {
+                    break
+                }
+                fontSize = (fontSize.value - 1f).sp
+            }
+            fontSize
+        }
+
+        Text(
+            text = text,
+            fontFamily = StencilFontFamily,
+            fontWeight = FontWeight.Bold,
+            fontSize = optimalFontSize,
+            letterSpacing = (optimalFontSize.value * 0.06f).sp,
+            color = MaterialTheme.colorScheme.primary,
+            textAlign = TextAlign.Center,
+            maxLines = 1
+        )
     }
 }
 

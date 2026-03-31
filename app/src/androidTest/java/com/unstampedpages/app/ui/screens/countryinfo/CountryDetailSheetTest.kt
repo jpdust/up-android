@@ -545,7 +545,7 @@ class CountryDetailSheetTest {
     @Test
     fun countryDetailSheet_showsEVisa() {
         val country = createCountry(
-            visaRequirement = VisaRequirement.EVISA
+            visaRequirement = VisaRequirement.E_VISA
         )
 
         composeTestRule.setContent {
