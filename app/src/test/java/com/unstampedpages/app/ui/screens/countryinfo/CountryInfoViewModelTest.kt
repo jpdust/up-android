@@ -555,4 +555,140 @@ class CountryInfoUiStateTest {
 
         assertTrue(state.isLoading)
     }
+
+    @Test
+    fun `default state has empty search query`() {
+        val state = CountryInfoUiState()
+
+        assertEquals("", state.searchQuery)
+    }
+
+    @Test
+    fun `default state has empty search results`() {
+        val state = CountryInfoUiState()
+
+        assertTrue(state.searchResults.isEmpty())
+    }
+
+    @Test
+    fun `state can be created with search query`() {
+        val state = CountryInfoUiState(searchQuery = "Japan")
+
+        assertEquals("Japan", state.searchQuery)
+    }
+
+    @Test
+    fun `state equality works correctly`() {
+        val state1 = CountryInfoUiState(isLoading = true, searchQuery = "test")
+        val state2 = CountryInfoUiState(isLoading = true, searchQuery = "test")
+        val state3 = CountryInfoUiState(isLoading = false, searchQuery = "test")
+
+        assertEquals(state1, state2)
+        assertNotEquals(state1, state3)
+    }
+
+    @Test
+    fun `state hashCode is consistent`() {
+        val state = CountryInfoUiState(isLoading = true, searchQuery = "test")
+        val hash1 = state.hashCode()
+        val hash2 = state.hashCode()
+
+        assertEquals(hash1, hash2)
+    }
+
+    @Test
+    fun `state copy works correctly`() {
+        val original = CountryInfoUiState(isLoading = true, searchQuery = "original")
+        val copy = original.copy(searchQuery = "modified")
+
+        assertEquals("original", original.searchQuery)
+        assertEquals("modified", copy.searchQuery)
+        assertTrue(original.isLoading)
+        assertTrue(copy.isLoading)
+    }
+
+    @Test
+    fun `state copy preserves unmodified fields`() {
+        val original = CountryInfoUiState(
+            isLoading = true,
+            searchQuery = "test",
+            countries = emptyList(),
+            selectedCountry = null,
+            searchResults = emptyList()
+        )
+        val copy = original.copy(isLoading = false)
+
+        assertFalse(copy.isLoading)
+        assertEquals(original.searchQuery, copy.searchQuery)
+        assertEquals(original.countries, copy.countries)
+        assertEquals(original.selectedCountry, copy.selectedCountry)
+        assertEquals(original.searchResults, copy.searchResults)
+    }
+
+    @Test
+    fun `state toString contains field names`() {
+        val state = CountryInfoUiState(isLoading = true, searchQuery = "test")
+        val string = state.toString()
+
+        assertTrue(string.contains("isLoading"))
+        assertTrue(string.contains("searchQuery"))
+        assertTrue(string.contains("countries"))
+    }
+
+    @Test
+    fun `state component1 returns countries`() {
+        val state = CountryInfoUiState()
+        val (countries, _, _, _, _) = state
+
+        assertTrue(countries.isEmpty())
+    }
+
+    @Test
+    fun `state component2 returns selectedCountry`() {
+        val state = CountryInfoUiState()
+        val (_, selectedCountry, _, _, _) = state
+
+        assertNull(selectedCountry)
+    }
+
+    @Test
+    fun `state component3 returns isLoading`() {
+        val state = CountryInfoUiState(isLoading = true)
+        val (_, _, isLoading, _, _) = state
+
+        assertTrue(isLoading)
+    }
+
+    @Test
+    fun `state component4 returns searchQuery`() {
+        val state = CountryInfoUiState(searchQuery = "test")
+        val (_, _, _, searchQuery, _) = state
+
+        assertEquals("test", searchQuery)
+    }
+
+    @Test
+    fun `state component5 returns searchResults`() {
+        val state = CountryInfoUiState()
+        val (_, _, _, _, searchResults) = state
+
+        assertTrue(searchResults.isEmpty())
+    }
+
+    @Test
+    fun `state with all parameters can be created`() {
+        val state = CountryInfoUiState(
+            countries = emptyList(),
+            selectedCountry = null,
+            isLoading = false,
+            searchQuery = "query",
+            searchResults = emptyList()
+        )
+
+        assertTrue(state.countries.isEmpty())
+        assertNull(state.selectedCountry)
+        assertFalse(state.isLoading)
+        assertEquals("query", state.searchQuery)
+        assertTrue(state.searchResults.isEmpty())
+    }
 }

@@ -1237,4 +1237,333 @@ class WorldMapCanvasTest {
     fun `geoJsonToRepoId Ukraine mapping is correct`() {
         assertEquals("ua", geoJsonToRepoId["UKR"])
     }
+
+    // ==================== MapLegendConfig Edge Case Tests ====================
+
+    @Test
+    fun `MapLegendConfig equality with same values`() {
+        val config1 = MapLegendConfig(showLegend = true)
+        val config2 = MapLegendConfig(showLegend = true)
+
+        assertEquals(config1.showLegend, config2.showLegend)
+    }
+
+    @Test
+    fun `MapLegendConfig with different showLegend values`() {
+        val configTrue = MapLegendConfig(showLegend = true)
+        val configFalse = MapLegendConfig(showLegend = false)
+
+        assertTrue(configTrue.showLegend)
+        assertFalse(configFalse.showLegend)
+    }
+
+    @Test
+    fun `MapLegendConfig callback invocation order is independent`() {
+        var callOrder = mutableListOf<String>()
+
+        val config = MapLegendConfig(
+            showLegend = true,
+            onCompassTapped = { callOrder.add("compass") },
+            onLegendClose = { callOrder.add("close") }
+        )
+
+        config.onLegendClose()
+        config.onCompassTapped()
+        config.onLegendClose()
+
+        assertEquals(listOf("close", "compass", "close"), callOrder)
+    }
+
+    // ==================== MercatorProjection Boundary Tests ====================
+
+    @Test
+    fun `latitudeToY at exact MAX_LATITUDE returns 0`() {
+        val y = MercatorProjection.latitudeToY(MercatorProjection.MAX_LATITUDE)
+        assertEquals(0f, y, 0.001f)
+    }
+
+    @Test
+    fun `latitudeToY at exact MIN_LATITUDE returns 1`() {
+        val y = MercatorProjection.latitudeToY(MercatorProjection.MIN_LATITUDE)
+        assertEquals(1f, y, 0.001f)
+    }
+
+    @Test
+    fun `yToLatitude at 0 returns MAX_LATITUDE`() {
+        val lat = MercatorProjection.yToLatitude(0f)
+        assertEquals(MercatorProjection.MAX_LATITUDE, lat, 0.1f)
+    }
+
+    @Test
+    fun `yToLatitude at 1 returns MIN_LATITUDE`() {
+        val lat = MercatorProjection.yToLatitude(1f)
+        assertEquals(MercatorProjection.MIN_LATITUDE, lat, 0.1f)
+    }
+
+    @Test
+    fun `xToLongitude at 0 returns MIN_LONGITUDE`() {
+        val lng = MercatorProjection.xToLongitude(0f)
+        assertEquals(MercatorProjection.MIN_LONGITUDE, lng, 0.001f)
+    }
+
+    @Test
+    fun `xToLongitude at 1 returns MAX_LONGITUDE`() {
+        val lng = MercatorProjection.xToLongitude(1f)
+        assertEquals(MercatorProjection.MAX_LONGITUDE, lng, 0.001f)
+    }
+
+    // ==================== Coordinate Conversion Precision Tests ====================
+
+    @Test
+    fun `coordinate conversion maintains precision for small latitude changes`() {
+        val lat1 = 45.0f
+        val lat2 = 45.1f
+
+        val y1 = MercatorProjection.latitudeToY(lat1)
+        val y2 = MercatorProjection.latitudeToY(lat2)
+
+        assertTrue("Small latitude change should produce different Y values", y1 != y2)
+    }
+
+    @Test
+    fun `coordinate conversion maintains precision for small longitude changes`() {
+        val lng1 = 90.0f
+        val lng2 = 90.1f
+
+        val x1 = MercatorProjection.longitudeToX(lng1)
+        val x2 = MercatorProjection.longitudeToX(lng2)
+
+        assertTrue("Small longitude change should produce different X values", x1 != x2)
+    }
+
+    // ==================== normalizeOffsetX Comprehensive Tests ====================
+
+    @Test
+    fun `normalizeOffsetX handles very small positive values`() {
+        val result = normalizeOffsetX(0.001f)
+        assertEquals(0.001f, result, 0.0001f)
+    }
+
+    @Test
+    fun `normalizeOffsetX handles very small negative values`() {
+        val result = normalizeOffsetX(-0.001f)
+        assertEquals(-0.001f, result, 0.0001f)
+    }
+
+    @Test
+    fun `normalizeOffsetX result is always in range`() {
+        val testValues = listOf(-10f, -5f, -1f, -0.5f, 0f, 0.5f, 1f, 5f, 10f)
+        testValues.forEach { value ->
+            val result = normalizeOffsetX(value)
+            assertTrue(
+                "Result $result for input $value should be in range [-0.5, 0.5)",
+                result >= -0.5f && result < 0.5f
+            )
+        }
+    }
+
+    // ==================== normalizeNormalizedX Comprehensive Tests ====================
+
+    @Test
+    fun `normalizeNormalizedX handles very small positive values`() {
+        val result = normalizeNormalizedX(0.001f)
+        assertEquals(0.001f, result, 0.0001f)
+    }
+
+    @Test
+    fun `normalizeNormalizedX handles value just under 1`() {
+        val result = normalizeNormalizedX(0.999f)
+        assertEquals(0.999f, result, 0.001f)
+    }
+
+    @Test
+    fun `normalizeNormalizedX result is always in range`() {
+        val testValues = listOf(-10f, -5f, -1f, -0.5f, 0f, 0.5f, 1f, 5f, 10f)
+        testValues.forEach { value ->
+            val result = normalizeNormalizedX(value)
+            assertTrue(
+                "Result $result for input $value should be in range [0, 1)",
+                result >= 0f && result < 1f
+            )
+        }
+    }
+
+    // ==================== getLegendItems Comprehensive Tests ====================
+
+    @Test
+    fun `getLegendItems SECURITY_RISK test tags are unique`() {
+        val items = getLegendItems(MapColorMode.SECURITY_RISK)
+        val testTags = items.map { it.testTag }
+        assertEquals(testTags.size, testTags.distinct().size)
+    }
+
+    @Test
+    fun `getLegendItems VISA_REQUIREMENTS test tags are unique`() {
+        val items = getLegendItems(MapColorMode.VISA_REQUIREMENTS)
+        val testTags = items.map { it.testTag }
+        assertEquals(testTags.size, testTags.distinct().size)
+    }
+
+    @Test
+    fun `getLegendItems PASSPORT_VALIDITY test tags are unique`() {
+        val items = getLegendItems(MapColorMode.PASSPORT_VALIDITY)
+        val testTags = items.map { it.testTag }
+        assertEquals(testTags.size, testTags.distinct().size)
+    }
+
+    @Test
+    fun `getLegendItems all modes have unique test tags across modes`() {
+        val allTestTags = MapColorMode.entries
+            .filter { it != MapColorMode.DEFAULT }
+            .flatMap { getLegendItems(it) }
+            .map { it.testTag }
+
+        assertEquals(
+            "All test tags across all modes should be unique",
+            allTestTags.size,
+            allTestTags.distinct().size
+        )
+    }
+
+    // ==================== getPassportValidityColor Comprehensive Tests ====================
+
+    @Test
+    fun `getPassportValidityColor handles common variations of 6 months`() {
+        assertEquals(PassportValidityColors.SixMonths, getPassportValidityColor("6 months"))
+        assertEquals(PassportValidityColors.Other, getPassportValidityColor("6 Months"))
+        assertEquals(PassportValidityColors.Other, getPassportValidityColor("six months"))
+    }
+
+    @Test
+    fun `getPassportValidityColor handles common variations of 3 months`() {
+        assertEquals(PassportValidityColors.ThreeMonths, getPassportValidityColor("3 months"))
+        assertEquals(PassportValidityColors.Other, getPassportValidityColor("3 Months"))
+        assertEquals(PassportValidityColors.Other, getPassportValidityColor("three months"))
+    }
+
+    @Test
+    fun `getPassportValidityColor handles planned stay variations`() {
+        assertEquals(PassportValidityColors.PlannedStay, getPassportValidityColor("Planned length of stay"))
+        assertEquals(PassportValidityColors.Other, getPassportValidityColor("planned length of stay"))
+    }
+
+    // ==================== City Coordinate Tests (Additional) ====================
+
+    @Test
+    fun `coordinate conversion round trip for Moscow`() {
+        val lat = 55.7558f
+        val lng = 37.6173f
+
+        val x = MercatorProjection.longitudeToX(lng)
+        val y = MercatorProjection.latitudeToY(lat)
+
+        val recoveredLng = MercatorProjection.xToLongitude(x)
+        val recoveredLat = MercatorProjection.yToLatitude(y)
+
+        assertEquals(lng, recoveredLng, 0.01f)
+        assertEquals(lat, recoveredLat, 0.1f)
+    }
+
+    @Test
+    fun `coordinate conversion round trip for Mumbai`() {
+        val lat = 19.0760f
+        val lng = 72.8777f
+
+        val x = MercatorProjection.longitudeToX(lng)
+        val y = MercatorProjection.latitudeToY(lat)
+
+        val recoveredLng = MercatorProjection.xToLongitude(x)
+        val recoveredLat = MercatorProjection.yToLatitude(y)
+
+        assertEquals(lng, recoveredLng, 0.01f)
+        assertEquals(lat, recoveredLat, 0.1f)
+    }
+
+    @Test
+    fun `coordinate conversion round trip for Cairo`() {
+        val lat = 30.0444f
+        val lng = 31.2357f
+
+        val x = MercatorProjection.longitudeToX(lng)
+        val y = MercatorProjection.latitudeToY(lat)
+
+        val recoveredLng = MercatorProjection.xToLongitude(x)
+        val recoveredLat = MercatorProjection.yToLatitude(y)
+
+        assertEquals(lng, recoveredLng, 0.01f)
+        assertEquals(lat, recoveredLat, 0.1f)
+    }
+
+    @Test
+    fun `coordinate conversion round trip for São Paulo`() {
+        val lat = -23.5505f
+        val lng = -46.6333f
+
+        val x = MercatorProjection.longitudeToX(lng)
+        val y = MercatorProjection.latitudeToY(lat)
+
+        val recoveredLng = MercatorProjection.xToLongitude(x)
+        val recoveredLat = MercatorProjection.yToLatitude(y)
+
+        assertEquals(lng, recoveredLng, 0.01f)
+        assertEquals(lat, recoveredLat, 0.1f)
+    }
+
+    // ==================== geoJsonToRepoId Additional Tests ====================
+
+    @Test
+    fun `geoJsonToRepoId contains small island nations`() {
+        val islandNations = listOf("MUS", "MDV", "MLT", "BRB", "SGP")
+        islandNations.forEach { code ->
+            assertNotNull("Should contain $code", geoJsonToRepoId[code])
+        }
+    }
+
+    @Test
+    fun `geoJsonToRepoId contains Nordic countries`() {
+        val nordicCodes = listOf("DNK", "FIN", "ISL", "NOR", "SWE")
+        nordicCodes.forEach { code ->
+            assertNotNull("Should contain $code", geoJsonToRepoId[code])
+        }
+    }
+
+    @Test
+    fun `geoJsonToRepoId contains Baltic states`() {
+        val balticCodes = listOf("EST", "LVA", "LTU")
+        balticCodes.forEach { code ->
+            assertNotNull("Should contain $code", geoJsonToRepoId[code])
+        }
+    }
+
+    @Test
+    fun `geoJsonToRepoId contains Balkan countries`() {
+        val balkanCodes = listOf("HRV", "SRB", "BGR", "ROU", "SVN", "ALB", "MKD", "BIH", "MNE")
+        balkanCodes.forEach { code ->
+            assertNotNull("Should contain $code", geoJsonToRepoId[code])
+        }
+    }
+
+    // ==================== LegendItem Additional Tests ====================
+
+    @Test
+    fun `LegendItem destructuring works correctly`() {
+        val item = LegendItem(Color.Red, "Test", "test_tag")
+        val (color, label, tag) = item
+
+        assertEquals(Color.Red, color)
+        assertEquals("Test", label)
+        assertEquals("test_tag", tag)
+    }
+
+    @Test
+    fun `LegendItem with transparent color can be created`() {
+        val item = LegendItem(Color.Transparent, "Transparent", "transparent_tag")
+        assertEquals(Color.Transparent, item.color)
+    }
+
+    @Test
+    fun `LegendItem with empty label can be created`() {
+        val item = LegendItem(Color.Red, "", "empty_label_tag")
+        assertEquals("", item.label)
+    }
 }
