@@ -1,6 +1,7 @@
 package com.unstampedpages.app.ui.navigation
 
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -10,9 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.unstampedpages.app.ui.theme.Primary
 import com.unstampedpages.app.ui.theme.Secondary
-import com.unstampedpages.app.ui.theme.Surface
 
 @Composable
 fun BottomNavBar(
@@ -22,10 +21,12 @@ fun BottomNavBar(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    val primary = MaterialTheme.colorScheme.primary
+
     NavigationBar(
         modifier = modifier,
-        containerColor = Surface,
-        contentColor = Primary
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = primary
     ) {
         NavRoute.items.forEach { item ->
             val selected = currentRoute == item.route
@@ -51,10 +52,10 @@ fun BottomNavBar(
                 },
                 label = { Text(item.title) },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = Primary,
-                    selectedTextColor = Primary,
-                    unselectedIconColor = Primary.copy(alpha = 0.6f),
-                    unselectedTextColor = Primary.copy(alpha = 0.6f),
+                    selectedIconColor = primary,
+                    selectedTextColor = primary,
+                    unselectedIconColor = primary.copy(alpha = 0.6f),
+                    unselectedTextColor = primary.copy(alpha = 0.6f),
                     indicatorColor = Secondary.copy(alpha = 0.3f)
                 )
             )

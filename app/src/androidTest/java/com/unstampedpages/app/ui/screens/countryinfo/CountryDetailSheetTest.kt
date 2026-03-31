@@ -7,6 +7,7 @@ import com.unstampedpages.app.data.model.Continent
 import com.unstampedpages.app.data.model.Country
 import com.unstampedpages.app.data.model.SafetyLevel
 import com.unstampedpages.app.data.model.VisaRequirement
+import com.unstampedpages.app.ui.theme.UnstampedPagesTheme
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -52,11 +53,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = usdCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = usdCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // Verify currency is displayed
@@ -77,11 +80,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = euroCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = euroCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // Verify currency is displayed
@@ -104,11 +109,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = jpyCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = jpyCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // Verify currency is displayed
@@ -132,11 +139,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = panamaCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = panamaCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // Verify currency is displayed
@@ -158,11 +167,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = ecuadorCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = ecuadorCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // Verify exchange rate is NOT displayed for Ecuador (uses USD)
@@ -180,11 +191,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = gbpCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = gbpCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // Verify currency is displayed
@@ -201,11 +214,13 @@ class CountryDetailSheetTest {
         val country = createCountry()
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = country,
-                visible = false,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = false,
+                    onDismiss = {}
+                )
+            }
         }
 
         // When not visible, country name should not be displayed
@@ -217,11 +232,13 @@ class CountryDetailSheetTest {
         val country = createCountry(name = "Test Country")
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = country,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // When visible, country name should be displayed
@@ -245,11 +262,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = euroCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = euroCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // Initial USD amount should be "1"
@@ -271,11 +290,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = jpyCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = jpyCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // Initial USD amount should be "1"
@@ -297,11 +318,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = gbpCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = gbpCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // Initial USD amount should be "1"
@@ -323,11 +346,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = mxnCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = mxnCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // Initial USD amount should be "1"
@@ -347,11 +372,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = euroCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = euroCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // Currency codes should be displayed
@@ -370,11 +397,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = euroCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = euroCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // Equals sign should be displayed
@@ -393,11 +422,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = country,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("Safety Level").assertIsDisplayed()
@@ -412,11 +443,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = country,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("Safety Level").assertIsDisplayed()
@@ -431,11 +464,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = country,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("Safety Level").assertIsDisplayed()
@@ -450,11 +485,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = country,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("Safety Level").assertIsDisplayed()
@@ -472,11 +509,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = country,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("Entry Requirement").assertIsDisplayed()
@@ -490,11 +529,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = country,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("Entry Requirement").assertIsDisplayed()
@@ -508,11 +549,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = country,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("Entry Requirement").assertIsDisplayed()
@@ -526,11 +569,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = country,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("Entry Requirement").assertIsDisplayed()
@@ -548,11 +593,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = country,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("Power Outlet").assertIsDisplayed()
@@ -566,11 +613,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = country,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("Power Outlet").assertIsDisplayed()
@@ -584,11 +633,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = country,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("Power Outlet").assertIsDisplayed()
@@ -607,11 +658,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = country,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("North America").assertIsDisplayed()
@@ -625,11 +678,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = country,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("South America").assertIsDisplayed()
@@ -643,11 +698,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = country,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("Europe").assertIsDisplayed()
@@ -661,11 +718,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = country,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("Africa").assertIsDisplayed()
@@ -679,11 +738,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = country,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("Asia").assertIsDisplayed()
@@ -697,11 +758,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = country,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("Oceania").assertIsDisplayed()
@@ -715,11 +778,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = country,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // Verify the country name is shown
@@ -740,11 +805,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = country,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("\uD83C\uDDEB\uD83C\uDDF7").assertIsDisplayed()
@@ -757,11 +824,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = country,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("United States of America").assertIsDisplayed()
@@ -774,11 +843,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = country,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("Côte d'Ivoire").assertIsDisplayed()
@@ -791,11 +862,13 @@ class CountryDetailSheetTest {
     @Test
     fun countryDetailSheet_nullCountry_hidesContent() {
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = null,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = null,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // When country is null, no country-specific content should be displayed
@@ -807,11 +880,13 @@ class CountryDetailSheetTest {
     @Test
     fun countryDetailSheet_nullCountryNotVisible_hidesContent() {
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = null,
-                visible = false,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = null,
+                    visible = false,
+                    onDismiss = {}
+                )
+            }
         }
 
         // No content should be displayed
@@ -832,11 +907,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = country,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // Should display 0.00 for the foreign amount when exchange rate is 0
@@ -856,11 +933,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = vndCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = vndCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // Should display a large number for the foreign amount
@@ -881,11 +960,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = strongCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = strongCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // Should display 0.10 for the foreign amount
@@ -908,11 +989,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = country,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // Header
@@ -944,11 +1027,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = country,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("United Arab Emirates Dirham (AED)").assertIsDisplayed()
@@ -969,11 +1054,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = euroCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = euroCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithTag("currency_input_usd").assertExists()
@@ -990,11 +1077,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = euroCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = euroCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithTag("currency_input_foreign").assertExists()
@@ -1011,11 +1100,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = euroCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = euroCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithTag("currency_input_usd").performClick()
@@ -1033,11 +1124,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = euroCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = euroCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithTag("currency_input_foreign").performClick()
@@ -1055,11 +1148,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = euroCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = euroCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // Clear and type a new value
@@ -1083,11 +1178,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = euroCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = euroCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // Clear and type a new value in foreign field
@@ -1113,11 +1210,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = jpyCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = jpyCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // Initial value should be "1"
@@ -1144,11 +1243,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = euroCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = euroCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // Initial EUR value should be ~0.93
@@ -1175,11 +1276,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = euroCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = euroCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // Focus field
@@ -1205,11 +1308,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = euroCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = euroCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // Clear and type a decimal value
@@ -1233,11 +1338,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = euroCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = euroCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // Clear and type multiple digits
@@ -1263,11 +1370,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = gbpCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = gbpCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // Clear and type in USD field
@@ -1294,11 +1403,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = mxnCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = mxnCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // Clear and type in foreign (MXN) field
@@ -1323,11 +1434,13 @@ class CountryDetailSheetTest {
         )
 
         composeTestRule.setContent {
-            CountryDetailSheet(
-                country = usdCountry,
-                visible = true,
-                onDismiss = {}
-            )
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = usdCountry,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
         }
 
         // Currency converter should not be shown for USD countries
