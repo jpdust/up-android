@@ -32,6 +32,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -1024,7 +1025,7 @@ private fun MapLegend(
             .fillMaxWidth()
             .testTag("map_legend"),
         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-        color = Color(0xE6F4E4BC), // Parchment with 90% opacity
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.95f),
         shadowElevation = 8.dp
     ) {
         Column(
@@ -1040,7 +1041,7 @@ private fun MapLegend(
                     text = "Map Key",
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
-                    color = Color(0xFF4A2F18)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 IconButton(
                     onClick = onClose,
@@ -1051,7 +1052,7 @@ private fun MapLegend(
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Close legend",
-                        tint = Color(0xFF4A2F18),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -1108,7 +1109,7 @@ private fun LegendItemView(
         Text(
             text = item.label,
             fontSize = 10.sp,
-            color = Color(0xFF4A2F18),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 4.dp)
         )
     }

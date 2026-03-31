@@ -57,7 +57,7 @@ fun ProgressHeader(
                     text = progress.displayText,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Primary,
+                    color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.testTag("progress_text")
                 )
 

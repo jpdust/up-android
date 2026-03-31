@@ -130,7 +130,7 @@ fun CountryInfoScreen(
                     Text(
                         text = "Pinch to zoom • Drag to pan",
                         style = MaterialTheme.typography.labelSmall,
-                        color = Primary.copy(alpha = 0.6f),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         modifier = Modifier
                             .align(Alignment.BottomStart)
                             .padding(16.dp)
@@ -197,7 +197,7 @@ private fun CountrySearchBar(
         placeholder = {
             Text(
                 text = "Search for a country/territory...",
-                color = Primary.copy(alpha = 0.5f)
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
             )
         },
         leadingIcon = {
@@ -287,12 +287,12 @@ private fun CountrySearchItem(
             text = "${country.flagEmoji} ${country.name}",
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Medium,
-            color = Primary
+            color = MaterialTheme.colorScheme.onSurface
         )
         Text(
             text = country.continent.displayName,
             style = MaterialTheme.typography.bodySmall,
-            color = Primary.copy(alpha = 0.6f)
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         )
     }
 }
@@ -320,7 +320,7 @@ private fun MapColorModeSelector(
                 text = "Map View",
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
-                color = Primary,
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
                     .padding(bottom = 4.dp)
                     .testTag("map_view_label")
@@ -341,14 +341,14 @@ private fun MapColorModeSelector(
                         onClick = { onModeSelected(mode) },
                         colors = RadioButtonDefaults.colors(
                             selectedColor = Secondary,
-                            unselectedColor = Primary.copy(alpha = 0.5f)
+                            unselectedColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                         ),
                         modifier = Modifier.testTag("map_mode_radio_${mode.name.lowercase()}")
                     )
                     Text(
                         text = mode.displayName,
                         style = MaterialTheme.typography.bodySmall,
-                        color = Primary
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }

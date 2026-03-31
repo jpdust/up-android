@@ -25,13 +25,26 @@ val SurfaceDark = Color(0xFF3D2820)
 val Accent = Color(0xFF8B2500)
 val AccentLight = Color(0xFFB84D30)
 
-// Text colors
+// Text colors - Light mode
 val OnPrimary = Color(0xFFFFFFFF)
 val OnSecondary = Color(0xFF2D1810)
 val OnBackground = Color(0xFF2D1810)
-val OnBackgroundDark = Color(0xFFF4E4BC)
 val OnSurface = Color(0xFF2D1810)
-val OnSurfaceDark = Color(0xFFF4E4BC)
+
+// Text colors - Dark mode (higher contrast warm tones)
+val OnBackgroundDark = Color(0xFFF5EBD7)  // Warmer, brighter parchment
+val OnSurfaceDark = Color(0xFFF5EBD7)
+val OnSurfaceVariantDark = Color(0xFFE8DCC4)  // Slightly muted for variant
+
+// Dark mode container colors (lighter for better contrast)
+val PrimaryContainerDark = Color(0xFF8B6243)  // Lighter brown for containers
+val SecondaryContainerDark = Color(0xFFD4A843)  // Full gold for visibility
+val SurfaceContainerDark = Color(0xFF4A3828)  // Slightly lighter surface
+val SurfaceVariantDark = Color(0xFF5C4838)  // Visible variant
+
+// Dark mode outline colors (better visibility)
+val OutlineDark = Color(0xFFD4A843)  // Gold outline for visibility
+val OutlineVariantDark = Color(0xFF8B6243)  // Lighter brown outline
 
 // Map colors
 val MapLand = Color(0xFFD4C4A8)

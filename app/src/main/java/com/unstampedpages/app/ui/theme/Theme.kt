@@ -44,15 +44,15 @@ private val LightColorScheme = lightColorScheme(
 )
 
 private val DarkColorScheme = darkColorScheme(
-    primary = SecondaryLight,
+    primary = SecondaryLight,  // Gold - high contrast on dark
     onPrimary = BackgroundDark,
-    primaryContainer = Primary,
-    onPrimaryContainer = OnPrimary,
+    primaryContainer = PrimaryContainerDark,  // Lighter brown for visibility
+    onPrimaryContainer = OnBackgroundDark,  // Light text on container
 
-    secondary = Secondary,
+    secondary = Secondary,  // Antique gold
     onSecondary = BackgroundDark,
-    secondaryContainer = SecondaryDark,
-    onSecondaryContainer = OnPrimary,
+    secondaryContainer = SecondaryContainerDark,  // Full gold for visibility
+    onSecondaryContainer = BackgroundDark,  // Dark text on gold
 
     tertiary = AccentLight,
     onTertiary = OnPrimary,
@@ -64,14 +64,14 @@ private val DarkColorScheme = darkColorScheme(
 
     surface = SurfaceDark,
     onSurface = OnSurfaceDark,
-    surfaceVariant = PrimaryDark,
-    onSurfaceVariant = OnSurfaceDark,
+    surfaceVariant = SurfaceVariantDark,  // More visible variant
+    onSurfaceVariant = OnSurfaceVariantDark,
 
     error = AccentLight,
     onError = OnPrimary,
 
-    outline = SecondaryDark,
-    outlineVariant = Primary
+    outline = OutlineDark,  // Gold outline for visibility
+    outlineVariant = OutlineVariantDark  // Lighter brown outline
 )
 
 @Composable

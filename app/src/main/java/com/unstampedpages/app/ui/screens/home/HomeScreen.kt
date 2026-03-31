@@ -79,7 +79,7 @@ fun HomeScreen(
             fontWeight = FontWeight.Bold,
             fontSize = 32.sp,
             letterSpacing = 2.sp,
-            color = Primary,
+            color = MaterialTheme.colorScheme.primary,
             textAlign = TextAlign.Center
         )
 
@@ -109,7 +109,7 @@ fun HomeScreen(
                     text = "Welcome, Explorer",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = Primary
+                    color = MaterialTheme.colorScheme.primary
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -162,13 +162,13 @@ fun HomeScreen(
             style = MaterialTheme.typography.bodyMedium,
             fontStyle = FontStyle.Italic,
             textAlign = TextAlign.Center,
-            color = Primary.copy(alpha = 0.7f)
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
         )
 
         Text(
             text = "— Saint Augustine",
             style = MaterialTheme.typography.labelMedium,
-            color = Primary.copy(alpha = 0.5f)
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -277,7 +277,7 @@ private fun FeatureCard(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = Primary
+                color = MaterialTheme.colorScheme.primary
             )
 
             Spacer(modifier = Modifier.height(4.dp))

@@ -232,7 +232,7 @@ private fun EmptyChecklistMessage(
         Text(
             text = "Your checklist is empty",
             style = MaterialTheme.typography.titleMedium,
-            color = Primary,
+            color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.testTag("empty_message_title")
         )
@@ -240,7 +240,7 @@ private fun EmptyChecklistMessage(
         Text(
             text = "Tap the + button to add items\nor load a template to get started",
             style = MaterialTheme.typography.bodyMedium,
-            color = Primary.copy(alpha = 0.6f),
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
             textAlign = TextAlign.Center,
             modifier = Modifier.testTag("empty_message_subtitle")
         )

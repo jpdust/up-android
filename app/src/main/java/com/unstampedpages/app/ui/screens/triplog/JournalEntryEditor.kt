@@ -136,7 +136,7 @@ fun JournalEntryEditor(
                     Text(
                         text = DateUtils.formatFullDate(state.date),
                         style = MaterialTheme.typography.bodyLarge,
-                        color = Primary
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -212,12 +212,12 @@ fun JournalEntryEditor(
                     datePickerState.selectedDateMillis?.let { callbacks.onDateChange(it) }
                     dismissDatePicker()
                 }) {
-                    Text("OK", color = Primary)
+                    Text("OK", color = MaterialTheme.colorScheme.primary)
                 }
             },
             dismissButton = {
                 TextButton(onClick = dismissDatePicker) {
-                    Text("Cancel", color = Primary)
+                    Text("Cancel", color = MaterialTheme.colorScheme.primary)
                 }
             }
         ) {

@@ -151,7 +151,7 @@ fun CountryDetailSheet(
                                 testTag = "info_safety_level"
                             )
 
-                            HorizontalDivider(color = Primary.copy(alpha = 0.1f))
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
                             // Entry Requirement
                             InfoRow(
@@ -161,7 +161,7 @@ fun CountryDetailSheet(
                                 testTag = "info_entry_requirement"
                             )
 
-                            HorizontalDivider(color = Primary.copy(alpha = 0.1f))
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
                             // Passport Validity
                             InfoRow(
@@ -171,7 +171,7 @@ fun CountryDetailSheet(
                                 testTag = "info_passport_validity"
                             )
 
-                            HorizontalDivider(color = Primary.copy(alpha = 0.1f))
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
                             // Currency
                             InfoRow(
@@ -200,7 +200,7 @@ fun CountryDetailSheet(
                                     }
                                 )
 
-                                HorizontalDivider(color = Primary.copy(alpha = 0.1f))
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                             }
 
                             // Outlet Type
@@ -319,7 +319,7 @@ private fun InfoRow(
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
-                color = Primary.copy(alpha = 0.7f)
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
             )
             Text(
                 text = value,
@@ -389,7 +389,7 @@ private fun CurrencyConverter(
                 text = "USD",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
-                color = Primary
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             Text(
@@ -421,7 +421,7 @@ private fun CurrencyConverter(
                 text = currencyCode,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
-                color = Primary
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
@@ -470,7 +470,7 @@ private fun CurrencyInputField(
         textStyle = TextStyle(
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
-            color = Primary,
+            color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.End
         ),
         keyboardOptions = KeyboardOptions(
