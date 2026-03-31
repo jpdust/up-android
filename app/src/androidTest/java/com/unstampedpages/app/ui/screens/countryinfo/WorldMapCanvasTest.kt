@@ -24,7 +24,7 @@ class WorldMapCanvasTest {
                 selectedCountryId = null,
                 onCountryTapped = {},
                 colorMode = MapColorMode.SECURITY_RISK,
-                showLegend = false,
+                legendConfig = MapLegendConfig(showLegend = false),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -39,7 +39,7 @@ class WorldMapCanvasTest {
                 selectedCountryId = null,
                 onCountryTapped = {},
                 colorMode = MapColorMode.SECURITY_RISK,
-                showLegend = true,
+                legendConfig = MapLegendConfig(showLegend = true),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -54,7 +54,7 @@ class WorldMapCanvasTest {
                 selectedCountryId = null,
                 onCountryTapped = {},
                 colorMode = MapColorMode.DEFAULT,
-                showLegend = true,
+                legendConfig = MapLegendConfig(showLegend = true),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -71,7 +71,7 @@ class WorldMapCanvasTest {
                 selectedCountryId = null,
                 onCountryTapped = {},
                 colorMode = MapColorMode.SECURITY_RISK,
-                showLegend = true,
+                legendConfig = MapLegendConfig(showLegend = true),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -87,7 +87,7 @@ class WorldMapCanvasTest {
                 selectedCountryId = null,
                 onCountryTapped = {},
                 colorMode = MapColorMode.SECURITY_RISK,
-                showLegend = true,
+                legendConfig = MapLegendConfig(showLegend = true),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -103,7 +103,7 @@ class WorldMapCanvasTest {
                 selectedCountryId = null,
                 onCountryTapped = {},
                 colorMode = MapColorMode.SECURITY_RISK,
-                showLegend = true,
+                legendConfig = MapLegendConfig(showLegend = true),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -119,7 +119,7 @@ class WorldMapCanvasTest {
                 selectedCountryId = null,
                 onCountryTapped = {},
                 colorMode = MapColorMode.SECURITY_RISK,
-                showLegend = true,
+                legendConfig = MapLegendConfig(showLegend = true),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -138,7 +138,7 @@ class WorldMapCanvasTest {
                 selectedCountryId = null,
                 onCountryTapped = {},
                 colorMode = MapColorMode.VISA_REQUIREMENTS,
-                showLegend = true,
+                legendConfig = MapLegendConfig(showLegend = true),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -154,7 +154,7 @@ class WorldMapCanvasTest {
                 selectedCountryId = null,
                 onCountryTapped = {},
                 colorMode = MapColorMode.VISA_REQUIREMENTS,
-                showLegend = true,
+                legendConfig = MapLegendConfig(showLegend = true),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -170,7 +170,7 @@ class WorldMapCanvasTest {
                 selectedCountryId = null,
                 onCountryTapped = {},
                 colorMode = MapColorMode.VISA_REQUIREMENTS,
-                showLegend = true,
+                legendConfig = MapLegendConfig(showLegend = true),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -186,7 +186,7 @@ class WorldMapCanvasTest {
                 selectedCountryId = null,
                 onCountryTapped = {},
                 colorMode = MapColorMode.VISA_REQUIREMENTS,
-                showLegend = true,
+                legendConfig = MapLegendConfig(showLegend = true),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -202,7 +202,7 @@ class WorldMapCanvasTest {
                 selectedCountryId = null,
                 onCountryTapped = {},
                 colorMode = MapColorMode.VISA_REQUIREMENTS,
-                showLegend = true,
+                legendConfig = MapLegendConfig(showLegend = true),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -218,7 +218,7 @@ class WorldMapCanvasTest {
                 selectedCountryId = null,
                 onCountryTapped = {},
                 colorMode = MapColorMode.VISA_REQUIREMENTS,
-                showLegend = true,
+                legendConfig = MapLegendConfig(showLegend = true),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -239,7 +239,7 @@ class WorldMapCanvasTest {
                 selectedCountryId = null,
                 onCountryTapped = {},
                 colorMode = MapColorMode.PASSPORT_VALIDITY,
-                showLegend = true,
+                legendConfig = MapLegendConfig(showLegend = true),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -255,7 +255,7 @@ class WorldMapCanvasTest {
                 selectedCountryId = null,
                 onCountryTapped = {},
                 colorMode = MapColorMode.PASSPORT_VALIDITY,
-                showLegend = true,
+                legendConfig = MapLegendConfig(showLegend = true),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -271,7 +271,7 @@ class WorldMapCanvasTest {
                 selectedCountryId = null,
                 onCountryTapped = {},
                 colorMode = MapColorMode.PASSPORT_VALIDITY,
-                showLegend = true,
+                legendConfig = MapLegendConfig(showLegend = true),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -287,7 +287,7 @@ class WorldMapCanvasTest {
                 selectedCountryId = null,
                 onCountryTapped = {},
                 colorMode = MapColorMode.PASSPORT_VALIDITY,
-                showLegend = true,
+                legendConfig = MapLegendConfig(showLegend = true),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -303,7 +303,7 @@ class WorldMapCanvasTest {
                 selectedCountryId = null,
                 onCountryTapped = {},
                 colorMode = MapColorMode.PASSPORT_VALIDITY,
-                showLegend = true,
+                legendConfig = MapLegendConfig(showLegend = true),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -323,7 +323,7 @@ class WorldMapCanvasTest {
                 selectedCountryId = null,
                 onCountryTapped = {},
                 colorMode = MapColorMode.SECURITY_RISK,
-                showLegend = true,
+                legendConfig = MapLegendConfig(showLegend = true),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -338,7 +338,7 @@ class WorldMapCanvasTest {
                 selectedCountryId = null,
                 onCountryTapped = {},
                 colorMode = MapColorMode.SECURITY_RISK,
-                showLegend = true,
+                legendConfig = MapLegendConfig(showLegend = true),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -355,8 +355,10 @@ class WorldMapCanvasTest {
                 selectedCountryId = null,
                 onCountryTapped = {},
                 colorMode = MapColorMode.SECURITY_RISK,
-                showLegend = true,
-                onLegendClose = { closeCalled = true },
+                legendConfig = MapLegendConfig(
+                    showLegend = true,
+                    onLegendClose = { closeCalled = true }
+                ),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -375,7 +377,7 @@ class WorldMapCanvasTest {
                 selectedCountryId = null,
                 onCountryTapped = {},
                 colorMode = MapColorMode.SECURITY_RISK,
-                showLegend = true,
+                legendConfig = MapLegendConfig(showLegend = true),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -395,7 +397,7 @@ class WorldMapCanvasTest {
                 selectedCountryId = null,
                 onCountryTapped = {},
                 colorMode = MapColorMode.VISA_REQUIREMENTS,
-                showLegend = true,
+                legendConfig = MapLegendConfig(showLegend = true),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -415,7 +417,7 @@ class WorldMapCanvasTest {
                 selectedCountryId = null,
                 onCountryTapped = {},
                 colorMode = MapColorMode.PASSPORT_VALIDITY,
-                showLegend = true,
+                legendConfig = MapLegendConfig(showLegend = true),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -451,7 +453,7 @@ class WorldMapCanvasTest {
                 selectedCountryId = null,
                 onCountryTapped = {},
                 colorMode = MapColorMode.DEFAULT,
-                showLegend = true,
+                legendConfig = MapLegendConfig(showLegend = true),
                 modifier = Modifier.fillMaxSize()
             )
         }
