@@ -95,14 +95,14 @@ fun CategorySection(
                 text = category.displayName,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
-                color = Primary,
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.weight(1f)
             )
 
             Text(
                 text = "$checkedCount/$totalCount",
                 style = MaterialTheme.typography.labelMedium,
-                color = Primary.copy(alpha = 0.6f)
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
             )
 
             Spacer(modifier = Modifier.width(8.dp))
@@ -110,7 +110,7 @@ fun CategorySection(
             Icon(
                 imageVector = Icons.Default.ExpandMore,
                 contentDescription = if (state.isExpanded) "Collapse" else "Expand",
-                tint = Primary.copy(alpha = 0.6f),
+                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
                 modifier = Modifier
                     .size(24.dp)
                     .rotate(rotationAngle)

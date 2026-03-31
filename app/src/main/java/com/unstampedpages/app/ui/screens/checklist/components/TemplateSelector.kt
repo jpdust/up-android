@@ -56,13 +56,13 @@ fun TemplateSelector(
                     text = "Load Template",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = Primary
+                    color = MaterialTheme.colorScheme.primary
                 )
 
                 Text(
                     text = "Choose a template to add items to your checklist",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Primary.copy(alpha = 0.7f)
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -87,7 +87,7 @@ fun TemplateSelector(
                         onClick = onDismiss,
                         modifier = Modifier.testTag("template_cancel_button")
                     ) {
-                        Text("Cancel", color = Primary)
+                        Text("Cancel", color = MaterialTheme.colorScheme.primary)
                     }
                 }
             }
@@ -130,13 +130,13 @@ private fun TemplateOption(
                     text = template.displayName,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = Primary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Text(
                     text = "${template.items.size} items",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Primary.copy(alpha = 0.6f)
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             }
         }

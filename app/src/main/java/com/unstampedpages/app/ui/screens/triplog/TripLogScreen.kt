@@ -180,7 +180,7 @@ private fun JournalEntryCard(
                         text = DateUtils.formatRelativeDate(entry.date),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = Primary
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
 
@@ -190,7 +190,7 @@ private fun JournalEntryCard(
                     Icon(
                         imageVector = Icons.Default.Edit,
                         contentDescription = "Edit",
-                        tint = Primary.copy(alpha = 0.6f),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -199,7 +199,7 @@ private fun JournalEntryCard(
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = "Delete",
-                        tint = Primary.copy(alpha = 0.6f),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -212,7 +212,7 @@ private fun JournalEntryCard(
                 text = entry.title,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = PrimaryDark
+                color = MaterialTheme.colorScheme.primary
             )
 
             // Location
@@ -272,7 +272,7 @@ private fun EmptyTripLogMessage(modifier: Modifier = Modifier) {
         Text(
             text = "No journal entries yet",
             style = MaterialTheme.typography.titleMedium,
-            color = Primary,
+            color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.SemiBold
         )
 
@@ -281,7 +281,7 @@ private fun EmptyTripLogMessage(modifier: Modifier = Modifier) {
         Text(
             text = "Start documenting your travels!\nTap the + button to create your first entry.",
             style = MaterialTheme.typography.bodyMedium,
-            color = Primary.copy(alpha = 0.6f),
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
             textAlign = TextAlign.Center
         )
     }

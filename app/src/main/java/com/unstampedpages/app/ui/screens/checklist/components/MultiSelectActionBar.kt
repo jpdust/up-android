@@ -51,7 +51,7 @@ fun MultiSelectActionBar(
                 Icon(
                     imageVector = Icons.Default.Close,
                     contentDescription = "Cancel selection",
-                    tint = Primary
+                    tint = MaterialTheme.colorScheme.primary
                 )
             }
 
@@ -59,7 +59,7 @@ fun MultiSelectActionBar(
                 text = "$selectedCount selected",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium,
-                color = Primary,
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.testTag("selected_count")
             )
 

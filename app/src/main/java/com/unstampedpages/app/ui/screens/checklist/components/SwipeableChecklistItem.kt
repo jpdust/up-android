@@ -224,7 +224,7 @@ private fun ChecklistItemContent(
                     .weight(1f)
                     .alpha(visualState.textAlpha),
                 textDecoration = visualState.textDecoration,
-                color = Primary,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )

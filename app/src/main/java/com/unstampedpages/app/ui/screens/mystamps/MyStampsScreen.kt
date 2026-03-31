@@ -120,7 +120,7 @@ fun MyStampsScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Primary.copy(alpha = 0.1f))
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
                 .padding(horizontal = 16.dp, vertical = 12.dp)
                 .testTag("header_row"),
             verticalAlignment = Alignment.CenterVertically
@@ -129,7 +129,7 @@ fun MyStampsScreen(
                 text = "Country",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = Primary,
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
                     .weight(1f)
                     .testTag("column_header_country")
@@ -138,7 +138,7 @@ fun MyStampsScreen(
                 text = "Stamp",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = Primary,
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
                     .width(80.dp)
                     .testTag("column_header_stamp"),
@@ -150,7 +150,7 @@ fun MyStampsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
-                .background(Primary.copy(alpha = 0.2f))
+                .background(MaterialTheme.colorScheme.outlineVariant)
         )
 
         LazyColumn(
@@ -173,7 +173,7 @@ fun MyStampsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(1.dp)
-                        .background(Primary.copy(alpha = 0.1f))
+                        .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                 )
             }
         }
@@ -188,7 +188,7 @@ fun MyStampsScreen(
                 Text(
                     text = "Add Stamp",
                     fontWeight = FontWeight.Bold,
-                    color = Primary,
+                    color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.testTag("dialog_title")
                 )
             },
@@ -215,7 +215,7 @@ fun MyStampsScreen(
                                 .weight(1f)
                                 .testTag("camera_button"),
                             colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = Primary
+                                contentColor = MaterialTheme.colorScheme.primary
                             )
                         ) {
                             Icon(
@@ -253,7 +253,7 @@ fun MyStampsScreen(
                     onClick = { viewModel.dismissUploadDialog() },
                     modifier = Modifier.testTag("cancel_button")
                 ) {
-                    Text("Cancel", color = Primary)
+                    Text("Cancel", color = MaterialTheme.colorScheme.primary)
                 }
             },
             containerColor = MaterialTheme.colorScheme.surface

@@ -69,7 +69,7 @@ fun AddItemDialog(
                     text = "Add Item",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = Primary
+                    color = MaterialTheme.colorScheme.primary
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -86,7 +86,7 @@ fun AddItemDialog(
                         .testTag("item_name_input"),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Secondary,
-                        unfocusedBorderColor = Primary.copy(alpha = 0.3f),
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
                         cursorColor = Secondary
                     )
                 )
@@ -119,7 +119,7 @@ fun AddItemDialog(
                             .menuAnchor(),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Secondary,
-                            unfocusedBorderColor = Primary.copy(alpha = 0.3f)
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
                         )
                     )
 
@@ -161,7 +161,7 @@ fun AddItemDialog(
                     Text(
                         text = "Quantity",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = Primary
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
                     QuantityPicker(
@@ -183,7 +183,7 @@ fun AddItemDialog(
                         onClick = onDismiss,
                         modifier = Modifier.testTag("cancel_button")
                     ) {
-                        Text("Cancel", color = Primary)
+                        Text("Cancel", color = MaterialTheme.colorScheme.primary)
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
