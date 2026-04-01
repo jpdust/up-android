@@ -1,4 +1,4 @@
 # up-android
-Android application to complement the Unstamped Pages book.
+Android application to complement the future Unstamped Pages book.
 
-[Watch the demo](https://www.youtube.com/watch?v=5Jnez1KKpQs)
+[Watch the demo](https://www.youtube.com/shorts/RaNJ2_iZs5w)
