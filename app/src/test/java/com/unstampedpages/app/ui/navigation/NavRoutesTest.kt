@@ -1,5 +1,6 @@
 package com.unstampedpages.app.ui.navigation
 
+import com.unstampedpages.app.R
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -11,8 +12,8 @@ class NavRoutesTest {
     }
 
     @Test
-    fun `Home has correct title`() {
-        assertEquals("Home", NavRoute.Home.title)
+    fun `Home has correct titleResId`() {
+        assertEquals(R.string.nav_home, NavRoute.Home.titleResId)
     }
 
     @Test
@@ -21,8 +22,8 @@ class NavRoutesTest {
     }
 
     @Test
-    fun `CountryInfo has correct title`() {
-        assertEquals("Countries", NavRoute.CountryInfo.title)
+    fun `CountryInfo has correct titleResId`() {
+        assertEquals(R.string.nav_countries, NavRoute.CountryInfo.titleResId)
     }
 
     @Test
@@ -31,8 +32,8 @@ class NavRoutesTest {
     }
 
     @Test
-    fun `Checklist has correct title`() {
-        assertEquals("Checklist", NavRoute.Checklist.title)
+    fun `Checklist has correct titleResId`() {
+        assertEquals(R.string.nav_checklist, NavRoute.Checklist.titleResId)
     }
 
     @Test
@@ -41,8 +42,8 @@ class NavRoutesTest {
     }
 
     @Test
-    fun `TripLog has correct title`() {
-        assertEquals("Trip Log", NavRoute.TripLog.title)
+    fun `TripLog has correct titleResId`() {
+        assertEquals(R.string.nav_trip_log, NavRoute.TripLog.titleResId)
     }
 
     @Test
@@ -51,8 +52,8 @@ class NavRoutesTest {
     }
 
     @Test
-    fun `MyStamps has correct title`() {
-        assertEquals("My Stamps", NavRoute.MyStamps.title)
+    fun `MyStamps has correct titleResId`() {
+        assertEquals(R.string.nav_my_stamps, NavRoute.MyStamps.titleResId)
     }
 
     @Test
@@ -86,10 +87,10 @@ class NavRoutesTest {
     }
 
     @Test
-    fun `all titles are unique`() {
-        val titles = NavRoute.items.map { it.title }
+    fun `all titleResIds are unique`() {
+        val titleResIds = NavRoute.items.map { it.titleResId }
 
-        assertEquals(titles.size, titles.distinct().size)
+        assertEquals(titleResIds.size, titleResIds.distinct().size)
     }
 
     @Test

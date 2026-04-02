@@ -24,9 +24,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.unstampedpages.app.R
 import com.unstampedpages.app.data.model.ChecklistTemplate
 import com.unstampedpages.app.ui.theme.Primary
 import com.unstampedpages.app.ui.theme.Secondary
@@ -53,14 +55,14 @@ fun TemplateSelector(
                     .padding(24.dp)
             ) {
                 Text(
-                    text = "Load Template",
+                    text = stringResource(R.string.template_dialog_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
 
                 Text(
-                    text = "Choose a template to add items to your checklist",
+                    text = stringResource(R.string.template_dialog_description),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
                 )
@@ -87,7 +89,7 @@ fun TemplateSelector(
                         onClick = onDismiss,
                         modifier = Modifier.testTag("template_cancel_button")
                     ) {
-                        Text("Cancel", color = MaterialTheme.colorScheme.primary)
+                        Text(stringResource(R.string.action_cancel), color = MaterialTheme.colorScheme.primary)
                     }
                 }
             }
@@ -127,14 +129,14 @@ private fun TemplateOption(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = template.displayName,
+                    text = stringResource(template.displayNameResId),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Text(
-                    text = "${template.items.size} items",
+                    text = stringResource(R.string.template_items_count, template.items.size),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )

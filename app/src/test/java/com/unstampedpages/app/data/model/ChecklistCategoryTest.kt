@@ -1,5 +1,6 @@
 package com.unstampedpages.app.data.model
 
+import com.unstampedpages.app.R
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -52,65 +53,65 @@ class ChecklistCategoryTest {
         assertTrue(ChecklistCategory.entries.contains(ChecklistCategory.OTHER))
     }
 
-    // ==================== Display Name Tests ====================
+    // ==================== Display Name Resource ID Tests ====================
 
     @Test
-    fun `ELECTRONICS has correct displayName`() {
-        assertEquals("Electronics", ChecklistCategory.ELECTRONICS.displayName)
+    fun `ELECTRONICS has correct displayNameResId`() {
+        assertEquals(R.string.category_electronics, ChecklistCategory.ELECTRONICS.displayNameResId)
     }
 
     @Test
-    fun `TOILETRIES has correct displayName`() {
-        assertEquals("Toiletries", ChecklistCategory.TOILETRIES.displayName)
+    fun `TOILETRIES has correct displayNameResId`() {
+        assertEquals(R.string.category_toiletries, ChecklistCategory.TOILETRIES.displayNameResId)
     }
 
     @Test
-    fun `CLOTHING has correct displayName`() {
-        assertEquals("Clothing", ChecklistCategory.CLOTHING.displayName)
+    fun `CLOTHING has correct displayNameResId`() {
+        assertEquals(R.string.category_clothing, ChecklistCategory.CLOTHING.displayNameResId)
     }
 
     @Test
-    fun `DOCUMENTS has correct displayName`() {
-        assertEquals("Documents", ChecklistCategory.DOCUMENTS.displayName)
+    fun `DOCUMENTS has correct displayNameResId`() {
+        assertEquals(R.string.category_documents, ChecklistCategory.DOCUMENTS.displayNameResId)
     }
 
     @Test
-    fun `MEDICINE has correct displayName`() {
-        assertEquals("Medicine", ChecklistCategory.MEDICINE.displayName)
+    fun `MEDICINE has correct displayNameResId`() {
+        assertEquals(R.string.category_medicine, ChecklistCategory.MEDICINE.displayNameResId)
     }
 
     @Test
-    fun `ACCESSORIES has correct displayName`() {
-        assertEquals("Accessories", ChecklistCategory.ACCESSORIES.displayName)
+    fun `ACCESSORIES has correct displayNameResId`() {
+        assertEquals(R.string.category_accessories, ChecklistCategory.ACCESSORIES.displayNameResId)
     }
 
     @Test
-    fun `SNACKS has correct displayName`() {
-        assertEquals("Snacks", ChecklistCategory.SNACKS.displayName)
+    fun `SNACKS has correct displayNameResId`() {
+        assertEquals(R.string.category_snacks, ChecklistCategory.SNACKS.displayNameResId)
     }
 
     @Test
-    fun `OTHER has correct displayName`() {
-        assertEquals("Other", ChecklistCategory.OTHER.displayName)
+    fun `OTHER has correct displayNameResId`() {
+        assertEquals(R.string.category_other, ChecklistCategory.OTHER.displayNameResId)
     }
 
     @Test
-    fun `all categories have non-empty displayName`() {
+    fun `all categories have non-zero displayNameResId`() {
         ChecklistCategory.entries.forEach { category ->
             assertTrue(
-                "Category ${category.name} should have non-empty displayName",
-                category.displayName.isNotBlank()
+                "Category ${category.name} should have non-zero displayNameResId",
+                category.displayNameResId != 0
             )
         }
     }
 
     @Test
-    fun `all displayNames are unique`() {
-        val displayNames = ChecklistCategory.entries.map { it.displayName }
+    fun `all displayNameResIds are unique`() {
+        val displayNameResIds = ChecklistCategory.entries.map { it.displayNameResId }
         assertEquals(
-            "All display names should be unique",
-            displayNames.size,
-            displayNames.distinct().size
+            "All display name resource IDs should be unique",
+            displayNameResIds.size,
+            displayNameResIds.distinct().size
         )
     }
 
@@ -372,11 +373,11 @@ class ChecklistCategoryTest {
     }
 
     @Test
-    fun `categories can be mapped to displayNames`() {
-        val names = ChecklistCategory.entries.map { it.displayName }
-        assertEquals(8, names.size)
-        assertTrue(names.contains("Electronics"))
-        assertTrue(names.contains("Other"))
+    fun `categories can be mapped to displayNameResIds`() {
+        val resIds = ChecklistCategory.entries.map { it.displayNameResId }
+        assertEquals(8, resIds.size)
+        assertTrue(resIds.contains(R.string.category_electronics))
+        assertTrue(resIds.contains(R.string.category_other))
     }
 
     @Test

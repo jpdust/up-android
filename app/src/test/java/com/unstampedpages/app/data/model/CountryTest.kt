@@ -208,7 +208,7 @@ class VisaRequirementTest {
     @Test
     fun `VisaRequirement valueOf returns correct enum`() {
         assertEquals(VisaRequirement.VISA_NOT_REQUIRED, VisaRequirement.valueOf("VISA_NOT_REQUIRED"))
-        assertEquals(VisaRequirement.E_VISA, VisaRequirement.valueOf("EVISA"))
+        assertEquals(VisaRequirement.E_VISA, VisaRequirement.valueOf("E_VISA"))
         assertEquals(VisaRequirement.VISA_ON_ARRIVAL, VisaRequirement.valueOf("VISA_ON_ARRIVAL"))
         assertEquals(VisaRequirement.VISA_REQUIRED, VisaRequirement.valueOf("VISA_REQUIRED"))
         assertEquals(VisaRequirement.RESTRICTED, VisaRequirement.valueOf("RESTRICTED"))

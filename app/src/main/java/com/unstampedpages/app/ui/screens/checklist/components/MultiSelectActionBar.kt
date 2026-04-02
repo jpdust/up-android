@@ -18,8 +18,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.unstampedpages.app.R
 import com.unstampedpages.app.ui.theme.Accent
 import com.unstampedpages.app.ui.theme.Primary
 import com.unstampedpages.app.ui.theme.Secondary
@@ -50,13 +52,13 @@ fun MultiSelectActionBar(
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = "Cancel selection",
+                    contentDescription = stringResource(R.string.cd_cancel_selection),
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
 
             Text(
-                text = "$selectedCount selected",
+                text = stringResource(R.string.checklist_selected_count, selectedCount),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.primary,
@@ -76,7 +78,7 @@ fun MultiSelectActionBar(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = "Delete",
+                    text = stringResource(R.string.action_delete),
                     color = Accent,
                     fontWeight = FontWeight.Bold
                 )

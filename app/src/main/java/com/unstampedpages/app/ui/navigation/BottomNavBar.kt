@@ -9,6 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.unstampedpages.app.ui.theme.Secondary
@@ -45,12 +46,13 @@ fun BottomNavBar(
                     }
                 },
                 icon = {
+                    val title = stringResource(item.titleResId)
                     Icon(
                         imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
-                        contentDescription = item.title
+                        contentDescription = title
                     )
                 },
-                label = { Text(item.title) },
+                label = { Text(stringResource(item.titleResId)) },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = primary,
                     selectedTextColor = primary,

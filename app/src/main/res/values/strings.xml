@@ -1,43 +1,223 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Unstamped Pages</string>
+    <string name="app_title">UNSTAMPED PAGES</string>
+    <string name="app_tagline">Your Adventure Awaits</string>
 
     <!-- Navigation -->
     <string name="nav_home">Home</string>
-    <string name="nav_country_info">Countries</string>
+    <string name="nav_countries">Countries</string>
     <string name="nav_checklist">Checklist</string>
     <string name="nav_trip_log">Trip Log</string>
+    <string name="nav_my_stamps">My Stamps</string>
 
     <!-- Home Screen -->
     <string name="home_welcome">Welcome, Explorer</string>
-    <string name="home_subtitle">Your adventure awaits</string>
-    <string name="home_tagline">Document your journeys across the globe</string>
+    <string name="home_description">Document your journeys across the globe. Discover new countries, track your travels, and never forget what to pack.</string>
+    <string name="home_quote">"The world is a book, and those who do not travel read only one page."</string>
+    <string name="home_quote_author">— Saint Augustine</string>
 
-    <!-- Country Info -->
-    <string name="country_info_title">Explore the World</string>
-    <string name="country_safety">Safety Level</string>
+    <!-- Home Screen Feature Cards -->
+    <string name="feature_explore_title">Explore Countries</string>
+    <string name="feature_explore_description">Tap the globe to discover country info, safety levels, and travel tips.</string>
+    <string name="feature_checklist_title">Travel Checklist</string>
+    <string name="feature_checklist_description">Never forget essentials. Keep track of what to bring on your adventure.</string>
+    <string name="feature_journal_title">Trip Journal</string>
+    <string name="feature_journal_description">Record your memories. Document each day of your journey.</string>
+    <string name="feature_stamps_title">My Passport Stamps</string>
+    <string name="feature_stamps_description">Upload pictures of your passport stamps to each country you visit as a digital record.</string>
+
+    <!-- Screen Headers -->
+    <string name="header_explore_title">EXPLORE THE WORLD</string>
+    <string name="header_explore_subtitle">Tap a country to discover more</string>
+    <string name="header_checklist_title">TRAVEL CHECKLIST</string>
+    <string name="header_checklist_subtitle">Never forget the essentials</string>
+    <string name="header_trip_log_title">TRIP LOG</string>
+    <string name="header_trip_log_subtitle">Document your adventures</string>
+    <string name="header_my_stamps_title">MY STAMPS</string>
+    <string name="header_my_stamps_subtitle">Collect passport stamps from around the world</string>
+
+    <!-- Country Info Screen -->
+    <string name="country_search_placeholder">Search for a country/territory…</string>
+    <string name="country_map_instructions">Pinch to zoom • Drag to pan</string>
+    <string name="country_map_view">Map View</string>
+    <string name="country_map_key">Map Key</string>
+
+    <!-- Country Detail Labels -->
+    <string name="country_safety_level">Safety Level</string>
+    <string name="country_entry_requirement">Entry Requirement</string>
+    <string name="country_passport_validity">Passport Validity</string>
     <string name="country_currency">Currency</string>
-    <string name="country_exchange_rate">Exchange Rate (USD)</string>
-    <string name="country_outlet">Outlet Type</string>
+    <string name="country_power_outlet">Power Outlet</string>
+    <string name="country_usd">USD</string>
+    <string name="country_equals">=</string>
+    <string name="country_not_specified">Not specified</string>
 
-    <!-- Checklist -->
-    <string name="checklist_title">Travel Checklist</string>
-    <string name="checklist_hint">What to bring on your adventure…</string>
-    <string name="checklist_save">Save</string>
+    <!-- Map Color Modes -->
+    <string name="map_mode_default">Default</string>
+    <string name="map_mode_security_risk">Security Risk</string>
+    <string name="map_mode_visa_requirements">Visa Requirements</string>
+    <string name="map_mode_passport_validity">Passport Validity</string>
 
-    <!-- Trip Log -->
-    <string name="trip_log_title">Trip Log</string>
+    <!-- Map Legend - Safety -->
+    <string name="legend_low_risk">Low Risk</string>
+    <string name="legend_medium_risk">Medium Risk</string>
+    <string name="legend_high_risk">High Risk</string>
+
+    <!-- Map Legend - Visa Requirements -->
+    <string name="legend_visa_not_required">Visa Not Required</string>
+    <string name="legend_evisa">eVisa</string>
+    <string name="legend_visa_on_arrival">Visa On Arrival</string>
+    <string name="legend_visa_required">Visa Required</string>
+    <string name="legend_restricted">Restricted</string>
+
+    <!-- Map Legend - Passport Validity -->
+    <string name="legend_six_months">6 Months</string>
+    <string name="legend_three_months">3 Months</string>
+    <string name="legend_duration_of_stay">Duration of Stay</string>
+    <string name="legend_other">Other</string>
+
+    <!-- Checklist Screen -->
+    <string name="checklist_empty_title">Your checklist is empty</string>
+    <string name="checklist_empty_message">Tap the + button to add items\nor load a template to get started</string>
+    <string name="checklist_all_packed">All packed!</string>
+    <string name="checklist_load_template">Load Template</string>
+    <string name="checklist_reset_list">Reset List</string>
+    <string name="checklist_add_item">Add Item</string>
+    <string name="checklist_item_name">Item name</string>
+    <string name="checklist_item_placeholder">What to pack…</string>
+    <string name="checklist_category">Category</string>
+    <string name="checklist_quantity">Quantity</string>
+    <string name="checklist_add">Add</string>
+    <string name="checklist_cancel">Cancel</string>
+    <string name="checklist_selected_count">%d selected</string>
+    <string name="checklist_delete">Delete</string>
+    <string name="checklist_item_count">%d/%d</string>
+
+    <!-- Checklist Categories -->
+    <string name="category_electronics">Electronics</string>
+    <string name="category_toiletries">Toiletries</string>
+    <string name="category_clothing">Clothing</string>
+    <string name="category_documents">Documents</string>
+    <string name="category_medicine">Medicine</string>
+    <string name="category_accessories">Accessories</string>
+    <string name="category_snacks">Snacks</string>
+    <string name="category_other">Other</string>
+
+    <!-- Checklist Templates -->
+    <string name="template_dialog_title">Load Template</string>
+    <string name="template_dialog_description">Choose a template to add items to your checklist</string>
+    <string name="template_items_count">%d items</string>
+    <string name="template_business_trip">Business Trip</string>
+    <string name="template_beach_vacation">Beach Vacation</string>
+    <string name="template_hiking">Hiking Adventure</string>
+
+    <!-- Template Items - Common -->
+    <string name="item_phone_charger">Phone charger</string>
+    <string name="item_portable_battery">Portable battery</string>
+    <string name="item_passport">Passport</string>
+    <string name="item_sunscreen">Sunscreen</string>
+    <string name="item_sunglasses">Sunglasses</string>
+    <string name="item_toothbrush">Toothbrush</string>
+    <string name="item_toothpaste">Toothpaste</string>
+    <string name="item_deodorant">Deodorant</string>
+    <string name="item_pain_relievers">Pain relievers</string>
+
+    <!-- Template Items - Business Trip -->
+    <string name="item_laptop">Laptop</string>
+    <string name="item_laptop_charger">Laptop charger</string>
+    <string name="item_business_cards">Business cards</string>
+    <string name="item_travel_itinerary">Travel itinerary</string>
+    <string name="item_suit_blazer">Suit/Blazer</string>
+    <string name="item_dress_shirts">Dress shirts</string>
+    <string name="item_dress_pants">Dress pants</string>
+    <string name="item_dress_shoes">Dress shoes</string>
+    <string name="item_belt">Belt</string>
+    <string name="item_watch">Watch</string>
+
+    <!-- Template Items - Beach Vacation -->
+    <string name="item_swimsuit">Swimsuit</string>
+    <string name="item_sun_hat">Sun hat</string>
+    <string name="item_flip_flops">Flip flops</string>
+    <string name="item_beach_towel">Beach towel</string>
+    <string name="item_aloe_vera_gel">Aloe vera gel</string>
+    <string name="item_camera">Camera</string>
+    <string name="item_waterproof_phone_case">Waterproof phone case</string>
+    <string name="item_shorts">Shorts</string>
+    <string name="item_t_shirts">T-shirts</string>
+    <string name="item_sandals">Sandals</string>
+    <string name="item_snacks">Snacks</string>
+    <string name="item_motion_sickness_pills">Motion sickness pills</string>
+
+    <!-- Template Items - Hiking -->
+    <string name="item_backpack">Backpack</string>
+    <string name="item_hiking_boots">Hiking boots</string>
+    <string name="item_hiking_socks">Hiking socks</string>
+    <string name="item_water_bottle">Water bottle</string>
+    <string name="item_trail_map">Trail map</string>
+    <string name="item_first_aid_kit">First aid kit</string>
+    <string name="item_bug_spray">Bug spray</string>
+    <string name="item_rain_jacket">Rain jacket</string>
+    <string name="item_flashlight">Flashlight</string>
+    <string name="item_energy_bars">Energy bars</string>
+    <string name="item_trail_mix">Trail mix</string>
+    <string name="item_hat">Hat</string>
+    <string name="item_quick_dry_pants">Quick-dry pants</string>
+    <string name="item_moisture_wicking_shirts">Moisture-wicking shirts</string>
+    <string name="item_blister_bandages">Blister bandages</string>
+
+    <!-- Trip Log Screen -->
+    <string name="trip_log_empty_title">No journal entries yet</string>
+    <string name="trip_log_empty_message">Start documenting your travels!\nTap the + button to create your first entry.</string>
     <string name="trip_log_new_entry">New Entry</string>
-    <string name="trip_log_entry_hint">Record your adventure…</string>
-    <string name="trip_log_no_entries">No journal entries yet.\nStart documenting your travels!</string>
+    <string name="trip_log_edit_entry">Edit Entry</string>
+    <string name="trip_log_title_label">Title</string>
+    <string name="trip_log_title_placeholder">Give your entry a title…</string>
+    <string name="trip_log_location_label">Location (optional)</string>
+    <string name="trip_log_location_placeholder">Where are you?</string>
+    <string name="trip_log_story_label">Your story</string>
+    <string name="trip_log_story_placeholder">Record your adventure…</string>
 
-    <!-- My Stamps -->
-    <string name="nav_my_stamps">My Stamps</string>
-    <string name="my_stamps_title">My Stamps</string>
-    <string name="my_stamps_subtitle">Collect passport stamps from around the world</string>
-    <string name="my_stamps_country">Country</string>
-    <string name="my_stamps_stamp">Stamp</string>
-    <string name="my_stamps_add_stamp">Add Stamp</string>
-    <string name="my_stamps_choose_image">Choose Image</string>
+    <!-- My Stamps Screen -->
+    <string name="my_stamps_column_country">Country</string>
+    <string name="my_stamps_column_stamp">Stamp</string>
+    <string name="my_stamps_add_dialog_title">Add Stamp</string>
+    <string name="my_stamps_add_dialog_message">Add a passport stamp image for %s</string>
+    <string name="my_stamps_add_dialog_instruction">Take a new photo or choose an existing image from your device.</string>
+    <string name="my_stamps_camera">Camera</string>
+    <string name="my_stamps_gallery">Gallery</string>
     <string name="my_stamps_cancel">Cancel</string>
+
+    <!-- Content Descriptions (Accessibility) -->
+    <string name="cd_cancel_selection">Cancel selection</string>
+    <string name="cd_decrease_quantity">Decrease quantity</string>
+    <string name="cd_increase_quantity">Increase quantity</string>
+    <string name="cd_more_options">More options</string>
+    <string name="cd_add_item">Add item</string>
+    <string name="cd_close_legend">Close legend</string>
+    <string name="cd_close">Close</string>
+    <string name="cd_search">Search</string>
+    <string name="cd_clear">Clear</string>
+    <string name="cd_new_entry">New entry</string>
+    <string name="cd_edit">Edit</string>
+    <string name="cd_delete">Delete</string>
+    <string name="cd_cancel">Cancel</string>
+    <string name="cd_save">Save</string>
+    <string name="cd_stamp_for_country">Stamp for %s</string>
+    <string name="cd_remove_stamp">Remove stamp</string>
+    <string name="cd_add_stamp">Add stamp</string>
+    <string name="cd_pinned">Pinned</string>
+    <string name="cd_collapse">Collapse</string>
+    <string name="cd_expand">Expand</string>
+
+    <!-- Common Actions -->
+    <string name="action_ok">OK</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_save">Save</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_add">Add</string>
+    <string name="action_close">Close</string>
+
+    <!-- Quantity Display -->
+    <string name="quantity_display">x%d</string>
 </resources>

@@ -19,8 +19,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.unstampedpages.app.R
 import com.unstampedpages.app.data.model.ChecklistProgress
 import com.unstampedpages.app.ui.theme.Primary
 import com.unstampedpages.app.ui.theme.Secondary
@@ -54,7 +56,7 @@ fun ProgressHeader(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = progress.displayText,
+                    text = stringResource(R.string.checklist_item_count, progress.checkedCount, progress.totalCount),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
@@ -65,7 +67,7 @@ fun ProgressHeader(
 
                 if (progress.isComplete && progress.totalCount > 0) {
                     Text(
-                        text = "All packed!",
+                        text = stringResource(R.string.checklist_all_packed),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Medium,
                         color = Secondary,

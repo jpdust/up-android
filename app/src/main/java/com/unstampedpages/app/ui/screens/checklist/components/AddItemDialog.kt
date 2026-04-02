@@ -32,9 +32,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.unstampedpages.app.R
 import com.unstampedpages.app.data.model.ChecklistCategory
 import com.unstampedpages.app.ui.theme.Primary
 import com.unstampedpages.app.ui.theme.Secondary
@@ -66,7 +68,7 @@ fun AddItemDialog(
                     .padding(24.dp)
             ) {
                 Text(
-                    text = "Add Item",
+                    text = stringResource(R.string.checklist_add_item),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -78,8 +80,8 @@ fun AddItemDialog(
                 OutlinedTextField(
                     value = itemName,
                     onValueChange = { itemName = it },
-                    label = { Text("Item name") },
-                    placeholder = { Text("What to pack...") },
+                    label = { Text(stringResource(R.string.checklist_item_name)) },
+                    placeholder = { Text(stringResource(R.string.checklist_item_placeholder)) },
                     singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -102,10 +104,10 @@ fun AddItemDialog(
                         .testTag("category_dropdown")
                 ) {
                     OutlinedTextField(
-                        value = selectedCategory.displayName,
+                        value = stringResource(selectedCategory.displayNameResId),
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Category") },
+                        label = { Text(stringResource(R.string.checklist_category)) },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
                         leadingIcon = {
                             Icon(
@@ -137,7 +139,7 @@ fun AddItemDialog(
                                             tint = Secondary
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
-                                        Text(category.displayName)
+                                        Text(stringResource(category.displayNameResId))
                                     }
                                 },
                                 onClick = {
@@ -159,7 +161,7 @@ fun AddItemDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Quantity",
+                        text = stringResource(R.string.checklist_quantity),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -183,7 +185,7 @@ fun AddItemDialog(
                         onClick = onDismiss,
                         modifier = Modifier.testTag("cancel_button")
                     ) {
-                        Text("Cancel", color = MaterialTheme.colorScheme.primary)
+                        Text(stringResource(R.string.action_cancel), color = MaterialTheme.colorScheme.primary)
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
@@ -197,7 +199,7 @@ fun AddItemDialog(
                         ),
                         modifier = Modifier.testTag("add_button")
                     ) {
-                        Text("Add")
+                        Text(stringResource(R.string.action_add))
                     }
                 }
             }

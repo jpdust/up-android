@@ -58,6 +58,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
@@ -67,6 +68,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.unstampedpages.app.R
 import com.unstampedpages.app.data.model.Country
 import com.unstampedpages.app.ui.theme.Primary
 import kotlinx.coroutines.launch
@@ -145,7 +147,7 @@ fun CountryDetailSheet(
                             // Safety Level
                             InfoRow(
                                 icon = Icons.Default.Shield,
-                                label = "Safety Level",
+                                label = stringResource(R.string.country_safety_level),
                                 value = it.safetyLevel.displayName,
                                 valueColor = it.safetyLevel.color,
                                 testTag = "info_safety_level"
@@ -156,7 +158,7 @@ fun CountryDetailSheet(
                             // Entry Requirement
                             InfoRow(
                                 icon = Icons.Default.Badge,
-                                label = "Entry Requirement",
+                                label = stringResource(R.string.country_entry_requirement),
                                 value = it.visaRequirement.displayName,
                                 testTag = "info_entry_requirement"
                             )
@@ -166,8 +168,8 @@ fun CountryDetailSheet(
                             // Passport Validity
                             InfoRow(
                                 icon = Icons.Default.CalendarMonth,
-                                label = "Passport Validity",
-                                value = it.passportValidity ?: "Not specified",
+                                label = stringResource(R.string.country_passport_validity),
+                                value = it.passportValidity ?: stringResource(R.string.country_not_specified),
                                 testTag = "info_passport_validity"
                             )
 
@@ -176,7 +178,7 @@ fun CountryDetailSheet(
                             // Currency
                             InfoRow(
                                 icon = Icons.Default.AttachMoney,
-                                label = "Currency",
+                                label = stringResource(R.string.country_currency),
                                 value = "${it.currency} (${it.currencyCode})",
                                 testTag = "info_currency"
                             )
@@ -206,7 +208,7 @@ fun CountryDetailSheet(
                             // Outlet Type
                             InfoRow(
                                 icon = Icons.Default.ElectricalServices,
-                                label = "Power Outlet",
+                                label = stringResource(R.string.country_power_outlet),
                                 value = it.outletType,
                                 testTag = "info_power_outlet"
                             )
@@ -250,7 +252,7 @@ private fun CountryHeader(
         ) {
             Icon(
                 imageVector = Icons.Default.Close,
-                contentDescription = "Close",
+                contentDescription = stringResource(R.string.cd_close),
                 tint = Color.White
             )
         }
@@ -386,14 +388,14 @@ private fun CurrencyConverter(
             )
 
             Text(
-                text = "USD",
+                text = stringResource(R.string.country_usd),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
             Text(
-                text = "=",
+                text = stringResource(R.string.country_equals),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
                 color = Secondary

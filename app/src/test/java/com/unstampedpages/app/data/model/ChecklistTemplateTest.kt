@@ -1,5 +1,6 @@
 package com.unstampedpages.app.data.model
 
+import com.unstampedpages.app.R
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -10,18 +11,18 @@ class ChecklistTemplateItemTest {
     @Test
     fun `ChecklistTemplateItem can be created with required fields`() {
         val item = ChecklistTemplateItem(
-            name = "Test Item",
+            nameResId = R.string.item_laptop,
             category = ChecklistCategory.ELECTRONICS
         )
 
-        assertEquals("Test Item", item.name)
+        assertEquals(R.string.item_laptop, item.nameResId)
         assertEquals(ChecklistCategory.ELECTRONICS, item.category)
     }
 
     @Test
     fun `ChecklistTemplateItem has default quantity of 1`() {
         val item = ChecklistTemplateItem(
-            name = "Test Item",
+            nameResId = R.string.item_laptop,
             category = ChecklistCategory.ELECTRONICS
         )
 
@@ -31,7 +32,7 @@ class ChecklistTemplateItemTest {
     @Test
     fun `ChecklistTemplateItem can be created with custom quantity`() {
         val item = ChecklistTemplateItem(
-            name = "Socks",
+            nameResId = R.string.item_hiking_socks,
             category = ChecklistCategory.CLOTHING,
             quantity = 5
         )
@@ -39,37 +40,16 @@ class ChecklistTemplateItemTest {
         assertEquals(5, item.quantity)
     }
 
-    // ==================== Name Tests ====================
+    // ==================== NameResId Tests ====================
 
     @Test
-    fun `ChecklistTemplateItem name can be empty string`() {
+    fun `ChecklistTemplateItem nameResId is non-zero`() {
         val item = ChecklistTemplateItem(
-            name = "",
-            category = ChecklistCategory.OTHER
+            nameResId = R.string.item_passport,
+            category = ChecklistCategory.DOCUMENTS
         )
 
-        assertEquals("", item.name)
-    }
-
-    @Test
-    fun `ChecklistTemplateItem name can contain special characters`() {
-        val item = ChecklistTemplateItem(
-            name = "Phone charger (USB-C)",
-            category = ChecklistCategory.ELECTRONICS
-        )
-
-        assertEquals("Phone charger (USB-C)", item.name)
-    }
-
-    @Test
-    fun `ChecklistTemplateItem name can be very long`() {
-        val longName = "A".repeat(100)
-        val item = ChecklistTemplateItem(
-            name = longName,
-            category = ChecklistCategory.OTHER
-        )
-
-        assertEquals(longName, item.name)
+        assertTrue(item.nameResId != 0)
     }
 
     // ==================== Category Tests ====================
@@ -78,7 +58,7 @@ class ChecklistTemplateItemTest {
     fun `ChecklistTemplateItem can have any category`() {
         ChecklistCategory.entries.forEach { category ->
             val item = ChecklistTemplateItem(
-                name = "Test",
+                nameResId = R.string.item_passport,
                 category = category
             )
             assertEquals(category, item.category)
@@ -90,7 +70,7 @@ class ChecklistTemplateItemTest {
     @Test
     fun `ChecklistTemplateItem quantity can be 0`() {
         val item = ChecklistTemplateItem(
-            name = "Test",
+            nameResId = R.string.item_passport,
             category = ChecklistCategory.OTHER,
             quantity = 0
         )
@@ -101,7 +81,7 @@ class ChecklistTemplateItemTest {
     @Test
     fun `ChecklistTemplateItem quantity can be large`() {
         val item = ChecklistTemplateItem(
-            name = "Test",
+            nameResId = R.string.item_passport,
             category = ChecklistCategory.OTHER,
             quantity = 999
         )
@@ -113,9 +93,9 @@ class ChecklistTemplateItemTest {
 
     @Test
     fun `ChecklistTemplateItem equality works correctly`() {
-        val item1 = ChecklistTemplateItem("Test", ChecklistCategory.ELECTRONICS, 1)
-        val item2 = ChecklistTemplateItem("Test", ChecklistCategory.ELECTRONICS, 1)
-        val item3 = ChecklistTemplateItem("Test", ChecklistCategory.ELECTRONICS, 2)
+        val item1 = ChecklistTemplateItem(R.string.item_laptop, ChecklistCategory.ELECTRONICS, 1)
+        val item2 = ChecklistTemplateItem(R.string.item_laptop, ChecklistCategory.ELECTRONICS, 1)
+        val item3 = ChecklistTemplateItem(R.string.item_laptop, ChecklistCategory.ELECTRONICS, 2)
 
         assertEquals(item1, item2)
         assertNotEquals(item1, item3)
@@ -123,9 +103,9 @@ class ChecklistTemplateItemTest {
 
     @Test
     fun `ChecklistTemplateItem equality considers all fields`() {
-        val item1 = ChecklistTemplateItem("Test", ChecklistCategory.ELECTRONICS, 1)
-        val item2 = ChecklistTemplateItem("Test", ChecklistCategory.CLOTHING, 1)
-        val item3 = ChecklistTemplateItem("Different", ChecklistCategory.ELECTRONICS, 1)
+        val item1 = ChecklistTemplateItem(R.string.item_laptop, ChecklistCategory.ELECTRONICS, 1)
+        val item2 = ChecklistTemplateItem(R.string.item_laptop, ChecklistCategory.CLOTHING, 1)
+        val item3 = ChecklistTemplateItem(R.string.item_passport, ChecklistCategory.ELECTRONICS, 1)
 
         assertNotEquals(item1, item2)
         assertNotEquals(item1, item3)
@@ -135,7 +115,7 @@ class ChecklistTemplateItemTest {
 
     @Test
     fun `ChecklistTemplateItem hashCode is consistent`() {
-        val item = ChecklistTemplateItem("Test", ChecklistCategory.ELECTRONICS, 2)
+        val item = ChecklistTemplateItem(R.string.item_laptop, ChecklistCategory.ELECTRONICS, 2)
         val hash1 = item.hashCode()
         val hash2 = item.hashCode()
 
@@ -144,8 +124,8 @@ class ChecklistTemplateItemTest {
 
     @Test
     fun `equal ChecklistTemplateItems have same hashCode`() {
-        val item1 = ChecklistTemplateItem("Test", ChecklistCategory.ELECTRONICS, 2)
-        val item2 = ChecklistTemplateItem("Test", ChecklistCategory.ELECTRONICS, 2)
+        val item1 = ChecklistTemplateItem(R.string.item_laptop, ChecklistCategory.ELECTRONICS, 2)
+        val item2 = ChecklistTemplateItem(R.string.item_laptop, ChecklistCategory.ELECTRONICS, 2)
 
         assertEquals(item1.hashCode(), item2.hashCode())
     }
@@ -154,26 +134,26 @@ class ChecklistTemplateItemTest {
 
     @Test
     fun `ChecklistTemplateItem copy works correctly`() {
-        val original = ChecklistTemplateItem("Original", ChecklistCategory.ELECTRONICS, 1)
-        val copy = original.copy(name = "Modified")
+        val original = ChecklistTemplateItem(R.string.item_laptop, ChecklistCategory.ELECTRONICS, 1)
+        val copy = original.copy(nameResId = R.string.item_passport)
 
-        assertEquals("Original", original.name)
-        assertEquals("Modified", copy.name)
+        assertEquals(R.string.item_laptop, original.nameResId)
+        assertEquals(R.string.item_passport, copy.nameResId)
         assertEquals(original.category, copy.category)
         assertEquals(original.quantity, copy.quantity)
     }
 
     @Test
     fun `ChecklistTemplateItem copy can update all fields`() {
-        val original = ChecklistTemplateItem("Original", ChecklistCategory.ELECTRONICS, 1)
+        val original = ChecklistTemplateItem(R.string.item_laptop, ChecklistCategory.ELECTRONICS, 1)
         val copy = original.copy(
-            name = "Modified",
-            category = ChecklistCategory.CLOTHING,
+            nameResId = R.string.item_passport,
+            category = ChecklistCategory.DOCUMENTS,
             quantity = 5
         )
 
-        assertEquals("Modified", copy.name)
-        assertEquals(ChecklistCategory.CLOTHING, copy.category)
+        assertEquals(R.string.item_passport, copy.nameResId)
+        assertEquals(ChecklistCategory.DOCUMENTS, copy.category)
         assertEquals(5, copy.quantity)
     }
 
@@ -181,23 +161,12 @@ class ChecklistTemplateItemTest {
 
     @Test
     fun `ChecklistTemplateItem destructuring works correctly`() {
-        val item = ChecklistTemplateItem("Test", ChecklistCategory.ELECTRONICS, 3)
-        val (name, category, quantity) = item
+        val item = ChecklistTemplateItem(R.string.item_laptop, ChecklistCategory.ELECTRONICS, 3)
+        val (nameResId, category, quantity) = item
 
-        assertEquals("Test", name)
+        assertEquals(R.string.item_laptop, nameResId)
         assertEquals(ChecklistCategory.ELECTRONICS, category)
         assertEquals(3, quantity)
-    }
-
-    // ==================== toString Tests ====================
-
-    @Test
-    fun `ChecklistTemplateItem toString contains field values`() {
-        val item = ChecklistTemplateItem("Laptop", ChecklistCategory.ELECTRONICS, 1)
-        val string = item.toString()
-
-        assertTrue(string.contains("Laptop"))
-        assertTrue(string.contains("ELECTRONICS"))
     }
 }
 
@@ -225,37 +194,37 @@ class ChecklistTemplateTest {
         assertTrue(ChecklistTemplate.entries.contains(ChecklistTemplate.HIKING))
     }
 
-    // ==================== Display Name Tests ====================
+    // ==================== Display Name Resource ID Tests ====================
 
     @Test
-    fun `BUSINESS_TRIP has correct displayName`() {
-        assertEquals("Business Trip", ChecklistTemplate.BUSINESS_TRIP.displayName)
+    fun `BUSINESS_TRIP has correct displayNameResId`() {
+        assertEquals(R.string.template_business_trip, ChecklistTemplate.BUSINESS_TRIP.displayNameResId)
     }
 
     @Test
-    fun `BEACH_VACATION has correct displayName`() {
-        assertEquals("Beach Vacation", ChecklistTemplate.BEACH_VACATION.displayName)
+    fun `BEACH_VACATION has correct displayNameResId`() {
+        assertEquals(R.string.template_beach_vacation, ChecklistTemplate.BEACH_VACATION.displayNameResId)
     }
 
     @Test
-    fun `HIKING has correct displayName`() {
-        assertEquals("Hiking Adventure", ChecklistTemplate.HIKING.displayName)
+    fun `HIKING has correct displayNameResId`() {
+        assertEquals(R.string.template_hiking, ChecklistTemplate.HIKING.displayNameResId)
     }
 
     @Test
-    fun `all templates have non-empty displayName`() {
+    fun `all templates have non-zero displayNameResId`() {
         ChecklistTemplate.entries.forEach { template ->
             assertTrue(
-                "Template ${template.name} should have non-empty displayName",
-                template.displayName.isNotBlank()
+                "Template ${template.name} should have non-zero displayNameResId",
+                template.displayNameResId != 0
             )
         }
     }
 
     @Test
-    fun `all displayNames are unique`() {
-        val displayNames = ChecklistTemplate.entries.map { it.displayName }
-        assertEquals(displayNames.size, displayNames.distinct().size)
+    fun `all displayNameResIds are unique`() {
+        val displayNameResIds = ChecklistTemplate.entries.map { it.displayNameResId }
+        assertEquals(displayNameResIds.size, displayNameResIds.distinct().size)
     }
 
     // ==================== Items List Tests ====================
@@ -305,7 +274,7 @@ class ChecklistTemplateTest {
     @Test
     fun `BUSINESS_TRIP contains laptop`() {
         val hasLaptop = ChecklistTemplate.BUSINESS_TRIP.items.any {
-            it.name.equals("Laptop", ignoreCase = true)
+            it.nameResId == R.string.item_laptop
         }
         assertTrue(hasLaptop)
     }
@@ -313,7 +282,7 @@ class ChecklistTemplateTest {
     @Test
     fun `BUSINESS_TRIP contains passport`() {
         val hasPassport = ChecklistTemplate.BUSINESS_TRIP.items.any {
-            it.name.equals("Passport", ignoreCase = true)
+            it.nameResId == R.string.item_passport
         }
         assertTrue(hasPassport)
     }
@@ -321,7 +290,7 @@ class ChecklistTemplateTest {
     @Test
     fun `BEACH_VACATION contains swimsuit`() {
         val hasSwimsuit = ChecklistTemplate.BEACH_VACATION.items.any {
-            it.name.equals("Swimsuit", ignoreCase = true)
+            it.nameResId == R.string.item_swimsuit
         }
         assertTrue(hasSwimsuit)
     }
@@ -329,7 +298,7 @@ class ChecklistTemplateTest {
     @Test
     fun `BEACH_VACATION contains sunscreen`() {
         val hasSunscreen = ChecklistTemplate.BEACH_VACATION.items.any {
-            it.name.equals("Sunscreen", ignoreCase = true)
+            it.nameResId == R.string.item_sunscreen
         }
         assertTrue(hasSunscreen)
     }
@@ -337,7 +306,7 @@ class ChecklistTemplateTest {
     @Test
     fun `HIKING contains hiking boots`() {
         val hasBoots = ChecklistTemplate.HIKING.items.any {
-            it.name.equals("Hiking boots", ignoreCase = true)
+            it.nameResId == R.string.item_hiking_boots
         }
         assertTrue(hasBoots)
     }
@@ -345,7 +314,7 @@ class ChecklistTemplateTest {
     @Test
     fun `HIKING contains first aid kit`() {
         val hasFirstAid = ChecklistTemplate.HIKING.items.any {
-            it.name.equals("First aid kit", ignoreCase = true)
+            it.nameResId == R.string.item_first_aid_kit
         }
         assertTrue(hasFirstAid)
     }
@@ -354,8 +323,7 @@ class ChecklistTemplateTest {
     fun `all templates contain phone charger`() {
         ChecklistTemplate.entries.forEach { template ->
             val hasCharger = template.items.any {
-                it.name.contains("charger", ignoreCase = true) ||
-                it.name.contains("Phone charger", ignoreCase = true)
+                it.nameResId == R.string.item_phone_charger
             }
             assertTrue(
                 "Template ${template.name} should contain a phone charger",
@@ -419,11 +387,11 @@ class ChecklistTemplateTest {
         ChecklistTemplate.entries.forEach { template ->
             template.items.forEach { item ->
                 assertNotNull(
-                    "Item '${item.name}' in ${template.name} should have a category",
+                    "Item in ${template.name} should have a category",
                     item.category
                 )
                 assertTrue(
-                    "Item '${item.name}' in ${template.name} should have a valid category",
+                    "Item in ${template.name} should have a valid category",
                     ChecklistCategory.entries.contains(item.category)
                 )
             }
@@ -437,7 +405,7 @@ class ChecklistTemplateTest {
         ChecklistTemplate.entries.forEach { template ->
             template.items.forEach { item ->
                 assertTrue(
-                    "Item '${item.name}' in ${template.name} should have positive quantity",
+                    "Item in ${template.name} should have positive quantity",
                     item.quantity >= 1
                 )
             }
@@ -447,7 +415,7 @@ class ChecklistTemplateTest {
     @Test
     fun `BUSINESS_TRIP dress shirts has quantity greater than 1`() {
         val dressShirts = ChecklistTemplate.BUSINESS_TRIP.items.find {
-            it.name.equals("Dress shirts", ignoreCase = true)
+            it.nameResId == R.string.item_dress_shirts
         }
         assertNotNull(dressShirts)
         assertTrue(dressShirts!!.quantity > 1)
@@ -456,7 +424,7 @@ class ChecklistTemplateTest {
     @Test
     fun `BEACH_VACATION swimsuit has quantity of 2`() {
         val swimsuit = ChecklistTemplate.BEACH_VACATION.items.find {
-            it.name.equals("Swimsuit", ignoreCase = true)
+            it.nameResId == R.string.item_swimsuit
         }
         assertNotNull(swimsuit)
         assertEquals(2, swimsuit!!.quantity)
@@ -465,7 +433,7 @@ class ChecklistTemplateTest {
     @Test
     fun `HIKING energy bars has quantity greater than 1`() {
         val energyBars = ChecklistTemplate.HIKING.items.find {
-            it.name.equals("Energy bars", ignoreCase = true)
+            it.nameResId == R.string.item_energy_bars
         }
         assertNotNull(energyBars)
         assertTrue(energyBars!!.quantity > 1)
@@ -482,24 +450,24 @@ class ChecklistTemplateTest {
         }
     }
 
-    // ==================== Name Uniqueness Tests ====================
+    // ==================== NameResId Uniqueness Tests ====================
 
     @Test
-    fun `BUSINESS_TRIP items have unique names`() {
-        val names = ChecklistTemplate.BUSINESS_TRIP.items.map { it.name }
-        assertEquals(names.size, names.distinct().size)
+    fun `BUSINESS_TRIP items have unique nameResIds`() {
+        val nameResIds = ChecklistTemplate.BUSINESS_TRIP.items.map { it.nameResId }
+        assertEquals(nameResIds.size, nameResIds.distinct().size)
     }
 
     @Test
-    fun `BEACH_VACATION items have unique names`() {
-        val names = ChecklistTemplate.BEACH_VACATION.items.map { it.name }
-        assertEquals(names.size, names.distinct().size)
+    fun `BEACH_VACATION items have unique nameResIds`() {
+        val nameResIds = ChecklistTemplate.BEACH_VACATION.items.map { it.nameResId }
+        assertEquals(nameResIds.size, nameResIds.distinct().size)
     }
 
     @Test
-    fun `HIKING items have unique names`() {
-        val names = ChecklistTemplate.HIKING.items.map { it.name }
-        assertEquals(names.size, names.distinct().size)
+    fun `HIKING items have unique nameResIds`() {
+        val nameResIds = ChecklistTemplate.HIKING.items.map { it.nameResId }
+        assertEquals(nameResIds.size, nameResIds.distinct().size)
     }
 
     // ==================== valueOf Tests ====================
@@ -586,12 +554,12 @@ class ChecklistTemplateTest {
     // ==================== Template Item Validation Tests ====================
 
     @Test
-    fun `all items have non-empty names`() {
+    fun `all items have non-zero nameResIds`() {
         ChecklistTemplate.entries.forEach { template ->
             template.items.forEach { item ->
                 assertTrue(
-                    "Item in ${template.name} should have non-empty name",
-                    item.name.isNotBlank()
+                    "Item in ${template.name} should have non-zero nameResId",
+                    item.nameResId != 0
                 )
             }
         }
@@ -602,7 +570,7 @@ class ChecklistTemplateTest {
         ChecklistTemplate.entries.forEach { template ->
             template.items.forEach { item ->
                 assertTrue(
-                    "Item '${item.name}' in ${template.name} should not have excessive quantity",
+                    "Item in ${template.name} should not have excessive quantity",
                     item.quantity <= 10
                 )
             }

@@ -26,6 +26,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.stringResource
+import com.unstampedpages.app.R
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
@@ -80,12 +82,12 @@ fun HomeScreen(
 
         // App Title - Stencil Font (auto-sized to fit width)
         AutoSizeTitle(
-            text = "UNSTAMPED PAGES",
+            text = stringResource(R.string.app_title),
             modifier = Modifier.fillMaxWidth()
         )
 
         Text(
-            text = "Your Adventure Awaits",
+            text = stringResource(R.string.app_tagline),
             style = MaterialTheme.typography.titleLarge,
             color = Secondary,
             fontStyle = FontStyle.Italic,
@@ -107,7 +109,7 @@ fun HomeScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Welcome, Explorer",
+                    text = stringResource(R.string.home_welcome),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.primary
@@ -116,9 +118,7 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "Document your journeys across the globe. " +
-                            "Discover new countries, track your travels, " +
-                            "and never forget what to pack.",
+                    text = stringResource(R.string.home_description),
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurface
@@ -128,29 +128,29 @@ fun HomeScreen(
 
         // Feature Cards
         FeatureCard(
-            title = "Explore Countries",
-            description = "Tap the globe to discover country info, safety levels, and travel tips.",
+            title = stringResource(R.string.feature_explore_title),
+            description = stringResource(R.string.feature_explore_description),
             iconContent = { Icon(Icons.Filled.Explore, contentDescription = null, tint = Secondary) },
             onClick = onNavigateToCountries
         )
 
         FeatureCard(
-            title = "Travel Checklist",
-            description = "Never forget essentials. Keep track of what to bring on your adventure.",
+            title = stringResource(R.string.feature_checklist_title),
+            description = stringResource(R.string.feature_checklist_description),
             iconContent = { ChecklistIcon() },
             onClick = onNavigateToChecklist
         )
 
         FeatureCard(
-            title = "Trip Journal",
-            description = "Record your memories. Document each day of your journey.",
+            title = stringResource(R.string.feature_journal_title),
+            description = stringResource(R.string.feature_journal_description),
             iconContent = { JournalIcon() },
             onClick = onNavigateToTripLog
         )
 
         FeatureCard(
-            title = "My Passport Stamps",
-            description = "Upload pictures of your passport stamps to each country you visit as a digital record.",
+            title = stringResource(R.string.feature_stamps_title),
+            description = stringResource(R.string.feature_stamps_description),
             iconContent = { StampIcon() },
             onClick = onNavigateToMyStamps
         )
@@ -159,7 +159,7 @@ fun HomeScreen(
 
         // Inspirational Quote
         Text(
-            text = "\"The world is a book, and those who do not travel read only one page.\"",
+            text = stringResource(R.string.home_quote),
             style = MaterialTheme.typography.bodyMedium,
             fontStyle = FontStyle.Italic,
             textAlign = TextAlign.Center,
@@ -167,7 +167,7 @@ fun HomeScreen(
         )
 
         Text(
-            text = "— Saint Augustine",
+            text = stringResource(R.string.home_quote_author),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
         )

@@ -40,10 +40,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.unstampedpages.app.R
 import com.unstampedpages.app.data.model.Country
 import com.unstampedpages.app.ui.theme.Primary
 import com.unstampedpages.app.ui.theme.Secondary
@@ -128,7 +130,7 @@ fun CountryInfoScreen(
                 // Instructions overlay
                 if (showInstructions) {
                     Text(
-                        text = "Pinch to zoom • Drag to pan",
+                        text = stringResource(R.string.country_map_instructions),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         modifier = Modifier
@@ -196,14 +198,14 @@ private fun CountrySearchBar(
         onValueChange = onSearchQueryChange,
         placeholder = {
             Text(
-                text = "Search for a country/territory...",
+                text = stringResource(R.string.country_search_placeholder),
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
             )
         },
         leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Search,
-                contentDescription = "Search",
+                contentDescription = stringResource(R.string.cd_search),
                 tint = Secondary
             )
         },
@@ -215,7 +217,7 @@ private fun CountrySearchBar(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Clear",
+                        contentDescription = stringResource(R.string.cd_clear),
                         tint = Primary.copy(alpha = 0.6f)
                     )
                 }
@@ -317,7 +319,7 @@ private fun MapColorModeSelector(
                 .padding(horizontal = 12.dp, vertical = 8.dp)
         ) {
             Text(
-                text = "Map View",
+                text = stringResource(R.string.country_map_view),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
@@ -346,7 +348,7 @@ private fun MapColorModeSelector(
                         modifier = Modifier.testTag("map_mode_radio_${mode.name.lowercase()}")
                     )
                     Text(
-                        text = mode.displayName,
+                        text = stringResource(mode.displayNameResId),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface
                     )

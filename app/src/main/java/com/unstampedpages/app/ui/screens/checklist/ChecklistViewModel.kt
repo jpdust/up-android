@@ -201,9 +201,10 @@ class ChecklistViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun loadTemplate(template: ChecklistTemplate) {
         viewModelScope.launch {
+            val context = getApplication<Application>()
             val items = template.items.map { templateItem ->
                 ChecklistItem(
-                    content = templateItem.name,
+                    content = context.getString(templateItem.nameResId),
                     category = templateItem.category.name,
                     quantity = templateItem.quantity
                 )

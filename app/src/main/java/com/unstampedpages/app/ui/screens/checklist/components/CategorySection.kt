@@ -23,8 +23,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.unstampedpages.app.R
 import com.unstampedpages.app.data.local.entity.ChecklistItem
 import com.unstampedpages.app.data.model.ChecklistCategory
 import com.unstampedpages.app.ui.theme.Primary
@@ -92,7 +94,7 @@ fun CategorySection(
             Spacer(modifier = Modifier.width(12.dp))
 
             Text(
-                text = category.displayName,
+                text = stringResource(category.displayNameResId),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
@@ -100,7 +102,7 @@ fun CategorySection(
             )
 
             Text(
-                text = "$checkedCount/$totalCount",
+                text = stringResource(R.string.checklist_item_count, checkedCount, totalCount),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
             )
@@ -109,7 +111,7 @@ fun CategorySection(
 
             Icon(
                 imageVector = Icons.Default.ExpandMore,
-                contentDescription = if (state.isExpanded) "Collapse" else "Expand",
+                contentDescription = stringResource(if (state.isExpanded) R.string.cd_collapse else R.string.cd_expand),
                 tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
                 modifier = Modifier
                     .size(24.dp)

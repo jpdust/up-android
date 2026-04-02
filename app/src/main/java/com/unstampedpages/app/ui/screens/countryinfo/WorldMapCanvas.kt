@@ -58,9 +58,12 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.annotation.StringRes
+import com.unstampedpages.app.R
 import com.unstampedpages.app.data.model.Country
 import com.unstampedpages.app.data.model.CountryGeometry
 import com.unstampedpages.app.data.model.LatLng
@@ -81,11 +84,11 @@ import kotlin.math.tan
 /**
  * Color modes for the world map
  */
-enum class MapColorMode(val displayName: String) {
-    DEFAULT("Default"),
-    SECURITY_RISK("Security Risk"),
-    VISA_REQUIREMENTS("Visa Requirements"),
-    PASSPORT_VALIDITY("Passport Validity")
+enum class MapColorMode(@StringRes val displayNameResId: Int) {
+    DEFAULT(R.string.map_mode_default),
+    SECURITY_RISK(R.string.map_mode_security_risk),
+    VISA_REQUIREMENTS(R.string.map_mode_visa_requirements),
+    PASSPORT_VALIDITY(R.string.map_mode_passport_validity)
 }
 
 /**
@@ -980,7 +983,7 @@ private fun DrawScope.drawZoomIndicator(scale: Float) {
  */
 internal data class LegendItem(
     val color: Color,
-    val label: String,
+    @StringRes val labelResId: Int,
     val testTag: String
 )
 
@@ -991,22 +994,22 @@ internal fun getLegendItems(colorMode: MapColorMode): List<LegendItem> {
     return when (colorMode) {
         MapColorMode.DEFAULT -> emptyList()
         MapColorMode.SECURITY_RISK -> listOf(
-            LegendItem(Color(0xFF4CAF50), "Low Risk", "legend_item_low_risk"),
-            LegendItem(Color(0xFFFFC107), "Medium Risk", "legend_item_medium_risk"),
-            LegendItem(Color(0xFF8B0000), "High Risk", "legend_item_high_risk")
+            LegendItem(Color(0xFF4CAF50), R.string.legend_low_risk, "legend_item_low_risk"),
+            LegendItem(Color(0xFFFFC107), R.string.legend_medium_risk, "legend_item_medium_risk"),
+            LegendItem(Color(0xFF8B0000), R.string.legend_high_risk, "legend_item_high_risk")
         )
         MapColorMode.VISA_REQUIREMENTS -> listOf(
-            LegendItem(Color(0xFF4CAF50), "Visa Not Required", "legend_item_visa_not_required"),
-            LegendItem(Color(0xFF00BCD4), "eVisa", "legend_item_evisa"),
-            LegendItem(Color(0xFFFFC107), "Visa On Arrival", "legend_item_visa_on_arrival"),
-            LegendItem(Color(0xFF9E9E9E), "Visa Required", "legend_item_visa_required"),
-            LegendItem(Color(0xFF000000), "Restricted", "legend_item_restricted")
+            LegendItem(Color(0xFF4CAF50), R.string.legend_visa_not_required, "legend_item_visa_not_required"),
+            LegendItem(Color(0xFF00BCD4), R.string.legend_evisa, "legend_item_evisa"),
+            LegendItem(Color(0xFFFFC107), R.string.legend_visa_on_arrival, "legend_item_visa_on_arrival"),
+            LegendItem(Color(0xFF9E9E9E), R.string.legend_visa_required, "legend_item_visa_required"),
+            LegendItem(Color(0xFF000000), R.string.legend_restricted, "legend_item_restricted")
         )
         MapColorMode.PASSPORT_VALIDITY -> listOf(
-            LegendItem(Color(0xFF9E9E9E), "6 Months", "legend_item_6_months"),
-            LegendItem(Color(0xFF00BCD4), "3 Months", "legend_item_3_months"),
-            LegendItem(Color(0xFF4CAF50), "Duration of Stay", "legend_item_duration_of_stay"),
-            LegendItem(Color(0xFFFFC107), "Other", "legend_item_other")
+            LegendItem(Color(0xFF9E9E9E), R.string.legend_six_months, "legend_item_6_months"),
+            LegendItem(Color(0xFF00BCD4), R.string.legend_three_months, "legend_item_3_months"),
+            LegendItem(Color(0xFF4CAF50), R.string.legend_duration_of_stay, "legend_item_duration_of_stay"),
+            LegendItem(Color(0xFFFFC107), R.string.legend_other, "legend_item_other")
         )
     }
 }
@@ -1038,7 +1041,7 @@ private fun MapLegend(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Map Key",
+                    text = stringResource(R.string.country_map_key),
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -1051,7 +1054,7 @@ private fun MapLegend(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Close legend",
+                        contentDescription = stringResource(R.string.cd_close_legend),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(18.dp)
                     )
@@ -1107,7 +1110,7 @@ private fun LegendItemView(
         )
         // Label
         Text(
-            text = item.label,
+            text = stringResource(item.labelResId),
             fontSize = 10.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 4.dp)

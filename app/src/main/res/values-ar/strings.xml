@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Arabic (العربية) translations -->
+<!-- Note: Arabic is an RTL language - ensure app supports RTL layouts -->
+<resources>
+    <string name="app_name">Unstamped Pages</string>
+    <string name="app_title">UNSTAMPED PAGES</string>
+    <string name="app_tagline">مغامرتك في انتظارك</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">الرئيسية</string>
+    <string name="nav_countries">الدول</string>
+    <string name="nav_checklist">قائمة</string>
+    <string name="nav_trip_log">سجل الرحلة</string>
+    <string name="nav_my_stamps">طوابعي</string>
+
+    <!-- Home Screen -->
+    <string name="home_welcome">أهلاً، أيها المستكشف</string>
+    <string name="home_description">وثّق رحلاتك حول العالم. اكتشف دولاً جديدة، تتبع أسفارك، ولا تنسَ أبداً ماذا تحزم.</string>
+    <string name="home_quote">"العالم كتاب، ومن لا يسافر يقرأ صفحة واحدة فقط."</string>
+    <string name="home_quote_author">— القديس أوغسطين</string>
+
+    <!-- Home Screen Feature Cards -->
+    <string name="feature_explore_title">استكشف الدول</string>
+    <string name="feature_explore_description">اضغط على الكرة الأرضية لاكتشاف معلومات الدولة ومستويات الأمان ونصائح السفر.</string>
+    <string name="feature_checklist_title">قائمة السفر</string>
+    <string name="feature_checklist_description">لا تنسَ الأساسيات أبداً. تتبع ما يجب إحضاره في مغامرتك.</string>
+    <string name="feature_journal_title">مذكرات الرحلة</string>
+    <string name="feature_journal_description">سجّل ذكرياتك. وثّق كل يوم من رحلتك.</string>
+    <string name="feature_stamps_title">طوابع جواز سفري</string>
+    <string name="feature_stamps_description">ارفع صور طوابع جواز سفرك لكل دولة تزورها كسجل رقمي.</string>
+
+    <!-- Screen Headers -->
+    <string name="header_explore_title">استكشف العالم</string>
+    <string name="header_explore_subtitle">اضغط على دولة لاكتشاف المزيد</string>
+    <string name="header_checklist_title">قائمة السفر</string>
+    <string name="header_checklist_subtitle">لا تنسَ الأساسيات أبداً</string>
+    <string name="header_trip_log_title">سجل الرحلة</string>
+    <string name="header_trip_log_subtitle">وثّق مغامراتك</string>
+    <string name="header_my_stamps_title">طوابعي</string>
+    <string name="header_my_stamps_subtitle">اجمع طوابع جواز السفر من جميع أنحاء العالم</string>
+
+    <!-- Country Info Screen -->
+    <string name="country_search_placeholder">ابحث عن دولة/إقليم…</string>
+    <string name="country_map_instructions">اقرص للتكبير • اسحب للتحريك</string>
+    <string name="country_map_view">عرض الخريطة</string>
+    <string name="country_map_key">مفتاح الخريطة</string>
+
+    <!-- Country Detail Labels -->
+    <string name="country_safety_level">مستوى الأمان</string>
+    <string name="country_entry_requirement">متطلبات الدخول</string>
+    <string name="country_passport_validity">صلاحية جواز السفر</string>
+    <string name="country_currency">العملة</string>
+    <string name="country_power_outlet">مقبس الكهرباء</string>
+    <string name="country_usd">دولار</string>
+    <string name="country_equals">=</string>
+    <string name="country_not_specified">غير محدد</string>
+
+    <!-- Map Color Modes -->
+    <string name="map_mode_default">افتراضي</string>
+    <string name="map_mode_security_risk">مخاطر أمنية</string>
+    <string name="map_mode_visa_requirements">متطلبات التأشيرة</string>
+    <string name="map_mode_passport_validity">صلاحية جواز السفر</string>
+
+    <!-- Map Legend - Safety -->
+    <string name="legend_low_risk">مخاطر منخفضة</string>
+    <string name="legend_medium_risk">مخاطر متوسطة</string>
+    <string name="legend_high_risk">مخاطر عالية</string>
+
+    <!-- Map Legend - Visa Requirements -->
+    <string name="legend_visa_not_required">لا تتطلب تأشيرة</string>
+    <string name="legend_evisa">تأشيرة إلكترونية</string>
+    <string name="legend_visa_on_arrival">تأشيرة عند الوصول</string>
+    <string name="legend_visa_required">تتطلب تأشيرة</string>
+    <string name="legend_restricted">مقيد</string>
+
+    <!-- Map Legend - Passport Validity -->
+    <string name="legend_six_months">٦ أشهر</string>
+    <string name="legend_three_months">٣ أشهر</string>
+    <string name="legend_duration_of_stay">مدة الإقامة</string>
+    <string name="legend_other">أخرى</string>
+
+    <!-- Checklist Screen -->
+    <string name="checklist_empty_title">قائمتك فارغة</string>
+    <string name="checklist_empty_message">اضغط على زر + لإضافة عناصر\nأو حمّل قالباً للبدء</string>
+    <string name="checklist_all_packed">تم حزم الكل!</string>
+    <string name="checklist_load_template">تحميل قالب</string>
+    <string name="checklist_reset_list">إعادة تعيين القائمة</string>
+    <string name="checklist_add_item">إضافة عنصر</string>
+    <string name="checklist_item_name">اسم العنصر</string>
+    <string name="checklist_item_placeholder">ماذا تحزم…</string>
+    <string name="checklist_category">الفئة</string>
+    <string name="checklist_quantity">الكمية</string>
+    <string name="checklist_add">إضافة</string>
+    <string name="checklist_cancel">إلغاء</string>
+    <string name="checklist_selected_count">%d محدد</string>
+    <string name="checklist_delete">حذف</string>
+    <string name="checklist_item_count">%d/%d</string>
+
+    <!-- Checklist Categories -->
+    <string name="category_electronics">إلكترونيات</string>
+    <string name="category_toiletries">أدوات النظافة</string>
+    <string name="category_clothing">ملابس</string>
+    <string name="category_documents">وثائق</string>
+    <string name="category_medicine">أدوية</string>
+    <string name="category_accessories">إكسسوارات</string>
+    <string name="category_snacks">وجبات خفيفة</string>
+    <string name="category_other">أخرى</string>
+
+    <!-- Checklist Templates -->
+    <string name="template_dialog_title">تحميل قالب</string>
+    <string name="template_dialog_description">اختر قالباً لإضافة عناصر إلى قائمتك</string>
+    <string name="template_items_count">%d عنصر</string>
+    <string name="template_business_trip">رحلة عمل</string>
+    <string name="template_beach_vacation">عطلة على الشاطئ</string>
+    <string name="template_hiking">مغامرة تسلق</string>
+
+    <!-- Template Items - Common -->
+    <string name="item_phone_charger">شاحن الهاتف</string>
+    <string name="item_portable_battery">بطارية محمولة</string>
+    <string name="item_passport">جواز السفر</string>
+    <string name="item_sunscreen">واقي الشمس</string>
+    <string name="item_sunglasses">نظارات شمسية</string>
+    <string name="item_toothbrush">فرشاة أسنان</string>
+    <string name="item_toothpaste">معجون أسنان</string>
+    <string name="item_deodorant">مزيل العرق</string>
+    <string name="item_pain_relievers">مسكنات الألم</string>
+
+    <!-- Template Items - Business Trip -->
+    <string name="item_laptop">حاسوب محمول</string>
+    <string name="item_laptop_charger">شاحن الحاسوب</string>
+    <string name="item_business_cards">بطاقات العمل</string>
+    <string name="item_travel_itinerary">جدول الرحلة</string>
+    <string name="item_suit_blazer">بدلة/جاكيت</string>
+    <string name="item_dress_shirts">قمصان رسمية</string>
+    <string name="item_dress_pants">بناطيل رسمية</string>
+    <string name="item_dress_shoes">أحذية رسمية</string>
+    <string name="item_belt">حزام</string>
+    <string name="item_watch">ساعة</string>
+
+    <!-- Template Items - Beach Vacation -->
+    <string name="item_swimsuit">ملابس سباحة</string>
+    <string name="item_sun_hat">قبعة شمسية</string>
+    <string name="item_flip_flops">شبشب</string>
+    <string name="item_beach_towel">منشفة شاطئ</string>
+    <string name="item_aloe_vera_gel">جل الصبار</string>
+    <string name="item_camera">كاميرا</string>
+    <string name="item_waterproof_phone_case">غطاء هاتف مقاوم للماء</string>
+    <string name="item_shorts">شورت</string>
+    <string name="item_t_shirts">تي شيرت</string>
+    <string name="item_sandals">صنادل</string>
+    <string name="item_snacks">وجبات خفيفة</string>
+    <string name="item_motion_sickness_pills">حبوب دوار الحركة</string>
+
+    <!-- Template Items - Hiking -->
+    <string name="item_backpack">حقيبة ظهر</string>
+    <string name="item_hiking_boots">أحذية تسلق</string>
+    <string name="item_hiking_socks">جوارب تسلق</string>
+    <string name="item_water_bottle">زجاجة ماء</string>
+    <string name="item_trail_map">خريطة المسار</string>
+    <string name="item_first_aid_kit">حقيبة إسعافات أولية</string>
+    <string name="item_bug_spray">رذاذ طارد الحشرات</string>
+    <string name="item_rain_jacket">سترة مطر</string>
+    <string name="item_flashlight">مصباح يدوي</string>
+    <string name="item_energy_bars">ألواح طاقة</string>
+    <string name="item_trail_mix">خليط المكسرات</string>
+    <string name="item_hat">قبعة</string>
+    <string name="item_quick_dry_pants">بناطيل سريعة الجفاف</string>
+    <string name="item_moisture_wicking_shirts">قمصان ماصة للرطوبة</string>
+    <string name="item_blister_bandages">ضمادات الفقاعات</string>
+
+    <!-- Trip Log Screen -->
+    <string name="trip_log_empty_title">لا توجد إدخالات بعد</string>
+    <string name="trip_log_empty_message">ابدأ بتوثيق رحلاتك!\nاضغط على زر + لإنشاء أول إدخال.</string>
+    <string name="trip_log_new_entry">إدخال جديد</string>
+    <string name="trip_log_edit_entry">تعديل الإدخال</string>
+    <string name="trip_log_title_label">العنوان</string>
+    <string name="trip_log_title_placeholder">أعطِ إدخالك عنواناً…</string>
+    <string name="trip_log_location_label">الموقع (اختياري)</string>
+    <string name="trip_log_location_placeholder">أين أنت؟</string>
+    <string name="trip_log_story_label">قصتك</string>
+    <string name="trip_log_story_placeholder">سجّل مغامرتك…</string>
+
+    <!-- My Stamps Screen -->
+    <string name="my_stamps_column_country">الدولة</string>
+    <string name="my_stamps_column_stamp">الطابع</string>
+    <string name="my_stamps_add_dialog_title">إضافة طابع</string>
+    <string name="my_stamps_add_dialog_message">إضافة صورة طابع جواز سفر لـ %s</string>
+    <string name="my_stamps_add_dialog_instruction">التقط صورة جديدة أو اختر صورة موجودة من جهازك.</string>
+    <string name="my_stamps_camera">الكاميرا</string>
+    <string name="my_stamps_gallery">المعرض</string>
+    <string name="my_stamps_cancel">إلغاء</string>
+
+    <!-- Content Descriptions (Accessibility) -->
+    <string name="cd_cancel_selection">إلغاء التحديد</string>
+    <string name="cd_decrease_quantity">تقليل الكمية</string>
+    <string name="cd_increase_quantity">زيادة الكمية</string>
+    <string name="cd_more_options">المزيد من الخيارات</string>
+    <string name="cd_add_item">إضافة عنصر</string>
+    <string name="cd_close_legend">إغلاق المفتاح</string>
+    <string name="cd_close">إغلاق</string>
+    <string name="cd_search">بحث</string>
+    <string name="cd_clear">مسح</string>
+    <string name="cd_new_entry">إدخال جديد</string>
+    <string name="cd_edit">تعديل</string>
+    <string name="cd_delete">حذف</string>
+    <string name="cd_cancel">إلغاء</string>
+    <string name="cd_save">حفظ</string>
+    <string name="cd_stamp_for_country">طابع لـ %s</string>
+    <string name="cd_remove_stamp">إزالة الطابع</string>
+    <string name="cd_add_stamp">إضافة طابع</string>
+    <string name="cd_pinned">مثبت</string>
+    <string name="cd_collapse">طي</string>
+    <string name="cd_expand">توسيع</string>
+
+    <!-- Common Actions -->
+    <string name="action_ok">موافق</string>
+    <string name="action_cancel">إلغاء</string>
+    <string name="action_save">حفظ</string>
+    <string name="action_delete">حذف</string>
+    <string name="action_add">إضافة</string>
+    <string name="action_close">إغلاق</string>
+
+    <!-- Quantity Display -->
+    <string name="quantity_display">x%d</string>
+</resources>

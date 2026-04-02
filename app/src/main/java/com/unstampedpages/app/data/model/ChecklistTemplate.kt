@@ -1,83 +1,84 @@
 package com.unstampedpages.app.data.model
 
+import androidx.annotation.StringRes
+import com.unstampedpages.app.R
+
 data class ChecklistTemplateItem(
-    val name: String,
+    @StringRes val nameResId: Int,
     val category: ChecklistCategory,
     val quantity: Int = 1
 )
 
-private const val PHONE_CHARGER = "Phone charger"
-
 enum class ChecklistTemplate(
-    val displayName: String,
+    @StringRes val displayNameResId: Int,
     val items: List<ChecklistTemplateItem>
 ) {
     BUSINESS_TRIP(
-        displayName = "Business Trip",
+        displayNameResId = R.string.template_business_trip,
         items = listOf(
-            ChecklistTemplateItem("Laptop", ChecklistCategory.ELECTRONICS),
-            ChecklistTemplateItem("Laptop charger", ChecklistCategory.ELECTRONICS),
-            ChecklistTemplateItem(PHONE_CHARGER, ChecklistCategory.ELECTRONICS),
-            ChecklistTemplateItem("Portable battery", ChecklistCategory.ELECTRONICS),
-            ChecklistTemplateItem("Business cards", ChecklistCategory.DOCUMENTS),
-            ChecklistTemplateItem("Passport", ChecklistCategory.DOCUMENTS),
-            ChecklistTemplateItem("Travel itinerary", ChecklistCategory.DOCUMENTS),
-            ChecklistTemplateItem("Suit/Blazer", ChecklistCategory.CLOTHING),
-            ChecklistTemplateItem("Dress shirts", ChecklistCategory.CLOTHING, 3),
-            ChecklistTemplateItem("Dress pants", ChecklistCategory.CLOTHING, 2),
-            ChecklistTemplateItem("Dress shoes", ChecklistCategory.CLOTHING),
-            ChecklistTemplateItem("Belt", ChecklistCategory.ACCESSORIES),
-            ChecklistTemplateItem("Watch", ChecklistCategory.ACCESSORIES),
-            ChecklistTemplateItem("Toothbrush", ChecklistCategory.TOILETRIES),
-            ChecklistTemplateItem("Toothpaste", ChecklistCategory.TOILETRIES),
-            ChecklistTemplateItem("Deodorant", ChecklistCategory.TOILETRIES),
-            ChecklistTemplateItem("Pain relievers", ChecklistCategory.MEDICINE)
+            ChecklistTemplateItem(R.string.item_laptop, ChecklistCategory.ELECTRONICS),
+            ChecklistTemplateItem(R.string.item_laptop_charger, ChecklistCategory.ELECTRONICS),
+            ChecklistTemplateItem(R.string.item_phone_charger, ChecklistCategory.ELECTRONICS),
+            ChecklistTemplateItem(R.string.item_portable_battery, ChecklistCategory.ELECTRONICS),
+            ChecklistTemplateItem(R.string.item_business_cards, ChecklistCategory.DOCUMENTS),
+            ChecklistTemplateItem(R.string.item_passport, ChecklistCategory.DOCUMENTS),
+            ChecklistTemplateItem(R.string.item_travel_itinerary, ChecklistCategory.DOCUMENTS),
+            ChecklistTemplateItem(R.string.item_suit_blazer, ChecklistCategory.CLOTHING),
+            ChecklistTemplateItem(R.string.item_dress_shirts, ChecklistCategory.CLOTHING, 3),
+            ChecklistTemplateItem(R.string.item_dress_pants, ChecklistCategory.CLOTHING, 2),
+            ChecklistTemplateItem(R.string.item_dress_shoes, ChecklistCategory.CLOTHING),
+            ChecklistTemplateItem(R.string.item_belt, ChecklistCategory.ACCESSORIES),
+            ChecklistTemplateItem(R.string.item_watch, ChecklistCategory.ACCESSORIES),
+            ChecklistTemplateItem(R.string.item_toothbrush, ChecklistCategory.TOILETRIES),
+            ChecklistTemplateItem(R.string.item_toothpaste, ChecklistCategory.TOILETRIES),
+            ChecklistTemplateItem(R.string.item_deodorant, ChecklistCategory.TOILETRIES),
+            ChecklistTemplateItem(R.string.item_pain_relievers, ChecklistCategory.MEDICINE)
         )
     ),
     BEACH_VACATION(
-        displayName = "Beach Vacation",
+        displayNameResId = R.string.template_beach_vacation,
         items = listOf(
-            ChecklistTemplateItem("Swimsuit", ChecklistCategory.CLOTHING, 2),
-            ChecklistTemplateItem("Sunglasses", ChecklistCategory.ACCESSORIES),
-            ChecklistTemplateItem("Sun hat", ChecklistCategory.ACCESSORIES),
-            ChecklistTemplateItem("Flip flops", ChecklistCategory.CLOTHING),
-            ChecklistTemplateItem("Beach towel", ChecklistCategory.OTHER),
-            ChecklistTemplateItem("Sunscreen", ChecklistCategory.TOILETRIES),
-            ChecklistTemplateItem("Aloe vera gel", ChecklistCategory.TOILETRIES),
-            ChecklistTemplateItem("Passport", ChecklistCategory.DOCUMENTS),
-            ChecklistTemplateItem(PHONE_CHARGER, ChecklistCategory.ELECTRONICS),
-            ChecklistTemplateItem("Camera", ChecklistCategory.ELECTRONICS),
-            ChecklistTemplateItem("Waterproof phone case", ChecklistCategory.ELECTRONICS),
-            ChecklistTemplateItem("Shorts", ChecklistCategory.CLOTHING, 3),
-            ChecklistTemplateItem("T-shirts", ChecklistCategory.CLOTHING, 4),
-            ChecklistTemplateItem("Sandals", ChecklistCategory.CLOTHING),
-            ChecklistTemplateItem("Snacks", ChecklistCategory.SNACKS),
-            ChecklistTemplateItem("Motion sickness pills", ChecklistCategory.MEDICINE)
+            ChecklistTemplateItem(R.string.item_swimsuit, ChecklistCategory.CLOTHING, 2),
+            ChecklistTemplateItem(R.string.item_sunglasses, ChecklistCategory.ACCESSORIES),
+            ChecklistTemplateItem(R.string.item_sun_hat, ChecklistCategory.ACCESSORIES),
+            ChecklistTemplateItem(R.string.item_flip_flops, ChecklistCategory.CLOTHING),
+            ChecklistTemplateItem(R.string.item_beach_towel, ChecklistCategory.OTHER),
+            ChecklistTemplateItem(R.string.item_sunscreen, ChecklistCategory.TOILETRIES),
+            ChecklistTemplateItem(R.string.item_aloe_vera_gel, ChecklistCategory.TOILETRIES),
+            ChecklistTemplateItem(R.string.item_passport, ChecklistCategory.DOCUMENTS),
+            ChecklistTemplateItem(R.string.item_phone_charger, ChecklistCategory.ELECTRONICS),
+            ChecklistTemplateItem(R.string.item_camera, ChecklistCategory.ELECTRONICS),
+            ChecklistTemplateItem(R.string.item_waterproof_phone_case, ChecklistCategory.ELECTRONICS),
+            ChecklistTemplateItem(R.string.item_shorts, ChecklistCategory.CLOTHING, 3),
+            ChecklistTemplateItem(R.string.item_t_shirts, ChecklistCategory.CLOTHING, 4),
+            ChecklistTemplateItem(R.string.item_sandals, ChecklistCategory.CLOTHING),
+            ChecklistTemplateItem(R.string.item_snacks, ChecklistCategory.SNACKS),
+            ChecklistTemplateItem(R.string.item_motion_sickness_pills, ChecklistCategory.MEDICINE)
         )
     ),
     HIKING(
-        displayName = "Hiking Adventure",
+        displayNameResId = R.string.template_hiking,
         items = listOf(
-            ChecklistTemplateItem("Backpack", ChecklistCategory.OTHER),
-            ChecklistTemplateItem("Hiking boots", ChecklistCategory.CLOTHING),
-            ChecklistTemplateItem("Hiking socks", ChecklistCategory.CLOTHING, 3),
-            ChecklistTemplateItem("Water bottle", ChecklistCategory.OTHER, 2),
-            ChecklistTemplateItem("Trail map", ChecklistCategory.DOCUMENTS),
-            ChecklistTemplateItem("First aid kit", ChecklistCategory.MEDICINE),
-            ChecklistTemplateItem("Sunscreen", ChecklistCategory.TOILETRIES),
-            ChecklistTemplateItem("Bug spray", ChecklistCategory.TOILETRIES),
-            ChecklistTemplateItem("Rain jacket", ChecklistCategory.CLOTHING),
-            ChecklistTemplateItem("Flashlight", ChecklistCategory.ELECTRONICS),
-            ChecklistTemplateItem(PHONE_CHARGER, ChecklistCategory.ELECTRONICS),
-            ChecklistTemplateItem("Portable battery", ChecklistCategory.ELECTRONICS),
-            ChecklistTemplateItem("Energy bars", ChecklistCategory.SNACKS, 5),
-            ChecklistTemplateItem("Trail mix", ChecklistCategory.SNACKS, 2),
-            ChecklistTemplateItem("Hat", ChecklistCategory.ACCESSORIES),
-            ChecklistTemplateItem("Sunglasses", ChecklistCategory.ACCESSORIES),
-            ChecklistTemplateItem("Quick-dry pants", ChecklistCategory.CLOTHING),
-            ChecklistTemplateItem("Moisture-wicking shirts", ChecklistCategory.CLOTHING, 2),
-            ChecklistTemplateItem("Pain relievers", ChecklistCategory.MEDICINE),
-            ChecklistTemplateItem("Blister bandages", ChecklistCategory.MEDICINE)
+            ChecklistTemplateItem(R.string.item_backpack, ChecklistCategory.OTHER),
+            ChecklistTemplateItem(R.string.item_hiking_boots, ChecklistCategory.CLOTHING),
+            ChecklistTemplateItem(R.string.item_hiking_socks, ChecklistCategory.CLOTHING, 3),
+            ChecklistTemplateItem(R.string.item_water_bottle, ChecklistCategory.OTHER, 2),
+            ChecklistTemplateItem(R.string.item_trail_map, ChecklistCategory.DOCUMENTS),
+            ChecklistTemplateItem(R.string.item_first_aid_kit, ChecklistCategory.MEDICINE),
+            ChecklistTemplateItem(R.string.item_sunscreen, ChecklistCategory.TOILETRIES),
+            ChecklistTemplateItem(R.string.item_bug_spray, ChecklistCategory.TOILETRIES),
+            ChecklistTemplateItem(R.string.item_rain_jacket, ChecklistCategory.CLOTHING),
+            ChecklistTemplateItem(R.string.item_flashlight, ChecklistCategory.ELECTRONICS),
+            ChecklistTemplateItem(R.string.item_phone_charger, ChecklistCategory.ELECTRONICS),
+            ChecklistTemplateItem(R.string.item_portable_battery, ChecklistCategory.ELECTRONICS),
+            ChecklistTemplateItem(R.string.item_energy_bars, ChecklistCategory.SNACKS, 5),
+            ChecklistTemplateItem(R.string.item_trail_mix, ChecklistCategory.SNACKS, 2),
+            ChecklistTemplateItem(R.string.item_hat, ChecklistCategory.ACCESSORIES),
+            ChecklistTemplateItem(R.string.item_sunglasses, ChecklistCategory.ACCESSORIES),
+            ChecklistTemplateItem(R.string.item_quick_dry_pants, ChecklistCategory.CLOTHING),
+            ChecklistTemplateItem(R.string.item_moisture_wicking_shirts, ChecklistCategory.CLOTHING, 2),
+            ChecklistTemplateItem(R.string.item_pain_relievers, ChecklistCategory.MEDICINE),
+            ChecklistTemplateItem(R.string.item_blister_bandages, ChecklistCategory.MEDICINE)
         )
     )
 }

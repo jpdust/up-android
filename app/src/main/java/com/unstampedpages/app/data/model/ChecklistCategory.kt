@@ -1,5 +1,6 @@
 package com.unstampedpages.app.data.model
 
+import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Backpack
 import androidx.compose.material.icons.filled.Checkroom
@@ -11,53 +12,54 @@ import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Soap
 import androidx.compose.material.icons.filled.Watch
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.unstampedpages.app.R
 
 /**
  * Categories for organizing checklist items.
  * Each category has a display name and an icon for visual identification.
  */
 enum class ChecklistCategory(
-    val displayName: String,
+    @StringRes val displayNameResId: Int,
     val icon: ImageVector,
     val sortOrder: Int
 ) {
     ELECTRONICS(
-        displayName = "Electronics",
+        displayNameResId = R.string.category_electronics,
         icon = Icons.Default.Devices,
         sortOrder = 0
     ),
     TOILETRIES(
-        displayName = "Toiletries",
+        displayNameResId = R.string.category_toiletries,
         icon = Icons.Default.Soap,
         sortOrder = 1
     ),
     CLOTHING(
-        displayName = "Clothing",
+        displayNameResId = R.string.category_clothing,
         icon = Icons.Default.Checkroom,
         sortOrder = 2
     ),
     DOCUMENTS(
-        displayName = "Documents",
+        displayNameResId = R.string.category_documents,
         icon = Icons.Default.Description,
         sortOrder = 3
     ),
     MEDICINE(
-        displayName = "Medicine",
+        displayNameResId = R.string.category_medicine,
         icon = Icons.Default.LocalPharmacy,
         sortOrder = 4
     ),
     ACCESSORIES(
-        displayName = "Accessories",
+        displayNameResId = R.string.category_accessories,
         icon = Icons.Default.Watch,
         sortOrder = 5
     ),
     SNACKS(
-        displayName = "Snacks",
+        displayNameResId = R.string.category_snacks,
         icon = Icons.Default.Restaurant,
         sortOrder = 6
     ),
     OTHER(
-        displayName = "Other",
+        displayNameResId = R.string.category_other,
         icon = Icons.Default.MoreHoriz,
         sortOrder = 7
     );
