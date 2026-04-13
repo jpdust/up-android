@@ -20,6 +20,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.unstampedpages.app.R
 import com.unstampedpages.app.ui.theme.Primary
 import com.unstampedpages.app.ui.theme.Secondary
 import com.unstampedpages.app.ui.theme.SecondaryLight
@@ -48,7 +50,7 @@ fun QuantityPicker(
             ) {
                 Icon(
                     imageVector = Icons.Default.Remove,
-                    contentDescription = "Decrease quantity",
+                    contentDescription = stringResource(R.string.cd_decrease_quantity),
                     tint = if (quantity > 1) Secondary else Primary.copy(alpha = 0.3f),
                     modifier = Modifier.size(16.dp)
                 )
@@ -74,7 +76,7 @@ fun QuantityPicker(
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Increase quantity",
+                    contentDescription = stringResource(R.string.cd_increase_quantity),
                     tint = Secondary,
                     modifier = Modifier.size(16.dp)
                 )

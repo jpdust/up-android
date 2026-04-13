@@ -6,8 +6,8 @@ import android.util.Log
 import androidx.core.content.FileProvider
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.unstampedpages.app.data.Country
 import com.unstampedpages.app.data.CountryList
+import com.unstampedpages.app.data.CountryListItem
 import com.unstampedpages.app.data.local.AppDatabase
 import com.unstampedpages.app.data.local.entity.StampItem
 import com.unstampedpages.app.data.repository.StampRepository
@@ -20,14 +20,14 @@ import java.io.File
 import java.io.FileOutputStream
 
 data class CountryStamp(
-    val country: Country,
+    val country: CountryListItem,
     val imagePath: String? = null
 )
 
 data class MyStampsUiState(
     val countryStamps: List<CountryStamp> = emptyList(),
     val isLoading: Boolean = false,
-    val selectedCountry: Country? = null,
+    val selectedCountry: CountryListItem? = null,
     val showUploadDialog: Boolean = false,
     val cameraImageUri: Uri? = null
 )
@@ -73,7 +73,7 @@ class MyStampsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    fun showUploadDialog(country: Country) {
+    fun showUploadDialog(country: CountryListItem) {
         _uiState.value = _uiState.value.copy(
             selectedCountry = country,
             showUploadDialog = true
@@ -96,7 +96,7 @@ class MyStampsViewModel(application: Application) : AndroidViewModel(application
                 if (imagePath != null) {
                     val stamp = StampItem(
                         countryCode = country.code,
-                        countryName = country.name,
+                        countryName = country.englishName,
                         imagePath = imagePath
                     )
                     repository?.insertStamp(stamp)
@@ -172,7 +172,7 @@ class MyStampsViewModel(application: Application) : AndroidViewModel(application
                 if (imagePath != null) {
                     val stamp = StampItem(
                         countryCode = country.code,
-                        countryName = country.name,
+                        countryName = country.englishName,
                         imagePath = imagePath
                     )
                     repository?.insertStamp(stamp)

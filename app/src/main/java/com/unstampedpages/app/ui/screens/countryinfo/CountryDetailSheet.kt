@@ -58,6 +58,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
@@ -67,6 +68,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.unstampedpages.app.R
 import com.unstampedpages.app.data.model.Country
 import com.unstampedpages.app.ui.theme.Primary
 import kotlinx.coroutines.launch
@@ -145,8 +147,8 @@ fun CountryDetailSheet(
                             // Safety Level
                             InfoRow(
                                 icon = Icons.Default.Shield,
-                                label = "Safety Level",
-                                value = it.safetyLevel.displayName,
+                                label = stringResource(R.string.country_safety_level),
+                                value = stringResource(it.safetyLevel.displayNameResId),
                                 valueColor = it.safetyLevel.color,
                                 testTag = "info_safety_level"
                             )
@@ -156,8 +158,8 @@ fun CountryDetailSheet(
                             // Entry Requirement
                             InfoRow(
                                 icon = Icons.Default.Badge,
-                                label = "Entry Requirement",
-                                value = it.visaRequirement.displayName,
+                                label = stringResource(R.string.country_entry_requirement),
+                                value = stringResource(it.visaRequirement.displayNameResId),
                                 testTag = "info_entry_requirement"
                             )
 
@@ -166,8 +168,8 @@ fun CountryDetailSheet(
                             // Passport Validity
                             InfoRow(
                                 icon = Icons.Default.CalendarMonth,
-                                label = "Passport Validity",
-                                value = it.passportValidity ?: "Not specified",
+                                label = stringResource(R.string.country_passport_validity),
+                                value = getLocalizedPassportValidity(it.passportValidity),
                                 testTag = "info_passport_validity"
                             )
 
@@ -176,7 +178,7 @@ fun CountryDetailSheet(
                             // Currency
                             InfoRow(
                                 icon = Icons.Default.AttachMoney,
-                                label = "Currency",
+                                label = stringResource(R.string.country_currency),
                                 value = "${it.currency} (${it.currencyCode})",
                                 testTag = "info_currency"
                             )
@@ -206,7 +208,7 @@ fun CountryDetailSheet(
                             // Outlet Type
                             InfoRow(
                                 icon = Icons.Default.ElectricalServices,
-                                label = "Power Outlet",
+                                label = stringResource(R.string.country_power_outlet),
                                 value = it.outletType,
                                 testTag = "info_power_outlet"
                             )
@@ -250,7 +252,7 @@ private fun CountryHeader(
         ) {
             Icon(
                 imageVector = Icons.Default.Close,
-                contentDescription = "Close",
+                contentDescription = stringResource(R.string.cd_close),
                 tint = Color.White
             )
         }
@@ -283,7 +285,7 @@ private fun CountryHeader(
 
             // Continent
             Text(
-                text = country.continent.displayName,
+                text = stringResource(country.continent.displayNameResId),
                 style = MaterialTheme.typography.bodyMedium,
                 color = Secondary,
                 modifier = Modifier.testTag("country_continent")
@@ -386,14 +388,14 @@ private fun CurrencyConverter(
             )
 
             Text(
-                text = "USD",
+                text = stringResource(R.string.country_usd),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
             Text(
-                text = "=",
+                text = stringResource(R.string.country_equals),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
                 color = Secondary
@@ -431,6 +433,19 @@ private val DECIMAL_INPUT_REGEX = Regex("^\\d*\\.?\\d{0,2}$")
 
 private fun isValidDecimalInput(text: String): Boolean =
     text.isEmpty() || text.matches(DECIMAL_INPUT_REGEX)
+
+@Composable
+private fun getLocalizedPassportValidity(passportValidity: String?): String {
+    return when {
+        passportValidity == null -> stringResource(R.string.passport_validity_not_specified)
+        passportValidity.contains("6 month", ignoreCase = true) -> stringResource(R.string.passport_validity_six_months)
+        passportValidity.contains("3 month", ignoreCase = true) -> stringResource(R.string.passport_validity_three_months)
+        passportValidity.contains("duration", ignoreCase = true) ||
+        passportValidity.contains("length of stay", ignoreCase = true) ||
+        passportValidity.contains("stay", ignoreCase = true) -> stringResource(R.string.passport_validity_duration_of_stay)
+        else -> passportValidity // fallback to original value if not recognized
+    }
+}
 
 @Composable
 private fun CurrencyInputField(
@@ -503,5 +518,3 @@ private fun CurrencyInputField(
             }
     )
 }
-
-

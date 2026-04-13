@@ -1,5 +1,6 @@
 package com.unstampedpages.app.data.model
 
+import com.unstampedpages.app.R
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -129,23 +130,23 @@ class CountryTest {
 class SafetyLevelTest {
 
     @Test
-    fun `SafetyLevel LOW has correct displayName`() {
-        assertEquals("Low Risk", SafetyLevel.LOW.displayName)
+    fun `SafetyLevel LOW has correct displayNameResId`() {
+        assertEquals(R.string.safety_low_risk, SafetyLevel.LOW.displayNameResId)
     }
 
     @Test
-    fun `SafetyLevel MEDIUM has correct displayName`() {
-        assertEquals("Medium Risk", SafetyLevel.MEDIUM.displayName)
+    fun `SafetyLevel MEDIUM has correct displayNameResId`() {
+        assertEquals(R.string.safety_medium_risk, SafetyLevel.MEDIUM.displayNameResId)
     }
 
     @Test
-    fun `SafetyLevel HIGH has correct displayName`() {
-        assertEquals("High Risk", SafetyLevel.HIGH.displayName)
+    fun `SafetyLevel HIGH has correct displayNameResId`() {
+        assertEquals(R.string.safety_high_risk, SafetyLevel.HIGH.displayNameResId)
     }
 
     @Test
-    fun `SafetyLevel EXTREME has correct displayName`() {
-        assertEquals("Extreme Risk", SafetyLevel.EXTREME.displayName)
+    fun `SafetyLevel EXTREME has correct displayNameResId`() {
+        assertEquals(R.string.safety_extreme_risk, SafetyLevel.EXTREME.displayNameResId)
     }
 
     @Test
@@ -170,28 +171,28 @@ class SafetyLevelTest {
 class VisaRequirementTest {
 
     @Test
-    fun `VisaRequirement NOT_REQUIRED has correct displayName`() {
-        assertEquals("Visa not required", VisaRequirement.VISA_NOT_REQUIRED.displayName)
+    fun `VisaRequirement NOT_REQUIRED has correct displayNameResId`() {
+        assertEquals(R.string.visa_not_required, VisaRequirement.VISA_NOT_REQUIRED.displayNameResId)
     }
 
     @Test
-    fun `VisaRequirement EVISA has correct displayName`() {
-        assertEquals("eVisa", VisaRequirement.E_VISA.displayName)
+    fun `VisaRequirement EVISA has correct displayNameResId`() {
+        assertEquals(R.string.visa_evisa, VisaRequirement.E_VISA.displayNameResId)
     }
 
     @Test
-    fun `VisaRequirement ON_ARRIVAL has correct displayName`() {
-        assertEquals("Visa on arrival", VisaRequirement.VISA_ON_ARRIVAL.displayName)
+    fun `VisaRequirement ON_ARRIVAL has correct displayNameResId`() {
+        assertEquals(R.string.visa_on_arrival, VisaRequirement.VISA_ON_ARRIVAL.displayNameResId)
     }
 
     @Test
-    fun `VisaRequirement REQUIRED has correct displayName`() {
-        assertEquals("Visa required", VisaRequirement.VISA_REQUIRED.displayName)
+    fun `VisaRequirement REQUIRED has correct displayNameResId`() {
+        assertEquals(R.string.visa_required, VisaRequirement.VISA_REQUIRED.displayNameResId)
     }
 
     @Test
-    fun `VisaRequirement OTHER has correct displayName`() {
-        assertEquals("Restricted", VisaRequirement.RESTRICTED.displayName)
+    fun `VisaRequirement RESTRICTED has correct displayNameResId`() {
+        assertEquals(R.string.visa_restricted, VisaRequirement.RESTRICTED.displayNameResId)
     }
 
     @Test
@@ -208,7 +209,7 @@ class VisaRequirementTest {
     @Test
     fun `VisaRequirement valueOf returns correct enum`() {
         assertEquals(VisaRequirement.VISA_NOT_REQUIRED, VisaRequirement.valueOf("VISA_NOT_REQUIRED"))
-        assertEquals(VisaRequirement.E_VISA, VisaRequirement.valueOf("EVISA"))
+        assertEquals(VisaRequirement.E_VISA, VisaRequirement.valueOf("E_VISA"))
         assertEquals(VisaRequirement.VISA_ON_ARRIVAL, VisaRequirement.valueOf("VISA_ON_ARRIVAL"))
         assertEquals(VisaRequirement.VISA_REQUIRED, VisaRequirement.valueOf("VISA_REQUIRED"))
         assertEquals(VisaRequirement.RESTRICTED, VisaRequirement.valueOf("RESTRICTED"))
@@ -218,38 +219,38 @@ class VisaRequirementTest {
 class ContinentTest {
 
     @Test
-    fun `Continent NORTH_AMERICA has correct displayName`() {
-        assertEquals("North America", Continent.NORTH_AMERICA.displayName)
+    fun `Continent NORTH_AMERICA has correct displayNameResId`() {
+        assertEquals(R.string.continent_north_america, Continent.NORTH_AMERICA.displayNameResId)
     }
 
     @Test
-    fun `Continent SOUTH_AMERICA has correct displayName`() {
-        assertEquals("South America", Continent.SOUTH_AMERICA.displayName)
+    fun `Continent SOUTH_AMERICA has correct displayNameResId`() {
+        assertEquals(R.string.continent_south_america, Continent.SOUTH_AMERICA.displayNameResId)
     }
 
     @Test
-    fun `Continent EUROPE has correct displayName`() {
-        assertEquals("Europe", Continent.EUROPE.displayName)
+    fun `Continent EUROPE has correct displayNameResId`() {
+        assertEquals(R.string.continent_europe, Continent.EUROPE.displayNameResId)
     }
 
     @Test
-    fun `Continent AFRICA has correct displayName`() {
-        assertEquals("Africa", Continent.AFRICA.displayName)
+    fun `Continent AFRICA has correct displayNameResId`() {
+        assertEquals(R.string.continent_africa, Continent.AFRICA.displayNameResId)
     }
 
     @Test
-    fun `Continent ASIA has correct displayName`() {
-        assertEquals("Asia", Continent.ASIA.displayName)
+    fun `Continent ASIA has correct displayNameResId`() {
+        assertEquals(R.string.continent_asia, Continent.ASIA.displayNameResId)
     }
 
     @Test
-    fun `Continent OCEANIA has correct displayName`() {
-        assertEquals("Oceania", Continent.OCEANIA.displayName)
+    fun `Continent OCEANIA has correct displayNameResId`() {
+        assertEquals(R.string.continent_oceania, Continent.OCEANIA.displayNameResId)
     }
 
     @Test
-    fun `Continent ANTARCTICA has correct displayName`() {
-        assertEquals("Antarctica", Continent.ANTARCTICA.displayName)
+    fun `Continent ANTARCTICA has correct displayNameResId`() {
+        assertEquals(R.string.continent_antarctica, Continent.ANTARCTICA.displayNameResId)
     }
 
     @Test

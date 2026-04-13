@@ -25,6 +25,8 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.unstampedpages.app.R
 import com.unstampedpages.app.data.local.entity.ChecklistItem
 import com.unstampedpages.app.data.model.ChecklistCategory
 import com.unstampedpages.app.ui.theme.Primary
@@ -92,7 +94,7 @@ fun CategorySection(
             Spacer(modifier = Modifier.width(12.dp))
 
             Text(
-                text = category.displayName,
+                text = stringResource(category.displayNameResId),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,

@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- French (Français) translations -->
+<resources>
+    <string name="app_name">Unstamped Pages</string>
+    <string name="app_title">UNSTAMPED PAGES</string>
+    <string name="app_tagline">Votre Aventure Vous Attend</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Accueil</string>
+    <string name="nav_countries">Pays</string>
+    <string name="nav_checklist">Liste</string>
+    <string name="nav_trip_log">Journal</string>
+    <string name="nav_my_stamps">Mes Tampons</string>
+
+    <!-- Home Screen -->
+    <string name="home_welcome">Bienvenue, Explorateur</string>
+    <string name="home_description">Documentez vos voyages à travers le monde. Découvrez de nouveaux pays, suivez vos voyages et n\'oubliez jamais quoi emporter.</string>
+    <string name="home_quote">"Le monde est un livre, et ceux qui ne voyagent pas n\'en lisent qu\'une page."</string>
+    <string name="home_quote_author">— Saint Augustin</string>
+
+    <!-- Home Screen Feature Cards -->
+    <string name="feature_explore_title">Explorer les Pays</string>
+    <string name="feature_explore_description">Touchez le globe pour découvrir les informations du pays, les niveaux de sécurité et les conseils de voyage.</string>
+    <string name="feature_checklist_title">Liste de Voyage</string>
+    <string name="feature_checklist_description">N\'oubliez jamais l\'essentiel. Gardez une trace de ce qu\'il faut emporter pour votre aventure.</string>
+    <string name="feature_journal_title">Journal de Voyage</string>
+    <string name="feature_journal_description">Enregistrez vos souvenirs. Documentez chaque jour de votre voyage.</string>
+    <string name="feature_stamps_title">Mes Tampons de Passeport</string>
+    <string name="feature_stamps_description">Téléchargez des photos de vos tampons de passeport pour chaque pays visité comme archive numérique.</string>
+
+    <!-- Screen Headers -->
+    <string name="header_explore_title">EXPLOREZ LE MONDE</string>
+    <string name="header_explore_subtitle">Touchez un pays pour en découvrir plus</string>
+    <string name="header_checklist_title">LISTE DE VOYAGE</string>
+    <string name="header_checklist_subtitle">N\'oubliez jamais l\'essentiel</string>
+    <string name="header_trip_log_title">JOURNAL DE VOYAGE</string>
+    <string name="header_trip_log_subtitle">Documentez vos aventures</string>
+    <string name="header_my_stamps_title">MES TAMPONS</string>
+    <string name="header_my_stamps_subtitle">Collectionnez des tampons de passeport du monde entier</string>
+
+    <!-- Country Info Screen -->
+    <string name="country_search_placeholder">Rechercher un pays/territoire…</string>
+    <string name="country_map_instructions">Pincez pour zoomer • Glissez pour déplacer</string>
+    <string name="country_map_view">Vue de la Carte</string>
+    <string name="country_map_key">Légende</string>
+
+    <!-- Country Detail Labels -->
+    <string name="country_safety_level">Niveau de Sécurité</string>
+    <string name="country_entry_requirement">Condition d\'Entrée</string>
+    <string name="country_passport_validity">Validité du Passeport</string>
+    <string name="country_currency">Devise</string>
+    <string name="country_power_outlet">Prise Électrique</string>
+    <string name="country_usd">USD</string>
+    <string name="country_equals">=</string>
+    <string name="country_not_specified">Non spécifié</string>
+
+    <!-- Map Color Modes -->
+    <string name="map_mode_default">Par défaut</string>
+    <string name="map_mode_security_risk">Risque Sécuritaire</string>
+    <string name="map_mode_visa_requirements">Exigences de Visa</string>
+    <string name="map_mode_passport_validity">Validité du Passeport</string>
+
+    <!-- Map Legend - Safety -->
+    <string name="legend_low_risk">Risque Faible</string>
+    <string name="legend_medium_risk">Risque Moyen</string>
+    <string name="legend_high_risk">Risque Élevé</string>
+
+    <!-- Map Legend - Visa Requirements -->
+    <string name="legend_visa_not_required">Visa Non Requis</string>
+    <string name="legend_evisa">eVisa</string>
+    <string name="legend_visa_on_arrival">Visa à l\'Arrivée</string>
+    <string name="legend_visa_required">Visa Requis</string>
+    <string name="legend_restricted">Restreint</string>
+
+    <!-- Map Legend - Passport Validity -->
+    <string name="legend_six_months">6 Mois</string>
+    <string name="legend_three_months">3 Mois</string>
+    <string name="legend_duration_of_stay">Durée du Séjour</string>
+    <string name="legend_other">Autre</string>
+
+    <!-- Checklist Screen -->
+    <string name="checklist_empty_title">Votre liste est vide</string>
+    <string name="checklist_empty_message">Appuyez sur le bouton + pour ajouter des articles\nou chargez un modèle pour commencer</string>
+    <string name="checklist_all_packed">Tout est prêt !</string>
+    <string name="checklist_progress">%1$d/%2$d préparés</string>
+    <string name="checklist_load_template">Charger un Modèle</string>
+    <string name="checklist_reset_list">Réinitialiser la Liste</string>
+    <string name="checklist_add_item">Ajouter un Article</string>
+    <string name="checklist_item_name">Nom de l\'article</string>
+    <string name="checklist_item_placeholder">Quoi emporter…</string>
+    <string name="checklist_category">Catégorie</string>
+    <string name="checklist_quantity">Quantité</string>
+    <string name="checklist_add">Ajouter</string>
+    <string name="checklist_cancel">Annuler</string>
+    <string name="checklist_selected_count">%d sélectionnés</string>
+    <string name="checklist_delete">Supprimer</string>
+    <string name="checklist_item_count">%d/%d</string>
+
+    <!-- Checklist Categories -->
+    <string name="category_electronics">Électronique</string>
+    <string name="category_toiletries">Articles de Toilette</string>
+    <string name="category_clothing">Vêtements</string>
+    <string name="category_documents">Documents</string>
+    <string name="category_medicine">Médicaments</string>
+    <string name="category_accessories">Accessoires</string>
+    <string name="category_snacks">Collations</string>
+    <string name="category_other">Autre</string>
+
+    <!-- Checklist Templates -->
+    <string name="template_dialog_title">Charger un Modèle</string>
+    <string name="template_dialog_description">Choisissez un modèle pour ajouter des articles à votre liste</string>
+    <string name="template_items_count">%d articles</string>
+    <string name="template_business_trip">Voyage d\'Affaires</string>
+    <string name="template_beach_vacation">Vacances à la Plage</string>
+    <string name="template_hiking">Aventure Randonnée</string>
+
+    <!-- Template Items - Common -->
+    <string name="item_phone_charger">Chargeur de téléphone</string>
+    <string name="item_portable_battery">Batterie portable</string>
+    <string name="item_passport">Passeport</string>
+    <string name="item_sunscreen">Crème solaire</string>
+    <string name="item_sunglasses">Lunettes de soleil</string>
+    <string name="item_toothbrush">Brosse à dents</string>
+    <string name="item_toothpaste">Dentifrice</string>
+    <string name="item_deodorant">Déodorant</string>
+    <string name="item_pain_relievers">Analgésiques</string>
+
+    <!-- Template Items - Business Trip -->
+    <string name="item_laptop">Ordinateur portable</string>
+    <string name="item_laptop_charger">Chargeur d\'ordinateur</string>
+    <string name="item_business_cards">Cartes de visite</string>
+    <string name="item_travel_itinerary">Itinéraire de voyage</string>
+    <string name="item_suit_blazer">Costume/Blazer</string>
+    <string name="item_dress_shirts">Chemises habillées</string>
+    <string name="item_dress_pants">Pantalons habillés</string>
+    <string name="item_dress_shoes">Chaussures habillées</string>
+    <string name="item_belt">Ceinture</string>
+    <string name="item_watch">Montre</string>
+
+    <!-- Template Items - Beach Vacation -->
+    <string name="item_swimsuit">Maillot de bain</string>
+    <string name="item_sun_hat">Chapeau de soleil</string>
+    <string name="item_flip_flops">Tongs</string>
+    <string name="item_beach_towel">Serviette de plage</string>
+    <string name="item_aloe_vera_gel">Gel d\'aloe vera</string>
+    <string name="item_camera">Appareil photo</string>
+    <string name="item_waterproof_phone_case">Étui étanche pour téléphone</string>
+    <string name="item_shorts">Shorts</string>
+    <string name="item_t_shirts">T-shirts</string>
+    <string name="item_sandals">Sandales</string>
+    <string name="item_snacks">Collations</string>
+    <string name="item_motion_sickness_pills">Pilules contre le mal des transports</string>
+
+    <!-- Template Items - Hiking -->
+    <string name="item_backpack">Sac à dos</string>
+    <string name="item_hiking_boots">Chaussures de randonnée</string>
+    <string name="item_hiking_socks">Chaussettes de randonnée</string>
+    <string name="item_water_bottle">Bouteille d\'eau</string>
+    <string name="item_trail_map">Carte du sentier</string>
+    <string name="item_first_aid_kit">Trousse de premiers soins</string>
+    <string name="item_bug_spray">Anti-moustique</string>
+    <string name="item_rain_jacket">Veste de pluie</string>
+    <string name="item_flashlight">Lampe de poche</string>
+    <string name="item_energy_bars">Barres énergétiques</string>
+    <string name="item_trail_mix">Mélange de fruits secs</string>
+    <string name="item_hat">Casquette</string>
+    <string name="item_quick_dry_pants">Pantalons à séchage rapide</string>
+    <string name="item_moisture_wicking_shirts">Chemises respirantes</string>
+    <string name="item_blister_bandages">Pansements pour ampoules</string>
+
+    <!-- Trip Log Screen -->
+    <string name="trip_log_empty_title">Pas encore d\'entrées de journal</string>
+    <string name="trip_log_empty_message">Commencez à documenter vos voyages !\nAppuyez sur le bouton + pour créer votre première entrée.</string>
+    <string name="trip_log_new_entry">Nouvelle Entrée</string>
+    <string name="trip_log_edit_entry">Modifier l\'Entrée</string>
+    <string name="trip_log_title_label">Titre</string>
+    <string name="trip_log_title_placeholder">Donnez un titre à votre entrée…</string>
+    <string name="trip_log_location_label">Lieu (optionnel)</string>
+    <string name="trip_log_location_placeholder">Où êtes-vous ?</string>
+    <string name="trip_log_story_label">Votre histoire</string>
+    <string name="trip_log_story_placeholder">Racontez votre aventure…</string>
+
+    <!-- My Stamps Screen -->
+    <string name="my_stamps_column_country">Pays</string>
+    <string name="my_stamps_column_stamp">Tampon</string>
+    <string name="my_stamps_add_dialog_title">Ajouter un Tampon</string>
+    <string name="my_stamps_add_dialog_message">Ajouter une image de tampon de passeport pour %s</string>
+    <string name="my_stamps_add_dialog_instruction">Prenez une nouvelle photo ou choisissez une image existante de votre appareil.</string>
+    <string name="my_stamps_camera">Appareil photo</string>
+    <string name="my_stamps_gallery">Galerie</string>
+    <string name="my_stamps_cancel">Annuler</string>
+
+    <!-- Content Descriptions (Accessibility) -->
+    <string name="cd_cancel_selection">Annuler la sélection</string>
+    <string name="cd_decrease_quantity">Diminuer la quantité</string>
+    <string name="cd_increase_quantity">Augmenter la quantité</string>
+    <string name="cd_more_options">Plus d\'options</string>
+    <string name="cd_add_item">Ajouter un article</string>
+    <string name="cd_close_legend">Fermer la légende</string>
+    <string name="cd_close">Fermer</string>
+    <string name="cd_search">Rechercher</string>
+    <string name="cd_clear">Effacer</string>
+    <string name="cd_new_entry">Nouvelle entrée</string>
+    <string name="cd_edit">Modifier</string>
+    <string name="cd_delete">Supprimer</string>
+    <string name="cd_cancel">Annuler</string>
+    <string name="cd_save">Enregistrer</string>
+    <string name="cd_stamp_for_country">Tampon pour %s</string>
+    <string name="cd_remove_stamp">Supprimer le tampon</string>
+    <string name="cd_add_stamp">Ajouter un tampon</string>
+    <string name="cd_pinned">Épinglé</string>
+    <string name="cd_collapse">Réduire</string>
+    <string name="cd_expand">Développer</string>
+
+    <!-- Common Actions -->
+    <string name="action_ok">OK</string>
+    <string name="action_cancel">Annuler</string>
+    <string name="action_save">Enregistrer</string>
+    <string name="action_delete">Supprimer</string>
+    <string name="action_add">Ajouter</string>
+    <string name="action_close">Fermer</string>
+
+    <!-- Quantity Display -->
+    <string name="quantity_display">x%d</string>
+
+    <!-- Safety Levels -->
+    <string name="safety_low_risk">Risque Faible</string>
+    <string name="safety_medium_risk">Risque Moyen</string>
+    <string name="safety_high_risk">Risque Élevé</string>
+    <string name="safety_extreme_risk">Risque Extrême</string>
+
+    <!-- Visa Requirements -->
+    <string name="visa_not_required">Visa non requis</string>
+    <string name="visa_evisa">eVisa</string>
+    <string name="visa_on_arrival">Visa à l\'arrivée</string>
+    <string name="visa_required">Visa requis</string>
+    <string name="visa_restricted">Restreint</string>
+
+    <!-- Continents -->
+    <string name="continent_north_america">Amérique du Nord</string>
+    <string name="continent_south_america">Amérique du Sud</string>
+    <string name="continent_europe">Europe</string>
+    <string name="continent_africa">Afrique</string>
+    <string name="continent_asia">Asie</string>
+    <string name="continent_oceania">Océanie</string>
+    <string name="continent_antarctica">Antarctique</string>
+
+    <!-- Passport Validity Values -->
+    <string name="passport_validity_six_months">6 mois</string>
+    <string name="passport_validity_three_months">3 mois</string>
+    <string name="passport_validity_duration_of_stay">Durée du séjour prévue</string>
+    <string name="passport_validity_not_specified">Non spécifié</string>
+</resources>

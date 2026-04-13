@@ -52,65 +52,65 @@ class ChecklistCategoryTest {
         assertTrue(ChecklistCategory.entries.contains(ChecklistCategory.OTHER))
     }
 
-    // ==================== Display Name Tests ====================
+    // ==================== Display Name Resource ID Tests ====================
 
     @Test
-    fun `ELECTRONICS has correct displayName`() {
-        assertEquals("Electronics", ChecklistCategory.ELECTRONICS.displayName)
+    fun `ELECTRONICS has valid displayNameResId`() {
+        assertTrue(ChecklistCategory.ELECTRONICS.displayNameResId != 0)
     }
 
     @Test
-    fun `TOILETRIES has correct displayName`() {
-        assertEquals("Toiletries", ChecklistCategory.TOILETRIES.displayName)
+    fun `TOILETRIES has valid displayNameResId`() {
+        assertTrue(ChecklistCategory.TOILETRIES.displayNameResId != 0)
     }
 
     @Test
-    fun `CLOTHING has correct displayName`() {
-        assertEquals("Clothing", ChecklistCategory.CLOTHING.displayName)
+    fun `CLOTHING has valid displayNameResId`() {
+        assertTrue(ChecklistCategory.CLOTHING.displayNameResId != 0)
     }
 
     @Test
-    fun `DOCUMENTS has correct displayName`() {
-        assertEquals("Documents", ChecklistCategory.DOCUMENTS.displayName)
+    fun `DOCUMENTS has valid displayNameResId`() {
+        assertTrue(ChecklistCategory.DOCUMENTS.displayNameResId != 0)
     }
 
     @Test
-    fun `MEDICINE has correct displayName`() {
-        assertEquals("Medicine", ChecklistCategory.MEDICINE.displayName)
+    fun `MEDICINE has valid displayNameResId`() {
+        assertTrue(ChecklistCategory.MEDICINE.displayNameResId != 0)
     }
 
     @Test
-    fun `ACCESSORIES has correct displayName`() {
-        assertEquals("Accessories", ChecklistCategory.ACCESSORIES.displayName)
+    fun `ACCESSORIES has valid displayNameResId`() {
+        assertTrue(ChecklistCategory.ACCESSORIES.displayNameResId != 0)
     }
 
     @Test
-    fun `SNACKS has correct displayName`() {
-        assertEquals("Snacks", ChecklistCategory.SNACKS.displayName)
+    fun `SNACKS has valid displayNameResId`() {
+        assertTrue(ChecklistCategory.SNACKS.displayNameResId != 0)
     }
 
     @Test
-    fun `OTHER has correct displayName`() {
-        assertEquals("Other", ChecklistCategory.OTHER.displayName)
+    fun `OTHER has valid displayNameResId`() {
+        assertTrue(ChecklistCategory.OTHER.displayNameResId != 0)
     }
 
     @Test
-    fun `all categories have non-empty displayName`() {
+    fun `all categories have valid displayNameResId`() {
         ChecklistCategory.entries.forEach { category ->
             assertTrue(
-                "Category ${category.name} should have non-empty displayName",
-                category.displayName.isNotBlank()
+                "Category ${category.name} should have valid displayNameResId",
+                category.displayNameResId != 0
             )
         }
     }
 
     @Test
-    fun `all displayNames are unique`() {
-        val displayNames = ChecklistCategory.entries.map { it.displayName }
+    fun `all displayNameResIds are unique`() {
+        val resourceIds = ChecklistCategory.entries.map { it.displayNameResId }
         assertEquals(
-            "All display names should be unique",
-            displayNames.size,
-            displayNames.distinct().size
+            "All display name resource IDs should be unique",
+            resourceIds.size,
+            resourceIds.distinct().size
         )
     }
 
@@ -372,11 +372,12 @@ class ChecklistCategoryTest {
     }
 
     @Test
-    fun `categories can be mapped to displayNames`() {
-        val names = ChecklistCategory.entries.map { it.displayName }
-        assertEquals(8, names.size)
-        assertTrue(names.contains("Electronics"))
-        assertTrue(names.contains("Other"))
+    fun `categories can be mapped to displayNameResIds`() {
+        val resourceIds = ChecklistCategory.entries.map { it.displayNameResId }
+        assertEquals(8, resourceIds.size)
+        resourceIds.forEach { resId ->
+            assertTrue("Resource ID should be non-zero", resId != 0)
+        }
     }
 
     @Test

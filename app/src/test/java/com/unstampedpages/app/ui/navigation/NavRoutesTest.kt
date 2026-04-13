@@ -11,8 +11,8 @@ class NavRoutesTest {
     }
 
     @Test
-    fun `Home has correct title`() {
-        assertEquals("Home", NavRoute.Home.title)
+    fun `Home has valid titleResId`() {
+        assertTrue("Home titleResId should be non-zero", NavRoute.Home.titleResId != 0)
     }
 
     @Test
@@ -21,8 +21,8 @@ class NavRoutesTest {
     }
 
     @Test
-    fun `CountryInfo has correct title`() {
-        assertEquals("Countries", NavRoute.CountryInfo.title)
+    fun `CountryInfo has valid titleResId`() {
+        assertTrue("CountryInfo titleResId should be non-zero", NavRoute.CountryInfo.titleResId != 0)
     }
 
     @Test
@@ -31,8 +31,8 @@ class NavRoutesTest {
     }
 
     @Test
-    fun `Checklist has correct title`() {
-        assertEquals("Checklist", NavRoute.Checklist.title)
+    fun `Checklist has valid titleResId`() {
+        assertTrue("Checklist titleResId should be non-zero", NavRoute.Checklist.titleResId != 0)
     }
 
     @Test
@@ -41,8 +41,8 @@ class NavRoutesTest {
     }
 
     @Test
-    fun `TripLog has correct title`() {
-        assertEquals("Trip Log", NavRoute.TripLog.title)
+    fun `TripLog has valid titleResId`() {
+        assertTrue("TripLog titleResId should be non-zero", NavRoute.TripLog.titleResId != 0)
     }
 
     @Test
@@ -51,8 +51,8 @@ class NavRoutesTest {
     }
 
     @Test
-    fun `MyStamps has correct title`() {
-        assertEquals("My Stamps", NavRoute.MyStamps.title)
+    fun `MyStamps has valid titleResId`() {
+        assertTrue("MyStamps titleResId should be non-zero", NavRoute.MyStamps.titleResId != 0)
     }
 
     @Test
@@ -86,10 +86,13 @@ class NavRoutesTest {
     }
 
     @Test
-    fun `all titles are unique`() {
-        val titles = NavRoute.items.map { it.title }
-
-        assertEquals(titles.size, titles.distinct().size)
+    fun `all titleResIds are valid`() {
+        NavRoute.items.forEach { navRoute ->
+            assertTrue(
+                "titleResId for ${navRoute.route} should be non-zero",
+                navRoute.titleResId != 0
+            )
+        }
     }
 
     @Test

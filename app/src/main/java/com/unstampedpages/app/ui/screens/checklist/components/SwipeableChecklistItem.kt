@@ -32,6 +32,7 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,6 +45,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.unstampedpages.app.R
 import com.unstampedpages.app.data.local.entity.ChecklistItem
 import com.unstampedpages.app.ui.theme.Accent
 import com.unstampedpages.app.ui.theme.Primary
@@ -80,23 +83,22 @@ fun SwipeableChecklistItem(
 ) {
     val hapticFeedback = LocalHapticFeedback.current
 
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { dismissValue ->
-            when (dismissValue) {
-                SwipeToDismissBoxValue.EndToStart -> {
-                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                    callbacks.onDelete()
-                    true
-                }
-                SwipeToDismissBoxValue.StartToEnd -> {
-                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                    callbacks.onPin()
-                    false // Don't dismiss, just toggle pin
-                }
-                SwipeToDismissBoxValue.Settled -> false
+    val dismissState = rememberSwipeToDismissBoxState()
+
+    LaunchedEffect(dismissState.currentValue) {
+        when (dismissState.currentValue) {
+            SwipeToDismissBoxValue.EndToStart -> {
+                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                callbacks.onDelete()
             }
+            SwipeToDismissBoxValue.StartToEnd -> {
+                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                callbacks.onPin()
+                dismissState.snapTo(SwipeToDismissBoxValue.Settled) // Reset after pin
+            }
+            SwipeToDismissBoxValue.Settled -> { /* Do nothing */ }
         }
-    )
+    }
 
     val enableDismissFromStartToEnd = !state.isMultiSelectMode
     val enableDismissFromEndToStart = !state.isMultiSelectMode
@@ -319,7 +321,7 @@ private fun PinIndicator(isPinned: Boolean) {
     if (!isPinned) return
     Icon(
         imageVector = Icons.Default.PushPin,
-        contentDescription = "Pinned",
+        contentDescription = stringResource(R.string.cd_pinned),
         tint = Secondary,
         modifier = Modifier.size(16.dp)
     )

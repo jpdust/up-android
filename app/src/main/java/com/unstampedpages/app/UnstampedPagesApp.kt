@@ -1,5 +1,6 @@
 package com.unstampedpages.app
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -21,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -38,16 +40,16 @@ import com.unstampedpages.app.ui.screens.triplog.TripLogScreen
 import com.unstampedpages.app.ui.theme.Secondary
 
 private data class HeaderContent(
-    val title: String,
-    val subtitle: String
+    @StringRes val titleResId: Int,
+    @StringRes val subtitleResId: Int
 )
 
 private fun getHeaderContent(route: String?): HeaderContent? {
     return when (route) {
-        NavRoute.CountryInfo.route -> HeaderContent("EXPLORE THE WORLD", "Tap a country to discover more")
-        NavRoute.Checklist.route -> HeaderContent("TRAVEL CHECKLIST", "Never forget the essentials")
-        NavRoute.TripLog.route -> HeaderContent("TRIP LOG", "Document your adventures")
-        NavRoute.MyStamps.route -> HeaderContent("MY STAMPS", "Collect passport stamps from around the world")
+        NavRoute.CountryInfo.route -> HeaderContent(R.string.header_explore_title, R.string.header_explore_subtitle)
+        NavRoute.Checklist.route -> HeaderContent(R.string.header_checklist_title, R.string.header_checklist_subtitle)
+        NavRoute.TripLog.route -> HeaderContent(R.string.header_trip_log_title, R.string.header_trip_log_subtitle)
+        NavRoute.MyStamps.route -> HeaderContent(R.string.header_my_stamps_title, R.string.header_my_stamps_subtitle)
         else -> null
     }
 }
@@ -103,14 +105,14 @@ fun UnstampedPagesApp() {
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Text(
-                                        text = content.title,
+                                        text = stringResource(content.titleResId),
                                         style = MaterialTheme.typography.titleLarge,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onPrimary,
                                         textAlign = TextAlign.Center
                                     )
                                     Text(
-                                        text = content.subtitle,
+                                        text = stringResource(content.subtitleResId),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = Secondary,
                                         textAlign = TextAlign.Center

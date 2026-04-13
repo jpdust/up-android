@@ -41,6 +41,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.unstampedpages.app.R
 import com.unstampedpages.app.ui.theme.Primary
 import com.unstampedpages.app.ui.theme.Secondary
 import com.unstampedpages.app.util.DateUtils
@@ -87,7 +89,7 @@ fun JournalEntryEditor(
         TopAppBar(
             title = {
                 Text(
-                    text = if (state.isNewEntry) "New Entry" else "Edit Entry",
+                    text = stringResource(if (state.isNewEntry) R.string.trip_log_new_entry else R.string.trip_log_edit_entry),
                     fontWeight = FontWeight.SemiBold
                 )
             },
@@ -95,7 +97,7 @@ fun JournalEntryEditor(
                 IconButton(onClick = callbacks.onCancel) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Cancel"
+                        contentDescription = stringResource(R.string.cd_cancel)
                     )
                 }
             },
@@ -103,7 +105,7 @@ fun JournalEntryEditor(
                 IconButton(onClick = callbacks.onSave) {
                     Icon(
                         imageVector = Icons.Default.Check,
-                        contentDescription = "Save",
+                        contentDescription = stringResource(R.string.cd_save),
                         tint = Secondary
                     )
                 }
@@ -147,8 +149,8 @@ fun JournalEntryEditor(
             OutlinedTextField(
                 value = state.title,
                 onValueChange = callbacks.onTitleChange,
-                label = { Text("Title") },
-                placeholder = { Text("Give your entry a title...") },
+                label = { Text(stringResource(R.string.trip_log_title_label)) },
+                placeholder = { Text(stringResource(R.string.trip_log_title_placeholder)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
@@ -164,8 +166,8 @@ fun JournalEntryEditor(
             OutlinedTextField(
                 value = state.location,
                 onValueChange = callbacks.onLocationChange,
-                label = { Text("Location (optional)") },
-                placeholder = { Text("Where are you?") },
+                label = { Text(stringResource(R.string.trip_log_location_label)) },
+                placeholder = { Text(stringResource(R.string.trip_log_location_placeholder)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 leadingIcon = {
@@ -188,8 +190,8 @@ fun JournalEntryEditor(
             OutlinedTextField(
                 value = state.content,
                 onValueChange = callbacks.onContentChange,
-                label = { Text("Your story") },
-                placeholder = { Text("Record your adventure...") },
+                label = { Text(stringResource(R.string.trip_log_story_label)) },
+                placeholder = { Text(stringResource(R.string.trip_log_story_placeholder)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(300.dp),
@@ -212,12 +214,12 @@ fun JournalEntryEditor(
                     datePickerState.selectedDateMillis?.let { callbacks.onDateChange(it) }
                     dismissDatePicker()
                 }) {
-                    Text("OK", color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.action_ok), color = MaterialTheme.colorScheme.primary)
                 }
             },
             dismissButton = {
                 TextButton(onClick = dismissDatePicker) {
-                    Text("Cancel", color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.checklist_cancel), color = MaterialTheme.colorScheme.primary)
                 }
             }
         ) {

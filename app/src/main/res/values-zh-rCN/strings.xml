@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Chinese Simplified (简体中文) translations -->
+<resources>
+    <string name="app_name">Unstamped Pages</string>
+    <string name="app_title">UNSTAMPED PAGES</string>
+    <string name="app_tagline">你的冒险在等待</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">主页</string>
+    <string name="nav_countries">国家</string>
+    <string name="nav_checklist">清单</string>
+    <string name="nav_trip_log">旅行日志</string>
+    <string name="nav_my_stamps">我的印章</string>
+
+    <!-- Home Screen -->
+    <string name="home_welcome">欢迎，探险家</string>
+    <string name="home_description">记录你环游世界的旅程。发现新的国家，追踪你的旅行，永不忘记该带什么。</string>
+    <string name="home_quote">"世界是一本书，那些不旅行的人只读了一页。"</string>
+    <string name="home_quote_author">— 圣奥古斯丁</string>
+
+    <!-- Home Screen Feature Cards -->
+    <string name="feature_explore_title">探索国家</string>
+    <string name="feature_explore_description">点击地球发现国家信息、安全级别和旅行提示。</string>
+    <string name="feature_checklist_title">旅行清单</string>
+    <string name="feature_checklist_description">永不忘记必需品。记录你冒险需要带的物品。</string>
+    <string name="feature_journal_title">旅行日记</string>
+    <string name="feature_journal_description">记录你的回忆。记录旅途中的每一天。</string>
+    <string name="feature_stamps_title">我的护照印章</string>
+    <string name="feature_stamps_description">上传你访问的每个国家的护照印章照片作为数字记录。</string>
+
+    <!-- Screen Headers -->
+    <string name="header_explore_title">探索世界</string>
+    <string name="header_explore_subtitle">点击一个国家了解更多</string>
+    <string name="header_checklist_title">旅行清单</string>
+    <string name="header_checklist_subtitle">永不忘记必需品</string>
+    <string name="header_trip_log_title">旅行日志</string>
+    <string name="header_trip_log_subtitle">记录你的冒险</string>
+    <string name="header_my_stamps_title">我的印章</string>
+    <string name="header_my_stamps_subtitle">收集来自世界各地的护照印章</string>
+
+    <!-- Country Info Screen -->
+    <string name="country_search_placeholder">搜索国家/地区…</string>
+    <string name="country_map_instructions">捏合缩放 • 拖动平移</string>
+    <string name="country_map_view">地图视图</string>
+    <string name="country_map_key">图例</string>
+
+    <!-- Country Detail Labels -->
+    <string name="country_safety_level">安全级别</string>
+    <string name="country_entry_requirement">入境要求</string>
+    <string name="country_passport_validity">护照有效期</string>
+    <string name="country_currency">货币</string>
+    <string name="country_power_outlet">电源插座</string>
+    <string name="country_usd">美元</string>
+    <string name="country_equals">=</string>
+    <string name="country_not_specified">未指定</string>
+
+    <!-- Map Color Modes -->
+    <string name="map_mode_default">默认</string>
+    <string name="map_mode_security_risk">安全风险</string>
+    <string name="map_mode_visa_requirements">签证要求</string>
+    <string name="map_mode_passport_validity">护照有效期</string>
+
+    <!-- Map Legend - Safety -->
+    <string name="legend_low_risk">低风险</string>
+    <string name="legend_medium_risk">中风险</string>
+    <string name="legend_high_risk">高风险</string>
+
+    <!-- Map Legend - Visa Requirements -->
+    <string name="legend_visa_not_required">免签证</string>
+    <string name="legend_evisa">电子签证</string>
+    <string name="legend_visa_on_arrival">落地签</string>
+    <string name="legend_visa_required">需要签证</string>
+    <string name="legend_restricted">受限制</string>
+
+    <!-- Map Legend - Passport Validity -->
+    <string name="legend_six_months">6个月</string>
+    <string name="legend_three_months">3个月</string>
+    <string name="legend_duration_of_stay">停留期限</string>
+    <string name="legend_other">其他</string>
+
+    <!-- Checklist Screen -->
+    <string name="checklist_empty_title">你的清单是空的</string>
+    <string name="checklist_empty_message">点击+按钮添加物品\n或加载模板开始</string>
+    <string name="checklist_all_packed">全部打包完成！</string>
+    <string name="checklist_progress">%1$d/%2$d 已打包</string>
+    <string name="checklist_load_template">加载模板</string>
+    <string name="checklist_reset_list">重置清单</string>
+    <string name="checklist_add_item">添加物品</string>
+    <string name="checklist_item_name">物品名称</string>
+    <string name="checklist_item_placeholder">要打包什么…</string>
+    <string name="checklist_category">类别</string>
+    <string name="checklist_quantity">数量</string>
+    <string name="checklist_add">添加</string>
+    <string name="checklist_cancel">取消</string>
+    <string name="checklist_selected_count">已选择%d项</string>
+    <string name="checklist_delete">删除</string>
+    <string name="checklist_item_count">%d/%d</string>
+
+    <!-- Checklist Categories -->
+    <string name="category_electronics">电子产品</string>
+    <string name="category_toiletries">洗漱用品</string>
+    <string name="category_clothing">服装</string>
+    <string name="category_documents">证件</string>
+    <string name="category_medicine">药品</string>
+    <string name="category_accessories">配件</string>
+    <string name="category_snacks">零食</string>
+    <string name="category_other">其他</string>
+
+    <!-- Checklist Templates -->
+    <string name="template_dialog_title">加载模板</string>
+    <string name="template_dialog_description">选择一个模板添加物品到你的清单</string>
+    <string name="template_items_count">%d项物品</string>
+    <string name="template_business_trip">商务旅行</string>
+    <string name="template_beach_vacation">海滩度假</string>
+    <string name="template_hiking">徒步冒险</string>
+
+    <!-- Template Items - Common -->
+    <string name="item_phone_charger">手机充电器</string>
+    <string name="item_portable_battery">移动电源</string>
+    <string name="item_passport">护照</string>
+    <string name="item_sunscreen">防晒霜</string>
+    <string name="item_sunglasses">太阳镜</string>
+    <string name="item_toothbrush">牙刷</string>
+    <string name="item_toothpaste">牙膏</string>
+    <string name="item_deodorant">除臭剂</string>
+    <string name="item_pain_relievers">止痛药</string>
+
+    <!-- Template Items - Business Trip -->
+    <string name="item_laptop">笔记本电脑</string>
+    <string name="item_laptop_charger">笔记本充电器</string>
+    <string name="item_business_cards">名片</string>
+    <string name="item_travel_itinerary">行程表</string>
+    <string name="item_suit_blazer">西装/外套</string>
+    <string name="item_dress_shirts">正装衬衫</string>
+    <string name="item_dress_pants">正装裤</string>
+    <string name="item_dress_shoes">正装鞋</string>
+    <string name="item_belt">腰带</string>
+    <string name="item_watch">手表</string>
+
+    <!-- Template Items - Beach Vacation -->
+    <string name="item_swimsuit">泳衣</string>
+    <string name="item_sun_hat">太阳帽</string>
+    <string name="item_flip_flops">人字拖</string>
+    <string name="item_beach_towel">沙滩浴巾</string>
+    <string name="item_aloe_vera_gel">芦荟凝胶</string>
+    <string name="item_camera">相机</string>
+    <string name="item_waterproof_phone_case">防水手机壳</string>
+    <string name="item_shorts">短裤</string>
+    <string name="item_t_shirts">T恤</string>
+    <string name="item_sandals">凉鞋</string>
+    <string name="item_snacks">零食</string>
+    <string name="item_motion_sickness_pills">晕车药</string>
+
+    <!-- Template Items - Hiking -->
+    <string name="item_backpack">背包</string>
+    <string name="item_hiking_boots">登山靴</string>
+    <string name="item_hiking_socks">登山袜</string>
+    <string name="item_water_bottle">水壶</string>
+    <string name="item_trail_map">步道地图</string>
+    <string name="item_first_aid_kit">急救包</string>
+    <string name="item_bug_spray">驱虫喷雾</string>
+    <string name="item_rain_jacket">雨衣</string>
+    <string name="item_flashlight">手电筒</string>
+    <string name="item_energy_bars">能量棒</string>
+    <string name="item_trail_mix">坚果混合</string>
+    <string name="item_hat">帽子</string>
+    <string name="item_quick_dry_pants">速干裤</string>
+    <string name="item_moisture_wicking_shirts">速干衬衫</string>
+    <string name="item_blister_bandages">水泡贴</string>
+
+    <!-- Trip Log Screen -->
+    <string name="trip_log_empty_title">还没有日记条目</string>
+    <string name="trip_log_empty_message">开始记录你的旅行吧！\n点击+按钮创建第一条记录。</string>
+    <string name="trip_log_new_entry">新条目</string>
+    <string name="trip_log_edit_entry">编辑条目</string>
+    <string name="trip_log_title_label">标题</string>
+    <string name="trip_log_title_placeholder">给你的条目起个标题…</string>
+    <string name="trip_log_location_label">地点（可选）</string>
+    <string name="trip_log_location_placeholder">你在哪里？</string>
+    <string name="trip_log_story_label">你的故事</string>
+    <string name="trip_log_story_placeholder">记录你的冒险…</string>
+
+    <!-- My Stamps Screen -->
+    <string name="my_stamps_column_country">国家</string>
+    <string name="my_stamps_column_stamp">印章</string>
+    <string name="my_stamps_add_dialog_title">添加印章</string>
+    <string name="my_stamps_add_dialog_message">为%s添加护照印章图片</string>
+    <string name="my_stamps_add_dialog_instruction">拍一张新照片或从设备中选择现有图片。</string>
+    <string name="my_stamps_camera">相机</string>
+    <string name="my_stamps_gallery">相册</string>
+    <string name="my_stamps_cancel">取消</string>
+
+    <!-- Content Descriptions (Accessibility) -->
+    <string name="cd_cancel_selection">取消选择</string>
+    <string name="cd_decrease_quantity">减少数量</string>
+    <string name="cd_increase_quantity">增加数量</string>
+    <string name="cd_more_options">更多选项</string>
+    <string name="cd_add_item">添加物品</string>
+    <string name="cd_close_legend">关闭图例</string>
+    <string name="cd_close">关闭</string>
+    <string name="cd_search">搜索</string>
+    <string name="cd_clear">清除</string>
+    <string name="cd_new_entry">新条目</string>
+    <string name="cd_edit">编辑</string>
+    <string name="cd_delete">删除</string>
+    <string name="cd_cancel">取消</string>
+    <string name="cd_save">保存</string>
+    <string name="cd_stamp_for_country">%s的印章</string>
+    <string name="cd_remove_stamp">移除印章</string>
+    <string name="cd_add_stamp">添加印章</string>
+    <string name="cd_pinned">已固定</string>
+    <string name="cd_collapse">折叠</string>
+    <string name="cd_expand">展开</string>
+
+    <!-- Common Actions -->
+    <string name="action_ok">确定</string>
+    <string name="action_cancel">取消</string>
+    <string name="action_save">保存</string>
+    <string name="action_delete">删除</string>
+    <string name="action_add">添加</string>
+    <string name="action_close">关闭</string>
+
+    <!-- Quantity Display -->
+    <string name="quantity_display">x%d</string>
+
+    <!-- Safety Levels -->
+    <string name="safety_low_risk">低风险</string>
+    <string name="safety_medium_risk">中风险</string>
+    <string name="safety_high_risk">高风险</string>
+    <string name="safety_extreme_risk">极高风险</string>
+
+    <!-- Visa Requirements -->
+    <string name="visa_not_required">免签证</string>
+    <string name="visa_evisa">电子签证</string>
+    <string name="visa_on_arrival">落地签</string>
+    <string name="visa_required">需要签证</string>
+    <string name="visa_restricted">受限制</string>
+
+    <!-- Continents -->
+    <string name="continent_north_america">北美洲</string>
+    <string name="continent_south_america">南美洲</string>
+    <string name="continent_europe">欧洲</string>
+    <string name="continent_africa">非洲</string>
+    <string name="continent_asia">亚洲</string>
+    <string name="continent_oceania">大洋洲</string>
+    <string name="continent_antarctica">南极洲</string>
+
+    <!-- Passport Validity Values -->
+    <string name="passport_validity_six_months">6个月</string>
+    <string name="passport_validity_three_months">3个月</string>
+    <string name="passport_validity_duration_of_stay">计划停留时间</string>
+    <string name="passport_validity_not_specified">未指定</string>
+</resources>

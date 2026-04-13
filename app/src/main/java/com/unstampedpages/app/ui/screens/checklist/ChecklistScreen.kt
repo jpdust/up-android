@@ -43,6 +43,8 @@ import com.unstampedpages.app.ui.screens.checklist.components.CategorySectionSta
 import com.unstampedpages.app.ui.screens.checklist.components.MultiSelectActionBar
 import com.unstampedpages.app.ui.screens.checklist.components.ProgressHeader
 import com.unstampedpages.app.ui.screens.checklist.components.TemplateSelector
+import androidx.compose.ui.res.stringResource
+import com.unstampedpages.app.R
 import com.unstampedpages.app.ui.theme.Primary
 import com.unstampedpages.app.ui.theme.Secondary
 
@@ -89,7 +91,7 @@ fun ChecklistScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.MoreVert,
-                                contentDescription = "More options",
+                                contentDescription = stringResource(R.string.cd_more_options),
                                 tint = Primary
                             )
                         }
@@ -99,7 +101,7 @@ fun ChecklistScreen(
                             onDismissRequest = { showOverflowMenu = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text("Load Template") },
+                                text = { Text(stringResource(R.string.checklist_load_template)) },
                                 leadingIcon = {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.ViewList,
@@ -113,7 +115,7 @@ fun ChecklistScreen(
                                 modifier = Modifier.testTag("menu_load_template")
                             )
                             DropdownMenuItem(
-                                text = { Text("Reset List") },
+                                text = { Text(stringResource(R.string.checklist_reset_list)) },
                                 leadingIcon = {
                                     Icon(
                                         imageVector = Icons.Default.Refresh,
@@ -194,7 +196,7 @@ fun ChecklistScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Add item"
+                    contentDescription = stringResource(R.string.cd_add_item)
                 )
             }
         }
@@ -230,7 +232,7 @@ private fun EmptyChecklistMessage(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Your checklist is empty",
+            text = stringResource(R.string.checklist_empty_title),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.SemiBold,
@@ -238,7 +240,7 @@ private fun EmptyChecklistMessage(
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Tap the + button to add items\nor load a template to get started",
+            text = stringResource(R.string.checklist_empty_message),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
             textAlign = TextAlign.Center,
@@ -256,7 +258,7 @@ private fun EmptyChecklistMessage(
             )
             Spacer(modifier = Modifier.padding(horizontal = 4.dp))
             Text(
-                text = "Load Template",
+                text = stringResource(R.string.checklist_load_template),
                 color = Secondary,
                 fontWeight = FontWeight.Bold
             )

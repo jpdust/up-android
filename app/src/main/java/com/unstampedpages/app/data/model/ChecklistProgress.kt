@@ -7,9 +7,6 @@ data class ChecklistProgress(
     val percentage: Float
         get() = if (totalCount > 0) checkedCount.toFloat() / totalCount else 0f
 
-    val displayText: String
-        get() = "$checkedCount/$totalCount packed"
-
     val isComplete: Boolean
         get() = totalCount > 0 && checkedCount == totalCount
 }

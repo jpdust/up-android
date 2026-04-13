@@ -225,37 +225,37 @@ class ChecklistTemplateTest {
         assertTrue(ChecklistTemplate.entries.contains(ChecklistTemplate.HIKING))
     }
 
-    // ==================== Display Name Tests ====================
+    // ==================== Display Name Resource ID Tests ====================
 
     @Test
-    fun `BUSINESS_TRIP has correct displayName`() {
-        assertEquals("Business Trip", ChecklistTemplate.BUSINESS_TRIP.displayName)
+    fun `BUSINESS_TRIP has valid displayNameResId`() {
+        assertTrue(ChecklistTemplate.BUSINESS_TRIP.displayNameResId != 0)
     }
 
     @Test
-    fun `BEACH_VACATION has correct displayName`() {
-        assertEquals("Beach Vacation", ChecklistTemplate.BEACH_VACATION.displayName)
+    fun `BEACH_VACATION has valid displayNameResId`() {
+        assertTrue(ChecklistTemplate.BEACH_VACATION.displayNameResId != 0)
     }
 
     @Test
-    fun `HIKING has correct displayName`() {
-        assertEquals("Hiking Adventure", ChecklistTemplate.HIKING.displayName)
+    fun `HIKING has valid displayNameResId`() {
+        assertTrue(ChecklistTemplate.HIKING.displayNameResId != 0)
     }
 
     @Test
-    fun `all templates have non-empty displayName`() {
+    fun `all templates have valid displayNameResId`() {
         ChecklistTemplate.entries.forEach { template ->
             assertTrue(
-                "Template ${template.name} should have non-empty displayName",
-                template.displayName.isNotBlank()
+                "Template ${template.name} should have valid displayNameResId",
+                template.displayNameResId != 0
             )
         }
     }
 
     @Test
-    fun `all displayNames are unique`() {
-        val displayNames = ChecklistTemplate.entries.map { it.displayName }
-        assertEquals(displayNames.size, displayNames.distinct().size)
+    fun `all displayNameResIds are unique`() {
+        val resourceIds = ChecklistTemplate.entries.map { it.displayNameResId }
+        assertEquals(resourceIds.size, resourceIds.distinct().size)
     }
 
     // ==================== Items List Tests ====================

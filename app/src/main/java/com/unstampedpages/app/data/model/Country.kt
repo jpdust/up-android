@@ -1,6 +1,8 @@
 package com.unstampedpages.app.data.model
 
+import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.Color
+import com.unstampedpages.app.R
 
 data class Country(
     val id: String,
@@ -17,29 +19,29 @@ data class Country(
     val passportValidity: String? = null
 )
 
-enum class SafetyLevel(val displayName: String, val color: Color) {
-    LOW("Low Risk", Color(0xFF4CAF50)),
-    MEDIUM("Medium Risk", Color(0xFFFFC107)),
-    HIGH("High Risk", Color(0xFF8B0000)),
-    EXTREME("Extreme Risk", Color(0xFFFF5722))
+enum class SafetyLevel(@StringRes val displayNameResId: Int, val color: Color) {
+    LOW(R.string.safety_low_risk, Color(0xFF4CAF50)),
+    MEDIUM(R.string.safety_medium_risk, Color(0xFFFFC107)),
+    HIGH(R.string.safety_high_risk, Color(0xFF8B0000)),
+    EXTREME(R.string.safety_extreme_risk, Color(0xFFFF5722))
 }
 
-enum class VisaRequirement(val displayName: String, val color: Color) {
-    VISA_NOT_REQUIRED("Visa not required", Color(0xFF4CAF50)),      // Green
-    E_VISA("eVisa", Color(0xFF00BCD4)),                          // Turquoise
-    VISA_ON_ARRIVAL("Visa on arrival", Color(0xFFFFC107)),           // Yellow
-    VISA_REQUIRED("Visa required", Color(0xFF9E9E9E)),               // Gray
-    RESTRICTED("Restricted", Color(0xFF000000))                           // Black
+enum class VisaRequirement(@StringRes val displayNameResId: Int, val color: Color) {
+    VISA_NOT_REQUIRED(R.string.visa_not_required, Color(0xFF4CAF50)),      // Green
+    E_VISA(R.string.visa_evisa, Color(0xFF00BCD4)),                        // Turquoise
+    VISA_ON_ARRIVAL(R.string.visa_on_arrival, Color(0xFFFFC107)),          // Yellow
+    VISA_REQUIRED(R.string.visa_required, Color(0xFF9E9E9E)),              // Gray
+    RESTRICTED(R.string.visa_restricted, Color(0xFF000000))                // Black
 }
 
-enum class Continent(val displayName: String) {
-    NORTH_AMERICA("North America"),
-    SOUTH_AMERICA("South America"),
-    EUROPE("Europe"),
-    AFRICA("Africa"),
-    ASIA("Asia"),
-    OCEANIA("Oceania"),
-    ANTARCTICA("Antarctica")
+enum class Continent(@StringRes val displayNameResId: Int) {
+    NORTH_AMERICA(R.string.continent_north_america),
+    SOUTH_AMERICA(R.string.continent_south_america),
+    EUROPE(R.string.continent_europe),
+    AFRICA(R.string.continent_africa),
+    ASIA(R.string.continent_asia),
+    OCEANIA(R.string.continent_oceania),
+    ANTARCTICA(R.string.continent_antarctica)
 }
 
 data class CountryMapData(

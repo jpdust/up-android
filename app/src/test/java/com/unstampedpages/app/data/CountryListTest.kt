@@ -26,7 +26,7 @@ class CountryListTest {
     @Test
     fun `all countries have non-empty name`() {
         CountryList.countries.forEach { country ->
-            assertTrue("Country name should not be empty", country.name.isNotEmpty())
+            assertTrue("Country name should not be empty", country.englishName.isNotEmpty())
         }
     }
 
@@ -64,7 +64,7 @@ class CountryListTest {
         val us = CountryList.countries.find { it.code == "US" }
 
         assertNotNull(us)
-        assertEquals("United States", us?.name)
+        assertEquals("United States", us?.englishName)
     }
 
     @Test
@@ -72,7 +72,7 @@ class CountryListTest {
         val gb = CountryList.countries.find { it.code == "GB" }
 
         assertNotNull(gb)
-        assertEquals("United Kingdom", gb?.name)
+        assertEquals("United Kingdom", gb?.englishName)
     }
 
     @Test
@@ -80,7 +80,7 @@ class CountryListTest {
         val jp = CountryList.countries.find { it.code == "JP" }
 
         assertNotNull(jp)
-        assertEquals("Japan", jp?.name)
+        assertEquals("Japan", jp?.englishName)
     }
 
     @Test
@@ -88,7 +88,7 @@ class CountryListTest {
         val au = CountryList.countries.find { it.code == "AU" }
 
         assertNotNull(au)
-        assertEquals("Australia", au?.name)
+        assertEquals("Australia", au?.englishName)
     }
 
     @Test
@@ -96,7 +96,7 @@ class CountryListTest {
         val br = CountryList.countries.find { it.code == "BR" }
 
         assertNotNull(br)
-        assertEquals("Brazil", br?.name)
+        assertEquals("Brazil", br?.englishName)
     }
 
     @Test
@@ -133,57 +133,57 @@ class CountryListTest {
     }
 }
 
-class CountryDataClassTest {
+class CountryListItemDataClassTest {
 
     @Test
-    fun `Country has correct code`() {
-        val country = Country(code = "US", name = "United States")
+    fun `CountryListItem has correct code`() {
+        val country = CountryListItem(code = "US", englishName = "United States")
 
         assertEquals("US", country.code)
     }
 
     @Test
-    fun `Country has correct name`() {
-        val country = Country(code = "US", name = "United States")
+    fun `CountryListItem has correct englishName`() {
+        val country = CountryListItem(code = "US", englishName = "United States")
 
-        assertEquals("United States", country.name)
+        assertEquals("United States", country.englishName)
     }
 
     @Test
     fun `equals returns true for same values`() {
-        val country1 = Country(code = "US", name = "United States")
-        val country2 = Country(code = "US", name = "United States")
+        val country1 = CountryListItem(code = "US", englishName = "United States")
+        val country2 = CountryListItem(code = "US", englishName = "United States")
 
         assertEquals(country1, country2)
     }
 
     @Test
     fun `equals returns false for different code`() {
-        val country1 = Country(code = "US", name = "United States")
-        val country2 = Country(code = "GB", name = "United States")
+        val country1 = CountryListItem(code = "US", englishName = "United States")
+        val country2 = CountryListItem(code = "GB", englishName = "United States")
 
         assertNotEquals(country1, country2)
     }
 
     @Test
     fun `equals returns false for different name`() {
-        val country1 = Country(code = "US", name = "United States")
-        val country2 = Country(code = "US", name = "America")
+        val country1 = CountryListItem(code = "US", englishName = "United States")
+        val country2 = CountryListItem(code = "US", englishName = "America")
 
         assertNotEquals(country1, country2)
     }
 
     @Test
     fun `hashCode is consistent for equal countries`() {
-        val country1 = Country(code = "JP", name = "Japan")
-        val country2 = Country(code = "JP", name = "Japan")
+        val country1 = CountryListItem(code = "JP", englishName = "Japan")
+        val country2 = CountryListItem(code = "JP", englishName = "Japan")
 
         assertEquals(country1.hashCode(), country2.hashCode())
     }
 
     @Test
     fun `copy creates new instance`() {
-        val original = Country(code = "US", name = "United States")
+        val original = CountryListItem(code = "US", englishName = "United States")
 
         val copy = original.copy()
 
@@ -192,7 +192,7 @@ class CountryDataClassTest {
 
     @Test
     fun `copy can modify code`() {
-        val original = Country(code = "US", name = "Test")
+        val original = CountryListItem(code = "US", englishName = "Test")
 
         val modified = original.copy(code = "GB")
 
@@ -201,18 +201,18 @@ class CountryDataClassTest {
     }
 
     @Test
-    fun `copy can modify name`() {
-        val original = Country(code = "US", name = "Original")
+    fun `copy can modify englishName`() {
+        val original = CountryListItem(code = "US", englishName = "Original")
 
-        val modified = original.copy(name = "Modified")
+        val modified = original.copy(englishName = "Modified")
 
-        assertEquals("Modified", modified.name)
-        assertEquals("Original", original.name)
+        assertEquals("Modified", modified.englishName)
+        assertEquals("Original", original.englishName)
     }
 
     @Test
     fun `toString contains code and name`() {
-        val country = Country(code = "JP", name = "Japan")
+        val country = CountryListItem(code = "JP", englishName = "Japan")
 
         val string = country.toString()
 

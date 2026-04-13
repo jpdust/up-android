@@ -1,5 +1,8 @@
 package com.unstampedpages.app.data.model
 
+import androidx.annotation.StringRes
+import com.unstampedpages.app.R
+
 data class ChecklistTemplateItem(
     val name: String,
     val category: ChecklistCategory,
@@ -9,11 +12,11 @@ data class ChecklistTemplateItem(
 private const val PHONE_CHARGER = "Phone charger"
 
 enum class ChecklistTemplate(
-    val displayName: String,
+    @StringRes val displayNameResId: Int,
     val items: List<ChecklistTemplateItem>
 ) {
     BUSINESS_TRIP(
-        displayName = "Business Trip",
+        displayNameResId = R.string.template_business_trip,
         items = listOf(
             ChecklistTemplateItem("Laptop", ChecklistCategory.ELECTRONICS),
             ChecklistTemplateItem("Laptop charger", ChecklistCategory.ELECTRONICS),
@@ -35,7 +38,7 @@ enum class ChecklistTemplate(
         )
     ),
     BEACH_VACATION(
-        displayName = "Beach Vacation",
+        displayNameResId = R.string.template_beach_vacation,
         items = listOf(
             ChecklistTemplateItem("Swimsuit", ChecklistCategory.CLOTHING, 2),
             ChecklistTemplateItem("Sunglasses", ChecklistCategory.ACCESSORIES),
@@ -56,7 +59,7 @@ enum class ChecklistTemplate(
         )
     ),
     HIKING(
-        displayName = "Hiking Adventure",
+        displayNameResId = R.string.template_hiking,
         items = listOf(
             ChecklistTemplateItem("Backpack", ChecklistCategory.OTHER),
             ChecklistTemplateItem("Hiking boots", ChecklistCategory.CLOTHING),

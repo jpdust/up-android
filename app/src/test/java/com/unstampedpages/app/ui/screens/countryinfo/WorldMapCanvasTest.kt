@@ -1,6 +1,7 @@
 package com.unstampedpages.app.ui.screens.countryinfo
 
 import androidx.compose.ui.graphics.Color
+import com.unstampedpages.app.R
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -339,19 +340,19 @@ class WorldMapCanvasTest {
     @Test
     fun `getLegendItems SECURITY_RISK contains Low Risk`() {
         val items = getLegendItems(MapColorMode.SECURITY_RISK)
-        assertTrue(items.any { it.label == "Low Risk" })
+        assertTrue(items.any { it.labelResId == R.string.legend_low_risk })
     }
 
     @Test
     fun `getLegendItems SECURITY_RISK contains Medium Risk`() {
         val items = getLegendItems(MapColorMode.SECURITY_RISK)
-        assertTrue(items.any { it.label == "Medium Risk" })
+        assertTrue(items.any { it.labelResId == R.string.legend_medium_risk })
     }
 
     @Test
     fun `getLegendItems SECURITY_RISK contains High Risk`() {
         val items = getLegendItems(MapColorMode.SECURITY_RISK)
-        assertTrue(items.any { it.label == "High Risk" })
+        assertTrue(items.any { it.labelResId == R.string.legend_high_risk })
     }
 
     @Test
@@ -363,12 +364,12 @@ class WorldMapCanvasTest {
     @Test
     fun `getLegendItems VISA_REQUIREMENTS contains all visa types`() {
         val items = getLegendItems(MapColorMode.VISA_REQUIREMENTS)
-        val labels = items.map { it.label }
-        assertTrue(labels.contains("Visa Not Required"))
-        assertTrue(labels.contains("eVisa"))
-        assertTrue(labels.contains("Visa On Arrival"))
-        assertTrue(labels.contains("Visa Required"))
-        assertTrue(labels.contains("Restricted"))
+        val labelResIds = items.map { it.labelResId }
+        assertTrue(labelResIds.contains(R.string.legend_visa_not_required))
+        assertTrue(labelResIds.contains(R.string.legend_evisa))
+        assertTrue(labelResIds.contains(R.string.legend_visa_on_arrival))
+        assertTrue(labelResIds.contains(R.string.legend_visa_required))
+        assertTrue(labelResIds.contains(R.string.legend_restricted))
     }
 
     @Test
@@ -380,11 +381,11 @@ class WorldMapCanvasTest {
     @Test
     fun `getLegendItems PASSPORT_VALIDITY contains all validity types`() {
         val items = getLegendItems(MapColorMode.PASSPORT_VALIDITY)
-        val labels = items.map { it.label }
-        assertTrue(labels.contains("6 Months"))
-        assertTrue(labels.contains("3 Months"))
-        assertTrue(labels.contains("Duration of Stay"))
-        assertTrue(labels.contains("Other"))
+        val labelResIds = items.map { it.labelResId }
+        assertTrue(labelResIds.contains(R.string.legend_six_months))
+        assertTrue(labelResIds.contains(R.string.legend_three_months))
+        assertTrue(labelResIds.contains(R.string.legend_duration_of_stay))
+        assertTrue(labelResIds.contains(R.string.legend_other))
     }
 
     @Test
@@ -393,7 +394,7 @@ class WorldMapCanvasTest {
             val items = getLegendItems(mode)
             items.forEach { item ->
                 assertTrue(
-                    "Item '${item.label}' should have non-empty testTag",
+                    "Item with labelResId '${item.labelResId}' should have non-empty testTag",
                     item.testTag.isNotBlank()
                 )
             }
@@ -401,13 +402,13 @@ class WorldMapCanvasTest {
     }
 
     @Test
-    fun `getLegendItems all items have non-empty labels`() {
+    fun `getLegendItems all items have valid label resource IDs`() {
         MapColorMode.entries.forEach { mode ->
             val items = getLegendItems(mode)
             items.forEach { item ->
                 assertTrue(
-                    "Item should have non-empty label",
-                    item.label.isNotBlank()
+                    "Item should have non-zero labelResId",
+                    item.labelResId != 0
                 )
             }
         }
@@ -432,20 +433,20 @@ class WorldMapCanvasTest {
     fun `LegendItem can be created with all properties`() {
         val item = LegendItem(
             color = Color.Red,
-            label = "Test Label",
+            labelResId = R.string.legend_low_risk,
             testTag = "test_tag"
         )
 
         assertEquals(Color.Red, item.color)
-        assertEquals("Test Label", item.label)
+        assertEquals(R.string.legend_low_risk, item.labelResId)
         assertEquals("test_tag", item.testTag)
     }
 
     @Test
     fun `LegendItem equality works correctly`() {
-        val item1 = LegendItem(Color.Red, "Label", "tag")
-        val item2 = LegendItem(Color.Red, "Label", "tag")
-        val item3 = LegendItem(Color.Blue, "Label", "tag")
+        val item1 = LegendItem(Color.Red, R.string.legend_low_risk, "tag")
+        val item2 = LegendItem(Color.Red, R.string.legend_low_risk, "tag")
+        val item3 = LegendItem(Color.Blue, R.string.legend_low_risk, "tag")
 
         assertEquals(item1, item2)
         assertNotEquals(item1, item3)
@@ -881,9 +882,9 @@ class WorldMapCanvasTest {
     @Test
     fun `getLegendItems SECURITY_RISK has correct colors`() {
         val items = getLegendItems(MapColorMode.SECURITY_RISK)
-        val lowRisk = items.find { it.label == "Low Risk" }
-        val mediumRisk = items.find { it.label == "Medium Risk" }
-        val highRisk = items.find { it.label == "High Risk" }
+        val lowRisk = items.find { it.labelResId == R.string.legend_low_risk }
+        val mediumRisk = items.find { it.labelResId == R.string.legend_medium_risk }
+        val highRisk = items.find { it.labelResId == R.string.legend_high_risk }
 
         assertEquals(Color(0xFF4CAF50), lowRisk?.color)    // Green
         assertEquals(Color(0xFFFFC107), mediumRisk?.color) // Yellow
@@ -894,21 +895,21 @@ class WorldMapCanvasTest {
     fun `getLegendItems VISA_REQUIREMENTS has correct colors`() {
         val items = getLegendItems(MapColorMode.VISA_REQUIREMENTS)
 
-        assertEquals(Color(0xFF4CAF50), items.find { it.label == "Visa Not Required" }?.color)
-        assertEquals(Color(0xFF00BCD4), items.find { it.label == "eVisa" }?.color)
-        assertEquals(Color(0xFFFFC107), items.find { it.label == "Visa On Arrival" }?.color)
-        assertEquals(Color(0xFF9E9E9E), items.find { it.label == "Visa Required" }?.color)
-        assertEquals(Color(0xFF000000), items.find { it.label == "Restricted" }?.color)
+        assertEquals(Color(0xFF4CAF50), items.find { it.labelResId == R.string.legend_visa_not_required }?.color)
+        assertEquals(Color(0xFF00BCD4), items.find { it.labelResId == R.string.legend_evisa }?.color)
+        assertEquals(Color(0xFFFFC107), items.find { it.labelResId == R.string.legend_visa_on_arrival }?.color)
+        assertEquals(Color(0xFF9E9E9E), items.find { it.labelResId == R.string.legend_visa_required }?.color)
+        assertEquals(Color(0xFF000000), items.find { it.labelResId == R.string.legend_restricted }?.color)
     }
 
     @Test
     fun `getLegendItems PASSPORT_VALIDITY has correct colors`() {
         val items = getLegendItems(MapColorMode.PASSPORT_VALIDITY)
 
-        assertEquals(Color(0xFF9E9E9E), items.find { it.label == "6 Months" }?.color)
-        assertEquals(Color(0xFF00BCD4), items.find { it.label == "3 Months" }?.color)
-        assertEquals(Color(0xFF4CAF50), items.find { it.label == "Duration of Stay" }?.color)
-        assertEquals(Color(0xFFFFC107), items.find { it.label == "Other" }?.color)
+        assertEquals(Color(0xFF9E9E9E), items.find { it.labelResId == R.string.legend_six_months }?.color)
+        assertEquals(Color(0xFF00BCD4), items.find { it.labelResId == R.string.legend_three_months }?.color)
+        assertEquals(Color(0xFF4CAF50), items.find { it.labelResId == R.string.legend_duration_of_stay }?.color)
+        assertEquals(Color(0xFFFFC107), items.find { it.labelResId == R.string.legend_other }?.color)
     }
 
     // ==================== Additional PassportValidityColors Tests ====================
@@ -983,7 +984,7 @@ class WorldMapCanvasTest {
 
     @Test
     fun `LegendItem hashCode is consistent`() {
-        val item = LegendItem(Color.Red, "Label", "tag")
+        val item = LegendItem(Color.Red, R.string.legend_low_risk, "tag")
         val hash1 = item.hashCode()
         val hash2 = item.hashCode()
         assertEquals(hash1, hash2)
@@ -991,21 +992,21 @@ class WorldMapCanvasTest {
 
     @Test
     fun `LegendItem copy works correctly`() {
-        val original = LegendItem(Color.Red, "Original", "original_tag")
-        val copy = original.copy(label = "Modified")
+        val original = LegendItem(Color.Red, R.string.legend_low_risk, "original_tag")
+        val copy = original.copy(labelResId = R.string.legend_high_risk)
 
-        assertEquals("Original", original.label)
-        assertEquals("Modified", copy.label)
+        assertEquals(R.string.legend_low_risk, original.labelResId)
+        assertEquals(R.string.legend_high_risk, copy.labelResId)
         assertEquals(original.color, copy.color)
         assertEquals(original.testTag, copy.testTag)
     }
 
     @Test
     fun `LegendItem toString contains all fields`() {
-        val item = LegendItem(Color.Red, "TestLabel", "test_tag")
+        val item = LegendItem(Color.Red, R.string.legend_low_risk, "test_tag")
         val string = item.toString()
 
-        assertTrue(string.contains("TestLabel"))
+        assertTrue(string.contains("labelResId"))
         assertTrue(string.contains("test_tag"))
     }
 
@@ -1547,23 +1548,23 @@ class WorldMapCanvasTest {
 
     @Test
     fun `LegendItem destructuring works correctly`() {
-        val item = LegendItem(Color.Red, "Test", "test_tag")
-        val (color, label, tag) = item
+        val item = LegendItem(Color.Red, R.string.legend_low_risk, "test_tag")
+        val (color, labelResId, tag) = item
 
         assertEquals(Color.Red, color)
-        assertEquals("Test", label)
+        assertEquals(R.string.legend_low_risk, labelResId)
         assertEquals("test_tag", tag)
     }
 
     @Test
     fun `LegendItem with transparent color can be created`() {
-        val item = LegendItem(Color.Transparent, "Transparent", "transparent_tag")
+        val item = LegendItem(Color.Transparent, R.string.legend_low_risk, "transparent_tag")
         assertEquals(Color.Transparent, item.color)
     }
 
     @Test
-    fun `LegendItem with empty label can be created`() {
-        val item = LegendItem(Color.Red, "", "empty_label_tag")
-        assertEquals("", item.label)
+    fun `LegendItem with zero labelResId can be created`() {
+        val item = LegendItem(Color.Red, 0, "zero_label_tag")
+        assertEquals(0, item.labelResId)
     }
 }

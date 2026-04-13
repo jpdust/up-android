@@ -88,50 +88,6 @@ class ChecklistProgressTest {
         assertEquals(0f, progress.percentage, 0.001f)
     }
 
-    // ==================== Display Text Tests ====================
-
-    @Test
-    fun `displayText format is correct for 0 of 0`() {
-        val progress = ChecklistProgress(checkedCount = 0, totalCount = 0)
-        assertEquals("0/0 packed", progress.displayText)
-    }
-
-    @Test
-    fun `displayText format is correct for 0 of 10`() {
-        val progress = ChecklistProgress(checkedCount = 0, totalCount = 10)
-        assertEquals("0/10 packed", progress.displayText)
-    }
-
-    @Test
-    fun `displayText format is correct for 5 of 10`() {
-        val progress = ChecklistProgress(checkedCount = 5, totalCount = 10)
-        assertEquals("5/10 packed", progress.displayText)
-    }
-
-    @Test
-    fun `displayText format is correct for 10 of 10`() {
-        val progress = ChecklistProgress(checkedCount = 10, totalCount = 10)
-        assertEquals("10/10 packed", progress.displayText)
-    }
-
-    @Test
-    fun `displayText format is correct for large numbers`() {
-        val progress = ChecklistProgress(checkedCount = 999, totalCount = 1000)
-        assertEquals("999/1000 packed", progress.displayText)
-    }
-
-    @Test
-    fun `displayText contains packed suffix`() {
-        val progress = ChecklistProgress(checkedCount = 3, totalCount = 5)
-        assertTrue(progress.displayText.endsWith("packed"))
-    }
-
-    @Test
-    fun `displayText contains slash separator`() {
-        val progress = ChecklistProgress(checkedCount = 3, totalCount = 5)
-        assertTrue(progress.displayText.contains("/"))
-    }
-
     // ==================== isComplete Tests ====================
 
     @Test
@@ -325,13 +281,6 @@ class ChecklistProgressTest {
         assertTrue(percentage >= 0f && percentage <= 1f)
     }
 
-    @Test
-    fun `displayText handles zero correctly`() {
-        val progress = ChecklistProgress()
-        assertNotNull(progress.displayText)
-        assertTrue(progress.displayText.isNotEmpty())
-    }
-
     // ==================== Progress State Transition Tests ====================
 
     @Test
@@ -381,7 +330,6 @@ class ChecklistProgressTest {
 
         assertTrue(progress.isComplete)
         assertEquals(1f, progress.percentage, 0.001f)
-        assertEquals("10/10 packed", progress.displayText)
     }
 
     @Test
@@ -390,6 +338,5 @@ class ChecklistProgressTest {
 
         assertFalse(progress.isComplete)
         assertEquals(0f, progress.percentage, 0.001f)
-        assertEquals("0/0 packed", progress.displayText)
     }
 }

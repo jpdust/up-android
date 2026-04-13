@@ -44,7 +44,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.unstampedpages.app.R
 import com.unstampedpages.app.data.local.entity.TripLogEntry
 import com.unstampedpages.app.ui.theme.Primary
 import com.unstampedpages.app.ui.theme.PrimaryDark
@@ -138,7 +140,7 @@ fun TripLogScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "New entry"
+                    contentDescription = stringResource(R.string.cd_new_entry)
                 )
             }
         }
@@ -189,7 +191,7 @@ private fun JournalEntryCard(
                 IconButton(onClick = onEdit, modifier = Modifier.size(36.dp)) {
                     Icon(
                         imageVector = Icons.Default.Edit,
-                        contentDescription = "Edit",
+                        contentDescription = stringResource(R.string.cd_edit),
                         tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         modifier = Modifier.size(20.dp)
                     )
@@ -198,7 +200,7 @@ private fun JournalEntryCard(
                 IconButton(onClick = onDelete, modifier = Modifier.size(36.dp)) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete",
+                        contentDescription = stringResource(R.string.cd_delete),
                         tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         modifier = Modifier.size(20.dp)
                     )
@@ -270,7 +272,7 @@ private fun EmptyTripLogMessage(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "No journal entries yet",
+            text = stringResource(R.string.trip_log_empty_title),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.SemiBold
@@ -279,7 +281,7 @@ private fun EmptyTripLogMessage(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Start documenting your travels!\nTap the + button to create your first entry.",
+            text = stringResource(R.string.trip_log_empty_message),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
             textAlign = TextAlign.Center

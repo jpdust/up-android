@@ -59,6 +59,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.res.stringResource
+import com.unstampedpages.app.R
 import com.unstampedpages.app.ui.theme.Primary
 import com.unstampedpages.app.ui.theme.Secondary
 
@@ -126,7 +128,7 @@ fun MyStampsScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Country",
+                text = stringResource(R.string.my_stamps_column_country),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
@@ -135,7 +137,7 @@ fun MyStampsScreen(
                     .testTag("column_header_country")
             )
             Text(
-                text = "Stamp",
+                text = stringResource(R.string.my_stamps_column_stamp),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
@@ -186,7 +188,7 @@ fun MyStampsScreen(
             modifier = Modifier.testTag("add_stamp_dialog"),
             title = {
                 Text(
-                    text = "Add Stamp",
+                    text = stringResource(R.string.my_stamps_add_dialog_title),
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.testTag("dialog_title")
@@ -195,12 +197,12 @@ fun MyStampsScreen(
             text = {
                 Column {
                     Text(
-                        text = "Add a passport stamp image for ${uiState.selectedCountry?.name}",
+                        text = stringResource(R.string.my_stamps_add_dialog_message, uiState.selectedCountry?.getLocalizedName() ?: ""),
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Take a new photo or choose an existing image from your device.",
+                        text = stringResource(R.string.my_stamps_add_dialog_instruction),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
@@ -224,7 +226,7 @@ fun MyStampsScreen(
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Camera")
+                            Text(stringResource(R.string.my_stamps_camera))
                         }
                         Button(
                             onClick = { imagePickerLauncher.launch("image/*") },
@@ -242,7 +244,7 @@ fun MyStampsScreen(
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Gallery")
+                            Text(stringResource(R.string.my_stamps_gallery))
                         }
                     }
                 }
@@ -253,7 +255,7 @@ fun MyStampsScreen(
                     onClick = { viewModel.dismissUploadDialog() },
                     modifier = Modifier.testTag("cancel_button")
                 ) {
-                    Text("Cancel", color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.my_stamps_cancel), color = MaterialTheme.colorScheme.primary)
                 }
             },
             containerColor = MaterialTheme.colorScheme.surface
@@ -276,7 +278,7 @@ private fun CountryStampRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = countryStamp.country.name,
+            text = countryStamp.country.getLocalizedName(),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f)
@@ -289,7 +291,7 @@ private fun CountryStampRow(
             if (countryStamp.imagePath != null) {
                 StampThumbnail(
                     imagePath = countryStamp.imagePath,
-                    countryName = countryStamp.country.name,
+                    countryName = countryStamp.country.getLocalizedName(),
                     onRemoveClick = onRemoveClick,
                     testTag = "stamp_${countryStamp.country.code}"
                 )
@@ -327,7 +329,7 @@ private fun StampThumbnail(
             if (bitmap != null) {
                 Image(
                     bitmap = bitmap,
-                    contentDescription = "Stamp for $countryName",
+                    contentDescription = stringResource(R.string.cd_stamp_for_country, countryName),
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(RoundedCornerShape(8.dp)),
@@ -349,7 +351,7 @@ private fun StampThumbnail(
         ) {
             Icon(
                 imageVector = Icons.Default.Close,
-                contentDescription = "Remove stamp",
+                contentDescription = stringResource(R.string.cd_remove_stamp),
                 tint = Color.White,
                 modifier = Modifier.size(12.dp)
             )
@@ -377,7 +379,7 @@ private fun AddStampButton(
     ) {
         Icon(
             imageVector = Icons.Default.Add,
-            contentDescription = "Add stamp",
+            contentDescription = stringResource(R.string.cd_add_stamp),
             tint = Secondary,
             modifier = Modifier.size(28.dp)
         )

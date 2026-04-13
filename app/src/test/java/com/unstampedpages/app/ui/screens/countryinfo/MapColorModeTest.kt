@@ -12,23 +12,23 @@ class MapColorModeTest {
     }
 
     @Test
-    fun `MapColorMode DEFAULT has correct displayName`() {
-        assertEquals("Default", MapColorMode.DEFAULT.displayName)
+    fun `MapColorMode DEFAULT has valid displayNameResId`() {
+        assertTrue(MapColorMode.DEFAULT.displayNameResId != 0)
     }
 
     @Test
-    fun `MapColorMode SECURITY_RISK has correct displayName`() {
-        assertEquals("Security Risk", MapColorMode.SECURITY_RISK.displayName)
+    fun `MapColorMode SECURITY_RISK has valid displayNameResId`() {
+        assertTrue(MapColorMode.SECURITY_RISK.displayNameResId != 0)
     }
 
     @Test
-    fun `MapColorMode VISA_REQUIREMENTS has correct displayName`() {
-        assertEquals("Visa Requirements", MapColorMode.VISA_REQUIREMENTS.displayName)
+    fun `MapColorMode VISA_REQUIREMENTS has valid displayNameResId`() {
+        assertTrue(MapColorMode.VISA_REQUIREMENTS.displayNameResId != 0)
     }
 
     @Test
-    fun `MapColorMode PASSPORT_VALIDITY has correct displayName`() {
-        assertEquals("Passport Validity", MapColorMode.PASSPORT_VALIDITY.displayName)
+    fun `MapColorMode PASSPORT_VALIDITY has valid displayNameResId`() {
+        assertTrue(MapColorMode.PASSPORT_VALIDITY.displayNameResId != 0)
     }
 
     @Test
@@ -61,22 +61,22 @@ class MapColorModeTest {
     }
 
     @Test
-    fun `all displayNames are non-empty`() {
+    fun `all displayNameResIds are valid`() {
         MapColorMode.entries.forEach { mode ->
             assertTrue(
-                "Display name for $mode should not be empty",
-                mode.displayName.isNotEmpty()
+                "Display name resource ID for $mode should be non-zero",
+                mode.displayNameResId != 0
             )
         }
     }
 
     @Test
-    fun `all displayNames are unique`() {
-        val displayNames = MapColorMode.entries.map { it.displayName }
+    fun `all displayNameResIds are unique`() {
+        val resourceIds = MapColorMode.entries.map { it.displayNameResId }
         assertEquals(
-            "All display names should be unique",
-            displayNames.size,
-            displayNames.distinct().size
+            "All display name resource IDs should be unique",
+            resourceIds.size,
+            resourceIds.distinct().size
         )
     }
 
@@ -141,42 +141,6 @@ class MapColorModeTest {
         assertEquals("PASSPORT_VALIDITY", MapColorMode.PASSPORT_VALIDITY.name)
     }
 
-    // ==================== Display Name Content Tests ====================
-
-    @Test
-    fun `displayNames do not contain underscores`() {
-        MapColorMode.entries.forEach { mode ->
-            assertFalse(
-                "Display name '${mode.displayName}' should not contain underscores",
-                mode.displayName.contains("_")
-            )
-        }
-    }
-
-    @Test
-    fun `displayNames start with capital letter`() {
-        MapColorMode.entries.forEach { mode ->
-            assertTrue(
-                "Display name '${mode.displayName}' should start with capital letter",
-                mode.displayName.first().isUpperCase()
-            )
-        }
-    }
-
-    @Test
-    fun `displayNames are human readable`() {
-        // Each display name should have proper spacing (no camelCase)
-        MapColorMode.entries.forEach { mode ->
-            val words = mode.displayName.split(" ")
-            words.forEach { word ->
-                assertTrue(
-                    "Word '$word' in '${mode.displayName}' should start with capital",
-                    word.first().isUpperCase()
-                )
-            }
-        }
-    }
-
     // ==================== Entries Iteration Tests ====================
 
     @Test
@@ -194,13 +158,12 @@ class MapColorModeTest {
     }
 
     @Test
-    fun `entries can be mapped to display names`() {
-        val displayNames = MapColorMode.entries.map { it.displayName }
-        assertEquals(4, displayNames.size)
-        assertTrue(displayNames.contains("Default"))
-        assertTrue(displayNames.contains("Security Risk"))
-        assertTrue(displayNames.contains("Visa Requirements"))
-        assertTrue(displayNames.contains("Passport Validity"))
+    fun `entries can be mapped to displayNameResIds`() {
+        val resourceIds = MapColorMode.entries.map { it.displayNameResId }
+        assertEquals(4, resourceIds.size)
+        resourceIds.forEach { resId ->
+            assertTrue("Resource ID should be non-zero", resId != 0)
+        }
     }
 
     // ==================== Equality Tests ====================
@@ -340,31 +303,21 @@ class MapColorModeTest {
         assertEquals(4, descriptions.size)
     }
 
-    // ==================== Display Name Length Tests ====================
+    // ==================== Display Name Resource ID Tests ====================
 
     @Test
-    fun `all displayNames have reasonable length`() {
+    fun `all displayNameResIds are positive integers`() {
         MapColorMode.entries.forEach { mode ->
             assertTrue(
-                "Display name '${mode.displayName}' should be between 5 and 25 characters",
-                mode.displayName.length in 5..25
+                "Display name resource ID for ${mode.name} should be positive",
+                mode.displayNameResId > 0
             )
         }
     }
 
     @Test
-    fun `longest displayName has 17 characters`() {
-        val longest = MapColorMode.entries.maxByOrNull { it.displayName.length }
-        assertEquals(17, longest?.displayName?.length)
-        // Both VISA_REQUIREMENTS and PASSPORT_VALIDITY have 17 characters
-        assertTrue(
-            longest == MapColorMode.VISA_REQUIREMENTS || longest == MapColorMode.PASSPORT_VALIDITY
-        )
-    }
-
-    @Test
-    fun `shortest displayName is Default`() {
-        val shortest = MapColorMode.entries.minByOrNull { it.displayName.length }
-        assertEquals(MapColorMode.DEFAULT, shortest)
+    fun `each mode has a distinct displayNameResId`() {
+        val resourceIds = MapColorMode.entries.map { it.displayNameResId }.toSet()
+        assertEquals(MapColorMode.entries.size, resourceIds.size)
     }
 }
