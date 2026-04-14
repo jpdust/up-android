@@ -7,38 +7,65 @@ import java.util.Locale
 
 object DateUtils {
 
-    private val fullDateFormat = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.getDefault())
-    private val shortDateFormat = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
-    private val monthYearFormat = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
-    private val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
+    /**
+     * Creates a fresh SimpleDateFormat with the current default locale.
+     * This ensures locale changes are reflected without requiring app restart.
+     */
+    private fun createFormat(pattern: String): SimpleDateFormat {
+        return SimpleDateFormat(pattern, Locale.getDefault())
+    }
 
     fun formatFullDate(timestamp: Long): String {
-        return fullDateFormat.format(Date(timestamp))
+        return createFormat("EEEE, MMMM d, yyyy").format(Date(timestamp))
     }
 
     fun formatShortDate(timestamp: Long): String {
-        return shortDateFormat.format(Date(timestamp))
+        return createFormat("MMM d, yyyy").format(Date(timestamp))
     }
 
     fun formatMonthYear(timestamp: Long): String {
-        return monthYearFormat.format(Date(timestamp))
+        return createFormat("MMMM yyyy").format(Date(timestamp))
     }
 
     fun formatTime(timestamp: Long): String {
-        return timeFormat.format(Date(timestamp))
+        return createFormat("h:mm a").format(Date(timestamp))
     }
 
-    fun formatRelativeDate(timestamp: Long): String {
+    /**
+     * Formats a timestamp as a relative date string.
+     *
+     * @param timestamp The timestamp to format
+     * @param todayString Localized string for "Today"
+     * @param yesterdayString Localized string for "Yesterday"
+     * @return Formatted relative date string
+     */
+    fun formatRelativeDate(
+        timestamp: Long,
+        todayString: String,
+        yesterdayString: String
+    ): String {
         val now = Calendar.getInstance()
         val date = Calendar.getInstance().apply { timeInMillis = timestamp }
 
         return when {
-            isSameDay(now, date) -> "Today"
-            isYesterday(now, date) -> "Yesterday"
-            isSameWeek(now, date) -> SimpleDateFormat("EEEE", Locale.getDefault()).format(Date(timestamp))
-            isSameYear(now, date) -> SimpleDateFormat("MMMM d", Locale.getDefault()).format(Date(timestamp))
-            else -> shortDateFormat.format(Date(timestamp))
+            isSameDay(now, date) -> todayString
+            isYesterday(now, date) -> yesterdayString
+            isSameWeek(now, date) -> createFormat("EEEE").format(Date(timestamp))
+            isSameYear(now, date) -> createFormat("MMMM d").format(Date(timestamp))
+            else -> formatShortDate(timestamp)
         }
+    }
+
+    /**
+     * Legacy method for backwards compatibility.
+     * Uses English strings - prefer the overload that accepts localized strings.
+     */
+    @Deprecated(
+        message = "Use formatRelativeDate(timestamp, todayString, yesterdayString) for locale-aware formatting",
+        replaceWith = ReplaceWith("formatRelativeDate(timestamp, todayString, yesterdayString)")
+    )
+    fun formatRelativeDate(timestamp: Long): String {
+        return formatRelativeDate(timestamp, "Today", "Yesterday")
     }
 
     private fun isSameDay(cal1: Calendar, cal2: Calendar): Boolean {

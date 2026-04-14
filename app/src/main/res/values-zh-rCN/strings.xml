@@ -168,6 +168,10 @@
     <string name="item_moisture_wicking_shirts">速干衬衫</string>
     <string name="item_blister_bandages">水泡贴</string>
 
+    <!-- Date Display -->
+    <string name="date_today">今天</string>
+    <string name="date_yesterday">昨天</string>
+
     <!-- Trip Log Screen -->
     <string name="trip_log_empty_title">还没有日记条目</string>
     <string name="trip_log_empty_message">开始记录你的旅行吧！\n点击+按钮创建第一条记录。</string>

@@ -178,8 +178,10 @@ private fun JournalEntryCard(
                         .background(SecondaryLight.copy(alpha = 0.3f))
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
+                    val todayString = stringResource(R.string.date_today)
+                    val yesterdayString = stringResource(R.string.date_yesterday)
                     Text(
-                        text = DateUtils.formatRelativeDate(entry.date),
+                        text = DateUtils.formatRelativeDate(entry.date, todayString, yesterdayString),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface

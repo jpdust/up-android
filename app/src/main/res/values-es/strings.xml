@@ -168,6 +168,10 @@
     <string name="item_moisture_wicking_shirts">Camisas transpirables</string>
     <string name="item_blister_bandages">Vendajes para ampollas</string>
 
+    <!-- Date Display -->
+    <string name="date_today">Hoy</string>
+    <string name="date_yesterday">Ayer</string>
+
     <!-- Trip Log Screen -->
     <string name="trip_log_empty_title">Sin entradas de diario aún</string>
     <string name="trip_log_empty_message">¡Comienza a documentar tus viajes!\nToca el botón + para crear tu primera entrada.</string>

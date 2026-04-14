@@ -167,6 +167,10 @@
     <string name="item_moisture_wicking_shirts">Moisture-wicking shirts</string>
     <string name="item_blister_bandages">Blister bandages</string>
 
+    <!-- Date Display -->
+    <string name="date_today">Today</string>
+    <string name="date_yesterday">Yesterday</string>
+
     <!-- Trip Log Screen -->
     <string name="trip_log_empty_title">No journal entries yet</string>
     <string name="trip_log_empty_message">Start documenting your travels!\nTap the + button to create your first entry.</string>

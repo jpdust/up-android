@@ -169,6 +169,10 @@
     <string name="item_moisture_wicking_shirts">قمصان ماصة للرطوبة</string>
     <string name="item_blister_bandages">ضمادات الفقاعات</string>
 
+    <!-- Date Display -->
+    <string name="date_today">اليوم</string>
+    <string name="date_yesterday">أمس</string>
+
     <!-- Trip Log Screen -->
     <string name="trip_log_empty_title">لا توجد إدخالات بعد</string>
     <string name="trip_log_empty_message">ابدأ بتوثيق رحلاتك!\nاضغط على زر + لإنشاء أول إدخال.</string>
