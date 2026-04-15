@@ -17,7 +17,7 @@ android {
         applicationId = "com.unstampedpages.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
+        versionCode = 20260415
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -52,6 +52,12 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
+
+    bundle {
+        language {
+            enableSplit = false
         }
     }
 }

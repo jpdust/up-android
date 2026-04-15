@@ -21,6 +21,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.unstampedpages.app.R
 import com.unstampedpages.app.data.model.ChecklistProgress
@@ -56,7 +57,7 @@ fun ProgressHeader(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = stringResource(R.string.checklist_progress, progress.checkedCount, progress.totalCount),
+                    text = pluralStringResource(R.plurals.checklist_progress, progress.checkedCount, progress.checkedCount, progress.totalCount),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
