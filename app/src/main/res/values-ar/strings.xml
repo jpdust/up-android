@@ -83,7 +83,14 @@
     <string name="checklist_empty_title">قائمتك فارغة</string>
     <string name="checklist_empty_message">اضغط على زر + لإضافة عناصر\nأو حمّل قالباً للبدء</string>
     <string name="checklist_all_packed">تم حزم الكل!</string>
-    <string name="checklist_progress">%1$d/%2$d محزومة</string>
+    <plurals name="checklist_progress">
+        <item quantity="zero">%1$d/%2$d عنصر محزوم</item>
+        <item quantity="one">%1$d/%2$d عنصر محزوم</item>
+        <item quantity="two">%1$d/%2$d عنصران محزومان</item>
+        <item quantity="few">%1$d/%2$d عناصر محزومة</item>
+        <item quantity="many">%1$d/%2$d عنصر محزوم</item>
+        <item quantity="other">%1$d/%2$d عنصر محزوم</item>
+    </plurals>
     <string name="checklist_load_template">تحميل قالب</string>
     <string name="checklist_reset_list">إعادة تعيين القائمة</string>
     <string name="checklist_add_item">إضافة عنصر</string>
@@ -93,9 +100,16 @@
     <string name="checklist_quantity">الكمية</string>
     <string name="checklist_add">إضافة</string>
     <string name="checklist_cancel">إلغاء</string>
-    <string name="checklist_selected_count">%d محدد</string>
+    <plurals name="checklist_selected_count">
+        <item quantity="zero">%d عنصر محدد</item>
+        <item quantity="one">%d عنصر محدد</item>
+        <item quantity="two">%d عنصران محددان</item>
+        <item quantity="few">%d عناصر محددة</item>
+        <item quantity="many">%d عنصر محدد</item>
+        <item quantity="other">%d عنصر محدد</item>
+    </plurals>
     <string name="checklist_delete">حذف</string>
-    <string name="checklist_item_count">%d/%d</string>
+    <string name="checklist_item_count">%1$d/%2$d</string>
 
     <!-- Checklist Categories -->
     <string name="category_electronics">إلكترونيات</string>
@@ -110,7 +124,14 @@
     <!-- Checklist Templates -->
     <string name="template_dialog_title">تحميل قالب</string>
     <string name="template_dialog_description">اختر قالباً لإضافة عناصر إلى قائمتك</string>
-    <string name="template_items_count">%d عنصر</string>
+    <plurals name="template_items_count">
+        <item quantity="zero">%d عنصر</item>
+        <item quantity="one">%d عنصر</item>
+        <item quantity="two">%d عنصران</item>
+        <item quantity="few">%d عناصر</item>
+        <item quantity="many">%d عنصر</item>
+        <item quantity="other">%d عنصر</item>
+    </plurals>
     <string name="template_business_trip">رحلة عمل</string>
     <string name="template_beach_vacation">عطلة على الشاطئ</string>
     <string name="template_hiking">مغامرة تسلق</string>

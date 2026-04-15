@@ -37,6 +37,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -634,10 +635,10 @@ internal fun normalizeOffsetX(offset: Float): Float {
 fun WorldMapCanvas(
     selectedCountryId: String?,
     onCountryTapped: (countryId: String?) -> Unit,
+    modifier: Modifier = Modifier,
     colorMode: MapColorMode = MapColorMode.DEFAULT,
     countries: Map<String, Country> = emptyMap(),
-    legendConfig: MapLegendConfig = MapLegendConfig(),
-    modifier: Modifier = Modifier
+    legendConfig: MapLegendConfig = MapLegendConfig()
 ) {
     var transform by remember { mutableStateOf(TransformState()) }
     val currentTransform by rememberUpdatedState(transform)
@@ -646,7 +647,7 @@ fun WorldMapCanvas(
 
     // Animation state for color mode transitions
     var previousColorMode by remember { mutableStateOf(colorMode) }
-    var animationTarget by remember { mutableStateOf(0f) }
+    var animationTarget by remember { mutableFloatStateOf(0f) }
 
     LaunchedEffect(colorMode) {
         if (colorMode != previousColorMode) {

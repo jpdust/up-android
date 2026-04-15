@@ -137,7 +137,7 @@ private fun TemplateOption(
                 )
 
                 Text(
-                    text = stringResource(R.string.template_items_count, template.items.size),
+                    text = pluralStringResource(R.plurals.template_items_count, template.items.size, template.items.size),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )

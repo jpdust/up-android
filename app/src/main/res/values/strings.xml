@@ -81,7 +81,10 @@
     <string name="checklist_empty_title">Your checklist is empty</string>
     <string name="checklist_empty_message">Tap the + button to add items\nor load a template to get started</string>
     <string name="checklist_all_packed">All packed!</string>
-    <string name="checklist_progress">%1$d/%2$d packed</string>
+    <plurals name="checklist_progress">
+        <item quantity="one">%1$d/%2$d item packed</item>
+        <item quantity="other">%1$d/%2$d items packed</item>
+    </plurals>
     <string name="checklist_load_template">Load Template</string>
     <string name="checklist_reset_list">Reset List</string>
     <string name="checklist_add_item">Add Item</string>
@@ -91,9 +94,12 @@
     <string name="checklist_quantity">Quantity</string>
     <string name="checklist_add">Add</string>
     <string name="checklist_cancel">Cancel</string>
-    <string name="checklist_selected_count">%d selected</string>
+    <plurals name="checklist_selected_count">
+        <item quantity="one">%d item selected</item>
+        <item quantity="other">%d items selected</item>
+    </plurals>
     <string name="checklist_delete">Delete</string>
-    <string name="checklist_item_count">%d/%d</string>
+    <string name="checklist_item_count">%1$d/%2$d</string>
 
     <!-- Checklist Categories -->
     <string name="category_electronics">Electronics</string>
@@ -108,7 +114,10 @@
     <!-- Checklist Templates -->
     <string name="template_dialog_title">Load Template</string>
     <string name="template_dialog_description">Choose a template to add items to your checklist</string>
-    <string name="template_items_count">%d items</string>
+    <plurals name="template_items_count">
+        <item quantity="one">%d item</item>
+        <item quantity="other">%d items</item>
+    </plurals>
     <string name="template_business_trip">Business Trip</string>
     <string name="template_beach_vacation">Beach Vacation</string>
     <string name="template_hiking">Hiking Adventure</string>

@@ -451,9 +451,9 @@ private fun getLocalizedPassportValidity(passportValidity: String?): String {
 private fun CurrencyInputField(
     value: String,
     onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
     onFieldFocused: () -> Unit = {},
     onDone: () -> Unit = {},
-    modifier: Modifier = Modifier,
     testTag: String = ""
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current

@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.unstampedpages.app.R
 import com.unstampedpages.app.ui.theme.Accent
@@ -58,7 +59,7 @@ fun MultiSelectActionBar(
             }
 
             Text(
-                text = stringResource(R.string.checklist_selected_count, selectedCount),
+                text = pluralStringResource(R.plurals.checklist_selected_count, selectedCount, selectedCount),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.primary,

@@ -82,7 +82,10 @@
     <string name="checklist_empty_title">Votre liste est vide</string>
     <string name="checklist_empty_message">Appuyez sur le bouton + pour ajouter des articles\nou chargez un modèle pour commencer</string>
     <string name="checklist_all_packed">Tout est prêt !</string>
-    <string name="checklist_progress">%1$d/%2$d préparés</string>
+    <plurals name="checklist_progress">
+        <item quantity="one">%1$d/%2$d article préparé</item>
+        <item quantity="other">%1$d/%2$d articles préparés</item>
+    </plurals>
     <string name="checklist_load_template">Charger un Modèle</string>
     <string name="checklist_reset_list">Réinitialiser la Liste</string>
     <string name="checklist_add_item">Ajouter un Article</string>
@@ -92,9 +95,12 @@
     <string name="checklist_quantity">Quantité</string>
     <string name="checklist_add">Ajouter</string>
     <string name="checklist_cancel">Annuler</string>
-    <string name="checklist_selected_count">%d sélectionnés</string>
+    <plurals name="checklist_selected_count">
+        <item quantity="one">%d article sélectionné</item>
+        <item quantity="other">%d articles sélectionnés</item>
+    </plurals>
     <string name="checklist_delete">Supprimer</string>
-    <string name="checklist_item_count">%d/%d</string>
+    <string name="checklist_item_count">%1$d/%2$d</string>
 
     <!-- Checklist Categories -->
     <string name="category_electronics">Électronique</string>
@@ -109,7 +115,10 @@
     <!-- Checklist Templates -->
     <string name="template_dialog_title">Charger un Modèle</string>
     <string name="template_dialog_description">Choisissez un modèle pour ajouter des articles à votre liste</string>
-    <string name="template_items_count">%d articles</string>
+    <plurals name="template_items_count">
+        <item quantity="one">%d article</item>
+        <item quantity="other">%d articles</item>
+    </plurals>
     <string name="template_business_trip">Voyage d\'Affaires</string>
     <string name="template_beach_vacation">Vacances à la Plage</string>
     <string name="template_hiking">Aventure Randonnée</string>
