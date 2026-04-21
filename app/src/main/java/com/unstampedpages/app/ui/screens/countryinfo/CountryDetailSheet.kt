@@ -447,6 +447,35 @@ private fun getLocalizedPassportValidity(passportValidity: String?): String {
     }
 }
 
+/**
+ * Extracts only the newly typed characters when text selection replacement didn't work.
+ * This handles the case where the user focuses a field (selecting all text), types a digit,
+ * but the selection wasn't replaced - instead the digit was inserted at the cursor position.
+ *
+ * @param oldText The text before the user typed (e.g., "1.00")
+ * @param newText The text after typing (e.g., "1.005", "51.00", "15.00", or just "5")
+ * @return Only the new portion that the user typed (e.g., "5")
+ */
+internal fun extractNewInputOnFirstKeystroke(oldText: String, newText: String): String {
+    // If new text is same or shorter than old, selection replacement worked or user deleted
+    if (newText.length <= oldText.length) {
+        return newText
+    }
+
+    // New text is longer - find the inserted character(s) by comparing strings
+    // This works regardless of where the cursor was (start, middle, or end)
+    val addedCount = newText.length - oldText.length
+
+    // Find insertion point by comparing characters from the start
+    var insertPos = 0
+    while (insertPos < oldText.length && insertPos < newText.length && oldText[insertPos] == newText[insertPos]) {
+        insertPos++
+    }
+
+    // Extract the newly inserted characters
+    return newText.substring(insertPos, insertPos + addedCount)
+}
+
 @Composable
 private fun CurrencyInputField(
     value: String,
@@ -463,6 +492,9 @@ private fun CurrencyInputField(
         mutableStateOf(TextFieldValue(text = value, selection = TextRange(value.length)))
     }
 
+    // Track whether this is the first keystroke after gaining focus
+    var isPristine by remember { mutableStateOf(false) }
+
     // Update textFieldValue when external value changes
     LaunchedEffect(value) {
         if (textFieldValue.text != value) {
@@ -473,13 +505,27 @@ private fun CurrencyInputField(
     BasicTextField(
         value = textFieldValue,
         onValueChange = { newValue ->
-            // Validate decimal input (digits with optional decimal point, max 2 decimal places)
-            if (isValidDecimalInput(newValue.text)) {
-                textFieldValue = TextFieldValue(
-                    text = newValue.text,
-                    selection = TextRange(newValue.text.length)
-                )
-                onValueChange(newValue.text)
+            // Only process if the text actually changed (ignore selection-only changes)
+            if (newValue.text != textFieldValue.text) {
+                val processedText = if (isPristine && newValue.text.isNotEmpty()) {
+                    // First keystroke after focus - extract only the new input
+                    isPristine = false
+                    extractNewInputOnFirstKeystroke(textFieldValue.text, newValue.text)
+                } else {
+                    newValue.text
+                }
+
+                // Validate decimal input (digits with optional decimal point, max 2 decimal places)
+                if (isValidDecimalInput(processedText)) {
+                    textFieldValue = TextFieldValue(
+                        text = processedText,
+                        selection = TextRange(processedText.length)
+                    )
+                    onValueChange(processedText)
+                }
+            } else {
+                // Selection changed but text didn't - just update the selection state
+                textFieldValue = newValue
             }
         },
         textStyle = TextStyle(
@@ -509,7 +555,9 @@ private fun CurrencyInputField(
             .padding(horizontal = 12.dp, vertical = 8.dp)
             .onFocusChanged { focusState ->
                 if (focusState.isFocused) {
-                    // Select all text so first keystroke replaces everything
+                    // Mark as pristine so first keystroke clears the value
+                    isPristine = true
+                    // Select all text for visual feedback
                     textFieldValue = textFieldValue.copy(
                         selection = TextRange(0, textFieldValue.text.length)
                     )
