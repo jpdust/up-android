@@ -1,5 +1,9 @@
 package com.unstampedpages.app.ui.screens.countryinfo
 
+import android.content.Context
+import android.net.Uri
+import androidx.browser.customtabs.CustomTabColorSchemeParams
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -7,6 +11,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -56,6 +61,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -69,6 +75,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.unstampedpages.app.R
+import com.unstampedpages.app.data.model.Continent
 import com.unstampedpages.app.data.model.Country
 import com.unstampedpages.app.ui.theme.Primary
 import kotlinx.coroutines.launch
@@ -145,13 +152,7 @@ fun CountryDetailSheet(
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             // Safety Level
-                            InfoRow(
-                                icon = Icons.Default.Shield,
-                                label = stringResource(R.string.country_safety_level),
-                                value = stringResource(it.safetyLevel.displayNameResId),
-                                valueColor = it.safetyLevel.color,
-                                testTag = "info_safety_level"
-                            )
+                            SafetyLevelRow(country = it)
 
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
@@ -292,6 +293,132 @@ private fun CountryHeader(
             )
         }
     }
+}
+
+@Composable
+private fun SafetyLevelRow(country: Country) {
+    val context = LocalContext.current
+    val countrySlug = country.name.lowercase().replace(" ", "-")
+    val continentSlug = country.continent.toSmartravellerSlug()
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("info_safety_level"),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Default.Shield,
+            contentDescription = null,
+            tint = Secondary,
+            modifier = Modifier.size(24.dp)
+        )
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.country_safety_level),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            )
+            Text(
+                text = stringResource(country.safetyLevel.displayNameResId),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = country.safetyLevel.color,
+                modifier = Modifier.testTag("info_safety_level_value")
+            )
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            TravelAdvisoryChip(
+                label = "US",
+                contentDescription = stringResource(R.string.cd_travel_advisory_us, country.name),
+                onClick = {
+                    openInCustomTab(
+                        context,
+                        "https://travel.state.gov/en/international-travel/travel-advisories/$countrySlug.html"
+                    )
+                }
+            )
+            TravelAdvisoryChip(
+                label = "UK",
+                contentDescription = stringResource(R.string.cd_travel_advisory_uk, country.name),
+                onClick = {
+                    openInCustomTab(
+                        context,
+                        "https://www.gov.uk/foreign-travel-advice/$countrySlug"
+                    )
+                }
+            )
+            TravelAdvisoryChip(
+                label = "AU",
+                contentDescription = stringResource(R.string.cd_travel_advisory_au, country.name),
+                onClick = {
+                    openInCustomTab(
+                        context,
+                        "https://www.smartraveller.gov.au/destinations/$continentSlug/$countrySlug"
+                    )
+                }
+            )
+            TravelAdvisoryChip(
+                label = "CA",
+                contentDescription = stringResource(R.string.cd_travel_advisory_ca, country.name),
+                onClick = {
+                    openInCustomTab(
+                        context,
+                        "https://travel.gc.ca/destinations/$countrySlug"
+                    )
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun TravelAdvisoryChip(
+    label: String,
+    contentDescription: String,
+    onClick: () -> Unit
+) {
+    Text(
+        text = label,
+        style = MaterialTheme.typography.labelSmall,
+        fontWeight = FontWeight.Medium,
+        color = Secondary,
+        modifier = Modifier
+            .clip(RoundedCornerShape(4.dp))
+            .border(1.dp, Secondary, RoundedCornerShape(4.dp))
+            .clickable(onClickLabel = contentDescription, onClick = onClick)
+            .padding(horizontal = 6.dp, vertical = 3.dp)
+    )
+}
+
+private fun openInCustomTab(context: Context, url: String) {
+    val toolbarColor = android.graphics.Color.parseColor("#6B4423")
+    val colorSchemeParams = CustomTabColorSchemeParams.Builder()
+        .setToolbarColor(toolbarColor)
+        .build()
+    val customTabsIntent = CustomTabsIntent.Builder()
+        .setDefaultColorSchemeParams(colorSchemeParams)
+        .setShowTitle(true)
+        .setShareState(CustomTabsIntent.SHARE_STATE_OFF)
+        .setUrlBarHidingEnabled(false)
+        .build()
+    customTabsIntent.launchUrl(context, Uri.parse(url))
+}
+
+private fun Continent.toSmartravellerSlug(): String = when (this) {
+    Continent.NORTH_AMERICA -> "americas"
+    Continent.SOUTH_AMERICA -> "americas"
+    Continent.EUROPE -> "europe"
+    Continent.AFRICA -> "africa"
+    Continent.ASIA -> "asia"
+    Continent.OCEANIA -> "pacific"
+    Continent.ANTARCTICA -> "antarctica"
 }
 
 @Composable

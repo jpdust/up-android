@@ -8,6 +8,8 @@ import com.unstampedpages.app.data.model.Country
 import com.unstampedpages.app.data.model.SafetyLevel
 import com.unstampedpages.app.data.model.VisaRequirement
 import com.unstampedpages.app.ui.theme.UnstampedPagesTheme
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -28,7 +30,8 @@ class CountryDetailSheetTest {
         safetyLevel: SafetyLevel = SafetyLevel.LOW,
         outletType: String = "Type A/B (120V)",
         continent: Continent = Continent.NORTH_AMERICA,
-        flagEmoji: String = "\uD83C\uDDFA\uD83C\uDDF8"
+        flagEmoji: String = "\uD83C\uDDFA\uD83C\uDDF8",
+        passportValidity: String? = null
     ) = Country(
         id = id,
         name = name,
@@ -39,7 +42,8 @@ class CountryDetailSheetTest {
         exchangeRateToUSD = exchangeRateToUSD,
         outletType = outletType,
         continent = continent,
-        flagEmoji = flagEmoji
+        flagEmoji = flagEmoji,
+        passportValidity = passportValidity
     )
 
     @Test
@@ -582,6 +586,27 @@ class CountryDetailSheetTest {
         composeTestRule.onNodeWithText("Visa on arrival").assertIsDisplayed()
     }
 
+    @Test
+    fun countryDetailSheet_showsRestricted() {
+        val country = createCountry(
+            name = "Restricted Country",
+            visaRequirement = VisaRequirement.RESTRICTED
+        )
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("Entry Requirement").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Restricted").assertIsDisplayed()
+    }
+
     // ============================================================
     // Outlet Type Display Tests
     // ============================================================
@@ -1017,6 +1042,12 @@ class CountryDetailSheetTest {
         composeTestRule.onNodeWithText("USD").assertIsDisplayed()
         composeTestRule.onNodeWithText("EUR").assertIsDisplayed()
         composeTestRule.onNodeWithText("=").assertIsDisplayed()
+
+        // Travel advisory chips
+        composeTestRule.onNodeWithText("US").assertIsDisplayed()
+        composeTestRule.onNodeWithText("UK").assertIsDisplayed()
+        composeTestRule.onNodeWithText("AU").assertIsDisplayed()
+        composeTestRule.onNodeWithText("CA").assertIsDisplayed()
     }
 
     @Test
@@ -1654,5 +1685,706 @@ class CountryDetailSheetTest {
 
         // Value should be "9" (not "59" or "95")
         composeTestRule.onNodeWithTag("currency_input_usd").assertTextEquals("9")
+    }
+
+    // ============================================================
+    // Travel Advisory Chip Tests
+    // ============================================================
+
+    @Test
+    fun safetyLevelRow_showsAllFourAdvisoryChips() {
+        val country = createCountry(name = "France", continent = Continent.EUROPE)
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText("US").assertIsDisplayed()
+        composeTestRule.onNodeWithText("UK").assertIsDisplayed()
+        composeTestRule.onNodeWithText("AU").assertIsDisplayed()
+        composeTestRule.onNodeWithText("CA").assertIsDisplayed()
+    }
+
+    @Test
+    fun safetyLevelRow_usChip_isClickable() {
+        val country = createCountry()
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText("US").assertHasClickAction()
+    }
+
+    @Test
+    fun safetyLevelRow_ukChip_isClickable() {
+        val country = createCountry()
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText("UK").assertHasClickAction()
+    }
+
+    @Test
+    fun safetyLevelRow_auChip_isClickable() {
+        val country = createCountry()
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText("AU").assertHasClickAction()
+    }
+
+    @Test
+    fun safetyLevelRow_caChip_isClickable() {
+        val country = createCountry()
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText("CA").assertHasClickAction()
+    }
+
+    @Test
+    fun safetyLevelRow_chips_visibleForMediumRisk() {
+        val country = createCountry(safetyLevel = SafetyLevel.MEDIUM)
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText("US").assertIsDisplayed()
+        composeTestRule.onNodeWithText("UK").assertIsDisplayed()
+        composeTestRule.onNodeWithText("AU").assertIsDisplayed()
+        composeTestRule.onNodeWithText("CA").assertIsDisplayed()
+    }
+
+    @Test
+    fun safetyLevelRow_chips_visibleForHighRisk() {
+        val country = createCountry(safetyLevel = SafetyLevel.HIGH)
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText("US").assertIsDisplayed()
+        composeTestRule.onNodeWithText("UK").assertIsDisplayed()
+        composeTestRule.onNodeWithText("AU").assertIsDisplayed()
+        composeTestRule.onNodeWithText("CA").assertIsDisplayed()
+    }
+
+    @Test
+    fun safetyLevelRow_chips_visibleForExtremeRisk() {
+        val country = createCountry(safetyLevel = SafetyLevel.EXTREME)
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText("US").assertIsDisplayed()
+        composeTestRule.onNodeWithText("UK").assertIsDisplayed()
+        composeTestRule.onNodeWithText("AU").assertIsDisplayed()
+        composeTestRule.onNodeWithText("CA").assertIsDisplayed()
+    }
+
+    @Test
+    fun safetyLevelRow_chips_notVisibleWhenSheetHidden() {
+        val country = createCountry()
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = false, onDismiss = {})
+            }
+        }
+
+        // Advisory chips should not appear when the sheet is not visible
+        composeTestRule.onNodeWithText("US").assertDoesNotExist()
+        composeTestRule.onNodeWithText("UK").assertDoesNotExist()
+        composeTestRule.onNodeWithText("AU").assertDoesNotExist()
+        composeTestRule.onNodeWithText("CA").assertDoesNotExist()
+    }
+
+    @Test
+    fun safetyLevelRow_chips_notVisibleForNullCountry() {
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = null, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText("US").assertDoesNotExist()
+        composeTestRule.onNodeWithText("UK").assertDoesNotExist()
+        composeTestRule.onNodeWithText("AU").assertDoesNotExist()
+        composeTestRule.onNodeWithText("CA").assertDoesNotExist()
+    }
+
+    @Test
+    fun safetyLevelRow_chips_visibleForSouthAmericaContinent() {
+        val country = createCountry(name = "Brazil", continent = Continent.SOUTH_AMERICA)
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText("US").assertIsDisplayed()
+        composeTestRule.onNodeWithText("UK").assertIsDisplayed()
+        composeTestRule.onNodeWithText("AU").assertIsDisplayed()
+        composeTestRule.onNodeWithText("CA").assertIsDisplayed()
+    }
+
+    @Test
+    fun safetyLevelRow_chips_visibleForAfricaContinent() {
+        val country = createCountry(name = "Kenya", continent = Continent.AFRICA)
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText("US").assertIsDisplayed()
+        composeTestRule.onNodeWithText("UK").assertIsDisplayed()
+        composeTestRule.onNodeWithText("AU").assertIsDisplayed()
+        composeTestRule.onNodeWithText("CA").assertIsDisplayed()
+    }
+
+    @Test
+    fun safetyLevelRow_chips_visibleForAsiaContinent() {
+        val country = createCountry(name = "Japan", continent = Continent.ASIA)
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText("US").assertIsDisplayed()
+        composeTestRule.onNodeWithText("UK").assertIsDisplayed()
+        composeTestRule.onNodeWithText("AU").assertIsDisplayed()
+        composeTestRule.onNodeWithText("CA").assertIsDisplayed()
+    }
+
+    @Test
+    fun safetyLevelRow_chips_visibleForOceaniaContinent() {
+        val country = createCountry(name = "Fiji", continent = Continent.OCEANIA)
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText("US").assertIsDisplayed()
+        composeTestRule.onNodeWithText("UK").assertIsDisplayed()
+        composeTestRule.onNodeWithText("AU").assertIsDisplayed()
+        composeTestRule.onNodeWithText("CA").assertIsDisplayed()
+    }
+
+    @Test
+    fun safetyLevelRow_chips_visibleForAntarcticaContinent() {
+        val country = createCountry(name = "Antarctica", continent = Continent.ANTARCTICA)
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText("US").assertIsDisplayed()
+        composeTestRule.onNodeWithText("UK").assertIsDisplayed()
+        composeTestRule.onNodeWithText("AU").assertIsDisplayed()
+        composeTestRule.onNodeWithText("CA").assertIsDisplayed()
+    }
+
+    @Test
+    fun safetyLevelRow_chips_insideSafetyLevelRow() {
+        // Verify chips are co-located with the safety level row, not elsewhere in the sheet
+        val country = createCountry()
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        // Safety level row must exist alongside the chips
+        composeTestRule.onNodeWithTag("info_safety_level").assertExists()
+        composeTestRule.onNodeWithText("US").assertIsDisplayed()
+        composeTestRule.onNodeWithText("CA").assertIsDisplayed()
+    }
+
+    @Test
+    fun safetyLevelRow_chips_visibleForMultiWordCountryName() {
+        // Multi-word country names exercise the slug generation (spaces → hyphens)
+        val country = createCountry(
+            name = "New Zealand",
+            continent = Continent.OCEANIA
+        )
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText("New Zealand").assertIsDisplayed()
+        composeTestRule.onNodeWithText("US").assertIsDisplayed()
+        composeTestRule.onNodeWithText("UK").assertIsDisplayed()
+        composeTestRule.onNodeWithText("AU").assertIsDisplayed()
+        composeTestRule.onNodeWithText("CA").assertIsDisplayed()
+    }
+
+    // ============================================================
+    // Passport Validity Display Tests
+    // ============================================================
+
+    @Test
+    fun countryDetailSheet_passportValidity_showsLabelRow() {
+        val country = createCountry(passportValidity = "6 months")
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText("Passport Validity").assertIsDisplayed()
+    }
+
+    @Test
+    fun countryDetailSheet_passportValidity_sixMonths_localizes() {
+        // "6 months" in the data → localized string "6 months"
+        val country = createCountry(passportValidity = "6 months")
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText("6 months").assertIsDisplayed()
+    }
+
+    @Test
+    fun countryDetailSheet_passportValidity_sixMonthsWithPrefix_localizes() {
+        // "At least 6 months" also matches the "6 month" pattern (case-insensitive)
+        val country = createCountry(passportValidity = "At least 6 months")
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText("6 months").assertIsDisplayed()
+    }
+
+    @Test
+    fun countryDetailSheet_passportValidity_threeMonths_localizes() {
+        val country = createCountry(passportValidity = "3 months")
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText("3 months").assertIsDisplayed()
+    }
+
+    @Test
+    fun countryDetailSheet_passportValidity_durationOfStay_localizes() {
+        val country = createCountry(passportValidity = "duration of stay")
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText("Planned length of stay").assertIsDisplayed()
+    }
+
+    @Test
+    fun countryDetailSheet_passportValidity_lengthOfStay_localizes() {
+        val country = createCountry(passportValidity = "length of stay")
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText("Planned length of stay").assertIsDisplayed()
+    }
+
+    @Test
+    fun countryDetailSheet_passportValidity_stayKeyword_localizes() {
+        val country = createCountry(passportValidity = "valid for the length of stay")
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText("Planned length of stay").assertIsDisplayed()
+    }
+
+    @Test
+    fun countryDetailSheet_passportValidity_null_showsNotSpecified() {
+        val country = createCountry(passportValidity = null)
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText("Not specified").assertIsDisplayed()
+    }
+
+    @Test
+    fun countryDetailSheet_passportValidity_unknownValue_showsRawString() {
+        // A value that doesn't match any known pattern falls through to the raw string
+        val country = createCountry(passportValidity = "1 year minimum")
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText("1 year minimum").assertIsDisplayed()
+    }
+
+    // ============================================================
+    // Dismiss Behavior Tests
+    // ============================================================
+
+    @Test
+    fun countryDetailSheet_closeButton_triggersOnDismiss() {
+        var dismissed = false
+        val country = createCountry()
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = { dismissed = true }
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithTag("bottom_sheet_close_button").performClick()
+        composeTestRule.waitForIdle()
+
+        assertTrue("onDismiss should be called when the close button is tapped", dismissed)
+    }
+
+    @Test
+    fun countryDetailSheet_scrimClick_triggersOnDismiss() {
+        var dismissed = false
+        val country = createCountry()
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country,
+                    visible = true,
+                    onDismiss = { dismissed = true }
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithTag("bottom_sheet_scrim").performClick()
+        composeTestRule.waitForIdle()
+
+        assertTrue("onDismiss should be called when the scrim is tapped", dismissed)
+    }
+
+    @Test
+    fun countryDetailSheet_closeButtonExists_whenVisible() {
+        val country = createCountry()
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithTag("bottom_sheet_close_button").assertExists()
+    }
+
+    // ============================================================
+    // Test Tag Verification Tests
+    // ============================================================
+
+    @Test
+    fun countryDetailSheet_testTag_countryDetailSheet_exists() {
+        val country = createCountry()
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithTag("country_detail_sheet").assertExists()
+    }
+
+    @Test
+    fun countryDetailSheet_testTag_countryHeader_exists() {
+        val country = createCountry()
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithTag("country_header").assertExists()
+    }
+
+    @Test
+    fun countryDetailSheet_testTag_countryFlag_displaysEmoji() {
+        val country = createCountry(
+            flagEmoji = "\uD83C\uDDEB\uD83C\uDDF7"
+        )
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithTag("country_flag")
+            .assertExists()
+            .assertTextEquals("\uD83C\uDDEB\uD83C\uDDF7")
+    }
+
+    @Test
+    fun countryDetailSheet_testTag_countryName_displaysName() {
+        val country = createCountry(name = "Japan")
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithTag("country_name")
+            .assertExists()
+            .assertTextEquals("Japan")
+    }
+
+    @Test
+    fun countryDetailSheet_testTag_safetyLevelValue_matchesSafetyLevel() {
+        val country = createCountry(safetyLevel = SafetyLevel.HIGH)
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithTag("info_safety_level_value")
+            .assertExists()
+            .assertTextEquals("High Risk")
+    }
+
+    @Test
+    fun countryDetailSheet_testTag_entryRequirementValue_matchesRequirement() {
+        val country = createCountry(visaRequirement = VisaRequirement.E_VISA)
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithTag("info_entry_requirement_value")
+            .assertExists()
+            .assertTextEquals("eVisa")
+    }
+
+    @Test
+    fun countryDetailSheet_testTag_passportValidityValue_matchesValidity() {
+        val country = createCountry(passportValidity = "6 months")
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithTag("info_passport_validity_value")
+            .assertExists()
+            .assertTextEquals("6 months")
+    }
+
+    @Test
+    fun countryDetailSheet_testTag_currencyValue_matchesCurrency() {
+        val country = createCountry(currency = "Euro", currencyCode = "EUR")
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithTag("info_currency_value")
+            .assertExists()
+            .assertTextEquals("Euro (EUR)")
+    }
+
+    @Test
+    fun countryDetailSheet_testTag_powerOutletValue_matchesOutletType() {
+        val country = createCountry(outletType = "Type G (230V)")
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithTag("info_power_outlet_value")
+            .assertExists()
+            .assertTextEquals("Type G (230V)")
+    }
+
+    @Test
+    fun countryDetailSheet_testTag_currencyConverter_existsForNonUsd() {
+        val country = createCountry(currencyCode = "EUR", exchangeRateToUSD = 1.08)
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithTag("currency_converter").assertExists()
+    }
+
+    @Test
+    fun countryDetailSheet_testTag_currencyConverter_absentForUsd() {
+        val country = createCountry(currencyCode = "USD", exchangeRateToUSD = 1.0)
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithTag("currency_converter").assertDoesNotExist()
+    }
+
+    @Test
+    fun countryDetailSheet_testTag_scrimExists_whenVisible() {
+        val country = createCountry()
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = true, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithTag("bottom_sheet_scrim").assertExists()
+    }
+
+    // ============================================================
+    // extractNewInputOnFirstKeystroke Unit Tests
+    // ============================================================
+
+    @Test
+    fun extractNewInput_newTextShorterThanOld_returnsNewText() {
+        // Deletion: user deleted a character
+        val result = extractNewInputOnFirstKeystroke(oldText = "1.00", newText = "1.0")
+        assertEquals("1.0", result)
+    }
+
+    @Test
+    fun extractNewInput_newTextSameLengthAsOld_returnsNewText() {
+        // Replacement at same length: full selection replaced
+        val result = extractNewInputOnFirstKeystroke(oldText = "1.00", newText = "5.00")
+        assertEquals("5.00", result)
+    }
+
+    @Test
+    fun extractNewInput_emptyNewText_returnsEmptyString() {
+        // User deleted everything
+        val result = extractNewInputOnFirstKeystroke(oldText = "1.00", newText = "")
+        assertEquals("", result)
+    }
+
+    @Test
+    fun extractNewInput_characterAppendedAtEnd_returnsAppendedChar() {
+        // User typed "5" at the end of "1.00" → "1.005"
+        val result = extractNewInputOnFirstKeystroke(oldText = "1.00", newText = "1.005")
+        assertEquals("5", result)
+    }
+
+    @Test
+    fun extractNewInput_characterPrependedAtStart_returnsPrependedChar() {
+        // User typed "5" at the start of "1.00" → "51.00"
+        val result = extractNewInputOnFirstKeystroke(oldText = "1.00", newText = "51.00")
+        assertEquals("5", result)
+    }
+
+    @Test
+    fun extractNewInput_characterInsertedInMiddle_returnsInsertedChar() {
+        // User typed "5" in the middle of "1.00" → "15.00"
+        val result = extractNewInputOnFirstKeystroke(oldText = "1.00", newText = "15.00")
+        assertEquals("5", result)
+    }
+
+    @Test
+    fun extractNewInput_multipleCharactersInserted_returnsAllInserted() {
+        // User pasted "23" into "1.00" at position 1 → "123.00"
+        val result = extractNewInputOnFirstKeystroke(oldText = "1.00", newText = "123.00")
+        assertEquals("23", result)
+    }
+
+    @Test
+    fun extractNewInput_emptyOldText_singleCharAdded_returnsThatChar() {
+        // Old is empty, user typed "7"
+        val result = extractNewInputOnFirstKeystroke(oldText = "", newText = "7")
+        assertEquals("7", result)
+    }
+
+    @Test
+    fun extractNewInput_emptyOldText_multipleCharsAdded_returnsAllChars() {
+        // Old is empty, user typed "42"
+        val result = extractNewInputOnFirstKeystroke(oldText = "", newText = "42")
+        assertEquals("42", result)
+    }
+
+    @Test
+    fun extractNewInput_singleCharOld_charAppended_returnsAppendedChar() {
+        val result = extractNewInputOnFirstKeystroke(oldText = "5", newText = "50")
+        assertEquals("0", result)
     }
 }

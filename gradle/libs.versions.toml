@@ -12,6 +12,7 @@ lifecycle = "2.10.0"
 lifecycle-runtime = "2.9.2"
 navigation-compose = "2.9.7"
 room = "2.8.4"
+browser = "1.8.0"
 gson = "2.13.2"
 json = "20251224"
 junit = "4.13.2"
@@ -34,6 +35,7 @@ androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "j
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso" }
 androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "test-rules" }
 androidx-test-core-ktx = { group = "androidx.test", name = "core-ktx", version.ref = "test-core" }
+androidx-browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 json = { group = "org.json", name = "json", version.ref = "json" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }

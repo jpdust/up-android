@@ -255,6 +255,12 @@
     <string name="continent_oceania">大洋洲</string>
     <string name="continent_antarctica">南极洲</string>
 
+    <!-- Travel Advisory Links -->
+    <string name="cd_travel_advisory_us">美国%s旅行建议</string>
+    <string name="cd_travel_advisory_uk">英国%s旅行建议</string>
+    <string name="cd_travel_advisory_au">澳大利亚%s旅行建议</string>
+    <string name="cd_travel_advisory_ca">加拿大%s旅行建议</string>
+
     <!-- Passport Validity Values -->
     <string name="passport_validity_six_months">6个月</string>
     <string name="passport_validity_three_months">3个月</string>
