@@ -195,6 +195,116 @@ class CountryRepositoryTest {
     }
 
     @Test
+    fun `countries have travel advisory links`() {
+        val countries = repository.getAllCountries()
+
+        countries.forEach { country ->
+            val advisories = country.travelAdvisories
+            assertNotNull("Expected travel advisories for ${country.name}", advisories)
+            assertTrue(advisories!!.us.startsWith("https://"))
+            assertTrue(advisories.uk.startsWith("https://"))
+            assertTrue(advisories.au.startsWith("https://"))
+            assertTrue(advisories.ca.startsWith("https://"))
+        }
+    }
+
+    @Test
+    fun `greenland uses explicit advisory overrides`() {
+        val greenland = repository.getCountryById("gl")
+
+        assertNotNull(greenland)
+        val advisories = greenland!!.travelAdvisories!!
+        assertEquals(
+            "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/greenland-travel-advisory.html",
+            advisories.us
+        )
+        assertEquals(
+            "https://www.gov.uk/foreign-travel-advice/denmark",
+            advisories.uk
+        )
+        assertEquals(
+            "https://www.smartraveller.gov.au/destinations/europe/denmark",
+            advisories.au
+        )
+        assertEquals(
+            "https://travel.gc.ca/destinations/greenland",
+            advisories.ca
+        )
+    }
+
+    @Test
+    fun `israel uses explicit advisory overrides`() {
+        val israel = repository.getCountryById("il")
+
+        assertNotNull(israel)
+        val advisories = israel!!.travelAdvisories!!
+        assertEquals(
+            "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/israel-west-bank-and-gaza-travel-advisory.html",
+            advisories.us
+        )
+        assertEquals(
+            "https://www.gov.uk/foreign-travel-advice/israel",
+            advisories.uk
+        )
+        assertEquals(
+            "https://www.smartraveller.gov.au/destinations/middle-east/israel-and-palestinian-territories",
+            advisories.au
+        )
+        assertEquals(
+            "https://travel.gc.ca/destinations/israel-and-palestine",
+            advisories.ca
+        )
+    }
+
+    @Test
+    fun `palestine uses explicit advisory overrides`() {
+        val palestine = repository.getCountryById("ps")
+
+        assertNotNull(palestine)
+        val advisories = palestine!!.travelAdvisories!!
+        assertEquals(
+            "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/israel-west-bank-and-gaza-travel-advisory.html",
+            advisories.us
+        )
+        assertEquals(
+            "https://www.gov.uk/foreign-travel-advice/palestine",
+            advisories.uk
+        )
+        assertEquals(
+            "https://www.smartraveller.gov.au/destinations/middle-east/palestine",
+            advisories.au
+        )
+        assertEquals(
+            "https://travel.gc.ca/destinations/israel-and-palestine",
+            advisories.ca
+        )
+    }
+
+    @Test
+    fun `ordinary countries still receive generated advisory links`() {
+        val japan = repository.getCountryById("jp")
+
+        assertNotNull(japan)
+        val advisories = japan!!.travelAdvisories!!
+        assertEquals(
+            "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/japan-travel-advisory.html",
+            advisories.us
+        )
+        assertEquals(
+            "https://www.gov.uk/foreign-travel-advice/japan",
+            advisories.uk
+        )
+        assertEquals(
+            "https://www.smartraveller.gov.au/destinations/asia/japan",
+            advisories.au
+        )
+        assertEquals(
+            "https://travel.gc.ca/destinations/japan",
+            advisories.ca
+        )
+    }
+
+    @Test
     fun `countries have valid visa requirements`() {
         val countries = repository.getAllCountries()
         val validRequirements = VisaRequirement.values().toList()

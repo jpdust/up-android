@@ -4,6 +4,13 @@ import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.Color
 import com.unstampedpages.app.R
 
+data class TravelAdvisories(
+    val us: String,
+    val uk: String,
+    val au: String,
+    val ca: String
+)
+
 data class Country(
     val id: String,
     val name: String,
@@ -15,6 +22,7 @@ data class Country(
     val outletType: String,
     val continent: Continent,
     val flagEmoji: String,
+    val travelAdvisories: TravelAdvisories? = null,
     val imageUrl: String? = null,
     val passportValidity: String? = null
 )

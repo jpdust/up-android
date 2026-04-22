@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.unstampedpages.app.data.model.Continent
 import com.unstampedpages.app.data.model.Country
 import com.unstampedpages.app.data.model.SafetyLevel
+import com.unstampedpages.app.data.model.TravelAdvisories
 import com.unstampedpages.app.data.model.VisaRequirement
 import com.unstampedpages.app.ui.theme.UnstampedPagesTheme
 import org.junit.Assert.assertEquals
@@ -31,7 +32,13 @@ class CountryDetailSheetTest {
         outletType: String = "Type A/B (120V)",
         continent: Continent = Continent.NORTH_AMERICA,
         flagEmoji: String = "\uD83C\uDDFA\uD83C\uDDF8",
-        passportValidity: String? = null
+        passportValidity: String? = null,
+        travelAdvisories: TravelAdvisories = TravelAdvisories(
+            us = "https://travel.state.gov/en/international-travel/travel-advisories/test-country.html",
+            uk = "https://www.gov.uk/foreign-travel-advice/test-country",
+            au = "https://www.smartraveller.gov.au/destinations/americas/test-country",
+            ca = "https://travel.gc.ca/destinations/test-country"
+        )
     ) = Country(
         id = id,
         name = name,
@@ -43,7 +50,8 @@ class CountryDetailSheetTest {
         outletType = outletType,
         continent = continent,
         flagEmoji = flagEmoji,
-        passportValidity = passportValidity
+        passportValidity = passportValidity,
+        travelAdvisories = travelAdvisories
     )
 
     @Test
