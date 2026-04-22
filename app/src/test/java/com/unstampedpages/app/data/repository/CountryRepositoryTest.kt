@@ -20,6 +20,7 @@ class CountryRepositoryTest {
         val countries = repository.getAllCountries()
 
         assertTrue(countries.isNotEmpty())
+        assertEquals(countries.size, 200)
     }
 
     @Test

@@ -92,6 +92,7 @@ dependencies {
     // Room Database
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.browser)
     ksp(libs.androidx.room.compiler)
 
     // Custom Tabs (external browser integration)
