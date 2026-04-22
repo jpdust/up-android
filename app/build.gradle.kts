@@ -94,6 +94,9 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 
+    // Custom Tabs (external browser integration)
+    implementation(libs.androidx.browser)
+
     // JSON parsing
     implementation(libs.gson)
 

@@ -258,6 +258,12 @@
     <string name="continent_oceania">Oceanía</string>
     <string name="continent_antarctica">Antártida</string>
 
+    <!-- Travel Advisory Links -->
+    <string name="cd_travel_advisory_us">Aviso de viaje de EE.UU. para %s</string>
+    <string name="cd_travel_advisory_uk">Aviso de viaje del Reino Unido para %s</string>
+    <string name="cd_travel_advisory_au">Aviso de viaje australiano para %s</string>
+    <string name="cd_travel_advisory_ca">Aviso de viaje canadiense para %s</string>
+
     <!-- Passport Validity Values -->
     <string name="passport_validity_six_months">6 meses</string>
     <string name="passport_validity_three_months">3 meses</string>
