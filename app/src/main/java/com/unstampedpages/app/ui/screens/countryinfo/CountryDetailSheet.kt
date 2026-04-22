@@ -13,6 +13,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.FocusInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -52,6 +53,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,8 +62,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -553,26 +555,6 @@ private fun getLocalizedPassportValidity(passportValidity: String?): String {
  * @param newText The text after typing (e.g., "1.005", "51.00", "15.00", or just "5")
  * @return Only the new portion that the user typed (e.g., "5")
  */
-internal fun extractNewInputOnFirstKeystroke(oldText: String, newText: String): String {
-    // If new text is same or shorter than old, selection replacement worked or user deleted
-    if (newText.length <= oldText.length) {
-        return newText
-    }
-
-    // New text is longer - find the inserted character(s) by comparing strings
-    // This works regardless of where the cursor was (start, middle, or end)
-    val addedCount = newText.length - oldText.length
-
-    // Find insertion point by comparing characters from the start
-    var insertPos = 0
-    while (insertPos < oldText.length && insertPos < newText.length && oldText[insertPos] == newText[insertPos]) {
-        insertPos++
-    }
-
-    // Extract the newly inserted characters
-    return newText.substring(insertPos, insertPos + addedCount)
-}
-
 @Composable
 private fun CurrencyInputField(
     value: String,
@@ -583,19 +565,47 @@ private fun CurrencyInputField(
     testTag: String = ""
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
-
-    // Use TextFieldValue to control cursor/selection
-    var textFieldValue by remember(value) {
+    val focusManager = LocalFocusManager.current
+    val interactionSource = remember { MutableInteractionSource() }
+    var isFocused by remember { mutableStateOf(false) }
+    var textFieldValue by remember {
         mutableStateOf(TextFieldValue(text = value, selection = TextRange(value.length)))
     }
 
-    // Track whether this is the first keystroke after gaining focus
-    var isPristine by remember { mutableStateOf(false) }
+    // Snapshot of the value at the moment the field is focused, used to restore on blur-cancel
+    var preFocusValue by remember { mutableStateOf(value) }
 
-    // Update textFieldValue when external value changes
+    // Always holds the latest external value for use inside long-lived coroutines
+    val currentValue by rememberUpdatedState(value)
+
+    // Sync external value changes (other field driving conversion) only when not editing
     LaunchedEffect(value) {
-        if (textFieldValue.text != value) {
+        if (!isFocused) {
             textFieldValue = TextFieldValue(text = value, selection = TextRange(value.length))
+        }
+    }
+
+    // Observe focus via interactionSource — more reliable than onFocusChanged on BasicTextField
+    LaunchedEffect(interactionSource) {
+        interactionSource.interactions.collect { interaction ->
+            when (interaction) {
+                is FocusInteraction.Focus -> {
+                    preFocusValue = currentValue
+                    isFocused = true
+                    textFieldValue = TextFieldValue(text = "", selection = TextRange(0))
+                    onFieldFocused()
+                }
+                is FocusInteraction.Unfocus -> {
+                    isFocused = false
+                    if (textFieldValue.text.isEmpty()) {
+                        // User tapped but typed nothing — restore what was showing before focus
+                        textFieldValue = TextFieldValue(
+                            text = preFocusValue,
+                            selection = TextRange(preFocusValue.length)
+                        )
+                    }
+                }
+            }
         }
     }
 
@@ -604,27 +614,20 @@ private fun CurrencyInputField(
         onValueChange = { newValue ->
             // Only process if the text actually changed (ignore selection-only changes)
             if (newValue.text != textFieldValue.text) {
-                val processedText = if (isPristine && newValue.text.isNotEmpty()) {
-                    // First keystroke after focus - extract only the new input
-                    isPristine = false
-                    extractNewInputOnFirstKeystroke(textFieldValue.text, newValue.text)
-                } else {
-                    newValue.text
-                }
-
                 // Validate decimal input (digits with optional decimal point, max 2 decimal places)
-                if (isValidDecimalInput(processedText)) {
+                if (isValidDecimalInput(newValue.text)) {
                     textFieldValue = TextFieldValue(
-                        text = processedText,
-                        selection = TextRange(processedText.length)
+                        text = newValue.text,
+                        selection = TextRange(newValue.text.length)
                     )
-                    onValueChange(processedText)
+                    onValueChange(newValue.text)
                 }
             } else {
                 // Selection changed but text didn't - just update the selection state
                 textFieldValue = newValue
             }
         },
+        interactionSource = interactionSource,
         textStyle = TextStyle(
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
@@ -638,6 +641,7 @@ private fun CurrencyInputField(
         keyboardActions = KeyboardActions(
             onDone = {
                 keyboardController?.hide()
+                focusManager.clearFocus()
                 onDone()
             }
         ),
@@ -650,16 +654,5 @@ private fun CurrencyInputField(
                 shape = RoundedCornerShape(8.dp)
             )
             .padding(horizontal = 12.dp, vertical = 8.dp)
-            .onFocusChanged { focusState ->
-                if (focusState.isFocused) {
-                    // Mark as pristine so first keystroke clears the value
-                    isPristine = true
-                    // Select all text for visual feedback
-                    textFieldValue = textFieldValue.copy(
-                        selection = TextRange(0, textFieldValue.text.length)
-                    )
-                    onFieldFocused()
-                }
-            }
     )
 }
