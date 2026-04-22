@@ -20,7 +20,7 @@ class CountryRepositoryTest {
         val countries = repository.getAllCountries()
 
         assertTrue(countries.isNotEmpty())
-        assertEquals(countries.size, 200)
+        assertEquals(countries.size, 201)
     }
 
     @Test
@@ -414,12 +414,34 @@ class CountryRepositoryTest {
     }
 
     @Test
-    fun `getCountriesByContinent returns empty for Antarctica`() {
-        // Assuming no countries in Antarctica dataset
+    fun `getCountriesByContinent returns Antarctica entry`() {
         val countries = repository.getCountriesByContinent(Continent.ANTARCTICA)
 
-        // This could be empty or have entries - just verify it doesn't crash
-        assertNotNull(countries)
+        assertEquals(1, countries.size)
+        assertEquals("aa", countries.first().id)
+        assertEquals("Antarctica", countries.first().name)
+    }
+
+    @Test
+    fun `getCountryById returns Antarctica for id aa`() {
+        val country = repository.getCountryById("aa")
+
+        assertNotNull("Antarctica should exist in the repository with id 'aa'", country)
+        assertEquals("Antarctica", country!!.name)
+        assertEquals(Continent.ANTARCTICA, country.continent)
+    }
+
+    @Test
+    fun `Antarctica has travel advisory links`() {
+        val country = repository.getCountryById("aa")
+
+        assertNotNull(country)
+        val advisories = country!!.travelAdvisories
+        assertNotNull("Antarctica should have travel advisories", advisories)
+        assertTrue(advisories!!.us.startsWith("https://"))
+        assertTrue(advisories.uk.startsWith("https://"))
+        assertTrue(advisories.au.startsWith("https://"))
+        assertTrue(advisories.ca.startsWith("https://"))
     }
 
     @Test
@@ -428,13 +450,13 @@ class CountryRepositoryTest {
             .map { it.continent }
             .distinct()
 
-        // Check that most major continents are represented
         assertTrue(continentsRepresented.contains(Continent.NORTH_AMERICA))
         assertTrue(continentsRepresented.contains(Continent.SOUTH_AMERICA))
         assertTrue(continentsRepresented.contains(Continent.EUROPE))
         assertTrue(continentsRepresented.contains(Continent.ASIA))
         assertTrue(continentsRepresented.contains(Continent.AFRICA))
         assertTrue(continentsRepresented.contains(Continent.OCEANIA))
+        assertTrue(continentsRepresented.contains(Continent.ANTARCTICA))
     }
 
     @Test
