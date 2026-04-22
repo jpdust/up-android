@@ -4,6 +4,7 @@ import com.unstampedpages.app.data.model.Continent
 import com.unstampedpages.app.data.model.Country
 import com.unstampedpages.app.data.model.CountryMapData
 import com.unstampedpages.app.data.model.SafetyLevel
+import com.unstampedpages.app.data.model.TravelAdvisories
 import com.unstampedpages.app.data.model.VisaRequirement
 
 class CountryRepository {
@@ -18,6 +19,24 @@ class CountryRepository {
     fun getMapData(): List<CountryMapData> = countryMapPositions
 
     companion object {
+        private fun advisoryUrls(name: String, continent: Continent): TravelAdvisories {
+            val slug = name.lowercase().replace(" ", "-")
+            val auContinent = when (continent) {
+                Continent.NORTH_AMERICA, Continent.SOUTH_AMERICA -> "americas"
+                Continent.EUROPE -> "europe"
+                Continent.AFRICA -> "africa"
+                Continent.ASIA -> "asia"
+                Continent.OCEANIA -> "pacific"
+                Continent.ANTARCTICA -> "antarctica"
+            }
+            return TravelAdvisories(
+                us = "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/$slug-travel-advisory.html",
+                uk = "https://www.gov.uk/foreign-travel-advice/$slug",
+                au = "https://www.smartraveller.gov.au/destinations/$auContinent/$slug",
+                ca = "https://travel.gc.ca/destinations/$slug"
+            )
+        }
+
         // Passport validity constants
         private const val PASSPORT_VALIDITY_6_MONTHS = "6 months"
         private const val PASSPORT_VALIDITY_3_MONTHS = "3 months"
@@ -301,6 +320,6 @@ class CountryRepository {
             Country(id = "ws", name = "Samoa", safetyLevel = SafetyLevel.LOW, visaRequirement = VisaRequirement.VISA_NOT_REQUIRED, currency = "Samoan Tala", currencyCode = "WST", exchangeRateToUSD = 0.37, outletType = OUTLET_TYPE_I_230V, continent = Continent.OCEANIA, flagEmoji = "\uD83C\uDDFC\uD83C\uDDF8", passportValidity = PASSPORT_VALIDITY_6_MONTHS),
             Country(id = "to", name = "Tonga", safetyLevel = SafetyLevel.LOW, visaRequirement = VisaRequirement.VISA_NOT_REQUIRED, currency = "Tongan Paʻanga", currencyCode = "TOP", exchangeRateToUSD = 0.43, outletType = OUTLET_TYPE_I_240V, continent = Continent.OCEANIA, flagEmoji = "\uD83C\uDDF9\uD83C\uDDF4", passportValidity = PASSPORT_VALIDITY_6_MONTHS),
             Country(id = "tv", name = "Tuvalu", safetyLevel = SafetyLevel.LOW, visaRequirement = VisaRequirement.VISA_NOT_REQUIRED, currency = CURRENCY_AUSTRALIAN_DOLLAR, currencyCode = "AUD", exchangeRateToUSD = 0.65, outletType = OUTLET_TYPE_I_240V, continent = Continent.OCEANIA, flagEmoji = "\uD83C\uDDF9\uD83C\uDDFB", passportValidity = PASSPORT_VALIDITY_6_MONTHS)
-        )
+        ).map { it.copy(travelAdvisories = advisoryUrls(it.name, it.continent)) }
     }
 }

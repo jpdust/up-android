@@ -75,7 +75,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.unstampedpages.app.R
-import com.unstampedpages.app.data.model.Continent
 import com.unstampedpages.app.data.model.Country
 import com.unstampedpages.app.ui.theme.Primary
 import kotlinx.coroutines.launch
@@ -298,8 +297,7 @@ private fun CountryHeader(
 @Composable
 private fun SafetyLevelRow(country: Country) {
     val context = LocalContext.current
-    val countrySlug = country.name.lowercase().replace(" ", "-")
-    val continentSlug = country.continent.toSmartravellerSlug()
+    val advisories = country.travelAdvisories
 
     Row(
         modifier = Modifier
@@ -331,49 +329,31 @@ private fun SafetyLevelRow(country: Country) {
             )
         }
 
-        Spacer(modifier = Modifier.width(8.dp))
+        if (advisories != null) {
+            Spacer(modifier = Modifier.width(8.dp))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            TravelAdvisoryChip(
-                label = "US",
-                contentDescription = stringResource(R.string.cd_travel_advisory_us, country.name),
-                onClick = {
-                    openInCustomTab(
-                        context,
-                        "https://travel.state.gov/en/international-travel/travel-advisories/$countrySlug.html"
-                    )
-                }
-            )
-            TravelAdvisoryChip(
-                label = "UK",
-                contentDescription = stringResource(R.string.cd_travel_advisory_uk, country.name),
-                onClick = {
-                    openInCustomTab(
-                        context,
-                        "https://www.gov.uk/foreign-travel-advice/$countrySlug"
-                    )
-                }
-            )
-            TravelAdvisoryChip(
-                label = "AU",
-                contentDescription = stringResource(R.string.cd_travel_advisory_au, country.name),
-                onClick = {
-                    openInCustomTab(
-                        context,
-                        "https://www.smartraveller.gov.au/destinations/$continentSlug/$countrySlug"
-                    )
-                }
-            )
-            TravelAdvisoryChip(
-                label = "CA",
-                contentDescription = stringResource(R.string.cd_travel_advisory_ca, country.name),
-                onClick = {
-                    openInCustomTab(
-                        context,
-                        "https://travel.gc.ca/destinations/$countrySlug"
-                    )
-                }
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                TravelAdvisoryChip(
+                    label = "US",
+                    contentDescription = stringResource(R.string.cd_travel_advisory_us, country.name),
+                    onClick = { openInCustomTab(context, advisories.us) }
+                )
+                TravelAdvisoryChip(
+                    label = "UK",
+                    contentDescription = stringResource(R.string.cd_travel_advisory_uk, country.name),
+                    onClick = { openInCustomTab(context, advisories.uk) }
+                )
+                TravelAdvisoryChip(
+                    label = "AU",
+                    contentDescription = stringResource(R.string.cd_travel_advisory_au, country.name),
+                    onClick = { openInCustomTab(context, advisories.au) }
+                )
+                TravelAdvisoryChip(
+                    label = "CA",
+                    contentDescription = stringResource(R.string.cd_travel_advisory_ca, country.name),
+                    onClick = { openInCustomTab(context, advisories.ca) }
+                )
+            }
         }
     }
 }
@@ -409,16 +389,6 @@ private fun openInCustomTab(context: Context, url: String) {
         .setUrlBarHidingEnabled(false)
         .build()
     customTabsIntent.launchUrl(context, Uri.parse(url))
-}
-
-private fun Continent.toSmartravellerSlug(): String = when (this) {
-    Continent.NORTH_AMERICA -> "americas"
-    Continent.SOUTH_AMERICA -> "americas"
-    Continent.EUROPE -> "europe"
-    Continent.AFRICA -> "africa"
-    Continent.ASIA -> "asia"
-    Continent.OCEANIA -> "pacific"
-    Continent.ANTARCTICA -> "antarctica"
 }
 
 @Composable
