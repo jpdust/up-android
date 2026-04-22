@@ -559,6 +559,8 @@ class WorldMapCanvasTest {
         // Oceania
         assertNotNull(geoJsonToRepoId["AUS"])
         assertNotNull(geoJsonToRepoId["NZL"])
+        // Antarctica
+        assertNotNull(geoJsonToRepoId["ATA"])
     }
 
     @Test
@@ -835,6 +837,22 @@ class WorldMapCanvasTest {
         oceanianCodes.forEach { code ->
             assertNotNull("Should contain $code", geoJsonToRepoId[code])
         }
+    }
+
+    @Test
+    fun `geoJsonToRepoId contains ATA mapping for Antarctica`() {
+        assertEquals("aa", geoJsonToRepoId["ATA"])
+    }
+
+    @Test
+    fun `geoJsonToRepoId ATA maps to repository id aa`() {
+        val repoId = geoJsonToRepoId["ATA"]
+        assertNotNull("ATA should have a repository mapping", repoId)
+        assertEquals(
+            "Antarctica GeoJSON code ATA must map to repository id 'aa'",
+            "aa",
+            repoId
+        )
     }
 
     @Test

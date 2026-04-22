@@ -552,7 +552,9 @@ internal val geoJsonToRepoId = mapOf(
     // Oceania
     "AUS" to "au", "NZL" to "nz", "PNG" to "pg", "FJI" to "fj", "SLB" to "sb",
     "VUT" to "vu", "NCL" to "nc", "KIR" to "ki", "MHL" to "mh", "FSM" to "fm",
-    "NRU" to "nr", "PLW" to "pw", "WSM" to "ws", "TON" to "to", "TUV" to "tv"
+    "NRU" to "nr", "PLW" to "pw", "WSM" to "ws", "TON" to "to", "TUV" to "tv",
+    // Antarctica
+    "ATA" to "aa"
 )
 
 /**
