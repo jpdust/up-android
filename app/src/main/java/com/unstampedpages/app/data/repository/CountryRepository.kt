@@ -328,7 +328,8 @@ class CountryRepository {
             Country(id = "tv", name = "Tuvalu", safetyLevel = SafetyLevel.LOW, visaRequirement = VisaRequirement.VISA_NOT_REQUIRED, currency = CURRENCY_AUSTRALIAN_DOLLAR, currencyCode = "AUD", exchangeRateToUSD = 0.65, outletType = OUTLET_TYPE_I_240V, continent = Continent.OCEANIA, flagEmoji = "\uD83C\uDDF9\uD83C\uDDFB", passportValidity = PASSPORT_VALIDITY_6_MONTHS),
 
             //Antarctica
-            Country(id = "aa", name = "Antarctica", safetyLevel = SafetyLevel.LOW, visaRequirement = VisaRequirement.VISA_NOT_REQUIRED, currency = CURRENCY_US_DOLLAR, currencyCode = "USD", exchangeRateToUSD = 1.0, outletType = OUTLET_TYPE_A_B_C_220V, continent = Continent.ANTARCTICA, flagEmoji = "\uD83C\uDDE6\uD83C\uDDF6", passportValidity = PASSPORT_VALIDITY_6_MONTHS)
+            Country(id = "aa", name = "Antarctica", safetyLevel = SafetyLevel.LOW, visaRequirement = VisaRequirement.VISA_NOT_REQUIRED, currency = CURRENCY_US_DOLLAR, currencyCode = "USD", exchangeRateToUSD = 1.0, outletType = OUTLET_TYPE_A_B_C_220V, continent = Continent.ANTARCTICA, flagEmoji = "\uD83C\uDDE6\uD83C\uDDF6", passportValidity = PASSPORT_VALIDITY_6_MONTHS,
+                travelAdvisories = TravelAdvisories(us = "https://travel.state.gov/en/international-travel/travel-advisories/antarctica.html", uk = "https://www.gov.uk/foreign-travel-advice/antarctica-british-antarctic-territory", au = "https://www.smartraveller.gov.au/before-you-go/activities/antarctica-and-arctic", ca = "https://travel.gc.ca/destinations/antarctica"))
         ).map { country ->
             if (country.travelAdvisories != null) {
                 country
