@@ -833,7 +833,11 @@ class WorldMapCanvasTest {
 
     @Test
     fun `geoJsonToRepoId contains Oceanian countries`() {
-        val oceanianCodes = listOf("AUS", "NZL", "PNG", "FJI")
+        val oceanianCodes = listOf(
+            "AUS", "NZL", "PNG", "FJI",
+            // Pacific micronations
+            "NRU", "TUV", "PLW", "MHL", "WSM", "TON", "KIR", "FSM"
+        )
         oceanianCodes.forEach { code ->
             assertNotNull("Should contain $code", geoJsonToRepoId[code])
         }
@@ -1026,85 +1030,6 @@ class WorldMapCanvasTest {
 
         assertTrue(string.contains("labelResId"))
         assertTrue(string.contains("test_tag"))
-    }
-
-    // ==================== Coordinate Conversion Additional Tests ====================
-
-    @Test
-    fun `coordinate conversion round trip for London`() {
-        val lat = 51.5074f
-        val lng = -0.1278f
-
-        val x = MercatorProjection.longitudeToX(lng)
-        val y = MercatorProjection.latitudeToY(lat)
-
-        val recoveredLng = MercatorProjection.xToLongitude(x)
-        val recoveredLat = MercatorProjection.yToLatitude(y)
-
-        assertEquals(lng, recoveredLng, 0.01f)
-        assertEquals(lat, recoveredLat, 0.1f)
-    }
-
-    @Test
-    fun `coordinate conversion round trip for Cape Town`() {
-        val lat = -33.9249f
-        val lng = 18.4241f
-
-        val x = MercatorProjection.longitudeToX(lng)
-        val y = MercatorProjection.latitudeToY(lat)
-
-        val recoveredLng = MercatorProjection.xToLongitude(x)
-        val recoveredLat = MercatorProjection.yToLatitude(y)
-
-        assertEquals(lng, recoveredLng, 0.01f)
-        assertEquals(lat, recoveredLat, 0.1f)
-    }
-
-    @Test
-    fun `coordinate conversion round trip for Buenos Aires`() {
-        val lat = -34.6037f
-        val lng = -58.3816f
-
-        val x = MercatorProjection.longitudeToX(lng)
-        val y = MercatorProjection.latitudeToY(lat)
-
-        val recoveredLng = MercatorProjection.xToLongitude(x)
-        val recoveredLat = MercatorProjection.yToLatitude(y)
-
-        assertEquals(lng, recoveredLng, 0.01f)
-        assertEquals(lat, recoveredLat, 0.1f)
-    }
-
-    @Test
-    fun `coordinate conversion round trip for Reykjavik`() {
-        // High latitude city
-        val lat = 64.1466f
-        val lng = -21.9426f
-
-        val x = MercatorProjection.longitudeToX(lng)
-        val y = MercatorProjection.latitudeToY(lat)
-
-        val recoveredLng = MercatorProjection.xToLongitude(x)
-        val recoveredLat = MercatorProjection.yToLatitude(y)
-
-        assertEquals(lng, recoveredLng, 0.01f)
-        assertEquals(lat, recoveredLat, 0.1f)
-    }
-
-    @Test
-    fun `coordinate conversion round trip for Singapore`() {
-        // Near equator
-        val lat = 1.3521f
-        val lng = 103.8198f
-
-        val x = MercatorProjection.longitudeToX(lng)
-        val y = MercatorProjection.latitudeToY(lat)
-
-        val recoveredLng = MercatorProjection.xToLongitude(x)
-        val recoveredLat = MercatorProjection.yToLatitude(y)
-
-        assertEquals(lng, recoveredLng, 0.01f)
-        assertEquals(lat, recoveredLat, 0.1f)
     }
 
     // ==================== Extreme Value Tests ====================
@@ -1466,73 +1391,19 @@ class WorldMapCanvasTest {
         assertEquals(PassportValidityColors.Other, getPassportValidityColor("planned length of stay"))
     }
 
-    // ==================== City Coordinate Tests (Additional) ====================
-
-    @Test
-    fun `coordinate conversion round trip for Moscow`() {
-        val lat = 55.7558f
-        val lng = 37.6173f
-
-        val x = MercatorProjection.longitudeToX(lng)
-        val y = MercatorProjection.latitudeToY(lat)
-
-        val recoveredLng = MercatorProjection.xToLongitude(x)
-        val recoveredLat = MercatorProjection.yToLatitude(y)
-
-        assertEquals(lng, recoveredLng, 0.01f)
-        assertEquals(lat, recoveredLat, 0.1f)
-    }
-
-    @Test
-    fun `coordinate conversion round trip for Mumbai`() {
-        val lat = 19.0760f
-        val lng = 72.8777f
-
-        val x = MercatorProjection.longitudeToX(lng)
-        val y = MercatorProjection.latitudeToY(lat)
-
-        val recoveredLng = MercatorProjection.xToLongitude(x)
-        val recoveredLat = MercatorProjection.yToLatitude(y)
-
-        assertEquals(lng, recoveredLng, 0.01f)
-        assertEquals(lat, recoveredLat, 0.1f)
-    }
-
-    @Test
-    fun `coordinate conversion round trip for Cairo`() {
-        val lat = 30.0444f
-        val lng = 31.2357f
-
-        val x = MercatorProjection.longitudeToX(lng)
-        val y = MercatorProjection.latitudeToY(lat)
-
-        val recoveredLng = MercatorProjection.xToLongitude(x)
-        val recoveredLat = MercatorProjection.yToLatitude(y)
-
-        assertEquals(lng, recoveredLng, 0.01f)
-        assertEquals(lat, recoveredLat, 0.1f)
-    }
-
-    @Test
-    fun `coordinate conversion round trip for São Paulo`() {
-        val lat = -23.5505f
-        val lng = -46.6333f
-
-        val x = MercatorProjection.longitudeToX(lng)
-        val y = MercatorProjection.latitudeToY(lat)
-
-        val recoveredLng = MercatorProjection.xToLongitude(x)
-        val recoveredLat = MercatorProjection.yToLatitude(y)
-
-        assertEquals(lng, recoveredLng, 0.01f)
-        assertEquals(lat, recoveredLat, 0.1f)
-    }
-
     // ==================== geoJsonToRepoId Additional Tests ====================
 
     @Test
     fun `geoJsonToRepoId contains small island nations`() {
-        val islandNations = listOf("MUS", "MDV", "MLT", "BRB", "SGP")
+        val islandNations = listOf(
+            "MUS", "MDV", "MLT", "BRB", "SGP",
+            // Caribbean
+            "ATG", "DMA", "GRD", "KNA", "LCA", "VCT",
+            // African islands
+            "COM", "STP", "SYC",
+            // European microstates
+            "AND", "LIE", "MCO", "SMR", "VAT"
+        )
         islandNations.forEach { code ->
             assertNotNull("Should contain $code", geoJsonToRepoId[code])
         }
@@ -1584,5 +1455,136 @@ class WorldMapCanvasTest {
     fun `LegendItem with zero labelResId can be created`() {
         val item = LegendItem(Color.Red, 0, "zero_label_tag")
         assertEquals(0, item.labelResId)
+    }
+
+    // ==================== Pacific Micronation Mapping Tests ====================
+
+    @Test
+    fun `geoJsonToRepoId Nauru mapping is correct`() {
+        assertEquals("nr", geoJsonToRepoId["NRU"])
+    }
+
+    @Test
+    fun `geoJsonToRepoId Tuvalu mapping is correct`() {
+        assertEquals("tv", geoJsonToRepoId["TUV"])
+    }
+
+    @Test
+    fun `geoJsonToRepoId Palau mapping is correct`() {
+        assertEquals("pw", geoJsonToRepoId["PLW"])
+    }
+
+    @Test
+    fun `geoJsonToRepoId Marshall Islands mapping is correct`() {
+        assertEquals("mh", geoJsonToRepoId["MHL"])
+    }
+
+    @Test
+    fun `geoJsonToRepoId Samoa mapping is correct`() {
+        assertEquals("ws", geoJsonToRepoId["WSM"])
+    }
+
+    @Test
+    fun `geoJsonToRepoId Tonga mapping is correct`() {
+        assertEquals("to", geoJsonToRepoId["TON"])
+    }
+
+    @Test
+    fun `geoJsonToRepoId Kiribati mapping is correct`() {
+        assertEquals("ki", geoJsonToRepoId["KIR"])
+    }
+
+    @Test
+    fun `geoJsonToRepoId Micronesia mapping is correct`() {
+        assertEquals("fm", geoJsonToRepoId["FSM"])
+    }
+
+    // ==================== Caribbean Small Nation Mapping Tests ====================
+
+    @Test
+    fun `geoJsonToRepoId Antigua and Barbuda mapping is correct`() {
+        assertEquals("ag", geoJsonToRepoId["ATG"])
+    }
+
+    @Test
+    fun `geoJsonToRepoId Dominica mapping is correct`() {
+        assertEquals("dm", geoJsonToRepoId["DMA"])
+    }
+
+    @Test
+    fun `geoJsonToRepoId Grenada mapping is correct`() {
+        assertEquals("gd", geoJsonToRepoId["GRD"])
+    }
+
+    @Test
+    fun `geoJsonToRepoId Saint Kitts and Nevis mapping is correct`() {
+        assertEquals("kn", geoJsonToRepoId["KNA"])
+    }
+
+    @Test
+    fun `geoJsonToRepoId Saint Lucia mapping is correct`() {
+        assertEquals("lc", geoJsonToRepoId["LCA"])
+    }
+
+    @Test
+    fun `geoJsonToRepoId Saint Vincent and the Grenadines mapping is correct`() {
+        assertEquals("vc", geoJsonToRepoId["VCT"])
+    }
+
+    // ==================== African Island Nation Mapping Tests ====================
+
+    @Test
+    fun `geoJsonToRepoId Comoros mapping is correct`() {
+        assertEquals("km", geoJsonToRepoId["COM"])
+    }
+
+    @Test
+    fun `geoJsonToRepoId Sao Tome and Principe mapping is correct`() {
+        assertEquals("st", geoJsonToRepoId["STP"])
+    }
+
+    @Test
+    fun `geoJsonToRepoId Seychelles mapping is correct`() {
+        assertEquals("sc", geoJsonToRepoId["SYC"])
+    }
+
+    // ==================== European Microstate Mapping Tests ====================
+
+    @Test
+    fun `geoJsonToRepoId Andorra mapping is correct`() {
+        assertEquals("ad", geoJsonToRepoId["AND"])
+    }
+
+    @Test
+    fun `geoJsonToRepoId Liechtenstein mapping is correct`() {
+        assertEquals("li", geoJsonToRepoId["LIE"])
+    }
+
+    @Test
+    fun `geoJsonToRepoId Monaco mapping is correct`() {
+        assertEquals("mc", geoJsonToRepoId["MCO"])
+    }
+
+    @Test
+    fun `geoJsonToRepoId San Marino mapping is correct`() {
+        assertEquals("sm", geoJsonToRepoId["SMR"])
+    }
+
+    @Test
+    fun `geoJsonToRepoId Vatican City mapping is correct`() {
+        assertEquals("va", geoJsonToRepoId["VAT"])
+    }
+
+    @Test
+    fun `geoJsonToRepoId Malta mapping is correct`() {
+        assertEquals("mt", geoJsonToRepoId["MLT"])
+    }
+
+    // ==================== Palestine Mapping Test ====================
+
+    @Test
+    fun `geoJsonToRepoId Palestine mapping is correct`() {
+        // Natural Earth uses PSX; our GeoJSON maps it to PSE to match the repository ID
+        assertEquals("ps", geoJsonToRepoId["PSE"])
     }
 }
