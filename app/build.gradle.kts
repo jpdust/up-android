@@ -17,7 +17,7 @@ android {
         applicationId = "com.unstampedpages.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 20260415
+        versionCode = 20260423
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

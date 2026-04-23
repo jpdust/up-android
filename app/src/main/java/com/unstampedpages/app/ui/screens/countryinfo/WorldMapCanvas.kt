@@ -170,10 +170,10 @@ private fun calculateMultiTouchTransform(
     mapWidth: Float,
     mapHeight: Float
 ): TransformState {
-    val newScale = (current.scale * zoom).coerceIn(1f, 25f)
+    val newScale = (current.scale * zoom).coerceIn(1f, 50f)
     // Scale maxPanY with zoom level to allow panning to map edges at high zoom
     // At scale 1: maxPanY = 0 (no panning needed, full map visible)
-    // At scale 25: maxPanY ≈ 0.98 (can pan to see top/bottom edges)
+    // At scale 50: maxPanY ≈ 0.99 (can pan to see top/bottom edges)
     val maxPanY = if (newScale <= 1f) 0f else (1f - 0.5f / newScale)
     val newPanX = current.panX + pan.x / (mapWidth * newScale)
     val newPanY = current.panY + pan.y / (mapHeight * newScale)
@@ -251,23 +251,58 @@ private class MapGestureState(
     var canvasHeight: Float = 0f,
     var compassCenterX: Float = 0f,
     var compassCenterY: Float = 0f,
-    var compassRadius: Float = 0f
+    var compassRadius: Float = 0f,
+    var countryBounds: Map<String, CountryBounds> = emptyMap(),
+    var currentScale: Float = 1f
 )
 
 /**
- * Process a tap gesture and return the tapped country ID
+ * Process a tap gesture and return the tapped country ID (repo ID).
+ * First tries exact ray-casting, then falls back to proximity for small island nations.
  */
 private fun MapGestureState.processTap(position: Offset): String? {
-    if (!matrixValid || mapLayoutWidth <= 0f || mapLayoutHeight <= 0f) {
-        return null
-    }
-    return screenPositionToCountryId(
+    if (!matrixValid || mapLayoutWidth <= 0f || mapLayoutHeight <= 0f) return null
+
+    // Primary: exact polygon hit test
+    val exact = screenPositionToCountryId(
         screenPosition = position,
         inverseMatrix = inverseMatrix,
         mapWidth = mapLayoutWidth,
         mapHeight = mapLayoutHeight,
         geometries = geometries
     )
+    if (exact != null) return exact
+
+    // Fallback: proximity to small country dot markers
+    val screenPts = floatArrayOf(position.x, position.y)
+    inverseMatrix.mapPoints(screenPts)
+    val normalizedX = normalizeNormalizedX(screenPts[0] / mapLayoutWidth)
+    val normalizedY = screenPts[1] / mapLayoutHeight
+
+    // Convert tap radius from screen pixels to normalised units
+    val tapRadiusNorm = TAP_PROXIMITY_PX / (currentScale * mapLayoutWidth)
+
+    var closestId: String? = null
+    var closestDistSq = tapRadiusNorm * tapRadiusNorm
+
+    for ((countryId, bounds) in countryBounds) {
+        // Only consider countries rendered as dot markers at this zoom level
+        val renderedPx = maxOf(
+            bounds.widthNorm * mapLayoutWidth,
+            bounds.heightNorm * mapLayoutHeight
+        ) * currentScale
+        if (renderedPx > SMALL_COUNTRY_THRESHOLD_PX) continue
+
+        val dx = normalizedX - bounds.centroidNormX
+        val dy = normalizedY - bounds.centroidNormY
+        val distSq = dx * dx + dy * dy
+        if (distSq < closestDistSq) {
+            closestDistSq = distSq
+            closestId = countryId
+        }
+    }
+
+    return closestId?.let { geoJsonToRepoId[it] }
 }
 
 /**
@@ -419,7 +454,8 @@ private data class MapDrawParams(
     val previousColorMode: MapColorMode,
     val transitionProgress: Float,
     val countries: Map<String, Country>,
-    val scale: Float
+    val scale: Float,
+    val countryBounds: Map<String, CountryBounds>
 )
 
 /**
@@ -439,6 +475,56 @@ private data class CountryDrawContext(
     val mapHeight: Float,
     val scale: Float
 )
+
+/** Threshold in screen pixels below which a country polygon is replaced by a dot marker */
+private const val SMALL_COUNTRY_THRESHOLD_PX = 8f
+
+/** Minimum dot radius in dp for guaranteed-visible small country markers */
+private const val MIN_DOT_RADIUS_DP = 3.5f
+
+/** Tap proximity radius in screen pixels for small country hit detection */
+private const val TAP_PROXIMITY_PX = 20f
+
+/**
+ * Pre-computed Mercator bounding box and centroid for a country, in normalised [0,1] coordinates.
+ */
+private data class CountryBounds(
+    val centroidNormX: Float,
+    val centroidNormY: Float,
+    val widthNorm: Float,
+    val heightNorm: Float
+)
+
+/**
+ * Pre-compute bounds for all country geometries once at startup.
+ */
+private fun computeAllCountryBounds(geometries: List<CountryGeometry>): Map<String, CountryBounds> =
+    geometries.associate { geometry ->
+        var minX = Float.MAX_VALUE; var maxX = -Float.MAX_VALUE
+        var minY = Float.MAX_VALUE; var maxY = -Float.MAX_VALUE
+        var sumX = 0f; var sumY = 0f; var count = 0
+
+        geometry.polygons.forEach { polygon ->
+            polygon.forEach { point ->
+                val x = MercatorProjection.longitudeToX(point.lng)
+                val y = MercatorProjection.latitudeToY(point.lat)
+                if (x < minX) minX = x; if (x > maxX) maxX = x
+                if (y < minY) minY = y; if (y > maxY) maxY = y
+                sumX += x; sumY += y; count++
+            }
+        }
+
+        geometry.countryId to if (count > 0) {
+            CountryBounds(
+                centroidNormX = sumX / count,
+                centroidNormY = sumY / count,
+                widthNorm = if (maxX > minX) maxX - minX else 0f,
+                heightNorm = if (maxY > minY) maxY - minY else 0f
+            )
+        } else {
+            CountryBounds(0.5f, 0.5f, 0f, 0f)
+        }
+    }
 
 /**
  * Draw a single copy of the map (used for horizontal wrapping)
@@ -483,12 +569,14 @@ private fun DrawScope.drawMapCopy(
             val isSelected = geometry.countryId == params.selectedCountryId
             val repoId = geoJsonToRepoId[geometry.countryId]
             val country = repoId?.let { params.countries[it] }
+            val bounds = params.countryBounds[geometry.countryId]
             drawCountryMercator(
                 geometry = geometry,
                 isSelected = isSelected,
                 colorTransition = colorTransition,
                 country = country,
-                drawContext = countryDrawContext
+                drawContext = countryDrawContext,
+                bounds = bounds
             )
         }
 
@@ -645,7 +733,9 @@ fun WorldMapCanvas(
     var transform by remember { mutableStateOf(TransformState()) }
     val currentTransform by rememberUpdatedState(transform)
     val geometries = remember { CountryGeometryData.getAllGeometries() }
+    val countryBounds = remember(geometries) { computeAllCountryBounds(geometries) }
     val gestureState = remember { MapGestureState(geometries, android.graphics.Matrix()) }
+    gestureState.countryBounds = countryBounds
 
     // Animation state for color mode transitions
     var previousColorMode by remember { mutableStateOf(colorMode) }
@@ -677,7 +767,8 @@ fun WorldMapCanvas(
         previousColorMode = previousColorMode,
         transitionProgress = transitionProgress,
         countries = countries,
-        scale = transform.scale
+        scale = transform.scale,
+        countryBounds = countryBounds
     )
 
     Box(
@@ -692,6 +783,8 @@ fun WorldMapCanvas(
             gestureState.mapLayoutHeight = layout.mapHeight
             gestureState.canvasWidth = size.width
             gestureState.canvasHeight = size.height
+
+            gestureState.currentScale = transform.scale
 
             // Store compass bounds for tap detection
             val roseSize = 44.dp.toPx()
@@ -808,7 +901,8 @@ private fun DrawScope.drawCountryMercator(
     isSelected: Boolean,
     colorTransition: ColorTransitionState,
     country: Country?,
-    drawContext: CountryDrawContext
+    drawContext: CountryDrawContext,
+    bounds: CountryBounds? = null
 ) {
     // Helper function to get color for a specific mode
     fun getColorForMode(mode: MapColorMode): Color {
@@ -834,28 +928,41 @@ private fun DrawScope.drawCountryMercator(
     val glowWidth = (3.dp.toPx() / drawContext.scale).coerceAtLeast(1.dp.toPx())
     val glowStyle = Stroke(width = glowWidth)
 
-    // Filter valid polygons and draw each one
-    geometry.polygons.filter { it.size >= 3 }.forEach { polygon ->
-        val path = Path().apply {
-            val firstPoint = latLngToMercator(polygon[0], drawContext.mapWidth, drawContext.mapHeight)
-            moveTo(firstPoint.x, firstPoint.y)
+    // Determine whether this country renders too small to see as a polygon
+    val isSmall = bounds != null && run {
+        val w = bounds.widthNorm * drawContext.mapWidth * drawContext.scale
+        val h = bounds.heightNorm * drawContext.mapHeight * drawContext.scale
+        maxOf(w, h) < SMALL_COUNTRY_THRESHOLD_PX
+    }
 
-            for (i in 1 until polygon.size) {
-                val point = latLngToMercator(polygon[i], drawContext.mapWidth, drawContext.mapHeight)
-                lineTo(point.x, point.y)
-            }
-            close()
-        }
-
-        // Draw fill
-        drawPath(path, fillColor, style = Fill)
-
-        // Draw border
-        drawPath(path, strokeColor, style = Stroke(width = strokeWidth))
-
-        // Draw glow effect if selected
+    if (isSmall && bounds != null) {
+        // Draw a guaranteed-visible dot marker at the centroid
+        val cx = bounds.centroidNormX * drawContext.mapWidth
+        val cy = bounds.centroidNormY * drawContext.mapHeight
+        // Keep a constant screen size regardless of zoom by dividing by scale
+        val dotRadius = (MIN_DOT_RADIUS_DP.dp.toPx() / drawContext.scale).coerceAtLeast(1f)
         if (isSelected) {
-            drawPath(path, MapHighlight.copy(alpha = 0.4f), style = glowStyle)
+            drawCircle(MapHighlight.copy(alpha = 0.35f), dotRadius * 4f, Offset(cx, cy))
+        }
+        drawCircle(fillColor, dotRadius, Offset(cx, cy))
+        drawCircle(strokeColor, dotRadius, Offset(cx, cy), style = Stroke(width = strokeWidth))
+    } else {
+        // Filter valid polygons and draw each one
+        geometry.polygons.filter { it.size >= 3 }.forEach { polygon ->
+            val path = Path().apply {
+                val firstPoint = latLngToMercator(polygon[0], drawContext.mapWidth, drawContext.mapHeight)
+                moveTo(firstPoint.x, firstPoint.y)
+                for (i in 1 until polygon.size) {
+                    val point = latLngToMercator(polygon[i], drawContext.mapWidth, drawContext.mapHeight)
+                    lineTo(point.x, point.y)
+                }
+                close()
+            }
+            drawPath(path, fillColor, style = Fill)
+            drawPath(path, strokeColor, style = Stroke(width = strokeWidth))
+            if (isSelected) {
+                drawPath(path, MapHighlight.copy(alpha = 0.4f), style = glowStyle)
+            }
         }
     }
 }
@@ -965,8 +1072,8 @@ private fun DrawScope.drawZoomIndicator(scale: Float) {
         val y = size.height - 12.dp.toPx()
 
         // Zoom indicator bars (more bars = more zoom)
-        // Max zoom is 25x, so scale appropriately for 5 bars
-        val barCount = ((scale - 1f) / 5f).toInt().coerceIn(1, 5)
+        // Max zoom is 50x, so scale appropriately for 5 bars
+        val barCount = ((scale - 1f) / (50f - 1f) * 5f).toInt().coerceIn(1, 5)
         val barWidth = 4.dp.toPx()
         val barSpacing = 3.dp.toPx()
         val maxBarHeight = 16.dp.toPx()
