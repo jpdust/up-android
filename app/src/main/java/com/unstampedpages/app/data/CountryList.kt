@@ -26,6 +26,7 @@ object CountryList {
         CountryListItem("AD", "Andorra"),
         CountryListItem("AO", "Angola"),
         CountryListItem("AG", "Antigua and Barbuda"),
+        CountryListItem("AW", "Aruba"),
         CountryListItem("AR", "Argentina"),
         CountryListItem("AM", "Armenia"),
         CountryListItem("AU", "Australia"),

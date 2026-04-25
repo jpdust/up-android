@@ -170,7 +170,7 @@ private fun calculateMultiTouchTransform(
     mapWidth: Float,
     mapHeight: Float
 ): TransformState {
-    val newScale = (current.scale * zoom).coerceIn(1f, 50f)
+    val newScale = (current.scale * zoom).coerceIn(1f, 200f)
     // Scale maxPanY with zoom level to allow panning to map edges at high zoom
     // At scale 1: maxPanY = 0 (no panning needed, full map visible)
     // At scale 50: maxPanY ≈ 0.99 (can pan to see top/bottom edges)
@@ -242,7 +242,7 @@ internal fun normalizeNormalizedX(x: Float): Float {
  * State holder for map gesture handling
  */
 private class MapGestureState(
-    val geometries: List<CountryGeometry>,
+    var geometries: List<CountryGeometry>,
     val inverseMatrix: android.graphics.Matrix,
     var matrixValid: Boolean = false,
     var mapLayoutWidth: Float = 0f,
@@ -487,13 +487,56 @@ private const val TAP_PROXIMITY_PX = 20f
 
 /**
  * Pre-computed Mercator bounding box and centroid for a country, in normalised [0,1] coordinates.
+ * Stores actual min/max bounds so viewport culling can use exact edge comparisons rather than
+ * centroid ± halfWidth (which is incorrect when the centroid isn't at the bbox center).
  */
 private data class CountryBounds(
     val centroidNormX: Float,
     val centroidNormY: Float,
-    val widthNorm: Float,
-    val heightNorm: Float
-)
+    val minX: Float,
+    val maxX: Float,
+    val minY: Float,
+    val maxY: Float
+) {
+    val widthNorm: Float get() = maxX - minX
+    val heightNorm: Float get() = maxY - minY
+}
+
+/**
+ * Lazily builds and caches Compose Path objects for all country polygons.
+ * Paths are expressed in map-pixel space (0..mapWidth × 0..mapHeight) and are
+ * compatible with withTransform-based zoom/pan, so the same cache is valid for
+ * all three horizontal wrap copies and for any zoom level.
+ * The cache is rebuilt only when mapWidth changes (i.e. on device-rotation,
+ * which is prevented by the portrait lock, so this happens at most once).
+ */
+private class PathCacheHolder {
+    private var builtForWidth: Float = 0f
+    private var cache: Map<String, List<Path>> = emptyMap()
+
+    fun getOrBuild(
+        geometries: List<CountryGeometry>,
+        mapWidth: Float,
+        mapHeight: Float
+    ): Map<String, List<Path>> {
+        if (builtForWidth == mapWidth && cache.isNotEmpty()) return cache
+        builtForWidth = mapWidth
+        cache = geometries.associate { geometry ->
+            geometry.countryId to geometry.polygons.filter { it.size >= 3 }.map { polygon ->
+                Path().apply {
+                    val first = latLngToMercator(polygon[0], mapWidth, mapHeight)
+                    moveTo(first.x, first.y)
+                    for (i in 1 until polygon.size) {
+                        val pt = latLngToMercator(polygon[i], mapWidth, mapHeight)
+                        lineTo(pt.x, pt.y)
+                    }
+                    close()
+                }
+            }
+        }
+        return cache
+    }
+}
 
 /**
  * Pre-compute bounds for all country geometries once at startup.
@@ -518,11 +561,14 @@ private fun computeAllCountryBounds(geometries: List<CountryGeometry>): Map<Stri
             CountryBounds(
                 centroidNormX = sumX / count,
                 centroidNormY = sumY / count,
-                widthNorm = if (maxX > minX) maxX - minX else 0f,
-                heightNorm = if (maxY > minY) maxY - minY else 0f
+                minX = minX,
+                maxX = maxX,
+                minY = minY,
+                maxY = maxY
             )
         } else {
-            CountryBounds(0.5f, 0.5f, 0f, 0f)
+            // Wide defaults so a degenerate geometry is never incorrectly culled
+            CountryBounds(0.5f, 0.5f, 0f, 1f, 0f, 1f)
         }
     }
 
@@ -534,6 +580,7 @@ private fun DrawScope.drawMapCopy(
     transform: TransformState,
     layout: MapLayout,
     params: MapDrawParams,
+    cachedPaths: Map<String, List<Path>>,
     inverseMatrix: android.graphics.Matrix,
     onMatrixCaptured: (Boolean) -> Unit
 ) {
@@ -565,13 +612,15 @@ private fun DrawScope.drawMapCopy(
             mapHeight = layout.mapHeight,
             scale = params.scale
         )
+
         params.geometries.forEach { geometry ->
+            val bounds = params.countryBounds[geometry.countryId]
             val isSelected = geometry.countryId == params.selectedCountryId
             val repoId = geoJsonToRepoId[geometry.countryId]
             val country = repoId?.let { params.countries[it] }
-            val bounds = params.countryBounds[geometry.countryId]
+            val paths = cachedPaths[geometry.countryId] ?: emptyList()
             drawCountryMercator(
-                geometry = geometry,
+                paths = paths,
                 isSelected = isSelected,
                 colorTransition = colorTransition,
                 country = country,
@@ -599,7 +648,7 @@ internal val geoJsonToRepoId = mapOf(
     "HTI" to "ht", "DOM" to "do", "HND" to "hn", "NIC" to "ni", "CRI" to "cr",
     "PAN" to "pa", "JAM" to "jm", "SLV" to "sv", "BLZ" to "bz", "GRL" to "gl",
     "BHS" to "bs", "TTO" to "tt", "ATG" to "ag", "BRB" to "bb", "DMA" to "dm",
-    "GRD" to "gd", "KNA" to "kn", "LCA" to "lc", "VCT" to "vc",
+    "GRD" to "gd", "KNA" to "kn", "LCA" to "lc", "VCT" to "vc", "ABW" to "aw",
     // South America
     "BRA" to "br", "ARG" to "ar", "COL" to "co", "PER" to "pe", "VEN" to "ve",
     "CHL" to "cl", "ECU" to "ec", "BOL" to "bo", "PRY" to "py", "URY" to "uy",
@@ -620,20 +669,20 @@ internal val geoJsonToRepoId = mapOf(
     "GHA" to "gh", "MOZ" to "mz", "CIV" to "ci", "CMR" to "cm", "AGO" to "ao",
     "SEN" to "sn", "ZMB" to "zm", "ZWE" to "zw", "TUN" to "tn", "RWA" to "rw",
     "BWA" to "bw", "NAM" to "na", "LBY" to "ly", "COD" to "cd", "MDG" to "mg",
-    "SOM" to "so", "ABV" to "xso", "BDI" to "bi", "BEN" to "bj", "BFA" to "bf",
+    "SOM" to "so", "SOL" to "xso", "BDI" to "bi", "BEN" to "bj", "BFA" to "bf",
     "CAF" to "cf", "COG" to "cg", "DJI" to "dj", "ERI" to "er", "GAB" to "ga",
     "GIN" to "gn", "GMB" to "gm", "GNB" to "gw", "GNQ" to "gq", "LBR" to "lr",
     "LSO" to "ls", "MLI" to "ml", "MRT" to "mr", "MWI" to "mw", "NER" to "ne",
     "SDS" to "ss", "SLE" to "sl", "SWZ" to "sz", "TCD" to "td", "TGO" to "tg",
     "CPV" to "cv", "COM" to "km", "MUS" to "mu", "STP" to "st", "SYC" to "sc",
-    // Asia
+    // Asia — NE 10m uses PSX for Palestine's ADM0_A3 (ISO_A3=PSE)
     "CHN" to "cn", "JPN" to "jp", "IND" to "in", "THA" to "th", "VNM" to "vn",
     "KOR" to "kr", "IDN" to "id", "PHL" to "ph", "PAK" to "pk", "BGD" to "bd",
     "MYS" to "my", "SGP" to "sg", "MMR" to "mm", "MDV" to "mv", "NPL" to "np", "KHM" to "kh",
     "LAO" to "la", "LKA" to "lk", "TWN" to "tw", "HKG" to "hk", "ARE" to "ae",
     "SAU" to "sa", "ISR" to "il", "IRQ" to "iq", "IRN" to "ir", "AFG" to "af",
     "KAZ" to "kz", "UZB" to "uz", "KGZ" to "kg", "TJK" to "tj", "TKM" to "tm",
-    "JOR" to "jo", "LBN" to "lb", "KWT" to "kw", "PSE" to "ps",
+    "JOR" to "jo", "LBN" to "lb", "KWT" to "kw", "PSX" to "ps",
     "OMN" to "om", "QAT" to "qa", "BHR" to "bh", "AZE" to "az", "GEO" to "ge",
     "ARM" to "am", "MNG" to "mn", "PRK" to "kp", "BRN" to "bn", "BTN" to "bt",
     "TLS" to "tl", "SYR" to "sy", "YEM" to "ye",
@@ -732,9 +781,13 @@ fun WorldMapCanvas(
 ) {
     var transform by remember { mutableStateOf(TransformState()) }
     val currentTransform by rememberUpdatedState(transform)
-    val geometries = remember { CountryGeometryData.getAllGeometries() }
+    // Re-read geometries whenever the async load completes
+    val isLoaded by CountryGeometryData.isLoaded
+    val geometries = remember(isLoaded) { CountryGeometryData.getAllGeometries() }
     val countryBounds = remember(geometries) { computeAllCountryBounds(geometries) }
     val gestureState = remember { MapGestureState(geometries, android.graphics.Matrix()) }
+    val pathCacheHolder = remember { PathCacheHolder() }
+    gestureState.geometries = geometries   // update after async load
     gestureState.countryBounds = countryBounds
 
     // Animation state for color mode transitions
@@ -792,13 +845,18 @@ fun WorldMapCanvas(
             gestureState.compassCenterY = size.height - roseSize / 2 - 12.dp.toPx()
             gestureState.compassRadius = roseSize / 2
 
-            // Draw 3 copies for horizontal wrapping (left, center, right)
+            // Build path cache once per map size (no-op on subsequent frames)
+            val cachedPaths = pathCacheHolder.getOrBuild(geometries, layout.mapWidth, layout.mapHeight)
+
+            // Draw all 3 horizontal copies for seamless wrapping.
+            // Path caching makes all 3 copies cheap to render.
             listOf(-1f, 0f, 1f).forEach { wrapOffset ->
                 drawMapCopy(
                     wrapOffset = wrapOffset,
                     transform = transform,
                     layout = layout,
                     params = drawParams,
+                    cachedPaths = cachedPaths,
                     inverseMatrix = gestureState.inverseMatrix,
                     onMatrixCaptured = { gestureState.matrixValid = it }
                 )
@@ -894,10 +952,10 @@ private fun latLngToMercator(latLng: LatLng, mapWidth: Float, mapHeight: Float):
 }
 
 /**
- * Draw a country using Mercator projection.
+ * Draw a country using pre-built cached paths.
  */
 private fun DrawScope.drawCountryMercator(
-    geometry: CountryGeometry,
+    paths: List<Path>,
     isSelected: Boolean,
     colorTransition: ColorTransitionState,
     country: Country?,
@@ -947,17 +1005,7 @@ private fun DrawScope.drawCountryMercator(
         drawCircle(fillColor, dotRadius, Offset(cx, cy))
         drawCircle(strokeColor, dotRadius, Offset(cx, cy), style = Stroke(width = strokeWidth))
     } else {
-        // Filter valid polygons and draw each one
-        geometry.polygons.filter { it.size >= 3 }.forEach { polygon ->
-            val path = Path().apply {
-                val firstPoint = latLngToMercator(polygon[0], drawContext.mapWidth, drawContext.mapHeight)
-                moveTo(firstPoint.x, firstPoint.y)
-                for (i in 1 until polygon.size) {
-                    val point = latLngToMercator(polygon[i], drawContext.mapWidth, drawContext.mapHeight)
-                    lineTo(point.x, point.y)
-                }
-                close()
-            }
+        paths.forEach { path ->
             drawPath(path, fillColor, style = Fill)
             drawPath(path, strokeColor, style = Stroke(width = strokeWidth))
             if (isSelected) {
@@ -1072,8 +1120,8 @@ private fun DrawScope.drawZoomIndicator(scale: Float) {
         val y = size.height - 12.dp.toPx()
 
         // Zoom indicator bars (more bars = more zoom)
-        // Max zoom is 50x, so scale appropriately for 5 bars
-        val barCount = ((scale - 1f) / (50f - 1f) * 5f).toInt().coerceIn(1, 5)
+        // Max zoom is 200x, so scale appropriately for 5 bars
+        val barCount = ((scale - 1f) / (200f - 1f) * 5f).toInt().coerceIn(1, 5)
         val barWidth = 4.dp.toPx()
         val barSpacing = 3.dp.toPx()
         val maxBarHeight = 16.dp.toPx()
