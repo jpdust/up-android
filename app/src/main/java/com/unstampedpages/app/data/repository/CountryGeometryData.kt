@@ -1,48 +1,62 @@
 package com.unstampedpages.app.data.repository
 
 import android.content.Context
+import androidx.compose.runtime.mutableStateOf
 import com.unstampedpages.app.R
 import com.unstampedpages.app.data.model.CountryGeometry
 import com.unstampedpages.app.util.GeoJsonParser
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Repository for country geometry data loaded from GeoJSON.
- * Provides accurate country borders for the world map.
+ * Initialization is done asynchronously on an IO thread to avoid blocking the main thread
+ * while parsing the high-resolution Natural Earth 10m dataset.
  */
 object CountryGeometryData {
 
-    private var geometries: List<CountryGeometry>? = null
+    private var geometries: List<CountryGeometry> = emptyList()
+
+    /** Compose-observable flag: true once geometry data has been loaded. */
+    val isLoaded = mutableStateOf(false)
 
     /**
-     * Initialize with application context to load GeoJSON data.
-     * Should be called once at app startup.
+     * Asynchronously load geometry data on an IO thread.
+     * Should be called once at app startup (e.g., from MainActivity.onCreate).
+     * Safe to call multiple times; subsequent calls are no-ops.
      */
-    fun initialize(context: Context) {
-        if (geometries == null) {
-            geometries = GeoJsonParser.parseFromResource(
+    fun initializeAsync(context: Context) {
+        if (isLoaded.value) return
+        CoroutineScope(Dispatchers.IO).launch {
+            val loaded = GeoJsonParser.parseFromResource(
                 context.applicationContext,
                 R.raw.world_geo
             )
+            withContext(Dispatchers.Main) {
+                geometries = loaded
+                isLoaded.value = true
+            }
         }
     }
 
     /**
-     * Get all country geometries.
-     * Returns empty list if not initialized.
+     * Synchronous initialization — kept for instrumented tests that run on Android.
      */
-    fun getAllGeometries(): List<CountryGeometry> {
-        return geometries ?: emptyList()
+    fun initialize(context: Context) {
+        if (isLoaded.value) return
+        geometries = GeoJsonParser.parseFromResource(
+            context.applicationContext,
+            R.raw.world_geo
+        )
+        isLoaded.value = true
     }
 
-    /**
-     * Get geometry for a specific country by ID.
-     */
-    fun getGeometryById(countryId: String): CountryGeometry? {
-        return geometries?.find { it.countryId == countryId }
-    }
+    fun getAllGeometries(): List<CountryGeometry> = geometries
 
-    /**
-     * Check if data has been loaded.
-     */
-    fun isInitialized(): Boolean = geometries != null
+    fun getGeometryById(countryId: String): CountryGeometry? =
+        geometries.find { it.countryId == countryId }
+
+    fun isInitialized(): Boolean = isLoaded.value
 }

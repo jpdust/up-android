@@ -1584,7 +1584,7 @@ class WorldMapCanvasTest {
 
     @Test
     fun `geoJsonToRepoId Palestine mapping is correct`() {
-        // Natural Earth uses PSX; our GeoJSON maps it to PSE to match the repository ID
-        assertEquals("ps", geoJsonToRepoId["PSE"])
+        // Natural Earth 10m uses PSX as the ADM0_A3 code for Palestine
+        assertEquals("ps", geoJsonToRepoId["PSX"])
     }
 }

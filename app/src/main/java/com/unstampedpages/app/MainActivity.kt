@@ -14,8 +14,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Initialize country geometry data for world map
-        CountryGeometryData.initialize(this)
+        // Kick off async load of country geometry data (high-resolution 10m dataset)
+        CountryGeometryData.initializeAsync(this)
 
         enableEdgeToEdge()
         setContent {

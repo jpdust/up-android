@@ -1,9 +1,9 @@
 package com.unstampedpages.app.util
 
 import com.unstampedpages.app.data.model.LatLng
-import org.json.JSONException
 import org.junit.Assert.*
 import org.junit.Test
+import java.io.IOException
 
 class GeoJsonParserTest {
 
@@ -263,6 +263,7 @@ class GeoJsonParserTest {
                             "coordinates": [
                                 [
                                     [-73.935242, 40.730610],
+                                    [-73.925242, 40.730610],
                                     [-73.935242, 40.730610]
                                 ]
                             ]
@@ -392,7 +393,7 @@ class GeoJsonParserTest {
     // ==================== Edge Cases Tests ====================
 
     @Test
-    fun `parseGeoJson with Polygon having empty coordinates creates geometry with empty polygon list`() {
+    fun `parseGeoJson with Polygon having empty coordinates skips the feature`() {
         val json = """
             {
                 "type": "FeatureCollection",
@@ -411,12 +412,9 @@ class GeoJsonParserTest {
 
         val result = GeoJsonParser.parseGeoJson(json)
 
-        // Note: The parser creates a CountryGeometry with an empty polygon when coordinates are empty
-        // This differs from MultiPolygon which filters out empty polygons
-        assertEquals(1, result.size)
-        assertEquals("empty", result[0].countryId)
-        assertEquals(1, result[0].polygons.size)
-        assertTrue(result[0].polygons[0].isEmpty())
+        // Streaming parser filters polygons with < 3 points; an empty outer ring
+        // produces no valid polygons, so the feature is skipped entirely.
+        assertTrue(result.isEmpty())
     }
 
     @Test
@@ -534,26 +532,28 @@ class GeoJsonParserTest {
 
     // ==================== Error Handling Tests ====================
 
-    @Test(expected = JSONException::class)
-    fun `parseGeoJson throws JSONException for malformed JSON`() {
+    @Test(expected = IOException::class)
+    fun `parseGeoJson throws IOException for malformed JSON`() {
         val json = "{ invalid json }"
 
         GeoJsonParser.parseGeoJson(json)
     }
 
-    @Test(expected = JSONException::class)
-    fun `parseGeoJson throws JSONException for missing features array`() {
+    @Test
+    fun `parseGeoJson with missing features array returns empty list`() {
         val json = """
             {
                 "type": "FeatureCollection"
             }
         """.trimIndent()
 
-        GeoJsonParser.parseGeoJson(json)
+        // Streaming parser skips unknown keys; no "features" key → returns empty list
+        val result = GeoJsonParser.parseGeoJson(json)
+        assertTrue(result.isEmpty())
     }
 
-    @Test(expected = JSONException::class)
-    fun `parseGeoJson throws JSONException for missing geometry`() {
+    @Test
+    fun `parseGeoJson with missing geometry skips the feature`() {
         val json = """
             {
                 "type": "FeatureCollection",
@@ -566,11 +566,13 @@ class GeoJsonParserTest {
             }
         """.trimIndent()
 
-        GeoJsonParser.parseGeoJson(json)
+        // Streaming parser: geometry is null → feature is skipped → empty list
+        val result = GeoJsonParser.parseGeoJson(json)
+        assertTrue(result.isEmpty())
     }
 
-    @Test(expected = JSONException::class)
-    fun `parseGeoJson throws JSONException for missing id`() {
+    @Test
+    fun `parseGeoJson with missing id skips the feature`() {
         val json = """
             {
                 "type": "FeatureCollection",
@@ -586,7 +588,9 @@ class GeoJsonParserTest {
             }
         """.trimIndent()
 
-        GeoJsonParser.parseGeoJson(json)
+        // Streaming parser: id is null → feature is skipped → empty list
+        val result = GeoJsonParser.parseGeoJson(json)
+        assertTrue(result.isEmpty())
     }
 
     // ==================== Real-world Scenario Tests ====================
