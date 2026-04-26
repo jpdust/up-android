@@ -59,11 +59,14 @@
     <string name="map_mode_security_risk">Risque Sécuritaire</string>
     <string name="map_mode_visa_requirements">Exigences de Visa</string>
     <string name="map_mode_passport_validity">Validité du Passeport</string>
+    <string name="map_mode_yellow_fever">Fièvre jaune</string>
+    <string name="map_mode_malaria">Paludisme</string>
 
     <!-- Map Legend - Safety -->
-    <string name="legend_low_risk">Risque Faible</string>
-    <string name="legend_medium_risk">Risque Moyen</string>
-    <string name="legend_high_risk">Risque Élevé</string>
+    <string name="legend_low_risk">Précautions de sécurité normales</string>
+    <string name="legend_medium_risk">Faire preuve d\'une grande prudence</string>
+    <string name="legend_high_risk">Reconsidérer le voyage</string>
+    <string name="legend_extreme_risk">Ne pas voyager</string>
 
     <!-- Map Legend - Visa Requirements -->
     <string name="legend_visa_not_required">Visa Non Requis</string>
@@ -77,6 +80,10 @@
     <string name="legend_three_months">3 Mois</string>
     <string name="legend_duration_of_stay">Durée du Séjour</string>
     <string name="legend_other">Autre</string>
+    <string name="legend_yellow_fever_required">Vaccination contre la fièvre jaune requise</string>
+    <string name="legend_malaria_risk">Vaccin contre le paludisme recommandé</string>
+
+    <string name="country_map_loading">Chargement des détails de la carte…</string>
 
     <!-- Checklist Screen -->
     <string name="checklist_empty_title">Votre liste est vide</string>
@@ -237,10 +244,10 @@
     <string name="quantity_display">x%d</string>
 
     <!-- Safety Levels -->
-    <string name="safety_low_risk">Risque Faible</string>
-    <string name="safety_medium_risk">Risque Moyen</string>
-    <string name="safety_high_risk">Risque Élevé</string>
-    <string name="safety_extreme_risk">Risque Extrême</string>
+    <string name="safety_low_risk">Précautions de sécurité normales</string>
+    <string name="safety_medium_risk">Faire preuve d\'une grande prudence</string>
+    <string name="safety_high_risk">Reconsidérer le voyage</string>
+    <string name="safety_extreme_risk">Ne pas voyager</string>
 
     <!-- Visa Requirements -->
     <string name="visa_not_required">Visa non requis</string>

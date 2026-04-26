@@ -59,11 +59,14 @@
     <string name="map_mode_security_risk">安全风险</string>
     <string name="map_mode_visa_requirements">签证要求</string>
     <string name="map_mode_passport_validity">护照有效期</string>
+    <string name="map_mode_yellow_fever">黄热病</string>
+    <string name="map_mode_malaria">疟疾</string>
 
     <!-- Map Legend - Safety -->
-    <string name="legend_low_risk">低风险</string>
-    <string name="legend_medium_risk">中风险</string>
-    <string name="legend_high_risk">高风险</string>
+    <string name="legend_low_risk">采取正常安全预防措施</string>
+    <string name="legend_medium_risk">高度谨慎</string>
+    <string name="legend_high_risk">重新考虑旅行</string>
+    <string name="legend_extreme_risk">不要旅行</string>
 
     <!-- Map Legend - Visa Requirements -->
     <string name="legend_visa_not_required">免签证</string>
@@ -77,6 +80,10 @@
     <string name="legend_three_months">3个月</string>
     <string name="legend_duration_of_stay">停留期限</string>
     <string name="legend_other">其他</string>
+    <string name="legend_yellow_fever_required">需要接种黄热病疫苗</string>
+    <string name="legend_malaria_risk">建议接种疟疾疫苗</string>
+
+    <string name="country_map_loading">正在加载地图详情…</string>
 
     <!-- Checklist Screen -->
     <string name="checklist_empty_title">你的清单是空的</string>
@@ -234,10 +241,10 @@
     <string name="quantity_display">x%d</string>
 
     <!-- Safety Levels -->
-    <string name="safety_low_risk">低风险</string>
-    <string name="safety_medium_risk">中风险</string>
-    <string name="safety_high_risk">高风险</string>
-    <string name="safety_extreme_risk">极高风险</string>
+    <string name="safety_low_risk">采取正常安全预防措施</string>
+    <string name="safety_medium_risk">高度谨慎</string>
+    <string name="safety_high_risk">重新考虑旅行</string>
+    <string name="safety_extreme_risk">不要旅行</string>
 
     <!-- Visa Requirements -->
     <string name="visa_not_required">免签证</string>

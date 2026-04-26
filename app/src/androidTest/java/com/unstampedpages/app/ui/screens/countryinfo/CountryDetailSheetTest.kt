@@ -9,7 +9,6 @@ import com.unstampedpages.app.data.model.SafetyLevel
 import com.unstampedpages.app.data.model.TravelAdvisories
 import com.unstampedpages.app.data.model.VisaRequirement
 import com.unstampedpages.app.ui.theme.UnstampedPagesTheme
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -28,7 +27,7 @@ class CountryDetailSheetTest {
         currency: String = "US Dollar",
         exchangeRateToUSD: Double = 1.0,
         visaRequirement: VisaRequirement = VisaRequirement.VISA_NOT_REQUIRED,
-        safetyLevel: SafetyLevel = SafetyLevel.LOW,
+        safetyLevel: SafetyLevel = SafetyLevel.NORMAL_SECURITY_PRECAUTIONS,
         outletType: String = "Type A/B (120V)",
         continent: Continent = Continent.NORTH_AMERICA,
         flagEmoji: String = "\uD83C\uDDFA\uD83C\uDDF8",
@@ -430,7 +429,7 @@ class CountryDetailSheetTest {
     fun countryDetailSheet_showsLowRiskSafetyLevel() {
         val country = createCountry(
             name = "Safe Country",
-            safetyLevel = SafetyLevel.LOW
+            safetyLevel = SafetyLevel.NORMAL_SECURITY_PRECAUTIONS
         )
 
         composeTestRule.setContent {
@@ -444,14 +443,14 @@ class CountryDetailSheetTest {
         }
 
         composeTestRule.onNodeWithText("Safety Level").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Low Risk").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Normal Security Precautions").assertIsDisplayed()
     }
 
     @Test
     fun countryDetailSheet_showsMediumRiskSafetyLevel() {
         val country = createCountry(
             name = "Medium Risk Country",
-            safetyLevel = SafetyLevel.MEDIUM
+            safetyLevel = SafetyLevel.HIGH_DEGREE_CAUTION
         )
 
         composeTestRule.setContent {
@@ -465,14 +464,14 @@ class CountryDetailSheetTest {
         }
 
         composeTestRule.onNodeWithText("Safety Level").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Medium Risk").assertIsDisplayed()
+        composeTestRule.onNodeWithText("High Degree of Caution").assertIsDisplayed()
     }
 
     @Test
     fun countryDetailSheet_showsHighRiskSafetyLevel() {
         val country = createCountry(
             name = "High Risk Country",
-            safetyLevel = SafetyLevel.HIGH
+            safetyLevel = SafetyLevel.RECONSIDER_TRAVEL
         )
 
         composeTestRule.setContent {
@@ -486,14 +485,14 @@ class CountryDetailSheetTest {
         }
 
         composeTestRule.onNodeWithText("Safety Level").assertIsDisplayed()
-        composeTestRule.onNodeWithText("High Risk").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Reconsider Travel").assertIsDisplayed()
     }
 
     @Test
     fun countryDetailSheet_showsExtremeRiskSafetyLevel() {
         val country = createCountry(
             name = "Extreme Risk Country",
-            safetyLevel = SafetyLevel.EXTREME
+            safetyLevel = SafetyLevel.DO_NOT_TRAVEL
         )
 
         composeTestRule.setContent {
@@ -507,7 +506,7 @@ class CountryDetailSheetTest {
         }
 
         composeTestRule.onNodeWithText("Safety Level").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Extreme Risk").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Do Not Travel").assertIsDisplayed()
     }
 
     // ============================================================
@@ -1011,7 +1010,7 @@ class CountryDetailSheetTest {
         // Comprehensive test that all fields are displayed together
         val country = createCountry(
             name = "Germany",
-            safetyLevel = SafetyLevel.LOW,
+            safetyLevel = SafetyLevel.NORMAL_SECURITY_PRECAUTIONS,
             visaRequirement = VisaRequirement.VISA_NOT_REQUIRED,
             currency = "Euro",
             currencyCode = "EUR",
@@ -1769,7 +1768,7 @@ class CountryDetailSheetTest {
 
     @Test
     fun safetyLevelRow_chips_visibleForMediumRisk() {
-        val country = createCountry(safetyLevel = SafetyLevel.MEDIUM)
+        val country = createCountry(safetyLevel = SafetyLevel.HIGH_DEGREE_CAUTION)
 
         composeTestRule.setContent {
             UnstampedPagesTheme {
@@ -1785,7 +1784,7 @@ class CountryDetailSheetTest {
 
     @Test
     fun safetyLevelRow_chips_visibleForHighRisk() {
-        val country = createCountry(safetyLevel = SafetyLevel.HIGH)
+        val country = createCountry(safetyLevel = SafetyLevel.RECONSIDER_TRAVEL)
 
         composeTestRule.setContent {
             UnstampedPagesTheme {
@@ -1801,7 +1800,7 @@ class CountryDetailSheetTest {
 
     @Test
     fun safetyLevelRow_chips_visibleForExtremeRisk() {
-        val country = createCountry(safetyLevel = SafetyLevel.EXTREME)
+        val country = createCountry(safetyLevel = SafetyLevel.DO_NOT_TRAVEL)
 
         composeTestRule.setContent {
             UnstampedPagesTheme {
@@ -2211,7 +2210,7 @@ class CountryDetailSheetTest {
 
     @Test
     fun countryDetailSheet_testTag_safetyLevelValue_matchesSafetyLevel() {
-        val country = createCountry(safetyLevel = SafetyLevel.HIGH)
+        val country = createCountry(safetyLevel = SafetyLevel.RECONSIDER_TRAVEL)
 
         composeTestRule.setContent {
             UnstampedPagesTheme {

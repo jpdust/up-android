@@ -60,11 +60,14 @@
     <string name="map_mode_security_risk">مخاطر أمنية</string>
     <string name="map_mode_visa_requirements">متطلبات التأشيرة</string>
     <string name="map_mode_passport_validity">صلاحية جواز السفر</string>
+    <string name="map_mode_yellow_fever">الحمى الصفراء</string>
+    <string name="map_mode_malaria">الملاريا</string>
 
     <!-- Map Legend - Safety -->
-    <string name="legend_low_risk">مخاطر منخفضة</string>
-    <string name="legend_medium_risk">مخاطر متوسطة</string>
-    <string name="legend_high_risk">مخاطر عالية</string>
+    <string name="legend_low_risk">احتياطات أمنية عادية</string>
+    <string name="legend_medium_risk">درجة عالية من الحذر</string>
+    <string name="legend_high_risk">إعادة النظر في السفر</string>
+    <string name="legend_extreme_risk">عدم السفر</string>
 
     <!-- Map Legend - Visa Requirements -->
     <string name="legend_visa_not_required">لا تتطلب تأشيرة</string>
@@ -78,6 +81,10 @@
     <string name="legend_three_months">٣ أشهر</string>
     <string name="legend_duration_of_stay">مدة الإقامة</string>
     <string name="legend_other">أخرى</string>
+    <string name="legend_yellow_fever_required">التطعيم ضد الحمى الصفراء مطلوب</string>
+    <string name="legend_malaria_risk">يوصى بلقاح الملاريا</string>
+
+    <string name="country_map_loading">جارٍ تحميل تفاصيل الخريطة…</string>
 
     <!-- Checklist Screen -->
     <string name="checklist_empty_title">قائمتك فارغة</string>
@@ -250,10 +257,10 @@
     <string name="quantity_display">x%d</string>
 
     <!-- Safety Levels -->
-    <string name="safety_low_risk">مخاطر منخفضة</string>
-    <string name="safety_medium_risk">مخاطر متوسطة</string>
-    <string name="safety_high_risk">مخاطر عالية</string>
-    <string name="safety_extreme_risk">مخاطر شديدة</string>
+    <string name="safety_low_risk">احتياطات أمنية عادية</string>
+    <string name="safety_medium_risk">درجة عالية من الحذر</string>
+    <string name="safety_high_risk">إعادة النظر في السفر</string>
+    <string name="safety_extreme_risk">عدم السفر</string>
 
     <!-- Visa Requirements -->
     <string name="visa_not_required">لا تتطلب تأشيرة</string>

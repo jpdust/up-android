@@ -61,9 +61,10 @@
     <string name="map_mode_passport_validity">Passport Validity</string>
 
     <!-- Map Legend - Safety -->
-    <string name="legend_low_risk">Low Risk</string>
-    <string name="legend_medium_risk">Medium Risk</string>
-    <string name="legend_high_risk">High Risk</string>
+    <string name="legend_low_risk">Normal Security Precautions</string>
+    <string name="legend_medium_risk">High Degree of Caution</string>
+    <string name="legend_high_risk">Reconsider Travel</string>
+    <string name="legend_extreme_risk">Do Not Travel</string>
 
     <!-- Map Legend - Visa Requirements -->
     <string name="legend_visa_not_required">Visa Not Required</string>
@@ -245,10 +246,10 @@
     <string name="quantity_display">x%d</string>
 
     <!-- Safety Levels -->
-    <string name="safety_low_risk">Low Risk</string>
-    <string name="safety_medium_risk">Medium Risk</string>
-    <string name="safety_high_risk">High Risk</string>
-    <string name="safety_extreme_risk">Extreme Risk</string>
+    <string name="safety_low_risk">Normal Security Precautions</string>
+    <string name="safety_medium_risk">High Degree of Caution</string>
+    <string name="safety_high_risk">Reconsider Travel</string>
+    <string name="safety_extreme_risk">Do Not Travel</string>
 
     <!-- Visa Requirements -->
     <string name="visa_not_required">Visa not required</string>

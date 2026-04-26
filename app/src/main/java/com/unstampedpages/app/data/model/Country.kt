@@ -30,10 +30,10 @@ data class Country(
 )
 
 enum class SafetyLevel(@StringRes val displayNameResId: Int, val color: Color) {
-    LOW(R.string.safety_low_risk, Color(0xFF4CAF50)),
-    MEDIUM(R.string.safety_medium_risk, Color(0xFFFFC107)),
-    HIGH(R.string.safety_high_risk, Color(0xFF8B0000)),
-    EXTREME(R.string.safety_extreme_risk, Color(0xFFFF5722))
+    NORMAL_SECURITY_PRECAUTIONS(R.string.safety_low_risk, Color(0xFF4CAF50)),
+    HIGH_DEGREE_CAUTION(R.string.safety_medium_risk, Color(0xFFFFC107)),
+    RECONSIDER_TRAVEL(R.string.safety_high_risk, Color(0xFFFF9800)),
+    DO_NOT_TRAVEL(R.string.safety_extreme_risk, Color(0xFFE53935))
 }
 
 enum class VisaRequirement(@StringRes val displayNameResId: Int, val color: Color) {
