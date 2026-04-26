@@ -66,6 +66,37 @@ class CountryRepository {
         private const val OUTLET_TYPE_I_240V = "Type I (240V)"
         private const val OUTLET_TYPE_C_F_L_230V = "Type C/F/L (230V)"
 
+        // Countries where Yellow Fever vaccination is required or strongly recommended
+        // (endemic zones per CDC/WHO guidance)
+        private val yellowFeverCountries = setOf(
+            // Sub-Saharan Africa
+            "ng", "ke", "et", "tz", "ug", "gh", "mz", "ci", "cm", "ao", "sn",
+            "zm", "zw", "rw", "cd", "so", "xso", "bi", "bj", "bf", "cf", "cg",
+            "ga", "gn", "gm", "gw", "gq", "lr", "ml", "mr", "mw", "ne", "ss",
+            "sl", "td", "tg", "st", "sd",
+            // Tropical South & Central America
+            "br", "co", "pe", "ec", "bo", "ve", "gy", "sr", "pa", "tt",
+            "gt", "hn", "ni"
+        )
+
+        // Countries with significant malaria risk (CDC recommends prophylaxis)
+        private val malariaRiskCountries = setOf(
+            // Sub-Saharan Africa
+            "ng", "ke", "et", "tz", "ug", "gh", "mz", "ci", "cm", "ao", "sn",
+            "zm", "zw", "rw", "cd", "so", "xso", "bi", "bj", "bf", "cf", "cg",
+            "ga", "gn", "gm", "gw", "gq", "lr", "ml", "mr", "mw", "ne", "ss",
+            "sl", "td", "tg", "st", "sd", "dj", "er", "na", "bw", "sz", "mg",
+            "km", "za",
+            // South & Central America
+            "br", "co", "pe", "ec", "bo", "ve", "gy", "sr", "pa", "gt", "hn",
+            "ni", "bz", "ht", "do", "mx", "cr", "py",
+            // Asia
+            "in", "th", "vn", "id", "ph", "mm", "kh", "la", "pk", "bd", "np",
+            "bt", "tl", "cn", "af", "ye", "sa", "ir",
+            // Oceania
+            "pg", "sb", "vu"
+        )
+
         // Simplified map positions (normalized 0-1 coordinates)
         // In production, these would be actual country polygon data
         val countryMapPositions = listOf(
@@ -339,6 +370,11 @@ class CountryRepository {
                     travelAdvisories = defaultAdvisoryUrls(country.name, country.continent)
                 )
             }
+        }.map { country ->
+            country.copy(
+                yellowFeverRequired = country.id in yellowFeverCountries,
+                malariaRisk = country.id in malariaRiskCountries
+            )
         }
     }
 }

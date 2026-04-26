@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -47,6 +48,7 @@ import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.unstampedpages.app.R
 import com.unstampedpages.app.data.model.Country
+import com.unstampedpages.app.data.repository.CountryGeometryData
 import com.unstampedpages.app.ui.theme.Primary
 import com.unstampedpages.app.ui.theme.Secondary
 
@@ -55,6 +57,7 @@ fun CountryInfoScreen(
     viewModel: CountryInfoViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val isMapLoaded by CountryGeometryData.isLoaded
     var showSheet by remember { mutableStateOf(false) }
     var showLegend by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
@@ -137,6 +140,24 @@ fun CountryInfoScreen(
                             .align(Alignment.BottomStart)
                             .padding(16.dp)
                     )
+                }
+
+                if (!isMapLoaded) {
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .padding(24.dp)
+                            .testTag("world_map_loading"),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        CircularProgressIndicator(color = Secondary)
+                        Text(
+                            text = stringResource(R.string.country_map_loading),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f)
+                        )
+                    }
                 }
             }
 
@@ -305,6 +326,17 @@ private fun MapColorModeSelector(
     onModeSelected: (MapColorMode) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val column1Modes = listOf(
+        MapColorMode.DEFAULT,
+        MapColorMode.SECURITY_RISK,
+        MapColorMode.VISA_REQUIREMENTS,
+        MapColorMode.PASSPORT_VALIDITY
+    )
+    val column2Modes = listOf(
+        MapColorMode.YELLOW_FEVER,
+        MapColorMode.MALARIA
+    )
+
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(12.dp),
@@ -328,32 +360,50 @@ private fun MapColorModeSelector(
                     .testTag("map_view_label")
             )
 
-            MapColorMode.entries.forEach { mode ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onModeSelected(mode) }
-                        .padding(vertical = 1.dp)
-                        .testTag("map_mode_${mode.name.lowercase()}"),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    RadioButton(
-                        selected = selectedMode == mode,
-                        onClick = { onModeSelected(mode) },
-                        colors = RadioButtonDefaults.colors(
-                            selectedColor = Secondary,
-                            unselectedColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                        ),
-                        modifier = Modifier.testTag("map_mode_radio_${mode.name.lowercase()}")
-                    )
-                    Text(
-                        text = stringResource(mode.displayNameResId),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.weight(1f)) {
+                    column1Modes.forEach { mode ->
+                        MapModeRow(mode, selectedMode, onModeSelected)
+                    }
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    column2Modes.forEach { mode ->
+                        MapModeRow(mode, selectedMode, onModeSelected)
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun MapModeRow(
+    mode: MapColorMode,
+    selectedMode: MapColorMode,
+    onModeSelected: (MapColorMode) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onModeSelected(mode) }
+            .padding(vertical = 1.dp)
+            .testTag("map_mode_${mode.name.lowercase()}"),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        RadioButton(
+            selected = selectedMode == mode,
+            onClick = { onModeSelected(mode) },
+            colors = RadioButtonDefaults.colors(
+                selectedColor = Secondary,
+                unselectedColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+            ),
+            modifier = Modifier.testTag("map_mode_radio_${mode.name.lowercase()}")
+        )
+        Text(
+            text = stringResource(mode.displayNameResId),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface
+        )
     }
 }

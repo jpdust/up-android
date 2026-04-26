@@ -653,6 +653,31 @@ class WorldMapCanvasTest {
         assertEquals(0.9999f, result, 0.001f)
     }
 
+    @Test
+    fun `calculateVerticalPanBounds locks pan when not zoomed`() {
+        val bounds = calculateVerticalPanBounds(
+            scale = 1f,
+            mapHeight = 1000f,
+            canvasHeight = 2000f
+        )
+
+        assertEquals(0f, bounds.minPanY, 0.001f)
+        assertEquals(0f, bounds.maxPanY, 0.001f)
+    }
+
+    @Test
+    fun `calculateVerticalPanBounds allows traversing full map at high zoom`() {
+        val bounds = calculateVerticalPanBounds(
+            scale = 200f,
+            mapHeight = 1018.52f,
+            canvasHeight = 2400f
+        )
+
+        assertTrue("Bottom-edge bound should allow substantial upward travel", bounds.minPanY < -0.99f)
+        assertTrue("Top-edge bound should allow substantial downward travel", bounds.maxPanY > 0.99f)
+        assertTrue(bounds.minPanY < bounds.maxPanY)
+    }
+
     // ==================== Additional MercatorProjection Tests ====================
 
     @Test

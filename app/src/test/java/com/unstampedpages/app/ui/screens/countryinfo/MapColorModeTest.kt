@@ -6,9 +6,9 @@ import org.junit.Test
 class MapColorModeTest {
 
     @Test
-    fun `MapColorMode has four values`() {
+    fun `MapColorMode has six values`() {
         val modes = MapColorMode.entries
-        assertEquals(4, modes.size)
+        assertEquals(6, modes.size)
     }
 
     @Test
@@ -32,12 +32,24 @@ class MapColorModeTest {
     }
 
     @Test
+    fun `MapColorMode YELLOW_FEVER has valid displayNameResId`() {
+        assertTrue(MapColorMode.YELLOW_FEVER.displayNameResId != 0)
+    }
+
+    @Test
+    fun `MapColorMode MALARIA has valid displayNameResId`() {
+        assertTrue(MapColorMode.MALARIA.displayNameResId != 0)
+    }
+
+    @Test
     fun `MapColorMode values are in expected order`() {
         val modes = MapColorMode.entries.toList()
         assertEquals(MapColorMode.DEFAULT, modes[0])
         assertEquals(MapColorMode.SECURITY_RISK, modes[1])
         assertEquals(MapColorMode.VISA_REQUIREMENTS, modes[2])
         assertEquals(MapColorMode.PASSPORT_VALIDITY, modes[3])
+        assertEquals(MapColorMode.YELLOW_FEVER, modes[4])
+        assertEquals(MapColorMode.MALARIA, modes[5])
     }
 
     @Test
@@ -61,6 +73,16 @@ class MapColorModeTest {
     }
 
     @Test
+    fun `MapColorMode valueOf works for YELLOW_FEVER`() {
+        assertEquals(MapColorMode.YELLOW_FEVER, MapColorMode.valueOf("YELLOW_FEVER"))
+    }
+
+    @Test
+    fun `MapColorMode valueOf works for MALARIA`() {
+        assertEquals(MapColorMode.MALARIA, MapColorMode.valueOf("MALARIA"))
+    }
+
+    @Test
     fun `all displayNameResIds are valid`() {
         MapColorMode.entries.forEach { mode ->
             assertTrue(
@@ -78,6 +100,17 @@ class MapColorModeTest {
             resourceIds.size,
             resourceIds.distinct().size
         )
+    }
+
+    @Test
+    fun `MapColorMode has four original values plus two health modes`() {
+        val modes = MapColorMode.entries
+        assertTrue(modes.contains(MapColorMode.DEFAULT))
+        assertTrue(modes.contains(MapColorMode.SECURITY_RISK))
+        assertTrue(modes.contains(MapColorMode.VISA_REQUIREMENTS))
+        assertTrue(modes.contains(MapColorMode.PASSPORT_VALIDITY))
+        assertTrue(modes.contains(MapColorMode.YELLOW_FEVER))
+        assertTrue(modes.contains(MapColorMode.MALARIA))
     }
 
     // ==================== Ordinal Tests ====================
@@ -100,6 +133,16 @@ class MapColorModeTest {
     @Test
     fun `PASSPORT_VALIDITY has ordinal 3`() {
         assertEquals(3, MapColorMode.PASSPORT_VALIDITY.ordinal)
+    }
+
+    @Test
+    fun `YELLOW_FEVER has ordinal 4`() {
+        assertEquals(4, MapColorMode.YELLOW_FEVER.ordinal)
+    }
+
+    @Test
+    fun `MALARIA has ordinal 5`() {
+        assertEquals(5, MapColorMode.MALARIA.ordinal)
     }
 
     // ==================== Invalid valueOf Tests ====================
@@ -147,20 +190,20 @@ class MapColorModeTest {
     fun `entries can be iterated with forEach`() {
         var count = 0
         MapColorMode.entries.forEach { _ -> count++ }
-        assertEquals(4, count)
+        assertEquals(6, count)
     }
 
     @Test
     fun `entries can be filtered`() {
         val nonDefaultModes = MapColorMode.entries.filter { it != MapColorMode.DEFAULT }
-        assertEquals(3, nonDefaultModes.size)
+        assertEquals(5, nonDefaultModes.size)
         assertFalse(nonDefaultModes.contains(MapColorMode.DEFAULT))
     }
 
     @Test
     fun `entries can be mapped to displayNameResIds`() {
         val resourceIds = MapColorMode.entries.map { it.displayNameResId }
-        assertEquals(4, resourceIds.size)
+        assertEquals(6, resourceIds.size)
         resourceIds.forEach { resId ->
             assertTrue("Resource ID should be non-zero", resId != 0)
         }
@@ -188,9 +231,9 @@ class MapColorModeTest {
     }
 
     @Test
-    fun `non-DEFAULT modes count is 3`() {
+    fun `non-DEFAULT modes count is 5`() {
         val nonDefaultCount = MapColorMode.entries.count { it != MapColorMode.DEFAULT }
-        assertEquals(3, nonDefaultCount)
+        assertEquals(5, nonDefaultCount)
     }
 
     // ==================== Legend-Related Mode Tests ====================
@@ -232,8 +275,18 @@ class MapColorModeTest {
     }
 
     @Test
-    fun `PASSPORT_VALIDITY is the last mode`() {
-        assertEquals(MapColorMode.PASSPORT_VALIDITY, MapColorMode.entries.last())
+    fun `PASSPORT_VALIDITY is less than YELLOW_FEVER`() {
+        assertTrue(MapColorMode.PASSPORT_VALIDITY < MapColorMode.YELLOW_FEVER)
+    }
+
+    @Test
+    fun `YELLOW_FEVER is less than MALARIA`() {
+        assertTrue(MapColorMode.YELLOW_FEVER < MapColorMode.MALARIA)
+    }
+
+    @Test
+    fun `MALARIA is the last mode`() {
+        assertEquals(MapColorMode.MALARIA, MapColorMode.entries.last())
     }
 
     // ==================== HashCode Tests ====================
@@ -274,6 +327,16 @@ class MapColorModeTest {
         assertEquals("PASSPORT_VALIDITY", MapColorMode.PASSPORT_VALIDITY.toString())
     }
 
+    @Test
+    fun `toString returns enum name for YELLOW_FEVER`() {
+        assertEquals("YELLOW_FEVER", MapColorMode.YELLOW_FEVER.toString())
+    }
+
+    @Test
+    fun `toString returns enum name for MALARIA`() {
+        assertEquals("MALARIA", MapColorMode.MALARIA.toString())
+    }
+
     // ==================== When Expression Coverage Tests ====================
 
     @Test
@@ -284,6 +347,8 @@ class MapColorModeTest {
                 MapColorMode.SECURITY_RISK -> "security"
                 MapColorMode.VISA_REQUIREMENTS -> "visa"
                 MapColorMode.PASSPORT_VALIDITY -> "passport"
+                MapColorMode.YELLOW_FEVER -> "yellow_fever"
+                MapColorMode.MALARIA -> "malaria"
             }
             assertTrue(result.isNotEmpty())
         }
@@ -298,9 +363,11 @@ class MapColorModeTest {
                 MapColorMode.SECURITY_RISK -> "Shows safety level colors"
                 MapColorMode.VISA_REQUIREMENTS -> "Shows visa requirement colors"
                 MapColorMode.PASSPORT_VALIDITY -> "Shows passport validity colors"
+                MapColorMode.YELLOW_FEVER -> "Shows yellow fever vaccination requirement"
+                MapColorMode.MALARIA -> "Shows malaria risk areas"
             }
         }
-        assertEquals(4, descriptions.size)
+        assertEquals(6, descriptions.size)
     }
 
     // ==================== Display Name Resource ID Tests ====================
@@ -319,5 +386,15 @@ class MapColorModeTest {
     fun `each mode has a distinct displayNameResId`() {
         val resourceIds = MapColorMode.entries.map { it.displayNameResId }.toSet()
         assertEquals(MapColorMode.entries.size, resourceIds.size)
+    }
+
+    @Test
+    fun `YELLOW_FEVER name property returns YELLOW_FEVER`() {
+        assertEquals("YELLOW_FEVER", MapColorMode.YELLOW_FEVER.name)
+    }
+
+    @Test
+    fun `MALARIA name property returns MALARIA`() {
+        assertEquals("MALARIA", MapColorMode.MALARIA.name)
     }
 }
