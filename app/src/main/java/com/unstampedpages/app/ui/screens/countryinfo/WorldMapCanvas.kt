@@ -1211,7 +1211,8 @@ internal fun getLegendItems(colorMode: MapColorMode): List<LegendItem> {
         MapColorMode.SECURITY_RISK -> listOf(
             LegendItem(Color(0xFF4CAF50), R.string.legend_low_risk, "legend_item_low_risk"),
             LegendItem(Color(0xFFFFC107), R.string.legend_medium_risk, "legend_item_medium_risk"),
-            LegendItem(Color(0xFF8B0000), R.string.legend_high_risk, "legend_item_high_risk")
+            LegendItem(Color(0xFFFF9800), R.string.legend_high_risk, "legend_item_high_risk"),
+            LegendItem(Color(0xFFE53935), R.string.legend_extreme_risk, "legend_item_extreme_risk")
         )
         MapColorMode.VISA_REQUIREMENTS -> listOf(
             LegendItem(Color(0xFF4CAF50), R.string.legend_visa_not_required, "legend_item_visa_not_required"),
@@ -1292,17 +1293,42 @@ private fun MapLegend(
                 label = "legendContentTransition"
             ) { mode ->
                 val legendItems = getLegendItems(mode)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    legendItems.forEach { item ->
-                        LegendItemView(
-                            item = item,
-                            modifier = Modifier.testTag(item.testTag)
-                        )
+                if (mode == MapColorMode.SECURITY_RISK) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        legendItems.chunked(2).forEach { rowItems ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                rowItems.forEach { item ->
+                                    LegendItemView(
+                                        item = item,
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .testTag(item.testTag)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        legendItems.forEach { item ->
+                            LegendItemView(
+                                item = item,
+                                modifier = Modifier.testTag(item.testTag)
+                            )
+                        }
                     }
                 }
             }

@@ -332,9 +332,9 @@ class WorldMapCanvasTest {
     }
 
     @Test
-    fun `getLegendItems returns 3 items for SECURITY_RISK mode`() {
+    fun `getLegendItems returns 4 items for SECURITY_RISK mode`() {
         val items = getLegendItems(MapColorMode.SECURITY_RISK)
-        assertEquals(3, items.size)
+        assertEquals(4, items.size)
     }
 
     @Test
@@ -350,9 +350,15 @@ class WorldMapCanvasTest {
     }
 
     @Test
-    fun `getLegendItems SECURITY_RISK contains High Risk`() {
+    fun `getLegendItems SECURITY_RISK contains Reconsider Travel`() {
         val items = getLegendItems(MapColorMode.SECURITY_RISK)
         assertTrue(items.any { it.labelResId == R.string.legend_high_risk })
+    }
+
+    @Test
+    fun `getLegendItems SECURITY_RISK contains Do Not Travel`() {
+        val items = getLegendItems(MapColorMode.SECURITY_RISK)
+        assertTrue(items.any { it.labelResId == R.string.legend_extreme_risk })
     }
 
     @Test
@@ -932,10 +938,12 @@ class WorldMapCanvasTest {
         val lowRisk = items.find { it.labelResId == R.string.legend_low_risk }
         val mediumRisk = items.find { it.labelResId == R.string.legend_medium_risk }
         val highRisk = items.find { it.labelResId == R.string.legend_high_risk }
+        val extremeRisk = items.find { it.labelResId == R.string.legend_extreme_risk }
 
         assertEquals(Color(0xFF4CAF50), lowRisk?.color)    // Green
         assertEquals(Color(0xFFFFC107), mediumRisk?.color) // Yellow
-        assertEquals(Color(0xFF8B0000), highRisk?.color)   // Dark Red
+        assertEquals(Color(0xFFFF9800), highRisk?.color)   // Orange
+        assertEquals(Color(0xFFE53935), extremeRisk?.color) // Red
     }
 
     @Test

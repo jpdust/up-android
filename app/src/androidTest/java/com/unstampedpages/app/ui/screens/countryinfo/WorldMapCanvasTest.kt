@@ -72,7 +72,7 @@ class WorldMapCanvasTest {
     // ==================== Security Risk Legend Content Tests ====================
 
     @Test
-    fun worldMapCanvas_securityRiskLegend_showsLowRisk() {
+    fun worldMapCanvas_securityRiskLegend_showsNormalSecurityPrecautions() {
         composeTestRule.setContent {
             UnstampedPagesTheme {
                 WorldMapCanvas(
@@ -86,11 +86,11 @@ class WorldMapCanvasTest {
         }
 
         composeTestRule.onNodeWithTag("legend_item_low_risk").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Low Risk").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Normal Security Precautions").assertIsDisplayed()
     }
 
     @Test
-    fun worldMapCanvas_securityRiskLegend_showsMediumRisk() {
+    fun worldMapCanvas_securityRiskLegend_showsHighDegreeOfCaution() {
         composeTestRule.setContent {
             UnstampedPagesTheme {
                 WorldMapCanvas(
@@ -104,11 +104,11 @@ class WorldMapCanvasTest {
         }
 
         composeTestRule.onNodeWithTag("legend_item_medium_risk").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Medium Risk").assertIsDisplayed()
+        composeTestRule.onNodeWithText("High Degree of Caution").assertIsDisplayed()
     }
 
     @Test
-    fun worldMapCanvas_securityRiskLegend_showsHighRisk() {
+    fun worldMapCanvas_securityRiskLegend_showsReconsiderTravel() {
         composeTestRule.setContent {
             UnstampedPagesTheme {
                 WorldMapCanvas(
@@ -122,11 +122,29 @@ class WorldMapCanvasTest {
         }
 
         composeTestRule.onNodeWithTag("legend_item_high_risk").assertIsDisplayed()
-        composeTestRule.onNodeWithText("High Risk").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Reconsider Travel").assertIsDisplayed()
     }
 
     @Test
-    fun worldMapCanvas_securityRiskLegend_showsAllThreeItems() {
+    fun worldMapCanvas_securityRiskLegend_showsDoNotTravel() {
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                WorldMapCanvas(
+                    selectedCountryId = null,
+                    onCountryTapped = {},
+                    colorMode = MapColorMode.SECURITY_RISK,
+                    legendConfig = MapLegendConfig(showLegend = true),
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithTag("legend_item_extreme_risk").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Do Not Travel").assertIsDisplayed()
+    }
+
+    @Test
+    fun worldMapCanvas_securityRiskLegend_showsAllFourItems() {
         composeTestRule.setContent {
             UnstampedPagesTheme {
                 WorldMapCanvas(
@@ -142,6 +160,7 @@ class WorldMapCanvasTest {
         composeTestRule.onNodeWithTag("legend_item_low_risk").assertIsDisplayed()
         composeTestRule.onNodeWithTag("legend_item_medium_risk").assertIsDisplayed()
         composeTestRule.onNodeWithTag("legend_item_high_risk").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("legend_item_extreme_risk").assertIsDisplayed()
     }
 
     // ==================== Visa Requirements Legend Content Tests ====================

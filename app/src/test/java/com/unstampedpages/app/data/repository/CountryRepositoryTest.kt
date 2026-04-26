@@ -1,6 +1,7 @@
 package com.unstampedpages.app.data.repository
 
 import com.unstampedpages.app.data.model.Continent
+import com.unstampedpages.app.data.model.SafetyLevel
 import com.unstampedpages.app.data.model.VisaRequirement
 import org.junit.Assert.*
 import org.junit.Before
@@ -157,7 +158,7 @@ class CountryRepositoryTest {
         countries.forEach { country ->
             assertNotNull(country.safetyLevel)
             // Check that safetyLevel name is one of the expected values
-            val validLevels = listOf("LOW", "MEDIUM", "HIGH", "EXTREME")
+            val validLevels = listOf("NORMAL_SECURITY_PRECAUTIONS", "HIGH_DEGREE_CAUTION", "RECONSIDER_TRAVEL", "DO_NOT_TRAVEL")
             assertTrue(validLevels.contains(country.safetyLevel.name))
         }
     }
@@ -332,8 +333,17 @@ class CountryRepositoryTest {
         assertEquals("Japan", japan?.name)
         assertEquals(Continent.ASIA, japan?.continent)
         assertEquals("JPY", japan?.currencyCode)
-        assertEquals("LOW", japan?.safetyLevel?.name)
+        assertEquals("NORMAL_SECURITY_PRECAUTIONS", japan?.safetyLevel?.name)
         assertEquals("Planned length of stay", japan?.passportValidity)
+    }
+
+    @Test
+    fun `state department overrides apply to representative countries`() {
+        assertEquals(SafetyLevel.RECONSIDER_TRAVEL, repository.getCountryById("gt")?.safetyLevel)
+        assertEquals(SafetyLevel.DO_NOT_TRAVEL, repository.getCountryById("ht")?.safetyLevel)
+        assertEquals(SafetyLevel.HIGH_DEGREE_CAUTION, repository.getCountryById("gb")?.safetyLevel)
+        assertEquals(SafetyLevel.RECONSIDER_TRAVEL, repository.getCountryById("ae")?.safetyLevel)
+        assertEquals(SafetyLevel.HIGH_DEGREE_CAUTION, repository.getCountryById("aa")?.safetyLevel)
     }
 
     @Test
@@ -494,16 +504,16 @@ class CountryRepositoryTest {
     @Test
     fun `high risk countries have HIGH safety level`() {
         val countries = repository.getAllCountries()
-        val highRiskCountries = countries.filter {
-            it.safetyLevel == com.unstampedpages.app.data.model.SafetyLevel.HIGH ||
-            it.safetyLevel == com.unstampedpages.app.data.model.SafetyLevel.EXTREME
+        val RECONSIDERTRAVELRiskCountries = countries.filter {
+            it.safetyLevel == com.unstampedpages.app.data.model.SafetyLevel.RECONSIDER_TRAVEL ||
+            it.safetyLevel == com.unstampedpages.app.data.model.SafetyLevel.DO_NOT_TRAVEL
         }
 
         // Just verify we can filter and that these countries exist
-        highRiskCountries.forEach { country ->
+        RECONSIDERTRAVELRiskCountries.forEach { country ->
             assertTrue(
-                country.safetyLevel == com.unstampedpages.app.data.model.SafetyLevel.HIGH ||
-                country.safetyLevel == com.unstampedpages.app.data.model.SafetyLevel.EXTREME
+                country.safetyLevel == com.unstampedpages.app.data.model.SafetyLevel.RECONSIDER_TRAVEL ||
+                country.safetyLevel == com.unstampedpages.app.data.model.SafetyLevel.DO_NOT_TRAVEL
             )
         }
     }

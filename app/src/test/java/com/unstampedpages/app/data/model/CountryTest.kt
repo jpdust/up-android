@@ -1,5 +1,6 @@
 package com.unstampedpages.app.data.model
 
+import androidx.compose.ui.graphics.Color
 import com.unstampedpages.app.R
 import org.junit.Assert.*
 import org.junit.Test
@@ -11,7 +12,7 @@ class CountryTest {
         val country = Country(
             id = "us",
             name = "United States",
-            safetyLevel = SafetyLevel.LOW,
+            safetyLevel = SafetyLevel.NORMAL_SECURITY_PRECAUTIONS,
             visaRequirement = VisaRequirement.RESTRICTED,
             currency = "US Dollar",
             currencyCode = "USD",
@@ -23,7 +24,7 @@ class CountryTest {
 
         assertEquals("us", country.id)
         assertEquals("United States", country.name)
-        assertEquals(SafetyLevel.LOW, country.safetyLevel)
+        assertEquals(SafetyLevel.NORMAL_SECURITY_PRECAUTIONS, country.safetyLevel)
         assertEquals(VisaRequirement.RESTRICTED, country.visaRequirement)
         assertEquals("US Dollar", country.currency)
         assertEquals("USD", country.currencyCode)
@@ -39,7 +40,7 @@ class CountryTest {
         val country = Country(
             id = "fr",
             name = "France",
-            safetyLevel = SafetyLevel.LOW,
+            safetyLevel = SafetyLevel.NORMAL_SECURITY_PRECAUTIONS,
             visaRequirement = VisaRequirement.VISA_NOT_REQUIRED,
             currency = "Euro",
             currencyCode = "EUR",
@@ -58,7 +59,7 @@ class CountryTest {
         val country = Country(
             id = "jp",
             name = "Japan",
-            safetyLevel = SafetyLevel.LOW,
+            safetyLevel = SafetyLevel.NORMAL_SECURITY_PRECAUTIONS,
             visaRequirement = VisaRequirement.VISA_NOT_REQUIRED,
             currency = "Yen",
             currencyCode = "JPY",
@@ -77,7 +78,7 @@ class CountryTest {
         val original = Country(
             id = "jp",
             name = "Japan",
-            safetyLevel = SafetyLevel.LOW,
+            safetyLevel = SafetyLevel.NORMAL_SECURITY_PRECAUTIONS,
             visaRequirement = VisaRequirement.VISA_NOT_REQUIRED,
             currency = "Yen",
             currencyCode = "JPY",
@@ -99,7 +100,7 @@ class CountryTest {
         val country1 = Country(
             id = "de",
             name = "Germany",
-            safetyLevel = SafetyLevel.LOW,
+            safetyLevel = SafetyLevel.NORMAL_SECURITY_PRECAUTIONS,
             visaRequirement = VisaRequirement.VISA_NOT_REQUIRED,
             currency = "Euro",
             currencyCode = "EUR",
@@ -112,7 +113,7 @@ class CountryTest {
         val country2 = Country(
             id = "de",
             name = "Germany",
-            safetyLevel = SafetyLevel.LOW,
+            safetyLevel = SafetyLevel.NORMAL_SECURITY_PRECAUTIONS,
             visaRequirement = VisaRequirement.VISA_NOT_REQUIRED,
             currency = "Euro",
             currencyCode = "EUR",
@@ -131,40 +132,50 @@ class SafetyLevelTest {
 
     @Test
     fun `SafetyLevel LOW has correct displayNameResId`() {
-        assertEquals(R.string.safety_low_risk, SafetyLevel.LOW.displayNameResId)
+        assertEquals(R.string.safety_low_risk, SafetyLevel.NORMAL_SECURITY_PRECAUTIONS.displayNameResId)
     }
 
     @Test
     fun `SafetyLevel MEDIUM has correct displayNameResId`() {
-        assertEquals(R.string.safety_medium_risk, SafetyLevel.MEDIUM.displayNameResId)
+        assertEquals(R.string.safety_medium_risk, SafetyLevel.HIGH_DEGREE_CAUTION.displayNameResId)
     }
 
     @Test
     fun `SafetyLevel HIGH has correct displayNameResId`() {
-        assertEquals(R.string.safety_high_risk, SafetyLevel.HIGH.displayNameResId)
+        assertEquals(R.string.safety_high_risk, SafetyLevel.RECONSIDER_TRAVEL.displayNameResId)
     }
 
     @Test
     fun `SafetyLevel EXTREME has correct displayNameResId`() {
-        assertEquals(R.string.safety_extreme_risk, SafetyLevel.EXTREME.displayNameResId)
+        assertEquals(R.string.safety_extreme_risk, SafetyLevel.DO_NOT_TRAVEL.displayNameResId)
+    }
+
+    @Test
+    fun `SafetyLevel HIGH uses orange advisory color`() {
+        assertEquals(Color(0xFFFF9800), SafetyLevel.RECONSIDER_TRAVEL.color)
+    }
+
+    @Test
+    fun `SafetyLevel EXTREME uses red advisory color`() {
+        assertEquals(Color(0xFFE53935), SafetyLevel.DO_NOT_TRAVEL.color)
     }
 
     @Test
     fun `SafetyLevel values returns all levels`() {
         val values = SafetyLevel.values()
         assertEquals(4, values.size)
-        assertTrue(values.contains(SafetyLevel.LOW))
-        assertTrue(values.contains(SafetyLevel.MEDIUM))
-        assertTrue(values.contains(SafetyLevel.HIGH))
-        assertTrue(values.contains(SafetyLevel.EXTREME))
+        assertTrue(values.contains(SafetyLevel.NORMAL_SECURITY_PRECAUTIONS))
+        assertTrue(values.contains(SafetyLevel.HIGH_DEGREE_CAUTION))
+        assertTrue(values.contains(SafetyLevel.RECONSIDER_TRAVEL))
+        assertTrue(values.contains(SafetyLevel.DO_NOT_TRAVEL))
     }
 
     @Test
     fun `SafetyLevel valueOf returns correct enum`() {
-        assertEquals(SafetyLevel.LOW, SafetyLevel.valueOf("LOW"))
-        assertEquals(SafetyLevel.MEDIUM, SafetyLevel.valueOf("MEDIUM"))
-        assertEquals(SafetyLevel.HIGH, SafetyLevel.valueOf("HIGH"))
-        assertEquals(SafetyLevel.EXTREME, SafetyLevel.valueOf("EXTREME"))
+        assertEquals(SafetyLevel.NORMAL_SECURITY_PRECAUTIONS, SafetyLevel.valueOf("NORMAL_SECURITY_PRECAUTIONS"))
+        assertEquals(SafetyLevel.HIGH_DEGREE_CAUTION, SafetyLevel.valueOf("HIGH_DEGREE_CAUTION"))
+        assertEquals(SafetyLevel.RECONSIDER_TRAVEL, SafetyLevel.valueOf("RECONSIDER_TRAVEL"))
+        assertEquals(SafetyLevel.DO_NOT_TRAVEL, SafetyLevel.valueOf("DO_NOT_TRAVEL"))
     }
 }
 
