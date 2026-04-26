@@ -40,6 +40,7 @@
     <!-- Country Info Screen -->
     <string name="country_search_placeholder">Search for a country/territory…</string>
     <string name="country_map_instructions">Pinch to zoom • Drag to pan</string>
+    <string name="country_map_loading">Loading map details…</string>
     <string name="country_map_view">Map View</string>
     <string name="country_map_key">Map Key</string>
 
@@ -76,6 +77,14 @@
     <string name="legend_three_months">3 Months</string>
     <string name="legend_duration_of_stay">Duration of Stay</string>
     <string name="legend_other">Other</string>
+
+    <!-- Map Color Modes - Health -->
+    <string name="map_mode_yellow_fever">Yellow Fever</string>
+    <string name="map_mode_malaria">Malaria</string>
+
+    <!-- Map Legend - Health -->
+    <string name="legend_yellow_fever_required">Yellow Fever Vaccination Required</string>
+    <string name="legend_malaria_risk">Malaria Vaccine Recommended</string>
 
     <!-- Checklist Screen -->
     <string name="checklist_empty_title">Your checklist is empty</string>

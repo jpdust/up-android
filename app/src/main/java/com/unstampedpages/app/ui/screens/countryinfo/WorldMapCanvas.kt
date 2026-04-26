@@ -11,7 +11,6 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculatePan
@@ -20,12 +19,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -69,7 +66,6 @@ import com.unstampedpages.app.data.model.Country
 import com.unstampedpages.app.data.model.CountryGeometry
 import com.unstampedpages.app.data.model.LatLng
 import com.unstampedpages.app.data.model.VisaRequirement
-import com.unstampedpages.app.data.model.isPointInPolygon
 import com.unstampedpages.app.data.repository.CountryGeometryData
 import com.unstampedpages.app.ui.theme.MapBorder
 import com.unstampedpages.app.ui.theme.MapHighlight
@@ -79,7 +75,6 @@ import androidx.compose.ui.graphics.nativeCanvas
 import kotlin.math.atan
 import kotlin.math.exp
 import kotlin.math.ln
-import kotlin.math.sinh
 import kotlin.math.tan
 
 /**
@@ -89,7 +84,9 @@ enum class MapColorMode(@StringRes val displayNameResId: Int) {
     DEFAULT(R.string.map_mode_default),
     SECURITY_RISK(R.string.map_mode_security_risk),
     VISA_REQUIREMENTS(R.string.map_mode_visa_requirements),
-    PASSPORT_VALIDITY(R.string.map_mode_passport_validity)
+    PASSPORT_VALIDITY(R.string.map_mode_passport_validity),
+    YELLOW_FEVER(R.string.map_mode_yellow_fever),
+    MALARIA(R.string.map_mode_malaria)
 }
 
 /**
@@ -118,6 +115,11 @@ private data class TransformState(
     val scale: Float = 1f,
     val panX: Float = 0f,
     val panY: Float = 0f
+)
+
+internal data class VerticalPanBounds(
+    val minPanY: Float,
+    val maxPanY: Float
 )
 
 /**
@@ -168,20 +170,22 @@ private fun calculateMultiTouchTransform(
     zoom: Float,
     pan: Offset,
     mapWidth: Float,
-    mapHeight: Float
+    mapHeight: Float,
+    canvasHeight: Float
 ): TransformState {
     val newScale = (current.scale * zoom).coerceIn(1f, 200f)
-    // Scale maxPanY with zoom level to allow panning to map edges at high zoom
-    // At scale 1: maxPanY = 0 (no panning needed, full map visible)
-    // At scale 50: maxPanY ≈ 0.99 (can pan to see top/bottom edges)
-    val maxPanY = if (newScale <= 1f) 0f else (1f - 0.5f / newScale)
+    val verticalPanBounds = calculateVerticalPanBounds(
+        scale = newScale,
+        mapHeight = mapHeight,
+        canvasHeight = canvasHeight
+    )
     val newPanX = current.panX + pan.x / (mapWidth * newScale)
     val newPanY = current.panY + pan.y / (mapHeight * newScale)
 
     return TransformState(
         scale = newScale,
         panX = normalizeOffsetX(newPanX),
-        panY = newPanY.coerceIn(-maxPanY, maxPanY)
+        panY = newPanY.coerceIn(verticalPanBounds.minPanY, verticalPanBounds.maxPanY)
     )
 }
 
@@ -192,16 +196,40 @@ private fun calculateSingleTouchTransform(
     current: TransformState,
     panDelta: Offset,
     mapWidth: Float,
-    mapHeight: Float
+    mapHeight: Float,
+    canvasHeight: Float
 ): TransformState {
-    // Scale maxPanY with zoom level to allow panning to map edges at high zoom
-    val maxPanY = if (current.scale <= 1f) 0f else (1f - 0.5f / current.scale)
+    val verticalPanBounds = calculateVerticalPanBounds(
+        scale = current.scale,
+        mapHeight = mapHeight,
+        canvasHeight = canvasHeight
+    )
     val newPanX = current.panX + panDelta.x / (mapWidth * current.scale)
     val newPanY = current.panY + panDelta.y / (mapHeight * current.scale)
 
     return current.copy(
         panX = normalizeOffsetX(newPanX),
-        panY = newPanY.coerceIn(-maxPanY, maxPanY)
+        panY = newPanY.coerceIn(verticalPanBounds.minPanY, verticalPanBounds.maxPanY)
+    )
+}
+
+internal fun calculateVerticalPanBounds(
+    scale: Float,
+    mapHeight: Float,
+    canvasHeight: Float
+): VerticalPanBounds {
+    if (scale <= 1f || mapHeight <= 0f) {
+        return VerticalPanBounds(minPanY = 0f, maxPanY = 0f)
+    }
+
+    // Once zoomed in, allow traversing the full projection instead of keeping the map tightly framed.
+    // With wrap rendering restored, a wider symmetric clamp is safer than edge-fitting math that can
+    // stop the user early on tall screens.
+    val maxPanDistance = 1f - 0.5f / scale
+
+    return VerticalPanBounds(
+        minPanY = -maxPanDistance,
+        maxPanY = maxPanDistance
     )
 }
 
@@ -329,6 +357,7 @@ private data class GestureResult(
 private fun handleMultiTouch(
     event: androidx.compose.ui.input.pointer.PointerEvent,
     layout: MapLayout,
+    canvasHeight: Float,
     currentTransform: () -> TransformState,
     onTransformChange: (TransformState) -> Unit
 ) {
@@ -338,7 +367,8 @@ private fun handleMultiTouch(
             zoom = event.calculateZoom(),
             pan = event.calculatePan(),
             mapWidth = layout.mapWidth,
-            mapHeight = layout.mapHeight
+            mapHeight = layout.mapHeight,
+            canvasHeight = canvasHeight
         )
     )
     event.changes.forEach { it.consume() }
@@ -351,6 +381,7 @@ private fun handleSingleTouch(
     change: androidx.compose.ui.input.pointer.PointerInputChange,
     currentDragDistance: Float,
     layout: MapLayout,
+    canvasHeight: Float,
     currentTransform: () -> TransformState,
     onTransformChange: (TransformState) -> Unit
 ): GestureResult {
@@ -370,7 +401,8 @@ private fun handleSingleTouch(
             current = currentTransform(),
             panDelta = panDelta,
             mapWidth = layout.mapWidth,
-            mapHeight = layout.mapHeight
+            mapHeight = layout.mapHeight,
+            canvasHeight = canvasHeight
         )
     )
     return GestureResult(wasDragged = true, dragDistance = newDragDistance)
@@ -392,7 +424,8 @@ private fun Modifier.mapGestures(
         val downPosition = down.position
         var totalDragDistance = 0f
         var wasDragged = false
-        val layout = calculateMapLayout(size.width.toFloat(), size.height.toFloat())
+        val canvasHeight = size.height.toFloat()
+        val layout = calculateMapLayout(size.width.toFloat(), canvasHeight)
 
         do {
             val event = awaitPointerEvent()
@@ -401,11 +434,11 @@ private fun Modifier.mapGestures(
             when {
                 changes.size > 1 -> {
                     wasDragged = true
-                    handleMultiTouch(event, layout, currentTransform, onTransformChange)
+                    handleMultiTouch(event, layout, canvasHeight, currentTransform, onTransformChange)
                 }
                 changes.size == 1 -> {
                     val result = handleSingleTouch(
-                        changes.first(), totalDragDistance, layout, currentTransform, onTransformChange
+                        changes.first(), totalDragDistance, layout, canvasHeight, currentTransform, onTransformChange
                     )
                     totalDragDistance = result.dragDistance
                     wasDragged = wasDragged || result.wasDragged
@@ -445,35 +478,38 @@ internal fun getPassportValidityColor(passportValidity: String?): Color {
 }
 
 /**
- * Parameters for drawing the map content
+ * Pre-compute fill colors for every country geometry for a given mode.
+ * Called at most once per unique (mode, countries) pair and cached via remember().
+ * Eliminates per-country per-frame branching in the hot draw path.
+ */
+private fun computeModeColors(
+    mode: MapColorMode,
+    countries: Map<String, Country>
+): Map<String, Color> = buildMap(geoJsonToRepoId.size) {
+    geoJsonToRepoId.forEach { (geoJsonId, repoId) ->
+        val country = countries[repoId]
+        put(geoJsonId, when {
+            mode == MapColorMode.SECURITY_RISK && country != null -> country.safetyLevel.color
+            mode == MapColorMode.VISA_REQUIREMENTS && country != null -> getVisaRequirementColor(country.visaRequirement)
+            mode == MapColorMode.PASSPORT_VALIDITY -> getPassportValidityColor(country?.passportValidity)
+            mode == MapColorMode.YELLOW_FEVER && country != null && country.yellowFeverRequired -> Color(0xFFFFEB3B)
+            mode == MapColorMode.MALARIA && country != null && country.malariaRisk -> Color(0xFFE53935)
+            else -> MapLand
+        })
+    }
+}
+
+/**
+ * Parameters for drawing the map content.
+ * Color data is excluded — it is passed as pre-computed maps to avoid
+ * per-country per-frame recalculation.
  */
 private data class MapDrawParams(
     val geometries: List<CountryGeometry>,
     val selectedCountryId: String?,
-    val colorMode: MapColorMode,
-    val previousColorMode: MapColorMode,
     val transitionProgress: Float,
-    val countries: Map<String, Country>,
     val scale: Float,
     val countryBounds: Map<String, CountryBounds>
-)
-
-/**
- * Color transition state for animated color mode changes
- */
-private data class ColorTransitionState(
-    val colorMode: MapColorMode,
-    val previousColorMode: MapColorMode,
-    val transitionProgress: Float
-)
-
-/**
- * Drawing context with map dimensions and scale
- */
-private data class CountryDrawContext(
-    val mapWidth: Float,
-    val mapHeight: Float,
-    val scale: Float
 )
 
 /** Threshold in screen pixels below which a country polygon is replaced by a dot marker */
@@ -490,7 +526,7 @@ private const val TAP_PROXIMITY_PX = 20f
  * Stores actual min/max bounds so viewport culling can use exact edge comparisons rather than
  * centroid ± halfWidth (which is incorrect when the centroid isn't at the bbox center).
  */
-private data class CountryBounds(
+internal data class CountryBounds(
     val centroidNormX: Float,
     val centroidNormY: Float,
     val minX: Float,
@@ -503,26 +539,30 @@ private data class CountryBounds(
 }
 
 /**
- * Lazily builds and caches Compose Path objects for all country polygons.
+ * Lazily builds and caches Compose Path objects for country polygons on demand.
  * Paths are expressed in map-pixel space (0..mapWidth × 0..mapHeight) and are
  * compatible with withTransform-based zoom/pan, so the same cache is valid for
  * all three horizontal wrap copies and for any zoom level.
- * The cache is rebuilt only when mapWidth changes (i.e. on device-rotation,
- * which is prevented by the portrait lock, so this happens at most once).
+ * The cache is rebuilt only when the map size changes.
  */
 private class PathCacheHolder {
     private var builtForWidth: Float = 0f
-    private var cache: Map<String, List<Path>> = emptyMap()
+    private var builtForHeight: Float = 0f
+    private val cache = mutableMapOf<String, List<Path>>()
 
     fun getOrBuild(
-        geometries: List<CountryGeometry>,
+        geometry: CountryGeometry,
         mapWidth: Float,
         mapHeight: Float
-    ): Map<String, List<Path>> {
-        if (builtForWidth == mapWidth && cache.isNotEmpty()) return cache
-        builtForWidth = mapWidth
-        cache = geometries.associate { geometry ->
-            geometry.countryId to geometry.polygons.filter { it.size >= 3 }.map { polygon ->
+    ): List<Path> {
+        if (builtForWidth != mapWidth || builtForHeight != mapHeight) {
+            builtForWidth = mapWidth
+            builtForHeight = mapHeight
+            cache.clear()
+        }
+
+        return cache.getOrPut(geometry.countryId) {
+            geometry.polygons.filter { it.size >= 3 }.map { polygon ->
                 Path().apply {
                     val first = latLngToMercator(polygon[0], mapWidth, mapHeight)
                     moveTo(first.x, first.y)
@@ -534,7 +574,6 @@ private class PathCacheHolder {
                 }
             }
         }
-        return cache
     }
 }
 
@@ -573,18 +612,29 @@ private fun computeAllCountryBounds(geometries: List<CountryGeometry>): Map<Stri
     }
 
 /**
- * Draw a single copy of the map (used for horizontal wrapping)
+ * Draw a single copy of the map (used for horizontal wrapping).
+ * Viewport culling skips invisible map copies and individual countries,
+ * cutting draw calls from 720 to only what is actually on screen.
  */
 private fun DrawScope.drawMapCopy(
     wrapOffset: Float,
     transform: TransformState,
     layout: MapLayout,
     params: MapDrawParams,
-    cachedPaths: Map<String, List<Path>>,
+    pathCacheHolder: PathCacheHolder,
+    currentModeColors: Map<String, Color>,
+    previousModeColors: Map<String, Color>,
+    normalStroke: Stroke,
+    selectedStroke: Stroke,
+    glowStyle: Stroke,
+    dotRadius: Float,
+    canvasWidth: Float,
+    canvasHeight: Float,
     inverseMatrix: android.graphics.Matrix,
     onMatrixCaptured: (Boolean) -> Unit
 ) {
     val effectivePanX = transform.panX + wrapOffset
+    val useTransition = params.transitionProgress < 1f
 
     withTransform({
         translate(layout.canvasOffsetX + 0.5f * layout.mapWidth, layout.canvasOffsetY + 0.5f * layout.mapHeight)
@@ -602,30 +652,36 @@ private fun DrawScope.drawMapCopy(
         drawMercatorGrid(layout.mapWidth, layout.mapHeight, params.scale)
 
         // Countries
-        val colorTransition = ColorTransitionState(
-            colorMode = params.colorMode,
-            previousColorMode = params.previousColorMode,
-            transitionProgress = params.transitionProgress
-        )
-        val countryDrawContext = CountryDrawContext(
-            mapWidth = layout.mapWidth,
-            mapHeight = layout.mapHeight,
-            scale = params.scale
-        )
-
         params.geometries.forEach { geometry ->
             val bounds = params.countryBounds[geometry.countryId]
             val isSelected = geometry.countryId == params.selectedCountryId
-            val repoId = geoJsonToRepoId[geometry.countryId]
-            val country = repoId?.let { params.countries[it] }
-            val paths = cachedPaths[geometry.countryId] ?: emptyList()
+            val fillColor = when {
+                isSelected -> MapHighlight
+                useTransition -> {
+                    val prev = previousModeColors[geometry.countryId] ?: MapLand
+                    val curr = currentModeColors[geometry.countryId] ?: MapLand
+                    lerp(prev, curr, params.transitionProgress)
+                }
+                else -> currentModeColors[geometry.countryId] ?: MapLand
+            }
+
+            val paths = pathCacheHolder.getOrBuild(
+                geometry = geometry,
+                mapWidth = layout.mapWidth,
+                mapHeight = layout.mapHeight
+            )
             drawCountryMercator(
                 paths = paths,
                 isSelected = isSelected,
-                colorTransition = colorTransition,
-                country = country,
-                drawContext = countryDrawContext,
-                bounds = bounds
+                fillColor = fillColor,
+                normalStroke = normalStroke,
+                selectedStroke = selectedStroke,
+                glowStyle = glowStyle,
+                bounds = bounds,
+                mapWidth = layout.mapWidth,
+                mapHeight = layout.mapHeight,
+                scale = params.scale,
+                dotRadius = dotRadius
             )
         }
 
@@ -812,14 +868,16 @@ fun WorldMapCanvas(
 
     val transitionProgress = if (previousColorMode == colorMode) 1f else animationProgress
 
-    // Don't use remember here - animated values need to trigger Canvas redraw on each frame
+    // Pre-compute fill colors for all countries — O(240) work, cached until mode or countries change.
+    // Eliminates per-country per-frame branching in the hot draw path.
+    val currentModeColors = remember(colorMode, countries) { computeModeColors(colorMode, countries) }
+    val previousModeColors = remember(previousColorMode, countries) { computeModeColors(previousColorMode, countries) }
+
+    // Don't use remember here — animated values must trigger Canvas redraw on each frame
     val drawParams = MapDrawParams(
         geometries = geometries,
         selectedCountryId = selectedCountryId,
-        colorMode = colorMode,
-        previousColorMode = previousColorMode,
         transitionProgress = transitionProgress,
-        countries = countries,
         scale = transform.scale,
         countryBounds = countryBounds
     )
@@ -845,18 +903,33 @@ fun WorldMapCanvas(
             gestureState.compassCenterY = size.height - roseSize / 2 - 12.dp.toPx()
             gestureState.compassRadius = roseSize / 2
 
-            // Build path cache once per map size (no-op on subsequent frames)
-            val cachedPaths = pathCacheHolder.getOrBuild(geometries, layout.mapWidth, layout.mapHeight)
+            // Pre-compute stroke objects once per frame — 3 allocations instead of 720+
+            val scale = transform.scale
+            val baseStrokeWidth = 0.4f.dp.toPx()
+            val normalStroke = Stroke(width = (baseStrokeWidth / scale).coerceAtLeast(0.1f.dp.toPx()))
+            val selectedStroke = Stroke(width = (1.5f.dp.toPx() / scale).coerceAtLeast(0.5f.dp.toPx()))
+            val glowStyle = Stroke(width = (3.dp.toPx() / scale).coerceAtLeast(1.dp.toPx()))
+            val dotRadius = (MIN_DOT_RADIUS_DP.dp.toPx() / scale).coerceAtLeast(1f)
+            val canvasWidth = size.width
+            val canvasHeight = size.height
 
             // Draw all 3 horizontal copies for seamless wrapping.
-            // Path caching makes all 3 copies cheap to render.
+            // Viewport culling skips copies that are entirely off-screen.
             listOf(-1f, 0f, 1f).forEach { wrapOffset ->
                 drawMapCopy(
                     wrapOffset = wrapOffset,
                     transform = transform,
                     layout = layout,
                     params = drawParams,
-                    cachedPaths = cachedPaths,
+                    pathCacheHolder = pathCacheHolder,
+                    currentModeColors = currentModeColors,
+                    previousModeColors = previousModeColors,
+                    normalStroke = normalStroke,
+                    selectedStroke = selectedStroke,
+                    glowStyle = glowStyle,
+                    dotRadius = dotRadius,
+                    canvasWidth = canvasWidth,
+                    canvasHeight = canvasHeight,
                     inverseMatrix = gestureState.inverseMatrix,
                     onMatrixCaptured = { gestureState.matrixValid = it }
                 )
@@ -953,61 +1026,43 @@ private fun latLngToMercator(latLng: LatLng, mapWidth: Float, mapHeight: Float):
 
 /**
  * Draw a country using pre-built cached paths.
+ * Fill color and stroke objects are pre-computed by the caller — no per-country allocations.
  */
 private fun DrawScope.drawCountryMercator(
     paths: List<Path>,
     isSelected: Boolean,
-    colorTransition: ColorTransitionState,
-    country: Country?,
-    drawContext: CountryDrawContext,
-    bounds: CountryBounds? = null
+    fillColor: Color,
+    normalStroke: Stroke,
+    selectedStroke: Stroke,
+    glowStyle: Stroke,
+    bounds: CountryBounds?,
+    mapWidth: Float,
+    mapHeight: Float,
+    scale: Float,
+    dotRadius: Float
 ) {
-    // Helper function to get color for a specific mode
-    fun getColorForMode(mode: MapColorMode): Color {
-        return when {
-            isSelected -> MapHighlight
-            mode == MapColorMode.SECURITY_RISK && country != null -> country.safetyLevel.color
-            mode == MapColorMode.VISA_REQUIREMENTS && country != null -> getVisaRequirementColor(country.visaRequirement)
-            mode == MapColorMode.PASSPORT_VALIDITY -> getPassportValidityColor(country?.passportValidity)
-            else -> MapLand
-        }
-    }
-
-    // Get colors for previous and current modes, then blend based on transition progress
-    val previousColor = getColorForMode(colorTransition.previousColorMode)
-    val currentColor = getColorForMode(colorTransition.colorMode)
-    val fillColor = if (isSelected) MapHighlight else lerp(previousColor, currentColor, colorTransition.transitionProgress)
     val strokeColor = if (isSelected) MapHighlight.copy(alpha = 0.9f) else MapBorder
-    // Scale border width inversely with zoom - thinner borders at higher zoom levels
-    // Base width is 0.4dp, scales down to 0.1dp at max zoom (25x)
-    val baseStrokeWidth = 0.4f.dp.toPx()
-    val scaledStrokeWidth = (baseStrokeWidth / drawContext.scale).coerceAtLeast(0.1f.dp.toPx())
-    val strokeWidth = if (isSelected) (1.5f.dp.toPx() / drawContext.scale).coerceAtLeast(0.5f.dp.toPx()) else scaledStrokeWidth
-    val glowWidth = (3.dp.toPx() / drawContext.scale).coerceAtLeast(1.dp.toPx())
-    val glowStyle = Stroke(width = glowWidth)
 
     // Determine whether this country renders too small to see as a polygon
     val isSmall = bounds != null && run {
-        val w = bounds.widthNorm * drawContext.mapWidth * drawContext.scale
-        val h = bounds.heightNorm * drawContext.mapHeight * drawContext.scale
+        val w = bounds.widthNorm * mapWidth * scale
+        val h = bounds.heightNorm * mapHeight * scale
         maxOf(w, h) < SMALL_COUNTRY_THRESHOLD_PX
     }
 
     if (isSmall && bounds != null) {
         // Draw a guaranteed-visible dot marker at the centroid
-        val cx = bounds.centroidNormX * drawContext.mapWidth
-        val cy = bounds.centroidNormY * drawContext.mapHeight
-        // Keep a constant screen size regardless of zoom by dividing by scale
-        val dotRadius = (MIN_DOT_RADIUS_DP.dp.toPx() / drawContext.scale).coerceAtLeast(1f)
+        val cx = bounds.centroidNormX * mapWidth
+        val cy = bounds.centroidNormY * mapHeight
         if (isSelected) {
             drawCircle(MapHighlight.copy(alpha = 0.35f), dotRadius * 4f, Offset(cx, cy))
         }
         drawCircle(fillColor, dotRadius, Offset(cx, cy))
-        drawCircle(strokeColor, dotRadius, Offset(cx, cy), style = Stroke(width = strokeWidth))
+        drawCircle(strokeColor, dotRadius, Offset(cx, cy), style = normalStroke)
     } else {
         paths.forEach { path ->
             drawPath(path, fillColor, style = Fill)
-            drawPath(path, strokeColor, style = Stroke(width = strokeWidth))
+            drawPath(path, strokeColor, style = if (isSelected) selectedStroke else normalStroke)
             if (isSelected) {
                 drawPath(path, MapHighlight.copy(alpha = 0.4f), style = glowStyle)
             }
@@ -1170,6 +1225,12 @@ internal fun getLegendItems(colorMode: MapColorMode): List<LegendItem> {
             LegendItem(Color(0xFF00BCD4), R.string.legend_three_months, "legend_item_3_months"),
             LegendItem(Color(0xFF4CAF50), R.string.legend_duration_of_stay, "legend_item_duration_of_stay"),
             LegendItem(Color(0xFFFFC107), R.string.legend_other, "legend_item_other")
+        )
+        MapColorMode.YELLOW_FEVER -> listOf(
+            LegendItem(Color(0xFFFFEB3B), R.string.legend_yellow_fever_required, "legend_item_yellow_fever")
+        )
+        MapColorMode.MALARIA -> listOf(
+            LegendItem(Color(0xFFE53935), R.string.legend_malaria_risk, "legend_item_malaria")
         )
     }
 }

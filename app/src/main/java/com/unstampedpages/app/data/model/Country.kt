@@ -24,7 +24,9 @@ data class Country(
     val flagEmoji: String,
     val travelAdvisories: TravelAdvisories? = null,
     val imageUrl: String? = null,
-    val passportValidity: String? = null
+    val passportValidity: String? = null,
+    val yellowFeverRequired: Boolean = false,
+    val malariaRisk: Boolean = false
 )
 
 enum class SafetyLevel(@StringRes val displayNameResId: Int, val color: Color) {
