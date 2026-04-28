@@ -37,6 +37,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -72,6 +73,11 @@ import com.unstampedpages.app.ui.theme.MapHighlight
 import com.unstampedpages.app.ui.theme.MapLand
 import com.unstampedpages.app.ui.theme.MapOcean
 import androidx.compose.ui.graphics.nativeCanvas
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.atan
 import kotlin.math.exp
 import kotlin.math.ln
@@ -234,26 +240,56 @@ internal fun calculateVerticalPanBounds(
 }
 
 /**
- * Convert screen tap position to country ID
+ * Pure hit-test function — safe to call on any thread.
+ *
+ * All mutable state is passed as value parameters so the caller can snapshot them on the
+ * main thread and then dispatch this function to [Dispatchers.Default] without races.
+ * The matrix is supplied as a pre-read 9-float array and reconstructed here to avoid
+ * sharing the live [android.graphics.Matrix] object across threads.
+ *
+ * Returns the repo country ID (e.g. "fr") or null if no country was hit.
  */
-private fun screenPositionToCountryId(
-    screenPosition: Offset,
-    inverseMatrix: android.graphics.Matrix,
+private fun hitTestCountry(
+    position: Offset,
+    matrixValues: FloatArray,
     mapWidth: Float,
     mapHeight: Float,
-    geometries: List<CountryGeometry>
+    geometries: List<CountryGeometry>,
+    countryBounds: Map<String, CountryBounds>,
+    currentScale: Float
 ): String? {
-    val screenPts = floatArrayOf(screenPosition.x, screenPosition.y)
+    val inverseMatrix = android.graphics.Matrix().apply { setValues(matrixValues) }
+    val screenPts = floatArrayOf(position.x, position.y)
     inverseMatrix.mapPoints(screenPts)
-
-    var normalizedX = screenPts[0] / mapWidth
+    val normalizedX = normalizeNormalizedX(screenPts[0] / mapWidth)
     val normalizedY = screenPts[1] / mapHeight
 
-    // Wrap X for horizontal continuity
-    normalizedX = normalizeNormalizedX(normalizedX)
+    // Primary: exact polygon ray-cast
+    val geoJsonId = findCountryAtNormalizedPoint(normalizedX, normalizedY, geometries, countryBounds)
+    if (geoJsonId != null) return geoJsonToRepoId[geoJsonId]
 
-    val geoJsonId = findCountryAtNormalizedPoint(normalizedX, normalizedY, geometries)
-    return geoJsonId?.let { geoJsonToRepoId[it] }
+    // Fallback: proximity to small dot-marker countries
+    val tapRadiusNorm = TAP_PROXIMITY_PX / (currentScale * mapWidth)
+    var closestId: String? = null
+    var closestDistSq = tapRadiusNorm * tapRadiusNorm
+
+    for ((countryId, bounds) in countryBounds) {
+        // Only consider countries rendered as dot markers at this zoom level
+        val renderedPx = maxOf(
+            bounds.widthNorm * mapWidth,
+            bounds.heightNorm * mapHeight
+        ) * currentScale
+        if (renderedPx > SMALL_COUNTRY_THRESHOLD_PX) continue
+
+        val dx = normalizedX - bounds.centroidNormX
+        val dy = normalizedY - bounds.centroidNormY
+        val distSq = dx * dx + dy * dy
+        if (distSq < closestDistSq) {
+            closestDistSq = distSq
+            closestId = countryId
+        }
+    }
+    return closestId?.let { geoJsonToRepoId[it] }
 }
 
 /**
@@ -283,55 +319,6 @@ private class MapGestureState(
     var countryBounds: Map<String, CountryBounds> = emptyMap(),
     var currentScale: Float = 1f
 )
-
-/**
- * Process a tap gesture and return the tapped country ID (repo ID).
- * First tries exact ray-casting, then falls back to proximity for small island nations.
- */
-private fun MapGestureState.processTap(position: Offset): String? {
-    if (!matrixValid || mapLayoutWidth <= 0f || mapLayoutHeight <= 0f) return null
-
-    // Primary: exact polygon hit test
-    val exact = screenPositionToCountryId(
-        screenPosition = position,
-        inverseMatrix = inverseMatrix,
-        mapWidth = mapLayoutWidth,
-        mapHeight = mapLayoutHeight,
-        geometries = geometries
-    )
-    if (exact != null) return exact
-
-    // Fallback: proximity to small country dot markers
-    val screenPts = floatArrayOf(position.x, position.y)
-    inverseMatrix.mapPoints(screenPts)
-    val normalizedX = normalizeNormalizedX(screenPts[0] / mapLayoutWidth)
-    val normalizedY = screenPts[1] / mapLayoutHeight
-
-    // Convert tap radius from screen pixels to normalised units
-    val tapRadiusNorm = TAP_PROXIMITY_PX / (currentScale * mapLayoutWidth)
-
-    var closestId: String? = null
-    var closestDistSq = tapRadiusNorm * tapRadiusNorm
-
-    for ((countryId, bounds) in countryBounds) {
-        // Only consider countries rendered as dot markers at this zoom level
-        val renderedPx = maxOf(
-            bounds.widthNorm * mapLayoutWidth,
-            bounds.heightNorm * mapLayoutHeight
-        ) * currentScale
-        if (renderedPx > SMALL_COUNTRY_THRESHOLD_PX) continue
-
-        val dx = normalizedX - bounds.centroidNormX
-        val dy = normalizedY - bounds.centroidNormY
-        val distSq = dx * dx + dy * dy
-        if (distSq < closestDistSq) {
-            closestDistSq = distSq
-            closestId = countryId
-        }
-    }
-
-    return closestId?.let { geoJsonToRepoId[it] }
-}
 
 /**
  * Check if a tap position is within the compass area
@@ -417,8 +404,10 @@ private fun Modifier.mapGestures(
     onTransformChange: (TransformState) -> Unit,
     onCountryTapped: (String?) -> Unit,
     colorMode: MapColorMode,
-    onCompassTapped: () -> Unit
+    onCompassTapped: () -> Unit,
+    tapScope: CoroutineScope
 ): Modifier = this.pointerInput(colorMode) {
+    var tapJob: Job? = null
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false)
         val downPosition = down.position
@@ -450,8 +439,41 @@ private fun Modifier.mapGestures(
             // Check if compass was tapped (only for non-default modes)
             if (colorMode != MapColorMode.DEFAULT && gestureState.isCompassTap(downPosition)) {
                 onCompassTapped()
+            } else if (gestureState.matrixValid &&
+                gestureState.mapLayoutWidth > 0f &&
+                gestureState.mapLayoutHeight > 0f
+            ) {
+                // Snapshot all mutable state on the main thread before dispatching.
+                // android.graphics.Matrix is not thread-safe — copy its 9 float values.
+                // List<CountryGeometry> and Map<String, CountryBounds> are immutable and
+                // safe to pass across threads by reference.
+                val matrixValues = FloatArray(9).also { gestureState.inverseMatrix.getValues(it) }
+                val mapWidth = gestureState.mapLayoutWidth
+                val mapHeight = gestureState.mapLayoutHeight
+                val geometries = gestureState.geometries
+                val countryBounds = gestureState.countryBounds
+                val currentScale = gestureState.currentScale
+
+                // Cancel any in-flight hit-test from a previous rapid tap, then start
+                // a new one on the Default dispatcher so the main thread (and renderer)
+                // are never blocked by O(n·m) ray-casting.
+                tapJob?.cancel()
+                tapJob = tapScope.launch(Dispatchers.Default) {
+                    val result = hitTestCountry(
+                        position = downPosition,
+                        matrixValues = matrixValues,
+                        mapWidth = mapWidth,
+                        mapHeight = mapHeight,
+                        geometries = geometries,
+                        countryBounds = countryBounds,
+                        currentScale = currentScale
+                    )
+                    withContext(Dispatchers.Main) {
+                        onCountryTapped(result)
+                    }
+                }
             } else {
-                onCountryTapped(gestureState.processTap(downPosition))
+                onCountryTapped(null)
             }
         }
     }
@@ -522,9 +544,26 @@ private const val MIN_DOT_RADIUS_DP = 3.5f
 private const val TAP_PROXIMITY_PX = 20f
 
 /**
+ * Normalised [0,1] bounding box for a single polygon ring, used as a second-level
+ * pre-filter inside [findCountryAtNormalizedPoint] before the O(n) ray-cast.
+ */
+internal data class PolygonBounds(
+    val minX: Float,
+    val maxX: Float,
+    val minY: Float,
+    val maxY: Float
+)
+
+/**
  * Pre-computed Mercator bounding box and centroid for a country, in normalised [0,1] coordinates.
  * Stores actual min/max bounds so viewport culling can use exact edge comparisons rather than
  * centroid ± halfWidth (which is incorrect when the centroid isn't at the bbox center).
+ *
+ * [polygonBounds] holds one entry per polygon in [CountryGeometry.polygons] (same order).
+ * Countries such as Russia and the USA have overall bboxes that span nearly the full map
+ * width due to outlier islands near the antimeridian.  The per-polygon bounds let
+ * [findCountryAtNormalizedPoint] skip individual polygons cheaply before committing to
+ * the expensive vertex-by-vertex ray-cast.
  */
 internal data class CountryBounds(
     val centroidNormX: Float,
@@ -532,7 +571,8 @@ internal data class CountryBounds(
     val minX: Float,
     val maxX: Float,
     val minY: Float,
-    val maxY: Float
+    val maxY: Float,
+    val polygonBounds: List<PolygonBounds> = emptyList()
 ) {
     val widthNorm: Float get() = maxX - minX
     val heightNorm: Float get() = maxY - minY
@@ -548,13 +588,13 @@ internal data class CountryBounds(
 private class PathCacheHolder {
     private var builtForWidth: Float = 0f
     private var builtForHeight: Float = 0f
-    private val cache = mutableMapOf<String, List<Path>>()
+    private val cache = mutableMapOf<String, Path>()
 
     fun getOrBuild(
         geometry: CountryGeometry,
         mapWidth: Float,
         mapHeight: Float
-    ): List<Path> {
+    ): Path {
         if (builtForWidth != mapWidth || builtForHeight != mapHeight) {
             builtForWidth = mapWidth
             builtForHeight = mapHeight
@@ -562,8 +602,9 @@ private class PathCacheHolder {
         }
 
         return cache.getOrPut(geometry.countryId) {
-            geometry.polygons.filter { it.size >= 3 }.map { polygon ->
-                Path().apply {
+            Path().apply {
+                for (polygon in geometry.polygons) {
+                    if (polygon.size < 3) continue
                     val first = latLngToMercator(polygon[0], mapWidth, mapHeight)
                     moveTo(first.x, first.y)
                     for (i in 1 until polygon.size) {
@@ -579,6 +620,10 @@ private class PathCacheHolder {
 
 /**
  * Pre-compute bounds for all country geometries once at startup.
+ * Produces both an overall per-geometry bbox (fast first-level cull) and a
+ * per-polygon bbox list (second-level cull that handles countries like Russia
+ * and the USA whose overall bbox spans nearly the full map width due to
+ * outlier islands near the antimeridian).
  */
 private fun computeAllCountryBounds(geometries: List<CountryGeometry>): Map<String, CountryBounds> =
     geometries.associate { geometry ->
@@ -586,14 +631,20 @@ private fun computeAllCountryBounds(geometries: List<CountryGeometry>): Map<Stri
         var minY = Float.MAX_VALUE; var maxY = -Float.MAX_VALUE
         var sumX = 0f; var sumY = 0f; var count = 0
 
-        geometry.polygons.forEach { polygon ->
+        val polygonBounds = geometry.polygons.map { polygon ->
+            var pMinX = Float.MAX_VALUE; var pMaxX = -Float.MAX_VALUE
+            var pMinY = Float.MAX_VALUE; var pMaxY = -Float.MAX_VALUE
             polygon.forEach { point ->
                 val x = MercatorProjection.longitudeToX(point.lng)
                 val y = MercatorProjection.latitudeToY(point.lat)
+                if (x < pMinX) pMinX = x; if (x > pMaxX) pMaxX = x
+                if (y < pMinY) pMinY = y; if (y > pMaxY) pMaxY = y
                 if (x < minX) minX = x; if (x > maxX) maxX = x
                 if (y < minY) minY = y; if (y > maxY) maxY = y
                 sumX += x; sumY += y; count++
             }
+            if (pMinX <= pMaxX) PolygonBounds(pMinX, pMaxX, pMinY, pMaxY)
+            else PolygonBounds(0f, 1f, 0f, 1f) // degenerate polygon — never cull
         }
 
         geometry.countryId to if (count > 0) {
@@ -603,7 +654,8 @@ private fun computeAllCountryBounds(geometries: List<CountryGeometry>): Map<Stri
                 minX = minX,
                 maxX = maxX,
                 minY = minY,
-                maxY = maxY
+                maxY = maxY,
+                polygonBounds = polygonBounds
             )
         } else {
             // Wide defaults so a degenerate geometry is never incorrectly culled
@@ -635,10 +687,24 @@ private fun DrawScope.drawMapCopy(
 ) {
     val effectivePanX = transform.panX + wrapOffset
     val useTransition = params.transitionProgress < 1f
+    val s = transform.scale
+
+    // --- Map copy viewport cull ---
+    // Derive the screen-space extent of this copy from the transform parameters and skip
+    // it entirely if it lies completely outside the canvas.
+    // The center copy (wrapOffset == 0) is exempt so the inverse-matrix capture for tap
+    // detection always executes — at scale ≥ 1 the center copy is never off-screen anyway.
+    if (wrapOffset != 0f) {
+        val copyLeft   = layout.canvasOffsetX + layout.mapWidth  * (0.5f + s * (effectivePanX    - 0.5f))
+        val copyRight  = copyLeft + s * layout.mapWidth
+        val copyTop    = layout.canvasOffsetY + layout.mapHeight * (0.5f + s * (transform.panY   - 0.5f))
+        val copyBottom = copyTop  + s * layout.mapHeight
+        if (copyRight <= 0f || copyLeft >= canvasWidth || copyBottom <= 0f || copyTop >= canvasHeight) return
+    }
 
     withTransform({
         translate(layout.canvasOffsetX + 0.5f * layout.mapWidth, layout.canvasOffsetY + 0.5f * layout.mapHeight)
-        scale(transform.scale, transform.scale)
+        scale(s, s)
         translate((effectivePanX - 0.5f) * layout.mapWidth, (transform.panY - 0.5f) * layout.mapHeight)
     }) {
         // Ocean background
@@ -665,13 +731,13 @@ private fun DrawScope.drawMapCopy(
                 else -> currentModeColors[geometry.countryId] ?: MapLand
             }
 
-            val paths = pathCacheHolder.getOrBuild(
+            val path = pathCacheHolder.getOrBuild(
                 geometry = geometry,
                 mapWidth = layout.mapWidth,
                 mapHeight = layout.mapHeight
             )
             drawCountryMercator(
-                paths = paths,
+                path = path,
                 isSelected = isSelected,
                 fillColor = fillColor,
                 normalStroke = normalStroke,
@@ -835,16 +901,26 @@ fun WorldMapCanvas(
     countries: Map<String, Country> = emptyMap(),
     legendConfig: MapLegendConfig = MapLegendConfig()
 ) {
+    val tapScope = rememberCoroutineScope()
     var transform by remember { mutableStateOf(TransformState()) }
     val currentTransform by rememberUpdatedState(transform)
-    // Re-read geometries whenever the async load completes
+
+    // Re-read both geometry datasets whenever the async load completes.
     val isLoaded by CountryGeometryData.isLoaded
-    val geometries = remember(isLoaded) { CountryGeometryData.getAllGeometries() }
-    val countryBounds = remember(geometries) { computeAllCountryBounds(geometries) }
-    val gestureState = remember { MapGestureState(geometries, android.graphics.Matrix()) }
-    val pathCacheHolder = remember { PathCacheHolder() }
-    gestureState.geometries = geometries   // update after async load
-    gestureState.countryBounds = countryBounds
+    val geometriesHiRes = remember(isLoaded) { CountryGeometryData.getAllGeometries() }
+    val geometriesLoRes = remember(isLoaded) { CountryGeometryData.getLowResGeometries() }
+    val boundsHiRes = remember(geometriesHiRes) { computeAllCountryBounds(geometriesHiRes) }
+    val boundsLoRes = remember(geometriesLoRes) { computeAllCountryBounds(geometriesLoRes) }
+
+    // Tap hit-testing always uses hi-res geometry for accuracy regardless of zoom.
+    val gestureState = remember { MapGestureState(geometriesHiRes, android.graphics.Matrix()) }
+    gestureState.geometries = geometriesHiRes
+    gestureState.countryBounds = boundsHiRes
+
+    // Separate path caches per resolution — both use countryId as key, so they must
+    // not share a cache or they'd collide when the same ID maps to different geometry.
+    val pathCacheHiRes = remember { PathCacheHolder() }
+    val pathCacheLoRes = remember { PathCacheHolder() }
 
     // Animation state for color mode transitions
     var previousColorMode by remember { mutableStateOf(colorMode) }
@@ -873,13 +949,21 @@ fun WorldMapCanvas(
     val currentModeColors = remember(colorMode, countries) { computeModeColors(colorMode, countries) }
     val previousModeColors = remember(previousColorMode, countries) { computeModeColors(previousColorMode, countries) }
 
+    // Select the active LOD dataset for rendering.
+    // Hi-res (10m) is used above LOD_SCALE_THRESHOLD; lo-res (110m) below it.
+    // Tap hit-testing always uses hi-res regardless (gestureState is fixed above).
+    val useLoRes = transform.scale < CountryGeometryData.LOD_SCALE_THRESHOLD
+    val drawGeometries = if (useLoRes) geometriesLoRes else geometriesHiRes
+    val drawBounds    = if (useLoRes) boundsLoRes     else boundsHiRes
+    val activePathCache = if (useLoRes) pathCacheLoRes else pathCacheHiRes
+
     // Don't use remember here — animated values must trigger Canvas redraw on each frame
     val drawParams = MapDrawParams(
-        geometries = geometries,
+        geometries = drawGeometries,
         selectedCountryId = selectedCountryId,
         transitionProgress = transitionProgress,
         scale = transform.scale,
-        countryBounds = countryBounds
+        countryBounds = drawBounds
     )
 
     Box(
@@ -921,7 +1005,7 @@ fun WorldMapCanvas(
                     transform = transform,
                     layout = layout,
                     params = drawParams,
-                    pathCacheHolder = pathCacheHolder,
+                    pathCacheHolder = activePathCache,
                     currentModeColors = currentModeColors,
                     previousModeColors = previousModeColors,
                     normalStroke = normalStroke,
@@ -949,7 +1033,8 @@ fun WorldMapCanvas(
                     onTransformChange = { transform = it },
                     onCountryTapped = onCountryTapped,
                     colorMode = colorMode,
-                    onCompassTapped = legendConfig.onCompassTapped
+                    onCompassTapped = legendConfig.onCompassTapped,
+                    tapScope = tapScope
                 )
         )
 
@@ -970,18 +1055,45 @@ fun WorldMapCanvas(
 
 /**
  * Find which country contains the given normalized point.
+ *
+ * Two-level bounding-box pre-filter eliminates ray-casting for the vast majority
+ * of geometries on every tap:
+ *
+ *   1. **Per-geometry bbox** — skip the whole country if the overall bbox misses.
+ *   2. **Per-polygon bbox** — within a geometry that passes level 1, skip individual
+ *      polygons whose own bbox misses.  This is critical for Russia (214 polygons,
+ *      overall bbox = 100% map width) and the USA (344 polygons, overall bbox ≈ 100%
+ *      map width): without level 2 every tap on earth ray-casts all 558 of their
+ *      polygons; with level 2 a tap in Europe skips all of them in ~3 µs.
  */
-private fun findCountryAtNormalizedPoint(
+internal fun findCountryAtNormalizedPoint(
     normalizedX: Float,
     normalizedY: Float,
-    geometries: List<CountryGeometry>
+    geometries: List<CountryGeometry>,
+    countryBounds: Map<String, CountryBounds> = emptyMap()
 ): String? {
-    // Convert normalized coordinates back to lat/lng
     val lng = MercatorProjection.xToLongitude(normalizedX)
     val lat = MercatorProjection.yToLatitude(normalizedY)
 
     for (geometry in geometries) {
-        for (polygon in geometry.polygons) {
+        val bounds = countryBounds[geometry.countryId]
+
+        // Level 1: skip entire geometry if overall bbox misses
+        if (bounds != null &&
+            (normalizedX < bounds.minX || normalizedX > bounds.maxX ||
+             normalizedY < bounds.minY || normalizedY > bounds.maxY)) {
+            continue
+        }
+
+        val polyBoundsList = bounds?.polygonBounds
+        for ((idx, polygon) in geometry.polygons.withIndex()) {
+            // Level 2: skip individual polygon if its own bbox misses
+            val pb = polyBoundsList?.getOrNull(idx)
+            if (pb != null &&
+                (normalizedX < pb.minX || normalizedX > pb.maxX ||
+                 normalizedY < pb.minY || normalizedY > pb.maxY)) {
+                continue
+            }
             if (isPointInLatLngPolygon(lat, lng, polygon)) {
                 return geometry.countryId
             }
@@ -1029,7 +1141,7 @@ private fun latLngToMercator(latLng: LatLng, mapWidth: Float, mapHeight: Float):
  * Fill color and stroke objects are pre-computed by the caller — no per-country allocations.
  */
 private fun DrawScope.drawCountryMercator(
-    paths: List<Path>,
+    path: Path,
     isSelected: Boolean,
     fillColor: Color,
     normalStroke: Stroke,
@@ -1060,12 +1172,10 @@ private fun DrawScope.drawCountryMercator(
         drawCircle(fillColor, dotRadius, Offset(cx, cy))
         drawCircle(strokeColor, dotRadius, Offset(cx, cy), style = normalStroke)
     } else {
-        paths.forEach { path ->
-            drawPath(path, fillColor, style = Fill)
-            drawPath(path, strokeColor, style = if (isSelected) selectedStroke else normalStroke)
-            if (isSelected) {
-                drawPath(path, MapHighlight.copy(alpha = 0.4f), style = glowStyle)
-            }
+        drawPath(path, fillColor, style = Fill)
+        drawPath(path, strokeColor, style = if (isSelected) selectedStroke else normalStroke)
+        if (isSelected) {
+            drawPath(path, MapHighlight.copy(alpha = 0.4f), style = glowStyle)
         }
     }
 }
