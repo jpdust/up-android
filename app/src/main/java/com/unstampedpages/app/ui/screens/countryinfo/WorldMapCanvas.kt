@@ -544,6 +544,17 @@ private const val MIN_DOT_RADIUS_DP = 3.5f
 private const val TAP_PROXIMITY_PX = 20f
 
 /**
+ * LOD hysteresis thresholds.
+ *
+ * The lo-res (110m) dataset switches to hi-res (10m) only when [scale ≥ LOD_HI_THRESHOLD].
+ * Once in hi-res, it reverts to lo-res only when [scale < LOD_LO_THRESHOLD].
+ * The dead-band between the two values prevents rapid oscillation when the user's
+ * gesture holds scale near a single cutoff value.
+ */
+private const val LOD_HI_THRESHOLD = 4f
+private const val LOD_LO_THRESHOLD = 2f
+
+/**
  * Normalised [0,1] bounding box for a single polygon ring, used as a second-level
  * pre-filter inside [findCountryAtNormalizedPoint] before the O(n) ray-cast.
  */
@@ -949,13 +960,19 @@ fun WorldMapCanvas(
     val currentModeColors = remember(colorMode, countries) { computeModeColors(colorMode, countries) }
     val previousModeColors = remember(previousColorMode, countries) { computeModeColors(previousColorMode, countries) }
 
-    // Select the active LOD dataset for rendering.
-    // Hi-res (10m) is used above LOD_SCALE_THRESHOLD; lo-res (110m) below it.
-    // Tap hit-testing always uses hi-res regardless (gestureState is fixed above).
-    val useLoRes = transform.scale < CountryGeometryData.LOD_SCALE_THRESHOLD
-    val drawGeometries = if (useLoRes) geometriesLoRes else geometriesHiRes
-    val drawBounds    = if (useLoRes) boundsLoRes     else boundsHiRes
-    val activePathCache = if (useLoRes) pathCacheLoRes else pathCacheHiRes
+    // LOD selection with hysteresis — prevents flickering when scale oscillates near a
+    // single cutoff value (common during combined zoom+pan gestures).
+    // Switch lo→hi at scale ≥ LOD_HI_THRESHOLD; hi→lo only at scale < LOD_LO_THRESHOLD.
+    // Tap hit-testing always uses hi-res regardless of LOD (gestureState is fixed above).
+    var isHiRes by remember { mutableStateOf(false) }
+    isHiRes = when {
+        transform.scale >= LOD_HI_THRESHOLD -> true
+        transform.scale <  LOD_LO_THRESHOLD -> false
+        else                                -> isHiRes  // hold current LOD in the dead-band
+    }
+    val drawGeometries  = if (isHiRes) geometriesHiRes else geometriesLoRes
+    val drawBounds      = if (isHiRes) boundsHiRes     else boundsLoRes
+    val activePathCache = if (isHiRes) pathCacheHiRes  else pathCacheLoRes
 
     // Don't use remember here — animated values must trigger Canvas redraw on each frame
     val drawParams = MapDrawParams(
