@@ -79,7 +79,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.atan
+import kotlin.math.ceil
 import kotlin.math.exp
+import kotlin.math.floor
 import kotlin.math.ln
 import kotlin.math.tan
 
@@ -135,7 +137,9 @@ private data class MapLayout(
     val mapWidth: Float,
     val mapHeight: Float,
     val canvasOffsetX: Float,
-    val canvasOffsetY: Float
+    val canvasOffsetY: Float,
+    val canvasWidth: Float,
+    val canvasHeight: Float
 )
 
 /**
@@ -153,7 +157,9 @@ private fun calculateMapLayout(canvasWidth: Float, canvasHeight: Float): MapLayo
             mapWidth = mapWidth,
             mapHeight = mapHeight,
             canvasOffsetX = (canvasWidth - mapWidth) / 2,
-            canvasOffsetY = 0f
+            canvasOffsetY = 0f,
+            canvasWidth = canvasWidth,
+            canvasHeight = canvasHeight
         )
     } else {
         // Canvas is taller than map - fit to width, align to top
@@ -163,7 +169,9 @@ private fun calculateMapLayout(canvasWidth: Float, canvasHeight: Float): MapLayo
             mapWidth = mapWidth,
             mapHeight = mapHeight,
             canvasOffsetX = 0f,
-            canvasOffsetY = 0f
+            canvasOffsetY = 0f,
+            canvasWidth = canvasWidth,
+            canvasHeight = canvasHeight
         )
     }
 }
@@ -176,14 +184,12 @@ private fun calculateMultiTouchTransform(
     zoom: Float,
     pan: Offset,
     mapWidth: Float,
-    mapHeight: Float,
-    canvasHeight: Float
+    mapHeight: Float
 ): TransformState {
     val newScale = (current.scale * zoom).coerceIn(1f, 200f)
     val verticalPanBounds = calculateVerticalPanBounds(
         scale = newScale,
-        mapHeight = mapHeight,
-        canvasHeight = canvasHeight
+        mapHeight = mapHeight
     )
     val newPanX = current.panX + pan.x / (mapWidth * newScale)
     val newPanY = current.panY + pan.y / (mapHeight * newScale)
@@ -202,13 +208,11 @@ private fun calculateSingleTouchTransform(
     current: TransformState,
     panDelta: Offset,
     mapWidth: Float,
-    mapHeight: Float,
-    canvasHeight: Float
+    mapHeight: Float
 ): TransformState {
     val verticalPanBounds = calculateVerticalPanBounds(
         scale = current.scale,
-        mapHeight = mapHeight,
-        canvasHeight = canvasHeight
+        mapHeight = mapHeight
     )
     val newPanX = current.panX + panDelta.x / (mapWidth * current.scale)
     val newPanY = current.panY + panDelta.y / (mapHeight * current.scale)
@@ -221,8 +225,7 @@ private fun calculateSingleTouchTransform(
 
 internal fun calculateVerticalPanBounds(
     scale: Float,
-    mapHeight: Float,
-    canvasHeight: Float
+    mapHeight: Float
 ): VerticalPanBounds {
     if (scale <= 1f || mapHeight <= 0f) {
         return VerticalPanBounds(minPanY = 0f, maxPanY = 0f)
@@ -330,6 +333,9 @@ private fun MapGestureState.isCompassTap(position: Offset): Boolean {
     return (dx * dx + dy * dy) <= (compassRadius * compassRadius)
 }
 
+private fun MapGestureState.isReadyForHitTest(): Boolean =
+    matrixValid && mapLayoutWidth > 0f && mapLayoutHeight > 0f
+
 /**
  * Result of processing a pointer event
  */
@@ -344,7 +350,6 @@ private data class GestureResult(
 private fun handleMultiTouch(
     event: androidx.compose.ui.input.pointer.PointerEvent,
     layout: MapLayout,
-    canvasHeight: Float,
     currentTransform: () -> TransformState,
     onTransformChange: (TransformState) -> Unit
 ) {
@@ -354,8 +359,7 @@ private fun handleMultiTouch(
             zoom = event.calculateZoom(),
             pan = event.calculatePan(),
             mapWidth = layout.mapWidth,
-            mapHeight = layout.mapHeight,
-            canvasHeight = canvasHeight
+            mapHeight = layout.mapHeight
         )
     )
     event.changes.forEach { it.consume() }
@@ -368,7 +372,6 @@ private fun handleSingleTouch(
     change: androidx.compose.ui.input.pointer.PointerInputChange,
     currentDragDistance: Float,
     layout: MapLayout,
-    canvasHeight: Float,
     currentTransform: () -> TransformState,
     onTransformChange: (TransformState) -> Unit
 ): GestureResult {
@@ -388,8 +391,7 @@ private fun handleSingleTouch(
             current = currentTransform(),
             panDelta = panDelta,
             mapWidth = layout.mapWidth,
-            mapHeight = layout.mapHeight,
-            canvasHeight = canvasHeight
+            mapHeight = layout.mapHeight
         )
     )
     return GestureResult(wasDragged = true, dragDistance = newDragDistance)
@@ -423,11 +425,11 @@ private fun Modifier.mapGestures(
             when {
                 changes.size > 1 -> {
                     wasDragged = true
-                    handleMultiTouch(event, layout, canvasHeight, currentTransform, onTransformChange)
+                    handleMultiTouch(event, layout, currentTransform, onTransformChange)
                 }
                 changes.size == 1 -> {
                     val result = handleSingleTouch(
-                        changes.first(), totalDragDistance, layout, canvasHeight, currentTransform, onTransformChange
+                        changes.first(), totalDragDistance, layout, currentTransform, onTransformChange
                     )
                     totalDragDistance = result.dragDistance
                     wasDragged = wasDragged || result.wasDragged
@@ -439,10 +441,7 @@ private fun Modifier.mapGestures(
             // Check if compass was tapped (only for non-default modes)
             if (colorMode != MapColorMode.DEFAULT && gestureState.isCompassTap(downPosition)) {
                 onCompassTapped()
-            } else if (gestureState.matrixValid &&
-                gestureState.mapLayoutWidth > 0f &&
-                gestureState.mapLayoutHeight > 0f
-            ) {
+            } else if (gestureState.isReadyForHitTest()) {
                 // Snapshot all mutable state on the main thread before dispatching.
                 // android.graphics.Matrix is not thread-safe — copy its 9 float values.
                 // List<CountryGeometry> and Map<String, CountryBounds> are immutable and
@@ -531,7 +530,16 @@ private data class MapDrawParams(
     val selectedCountryId: String?,
     val transitionProgress: Float,
     val scale: Float,
-    val countryBounds: Map<String, CountryBounds>
+    val countryBounds: Map<String, CountryBounds>,
+    val currentModeColors: Map<String, Color>,
+    val previousModeColors: Map<String, Color>
+)
+
+private data class CountryRenderStyle(
+    val normalStroke: Stroke,
+    val selectedStroke: Stroke,
+    val glowStyle: Stroke,
+    val dotRadius: Float
 )
 
 /** Threshold in screen pixels below which a country polygon is replaced by a dot marker */
@@ -543,16 +551,21 @@ private const val MIN_DOT_RADIUS_DP = 3.5f
 /** Tap proximity radius in screen pixels for small country hit detection */
 private const val TAP_PROXIMITY_PX = 20f
 
+/** Extra wrapped world copies to draw just outside the calculated viewport. */
+private const val WRAP_COPY_PADDING = 1
+
 /**
  * LOD hysteresis thresholds.
  *
  * The lo-res (110m) dataset switches to hi-res (10m) only when [scale ≥ LOD_HI_THRESHOLD].
  * Once in hi-res, it reverts to lo-res only when [scale < LOD_LO_THRESHOLD].
- * The dead-band between the two values prevents rapid oscillation when the user's
- * gesture holds scale near a single cutoff value.
+ * [LOD_LO_THRESHOLD] is set to 1f (the minimum possible scale) so the revert is effectively
+ * unreachable in practice: once the user has zoomed past [LOD_HI_THRESHOLD], hi-res persists
+ * for the session. This prevents the 63 countries present only in the 10m dataset from
+ * disappearing when the user zooms back out.
  */
 private const val LOD_HI_THRESHOLD = 4f
-private const val LOD_LO_THRESHOLD = 2f
+private const val LOD_LO_THRESHOLD = 1f
 
 /**
  * Normalised [0,1] bounding box for a single polygon ring, used as a second-level
@@ -674,10 +687,31 @@ private fun computeAllCountryBounds(geometries: List<CountryGeometry>): Map<Stri
         }
     }
 
+internal fun calculateHorizontalWrapOffsets(
+    panX: Float,
+    scale: Float,
+    mapWidth: Float,
+    canvasOffsetX: Float,
+    canvasWidth: Float
+): IntRange {
+    if (scale <= 0f || mapWidth <= 0f || canvasWidth <= 0f) return 0..0
+
+    val leftCanvasNorm = -canvasOffsetX / mapWidth
+    val rightCanvasNorm = (canvasWidth - canvasOffsetX) / mapWidth
+    val minVisibleWrap = ((leftCanvasNorm - 0.5f) / scale) - panX - 0.5f
+    val maxVisibleWrap = ((rightCanvasNorm - 0.5f) / scale) - panX + 0.5f
+
+    val padding = if (scale > 1f) WRAP_COPY_PADDING else 0
+    val first = floor(minVisibleWrap).toInt() - padding
+    val last = ceil(maxVisibleWrap).toInt() + padding
+
+    return minOf(first, 0)..maxOf(last, 0)
+}
+
 /**
  * Draw a single copy of the map (used for horizontal wrapping).
- * Viewport culling skips invisible map copies and individual countries,
- * cutting draw calls from 720 to only what is actually on screen.
+ * The caller chooses enough horizontal copies to cover the viewport, including
+ * padded neighbors to avoid precision gaps while panning at high zoom.
  */
 private fun DrawScope.drawMapCopy(
     wrapOffset: Float,
@@ -685,33 +719,12 @@ private fun DrawScope.drawMapCopy(
     layout: MapLayout,
     params: MapDrawParams,
     pathCacheHolder: PathCacheHolder,
-    currentModeColors: Map<String, Color>,
-    previousModeColors: Map<String, Color>,
-    normalStroke: Stroke,
-    selectedStroke: Stroke,
-    glowStyle: Stroke,
-    dotRadius: Float,
-    canvasWidth: Float,
-    canvasHeight: Float,
-    inverseMatrix: android.graphics.Matrix,
-    onMatrixCaptured: (Boolean) -> Unit
+    renderStyle: CountryRenderStyle,
+    gestureState: MapGestureState
 ) {
     val effectivePanX = transform.panX + wrapOffset
     val useTransition = params.transitionProgress < 1f
     val s = transform.scale
-
-    // --- Map copy viewport cull ---
-    // Derive the screen-space extent of this copy from the transform parameters and skip
-    // it entirely if it lies completely outside the canvas.
-    // The center copy (wrapOffset == 0) is exempt so the inverse-matrix capture for tap
-    // detection always executes — at scale ≥ 1 the center copy is never off-screen anyway.
-    if (wrapOffset != 0f) {
-        val copyLeft   = layout.canvasOffsetX + layout.mapWidth  * (0.5f + s * (effectivePanX    - 0.5f))
-        val copyRight  = copyLeft + s * layout.mapWidth
-        val copyTop    = layout.canvasOffsetY + layout.mapHeight * (0.5f + s * (transform.panY   - 0.5f))
-        val copyBottom = copyTop  + s * layout.mapHeight
-        if (copyRight <= 0f || copyLeft >= canvasWidth || copyBottom <= 0f || copyTop >= canvasHeight) return
-    }
 
     withTransform({
         translate(layout.canvasOffsetX + 0.5f * layout.mapWidth, layout.canvasOffsetY + 0.5f * layout.mapHeight)
@@ -735,11 +748,11 @@ private fun DrawScope.drawMapCopy(
             val fillColor = when {
                 isSelected -> MapHighlight
                 useTransition -> {
-                    val prev = previousModeColors[geometry.countryId] ?: MapLand
-                    val curr = currentModeColors[geometry.countryId] ?: MapLand
+                    val prev = params.previousModeColors[geometry.countryId] ?: MapLand
+                    val curr = params.currentModeColors[geometry.countryId] ?: MapLand
                     lerp(prev, curr, params.transitionProgress)
                 }
-                else -> currentModeColors[geometry.countryId] ?: MapLand
+                else -> params.currentModeColors[geometry.countryId] ?: MapLand
             }
 
             val path = pathCacheHolder.getOrBuild(
@@ -751,14 +764,14 @@ private fun DrawScope.drawMapCopy(
                 path = path,
                 isSelected = isSelected,
                 fillColor = fillColor,
-                normalStroke = normalStroke,
-                selectedStroke = selectedStroke,
-                glowStyle = glowStyle,
+                normalStroke = renderStyle.normalStroke,
+                selectedStroke = renderStyle.selectedStroke,
+                glowStyle = renderStyle.glowStyle,
                 bounds = bounds,
                 mapWidth = layout.mapWidth,
                 mapHeight = layout.mapHeight,
                 scale = params.scale,
-                dotRadius = dotRadius
+                dotRadius = renderStyle.dotRadius
             )
         }
 
@@ -767,7 +780,7 @@ private fun DrawScope.drawMapCopy(
             val matrix = android.graphics.Matrix()
             @Suppress("DEPRECATION") // getMatrix(Matrix) is the non-deprecated overload
             drawContext.canvas.nativeCanvas.getMatrix(matrix)
-            onMatrixCaptured(matrix.invert(inverseMatrix))
+            gestureState.matrixValid = matrix.invert(gestureState.inverseMatrix)
         }
     }
 }
@@ -980,7 +993,9 @@ fun WorldMapCanvas(
         selectedCountryId = selectedCountryId,
         transitionProgress = transitionProgress,
         scale = transform.scale,
-        countryBounds = drawBounds
+        countryBounds = drawBounds,
+        currentModeColors = currentModeColors,
+        previousModeColors = previousModeColors
     )
 
     Box(
@@ -1007,32 +1022,29 @@ fun WorldMapCanvas(
             // Pre-compute stroke objects once per frame — 3 allocations instead of 720+
             val scale = transform.scale
             val baseStrokeWidth = 0.4f.dp.toPx()
-            val normalStroke = Stroke(width = (baseStrokeWidth / scale).coerceAtLeast(0.1f.dp.toPx()))
-            val selectedStroke = Stroke(width = (1.5f.dp.toPx() / scale).coerceAtLeast(0.5f.dp.toPx()))
-            val glowStyle = Stroke(width = (3.dp.toPx() / scale).coerceAtLeast(1.dp.toPx()))
-            val dotRadius = (MIN_DOT_RADIUS_DP.dp.toPx() / scale).coerceAtLeast(1f)
-            val canvasWidth = size.width
-            val canvasHeight = size.height
+            val renderStyle = CountryRenderStyle(
+                normalStroke = Stroke(width = (baseStrokeWidth / scale).coerceAtLeast(0.1f.dp.toPx())),
+                selectedStroke = Stroke(width = (1.5f.dp.toPx() / scale).coerceAtLeast(0.5f.dp.toPx())),
+                glowStyle = Stroke(width = (3.dp.toPx() / scale).coerceAtLeast(1.dp.toPx())),
+                dotRadius = (MIN_DOT_RADIUS_DP.dp.toPx() / scale).coerceAtLeast(1f)
+            )
 
-            // Draw all 3 horizontal copies for seamless wrapping.
-            // Viewport culling skips copies that are entirely off-screen.
-            listOf(-1f, 0f, 1f).forEach { wrapOffset ->
+            // Draw enough horizontal copies to cover the viewport at the current zoom.
+            calculateHorizontalWrapOffsets(
+                panX = transform.panX,
+                scale = transform.scale,
+                mapWidth = layout.mapWidth,
+                canvasOffsetX = layout.canvasOffsetX,
+                canvasWidth = layout.canvasWidth
+            ).forEach { wrapOffset ->
                 drawMapCopy(
-                    wrapOffset = wrapOffset,
+                    wrapOffset = wrapOffset.toFloat(),
                     transform = transform,
                     layout = layout,
                     params = drawParams,
                     pathCacheHolder = activePathCache,
-                    currentModeColors = currentModeColors,
-                    previousModeColors = previousModeColors,
-                    normalStroke = normalStroke,
-                    selectedStroke = selectedStroke,
-                    glowStyle = glowStyle,
-                    dotRadius = dotRadius,
-                    canvasWidth = canvasWidth,
-                    canvasHeight = canvasHeight,
-                    inverseMatrix = gestureState.inverseMatrix,
-                    onMatrixCaptured = { gestureState.matrixValid = it }
+                    renderStyle = renderStyle,
+                    gestureState = gestureState
                 )
             }
 
@@ -1179,7 +1191,7 @@ private fun DrawScope.drawCountryMercator(
         maxOf(w, h) < SMALL_COUNTRY_THRESHOLD_PX
     }
 
-    if (isSmall && bounds != null) {
+    if (isSmall) {
         // Draw a guaranteed-visible dot marker at the centroid
         val cx = bounds.centroidNormX * mapWidth
         val cy = bounds.centroidNormY * mapHeight

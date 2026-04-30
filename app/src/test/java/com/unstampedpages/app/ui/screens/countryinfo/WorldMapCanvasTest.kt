@@ -663,8 +663,7 @@ class WorldMapCanvasTest {
     fun `calculateVerticalPanBounds locks pan when not zoomed`() {
         val bounds = calculateVerticalPanBounds(
             scale = 1f,
-            mapHeight = 1000f,
-            canvasHeight = 2000f
+            mapHeight = 1000f
         )
 
         assertEquals(0f, bounds.minPanY, 0.001f)
@@ -675,8 +674,7 @@ class WorldMapCanvasTest {
     fun `calculateVerticalPanBounds allows traversing full map at high zoom`() {
         val bounds = calculateVerticalPanBounds(
             scale = 200f,
-            mapHeight = 1018.52f,
-            canvasHeight = 2400f
+            mapHeight = 1018.52f
         )
 
         assertTrue("Bottom-edge bound should allow substantial upward travel", bounds.minPanY < -0.99f)
@@ -794,6 +792,33 @@ class WorldMapCanvasTest {
         // Just over 0.5 should wrap to negative
         val result = normalizeOffsetX(0.51f)
         assertTrue("Result should be negative when wrapping from 0.51", result < 0f)
+    }
+
+    @Test
+    fun `calculateHorizontalWrapOffsets includes padded neighbor copies at high zoom`() {
+        val offsets = calculateHorizontalWrapOffsets(
+            panX = -0.49f,
+            scale = 80f,
+            mapWidth = 1000f,
+            canvasOffsetX = 0f,
+            canvasWidth = 1000f
+        )
+
+        assertTrue("Center copy should always be included", 0 in offsets)
+        assertTrue("Right wrapped neighbor should be included near the west edge", 1 in offsets)
+    }
+
+    @Test
+    fun `calculateHorizontalWrapOffsets expands for wide canvases`() {
+        val offsets = calculateHorizontalWrapOffsets(
+            panX = 0f,
+            scale = 1f,
+            mapWidth = 1000f,
+            canvasOffsetX = -500f,
+            canvasWidth = 3000f
+        )
+
+        assertTrue("Wide viewports need more than the three default copies", offsets.last > 1)
     }
 
     // ==================== Additional normalizeNormalizedX Tests ====================

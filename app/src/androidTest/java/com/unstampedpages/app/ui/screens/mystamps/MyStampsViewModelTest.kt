@@ -3,8 +3,8 @@ package com.unstampedpages.app.ui.screens.mystamps
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.unstampedpages.app.data.Country
 import com.unstampedpages.app.data.CountryList
+import com.unstampedpages.app.data.CountryListItem
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Before
@@ -138,7 +138,7 @@ class MyStampsViewModelTest {
         val usStamp = state.countryStamps.find { it.country.code == "US" }
 
         assertNotNull(usStamp)
-        assertEquals("United States", usStamp?.country?.name)
+        assertEquals("United States", usStamp?.country?.englishName)
     }
 
     // Camera functionality tests
@@ -236,7 +236,7 @@ class CountryStampTest {
 
     @Test
     fun countryStamp_defaultImagePathIsNull() {
-        val country = Country(code = "US", name = "United States")
+        val country = CountryListItem(code = "US", englishName = "United States")
         val stamp = CountryStamp(country = country)
 
         assertNull(stamp.imagePath)
@@ -244,7 +244,7 @@ class CountryStampTest {
 
     @Test
     fun countryStamp_canHaveImagePath() {
-        val country = Country(code = "US", name = "United States")
+        val country = CountryListItem(code = "US", englishName = "United States")
         val stamp = CountryStamp(country = country, imagePath = "/path/to/image.jpg")
 
         assertEquals("/path/to/image.jpg", stamp.imagePath)
@@ -252,11 +252,11 @@ class CountryStampTest {
 
     @Test
     fun countryStamp_storesCountry() {
-        val country = Country(code = "FR", name = "France")
+        val country = CountryListItem(code = "FR", englishName = "France")
         val stamp = CountryStamp(country = country)
 
         assertEquals("FR", stamp.country.code)
-        assertEquals("France", stamp.country.name)
+        assertEquals("France", stamp.country.englishName)
     }
 }
 
@@ -306,7 +306,7 @@ class MyStampsUiStateTest {
 
     @Test
     fun state_canBeCreatedWithSelectedCountry() {
-        val country = Country(code = "US", name = "United States")
+        val country = CountryListItem(code = "US", englishName = "United States")
         val state = MyStampsUiState(selectedCountry = country)
 
         assertEquals(country, state.selectedCountry)
@@ -315,8 +315,8 @@ class MyStampsUiStateTest {
     @Test
     fun state_canBeCreatedWithCountryStamps() {
         val stamps = listOf(
-            CountryStamp(Country(code = "US", name = "United States")),
-            CountryStamp(Country(code = "FR", name = "France"))
+            CountryStamp(CountryListItem(code = "US", englishName = "United States")),
+            CountryStamp(CountryListItem(code = "FR", englishName = "France"))
         )
         val state = MyStampsUiState(countryStamps = stamps)
 

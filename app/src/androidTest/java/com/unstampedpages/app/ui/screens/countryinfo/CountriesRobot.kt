@@ -417,9 +417,11 @@ class CountriesRobot(private val composeTestRule: ComposeTestRule) {
         composeTestRule.onNodeWithTag("legend_item_low_risk").assertIsDisplayed()
         composeTestRule.onNodeWithTag("legend_item_medium_risk").assertIsDisplayed()
         composeTestRule.onNodeWithTag("legend_item_high_risk").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Low Risk").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Medium Risk").assertIsDisplayed()
-        composeTestRule.onNodeWithText("High Risk").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("legend_item_extreme_risk").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Normal Security Precautions").assertIsDisplayed()
+        composeTestRule.onNodeWithText("High Degree of Caution").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Reconsider Travel").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Do Not Travel").assertIsDisplayed()
         return this
     }
 
