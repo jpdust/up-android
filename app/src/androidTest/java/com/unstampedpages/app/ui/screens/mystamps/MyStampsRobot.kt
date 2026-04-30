@@ -119,7 +119,7 @@ class MyStampsRobot(private val composeTestRule: ComposeTestRule) {
      * Scrolls to a specific country by name
      */
     fun scrollToCountry(countryName: String): MyStampsRobot {
-        val country = CountryList.countries.find { it.name == countryName }
+        val country = CountryList.countries.find { it.englishName == countryName }
         requireNotNull(country) { "Country '$countryName' not found in CountryList" }
 
         composeTestRule.onNodeWithTag("country_stamps_list")
@@ -172,7 +172,7 @@ class MyStampsRobot(private val composeTestRule: ComposeTestRule) {
      * Clicks the add stamp button for a country by name
      */
     fun clickAddStampButtonByName(countryName: String): MyStampsRobot {
-        val country = CountryList.countries.find { it.name == countryName }
+        val country = CountryList.countries.find { it.englishName == countryName }
         requireNotNull(country) { "Country '$countryName' not found in CountryList" }
         return clickAddStampButton(country.code)
     }
@@ -280,7 +280,7 @@ class MyStampsRobot(private val composeTestRule: ComposeTestRule) {
      * Removes a stamp from a country by name
      */
     fun removeStampByName(countryName: String): MyStampsRobot {
-        val country = CountryList.countries.find { it.name == countryName }
+        val country = CountryList.countries.find { it.englishName == countryName }
         requireNotNull(country) { "Country '$countryName' not found in CountryList" }
         return clickRemoveStampButton(country.code)
     }

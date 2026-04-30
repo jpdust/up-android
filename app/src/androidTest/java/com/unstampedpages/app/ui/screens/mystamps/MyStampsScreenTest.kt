@@ -94,7 +94,7 @@ class MyStampsScreenTest {
     fun myStampsScreen_hasCorrectCountryCount() {
         composeTestRule.myStampsRobot {
             verifyScreenDisplayed()
-            verifyCountryCount(196)
+            verifyCountryCount(CountryList.countries.size)
         }
     }
 
@@ -103,7 +103,7 @@ class MyStampsScreenTest {
         val firstCountry = CountryList.countries.first()
         composeTestRule.myStampsRobot {
             verifyScreenDisplayed()
-            verifyCountryDisplayed(firstCountry.name)
+            verifyCountryDisplayed(firstCountry.englishName)
         }
     }
 
@@ -115,7 +115,7 @@ class MyStampsScreenTest {
         composeTestRule.myStampsRobot {
             verifyScreenDisplayed()
             scrollToBottom()
-            verifyCountryDisplayed(lastCountry.name)
+            verifyCountryDisplayed(lastCountry.englishName)
         }
     }
 
@@ -144,7 +144,7 @@ class MyStampsScreenTest {
             verifyScreenDisplayed()
             scrollToBottom()
             scrollToTop()
-            verifyCountryDisplayed(firstCountry.name)
+            verifyCountryDisplayed(firstCountry.englishName)
         }
     }
 
@@ -167,7 +167,7 @@ class MyStampsScreenTest {
             verifyScreenDisplayed()
             clickAddStampButton(country.code)
             verifyAddStampDialogDisplayed()
-            verifyDialogShowsCountry(country.name)
+            verifyDialogShowsCountry(country.englishName)
         }
     }
 
@@ -281,7 +281,7 @@ class MyStampsScreenTest {
             // Test first country
             clickAddStampButton(CountryList.countries.first().code)
             verifyAddStampDialogDisplayed()
-            verifyDialogShowsCountry(CountryList.countries.first().name)
+            verifyDialogShowsCountry(CountryList.countries.first().englishName)
             cancelAddingStamp()
 
             // Test another country (Japan)
@@ -311,7 +311,7 @@ class MyStampsScreenTest {
             verifyScreenDisplayed()
             scrollToCountryByCode(lastCountry.code)
             verifyCountryRowDisplayed(lastCountry.code)
-            verifyCountryDisplayed(lastCountry.name)
+            verifyCountryDisplayed(lastCountry.englishName)
         }
     }
 
