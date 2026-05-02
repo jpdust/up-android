@@ -643,6 +643,67 @@ private class PathCacheHolder {
 }
 
 /**
+ * Mutable accumulator for a Mercator bounding box and centroid sum.
+ * Centralises the four min/max comparisons so callers stay branch-free.
+ */
+private class BoundsAccumulator {
+    var minX = Float.MAX_VALUE;  var maxX = -Float.MAX_VALUE
+    var minY = Float.MAX_VALUE;  var maxY = -Float.MAX_VALUE
+    var sumX = 0f;               var sumY = 0f;  var count = 0
+
+    fun addPoint(x: Float, y: Float) {
+        if (x < minX) minX = x
+        if (x > maxX) maxX = x
+        if (y < minY) minY = y
+        if (y > maxY) maxY = y
+        sumX += x;  sumY += y;  count++
+    }
+
+    val isValid: Boolean get() = count > 0
+}
+
+/**
+ * Compute the Mercator bounding box for a single polygon ring.
+ * Returns [PolygonBounds(0,1,0,1)] for empty or degenerate polygons (never culls them).
+ */
+internal fun computePolygonBounds(polygon: List<LatLng>): PolygonBounds {
+    val acc = BoundsAccumulator()
+    for (point in polygon) {
+        acc.addPoint(MercatorProjection.longitudeToX(point.lng), MercatorProjection.latitudeToY(point.lat))
+    }
+    return if (acc.isValid) PolygonBounds(acc.minX, acc.maxX, acc.minY, acc.maxY)
+    else PolygonBounds(0f, 1f, 0f, 1f)
+}
+
+/**
+ * Compute [CountryBounds] for a single [CountryGeometry].
+ * Iterates polygons once: builds per-polygon bounds and accumulates the global bbox/centroid
+ * in the same pass. Returns wide-open defaults when the geometry contains no points.
+ */
+internal fun computeGeometryBounds(geometry: CountryGeometry): CountryBounds {
+    val polygonBoundsList = mutableListOf<PolygonBounds>()
+    val global = BoundsAccumulator()
+    for (polygon in geometry.polygons) {
+        polygonBoundsList.add(computePolygonBounds(polygon))
+        for (point in polygon) {
+            global.addPoint(MercatorProjection.longitudeToX(point.lng), MercatorProjection.latitudeToY(point.lat))
+        }
+    }
+    return if (global.isValid) {
+        CountryBounds(
+            centroidNormX = global.sumX / global.count,
+            centroidNormY = global.sumY / global.count,
+            minX = global.minX, maxX = global.maxX,
+            minY = global.minY, maxY = global.maxY,
+            polygonBounds = polygonBoundsList
+        )
+    } else {
+        // Wide defaults so a degenerate geometry is never incorrectly culled
+        CountryBounds(0.5f, 0.5f, 0f, 1f, 0f, 1f)
+    }
+}
+
+/**
  * Pre-compute bounds for all country geometries once at startup.
  * Produces both an overall per-geometry bbox (fast first-level cull) and a
  * per-polygon bbox list (second-level cull that handles countries like Russia
@@ -650,42 +711,7 @@ private class PathCacheHolder {
  * outlier islands near the antimeridian).
  */
 private fun computeAllCountryBounds(geometries: List<CountryGeometry>): Map<String, CountryBounds> =
-    geometries.associate { geometry ->
-        var minX = Float.MAX_VALUE; var maxX = -Float.MAX_VALUE
-        var minY = Float.MAX_VALUE; var maxY = -Float.MAX_VALUE
-        var sumX = 0f; var sumY = 0f; var count = 0
-
-        val polygonBounds = geometry.polygons.map { polygon ->
-            var pMinX = Float.MAX_VALUE; var pMaxX = -Float.MAX_VALUE
-            var pMinY = Float.MAX_VALUE; var pMaxY = -Float.MAX_VALUE
-            polygon.forEach { point ->
-                val x = MercatorProjection.longitudeToX(point.lng)
-                val y = MercatorProjection.latitudeToY(point.lat)
-                if (x < pMinX) pMinX = x; if (x > pMaxX) pMaxX = x
-                if (y < pMinY) pMinY = y; if (y > pMaxY) pMaxY = y
-                if (x < minX) minX = x; if (x > maxX) maxX = x
-                if (y < minY) minY = y; if (y > maxY) maxY = y
-                sumX += x; sumY += y; count++
-            }
-            if (pMinX <= pMaxX) PolygonBounds(pMinX, pMaxX, pMinY, pMaxY)
-            else PolygonBounds(0f, 1f, 0f, 1f) // degenerate polygon — never cull
-        }
-
-        geometry.countryId to if (count > 0) {
-            CountryBounds(
-                centroidNormX = sumX / count,
-                centroidNormY = sumY / count,
-                minX = minX,
-                maxX = maxX,
-                minY = minY,
-                maxY = maxY,
-                polygonBounds = polygonBounds
-            )
-        } else {
-            // Wide defaults so a degenerate geometry is never incorrectly culled
-            CountryBounds(0.5f, 0.5f, 0f, 1f, 0f, 1f)
-        }
-    }
+    geometries.associate { geometry -> geometry.countryId to computeGeometryBounds(geometry) }
 
 internal fun calculateHorizontalWrapOffsets(
     panX: Float,
@@ -760,18 +786,23 @@ private fun DrawScope.drawMapCopy(
                 mapWidth = layout.mapWidth,
                 mapHeight = layout.mapHeight
             )
+            val isSmall = bounds != null && run {
+                val w = bounds.widthNorm * layout.mapWidth * params.scale
+                val h = bounds.heightNorm * layout.mapHeight * params.scale
+                maxOf(w, h) < SMALL_COUNTRY_THRESHOLD_PX
+            }
+            val centroid = if (isSmall && bounds != null) {
+                Offset(bounds.centroidNormX * layout.mapWidth, bounds.centroidNormY * layout.mapHeight)
+            } else {
+                Offset.Zero
+            }
             drawCountryMercator(
                 path = path,
                 isSelected = isSelected,
                 fillColor = fillColor,
-                normalStroke = renderStyle.normalStroke,
-                selectedStroke = renderStyle.selectedStroke,
-                glowStyle = renderStyle.glowStyle,
-                bounds = bounds,
-                mapWidth = layout.mapWidth,
-                mapHeight = layout.mapHeight,
-                scale = params.scale,
-                dotRadius = renderStyle.dotRadius
+                renderStyle = renderStyle,
+                isSmall = isSmall,
+                centroid = centroid
             )
         }
 
@@ -1168,43 +1199,30 @@ private fun latLngToMercator(latLng: LatLng, mapWidth: Float, mapHeight: Float):
 /**
  * Draw a country using pre-built cached paths.
  * Fill color and stroke objects are pre-computed by the caller — no per-country allocations.
+ * [isSmall] and [centroid] are pre-computed by the caller from bounds, mapWidth/Height, and scale.
  */
 private fun DrawScope.drawCountryMercator(
     path: Path,
     isSelected: Boolean,
     fillColor: Color,
-    normalStroke: Stroke,
-    selectedStroke: Stroke,
-    glowStyle: Stroke,
-    bounds: CountryBounds?,
-    mapWidth: Float,
-    mapHeight: Float,
-    scale: Float,
-    dotRadius: Float
+    renderStyle: CountryRenderStyle,
+    isSmall: Boolean,
+    centroid: Offset
 ) {
     val strokeColor = if (isSelected) MapHighlight.copy(alpha = 0.9f) else MapBorder
 
-    // Determine whether this country renders too small to see as a polygon
-    val isSmall = bounds != null && run {
-        val w = bounds.widthNorm * mapWidth * scale
-        val h = bounds.heightNorm * mapHeight * scale
-        maxOf(w, h) < SMALL_COUNTRY_THRESHOLD_PX
-    }
-
     if (isSmall) {
         // Draw a guaranteed-visible dot marker at the centroid
-        val cx = bounds.centroidNormX * mapWidth
-        val cy = bounds.centroidNormY * mapHeight
         if (isSelected) {
-            drawCircle(MapHighlight.copy(alpha = 0.35f), dotRadius * 4f, Offset(cx, cy))
+            drawCircle(MapHighlight.copy(alpha = 0.35f), renderStyle.dotRadius * 4f, centroid)
         }
-        drawCircle(fillColor, dotRadius, Offset(cx, cy))
-        drawCircle(strokeColor, dotRadius, Offset(cx, cy), style = normalStroke)
+        drawCircle(fillColor, renderStyle.dotRadius, centroid)
+        drawCircle(strokeColor, renderStyle.dotRadius, centroid, style = renderStyle.normalStroke)
     } else {
         drawPath(path, fillColor, style = Fill)
-        drawPath(path, strokeColor, style = if (isSelected) selectedStroke else normalStroke)
+        drawPath(path, strokeColor, style = if (isSelected) renderStyle.selectedStroke else renderStyle.normalStroke)
         if (isSelected) {
-            drawPath(path, MapHighlight.copy(alpha = 0.4f), style = glowStyle)
+            drawPath(path, MapHighlight.copy(alpha = 0.4f), style = renderStyle.glowStyle)
         }
     }
 }
