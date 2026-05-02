@@ -103,6 +103,7 @@ dependencies {
     // Testing
     testImplementation(libs.junit)
     testImplementation(libs.json)
+    testImplementation(libs.mockito.core)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.compose.bom))

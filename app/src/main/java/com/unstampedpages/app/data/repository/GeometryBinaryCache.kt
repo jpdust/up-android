@@ -111,29 +111,39 @@ internal object GeometryBinaryCache {
         val tmp = File(file.parent, "${file.name}.tmp")
         try {
             DataOutputStream(BufferedOutputStream(FileOutputStream(tmp))).use { dos ->
-                dos.writeInt(MAGIC)
-                dos.writeInt(CACHE_VERSION)
-                dos.writeInt(geometries.size)
-                for (country in geometries) {
-                    val idBytes = country.countryId.toByteArray(Charsets.UTF_8)
-                    dos.writeShort(idBytes.size)
-                    dos.write(idBytes)
-                    dos.writeInt(country.polygons.size)
-                    for (polygon in country.polygons) {
-                        dos.writeInt(polygon.size)
-                        for (point in polygon) {
-                            dos.writeFloat(point.lat)
-                            dos.writeFloat(point.lng)
-                        }
-                    }
+                writeGeometries(dos, geometries)
+            }
+            if (!tmp.renameTo(file)) deleteOrSchedule(tmp)
+        } catch (_: Exception) {
+            deleteOrSchedule(tmp)
+            deleteOrSchedule(file)
+        }
+    }
+
+    /**
+     * Tries to delete [file] immediately; schedules deletion at JVM exit if that fails.
+     * Used to clean up tmp and target files after a failed atomic write.
+     */
+    internal fun deleteOrSchedule(file: File) {
+        if (!file.delete()) file.deleteOnExit()
+    }
+
+    private fun writeGeometries(dos: DataOutputStream, geometries: List<CountryGeometry>) {
+        dos.writeInt(MAGIC)
+        dos.writeInt(CACHE_VERSION)
+        dos.writeInt(geometries.size)
+        for (country in geometries) {
+            val idBytes = country.countryId.toByteArray(Charsets.UTF_8)
+            dos.writeShort(idBytes.size)
+            dos.write(idBytes)
+            dos.writeInt(country.polygons.size)
+            for (polygon in country.polygons) {
+                dos.writeInt(polygon.size)
+                for (point in polygon) {
+                    dos.writeFloat(point.lat)
+                    dos.writeFloat(point.lng)
                 }
             }
-            if (!tmp.renameTo(file)) {
-                if (!tmp.delete()) tmp.deleteOnExit()
-            }
-        } catch (_: Exception) {
-            if (!tmp.delete()) tmp.deleteOnExit()
-            if (!file.delete()) file.deleteOnExit()
         }
     }
 }
