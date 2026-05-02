@@ -128,7 +128,9 @@ internal object GeometryBinaryCache {
                     }
                 }
             }
-            if (!tmp.renameTo(file)) tmp.delete()
+            if (!tmp.renameTo(file)) {
+                if (!tmp.delete()) tmp.deleteOnExit()
+            }
         } catch (_: Exception) {
             if (!tmp.delete()) tmp.deleteOnExit()
             if (!file.delete()) file.deleteOnExit()

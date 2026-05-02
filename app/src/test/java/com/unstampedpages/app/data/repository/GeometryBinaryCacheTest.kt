@@ -188,6 +188,21 @@ class GeometryBinaryCacheTest {
     }
 
     @Test
+    fun `write cleans up tmp file when rename fails`() {
+        // Pre-create the destination as a directory so renameTo returns false (EISDIR).
+        // The .tmp file is written successfully first, so this exercises the
+        // rename-failure branch specifically — not the catch block.
+        val targetName = "cache_rename_fail.bin"
+        tmp.newFolder(targetName)
+        val file = File(tmp.root, targetName)
+
+        GeometryBinaryCache.writeToFile(file, emptyList())
+
+        val tmpFile = File(tmp.root, "$targetName.tmp")
+        assertFalse("Tmp file should be cleaned up after failed rename", tmpFile.exists())
+    }
+
+    @Test
     fun `write creates file in non-existent parent gracefully`() {
         // If parent doesn't exist, write should not throw — it just silently fails
         // and leaves no corrupt file. This mirrors the production catch-all.
