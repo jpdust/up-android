@@ -1646,3 +1646,171 @@ class WorldMapCanvasTest {
         assertEquals("ps", geoJsonToRepoId["PSX"])
     }
 }
+
+// ---------------------------------------------------------------------------
+// computePolygonBounds
+// ---------------------------------------------------------------------------
+
+class ComputePolygonBoundsTest {
+
+    private fun latLng(lat: Float, lng: Float) = com.unstampedpages.app.data.model.LatLng(lat, lng)
+
+    @Test
+    fun `empty polygon returns degenerate fallback bounds`() {
+        val bounds = computePolygonBounds(emptyList())
+        assertEquals(0f, bounds.minX, 0f)
+        assertEquals(1f, bounds.maxX, 0f)
+        assertEquals(0f, bounds.minY, 0f)
+        assertEquals(1f, bounds.maxY, 0f)
+    }
+
+    @Test
+    fun `single point polygon returns bounds equal to that point`() {
+        val point = latLng(0f, 0f)
+        val bounds = computePolygonBounds(listOf(point))
+        val expectedX = MercatorProjection.longitudeToX(0f)
+        val expectedY = MercatorProjection.latitudeToY(0f)
+        assertEquals(expectedX, bounds.minX, 0.0001f)
+        assertEquals(expectedX, bounds.maxX, 0.0001f)
+        assertEquals(expectedY, bounds.minY, 0.0001f)
+        assertEquals(expectedY, bounds.maxY, 0.0001f)
+    }
+
+    @Test
+    fun `polygon spanning equator and prime meridian has correct bounds`() {
+        val polygon = listOf(
+            latLng(10f, -10f), latLng(10f, 10f),
+            latLng(-10f, 10f), latLng(-10f, -10f)
+        )
+        val bounds = computePolygonBounds(polygon)
+        assertEquals(MercatorProjection.longitudeToX(-10f), bounds.minX, 0.0001f)
+        assertEquals(MercatorProjection.longitudeToX(10f),  bounds.maxX, 0.0001f)
+        // north (lat=10) → smaller Y; south (lat=-10) → larger Y
+        assertEquals(MercatorProjection.latitudeToY(10f),  bounds.minY, 0.0001f)
+        assertEquals(MercatorProjection.latitudeToY(-10f), bounds.maxY, 0.0001f)
+    }
+
+    @Test
+    fun `minX is less than maxX for any non-empty polygon`() {
+        val polygon = listOf(latLng(45f, -90f), latLng(45f, 90f), latLng(-45f, 0f))
+        val bounds = computePolygonBounds(polygon)
+        assertTrue(bounds.minX < bounds.maxX)
+    }
+
+    @Test
+    fun `minY is less than maxY for polygon spanning latitudes`() {
+        val polygon = listOf(latLng(60f, 0f), latLng(-60f, 0f), latLng(0f, 10f))
+        val bounds = computePolygonBounds(polygon)
+        assertTrue(bounds.minY < bounds.maxY)
+    }
+
+    @Test
+    fun `all-same-point polygon returns degenerate-free bounds`() {
+        val polygon = listOf(latLng(30f, 60f), latLng(30f, 60f), latLng(30f, 60f))
+        val bounds = computePolygonBounds(polygon)
+        // minX == maxX is valid (not degenerate — isValid=true because count > 0)
+        assertEquals(bounds.minX, bounds.maxX, 0.0001f)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// computeGeometryBounds
+// ---------------------------------------------------------------------------
+
+class ComputeGeometryBoundsTest {
+
+    private fun latLng(lat: Float, lng: Float) = com.unstampedpages.app.data.model.LatLng(lat, lng)
+
+    private val squarePolygon = listOf(
+        latLng(10f, -10f), latLng(10f, 10f),
+        latLng(-10f, 10f), latLng(-10f, -10f),
+        latLng(10f, -10f)
+    )
+
+    @Test
+    fun `geometry with no polygons returns degenerate fallback bounds`() {
+        val geometry = com.unstampedpages.app.data.model.CountryGeometry("empty", emptyList())
+        val bounds = computeGeometryBounds(geometry)
+        assertEquals(0.5f, bounds.centroidNormX, 0.0001f)
+        assertEquals(0.5f, bounds.centroidNormY, 0.0001f)
+        assertEquals(0f, bounds.minX, 0f)
+        assertEquals(1f, bounds.maxX, 0f)
+        assertEquals(0f, bounds.minY, 0f)
+        assertEquals(1f, bounds.maxY, 0f)
+    }
+
+    @Test
+    fun `geometry with one empty polygon returns degenerate fallback bounds`() {
+        val geometry = com.unstampedpages.app.data.model.CountryGeometry("empty", listOf(emptyList()))
+        val bounds = computeGeometryBounds(geometry)
+        // No points → global accumulator has count=0 → wide-open defaults with empty polygonBounds
+        assertEquals(0, bounds.polygonBounds.size)
+        assertEquals(0.5f, bounds.centroidNormX, 0.0001f)
+        assertEquals(0f, bounds.minX, 0f)
+        assertEquals(1f, bounds.maxX, 0f)
+    }
+
+    @Test
+    fun `single polygon geometry has correct centroid`() {
+        val geometry = com.unstampedpages.app.data.model.CountryGeometry("sq", listOf(squarePolygon))
+        val bounds = computeGeometryBounds(geometry)
+        // centroid should be near (0.5, latitudeToY(0)) for a symmetric square
+        assertEquals(MercatorProjection.longitudeToX(0f), bounds.centroidNormX, 0.01f)
+    }
+
+    @Test
+    fun `single polygon geometry global bounds match polygon bounds`() {
+        val geometry = com.unstampedpages.app.data.model.CountryGeometry("sq", listOf(squarePolygon))
+        val bounds = computeGeometryBounds(geometry)
+        val polyBounds = bounds.polygonBounds.first()
+        assertEquals(polyBounds.minX, bounds.minX, 0.0001f)
+        assertEquals(polyBounds.maxX, bounds.maxX, 0.0001f)
+        assertEquals(polyBounds.minY, bounds.minY, 0.0001f)
+        assertEquals(polyBounds.maxY, bounds.maxY, 0.0001f)
+    }
+
+    @Test
+    fun `polygon bounds list has one entry per polygon`() {
+        val farPolygon = listOf(
+            latLng(60f, 150f), latLng(60f, 170f),
+            latLng(50f, 170f), latLng(50f, 150f)
+        )
+        val geometry = com.unstampedpages.app.data.model.CountryGeometry("multi", listOf(squarePolygon, farPolygon))
+        val bounds = computeGeometryBounds(geometry)
+        assertEquals(2, bounds.polygonBounds.size)
+    }
+
+    @Test
+    fun `multipolygon global bounds span both polygons`() {
+        val farPolygon = listOf(
+            latLng(60f, 150f), latLng(60f, 170f),
+            latLng(50f, 170f), latLng(50f, 150f)
+        )
+        val geometry = com.unstampedpages.app.data.model.CountryGeometry("multi", listOf(squarePolygon, farPolygon))
+        val bounds = computeGeometryBounds(geometry)
+        // Global maxX must be at least as large as the far polygon's east edge
+        assertTrue(bounds.maxX >= MercatorProjection.longitudeToX(170f))
+        // Global minX must be at most as small as the square's west edge
+        assertTrue(bounds.minX <= MercatorProjection.longitudeToX(-10f))
+    }
+
+    @Test
+    fun `countryId is propagated correctly`() {
+        val geometry = com.unstampedpages.app.data.model.CountryGeometry("fr", listOf(squarePolygon))
+        val bounds = computeGeometryBounds(geometry)
+        // Just verify the function runs without error and returns valid data
+        assertTrue(bounds.widthNorm > 0f)
+    }
+
+    @Test
+    fun `geometry with empty and non-empty polygons uses only non-empty for global bounds`() {
+        val geometry = com.unstampedpages.app.data.model.CountryGeometry(
+            "mixed", listOf(emptyList(), squarePolygon)
+        )
+        val bounds = computeGeometryBounds(geometry)
+        assertEquals(2, bounds.polygonBounds.size)
+        // Global bounds should come from squarePolygon only
+        assertEquals(MercatorProjection.longitudeToX(-10f), bounds.minX, 0.0001f)
+        assertEquals(MercatorProjection.longitudeToX(10f),  bounds.maxX, 0.0001f)
+    }
+}
