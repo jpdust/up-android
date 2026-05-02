@@ -1,11 +1,14 @@
 package com.unstampedpages.app.data.repository
 
+import android.content.Context
 import com.unstampedpages.app.data.model.CountryGeometry
 import com.unstampedpages.app.data.model.LatLng
 import org.junit.Assert.*
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import org.mockito.Mockito
 import java.io.File
 
 class GeometryBinaryCacheTest {
@@ -235,6 +238,84 @@ class GeometryBinaryCacheTest {
 
         assertEquals(first.size, second.size)
         assertEquals(first[0].countryId, second[0].countryId)
+    }
+
+    // --- context-based API ----------------------------------------------------
+
+    private fun mockContext(): Context =
+        Mockito.mock(Context::class.java).also {
+            Mockito.`when`(it.filesDir).thenReturn(tmp.root)
+        }
+
+    @Test
+    fun `write and read via context round-trip through hi-res file`() {
+        val ctx = mockContext()
+        GeometryBinaryCache.write(ctx, listOf(makeGeometry("de", triangle())))
+        val result = GeometryBinaryCache.read(ctx)
+        assertNotNull(result)
+        assertEquals("de", result!![0].countryId)
+    }
+
+    @Test
+    fun `read via context returns null when no cache exists`() {
+        assertNull(GeometryBinaryCache.read(mockContext()))
+    }
+
+    @Test
+    fun `writeLowRes and readLowRes via context round-trip through lo-res file`() {
+        val ctx = mockContext()
+        GeometryBinaryCache.writeLowRes(ctx, listOf(makeGeometry("it", triangle())))
+        val result = GeometryBinaryCache.readLowRes(ctx)
+        assertNotNull(result)
+        assertEquals("it", result!![0].countryId)
+    }
+
+    @Test
+    fun `readLowRes via context returns null when no lo-res cache exists`() {
+        assertNull(GeometryBinaryCache.readLowRes(mockContext()))
+    }
+
+    @Test
+    fun `write uses hi-res filename, writeLowRes uses lo-res filename`() {
+        val ctx = mockContext()
+        GeometryBinaryCache.write(ctx, emptyList())
+        GeometryBinaryCache.writeLowRes(ctx, emptyList())
+        assertTrue(File(tmp.root, "geometry_cache.bin").exists())
+        assertTrue(File(tmp.root, "geometry_cache_110m.bin").exists())
+    }
+
+    @Test
+    fun `hi-res and lo-res caches are independent files`() {
+        val ctx = mockContext()
+        // Write only to hi-res; lo-res read must return null (different file)
+        GeometryBinaryCache.write(ctx, listOf(makeGeometry("fr", triangle())))
+        assertNull(GeometryBinaryCache.readLowRes(ctx))
+    }
+
+    // --- deleteOrSchedule -----------------------------------------------------
+
+    @Test
+    fun `deleteOrSchedule deletes file when deletion succeeds`() {
+        val file = tmp.newFile("to_delete.tmp")
+        GeometryBinaryCache.deleteOrSchedule(file)
+        assertFalse("File should be deleted", file.exists())
+    }
+
+    @Test
+    fun `deleteOrSchedule schedules deleteOnExit when deletion fails`() {
+        val subdir = tmp.newFolder("locked")
+        val file = File(subdir, "locked.bin")
+        file.createNewFile()
+        subdir.setWritable(false)
+        try {
+            // Skip on systems where setWritable(false) has no effect (e.g. running as root)
+            assumeTrue("Requires non-root: setWritable must prevent deletion", !file.delete())
+            // file.delete() returned false — the file still exists
+            GeometryBinaryCache.deleteOrSchedule(file)
+            assertTrue("File must remain when delete() fails; deleteOnExit() was registered", file.exists())
+        } finally {
+            subdir.setWritable(true)
+        }
     }
 
     // --- large polygon ---------------------------------------------------------
