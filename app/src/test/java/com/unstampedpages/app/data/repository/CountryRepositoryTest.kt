@@ -59,84 +59,6 @@ class CountryRepositoryTest {
     }
 
     @Test
-    fun `getCountriesByContinent returns correct countries for North America`() {
-        val countries = repository.getCountriesByContinent(Continent.NORTH_AMERICA)
-
-        assertTrue(countries.isNotEmpty())
-        countries.forEach { country ->
-            assertEquals(Continent.NORTH_AMERICA, country.continent)
-        }
-    }
-
-    @Test
-    fun `getCountriesByContinent returns correct countries for Europe`() {
-        val countries = repository.getCountriesByContinent(Continent.EUROPE)
-
-        assertTrue(countries.isNotEmpty())
-        countries.forEach { country ->
-            assertEquals(Continent.EUROPE, country.continent)
-        }
-    }
-
-    @Test
-    fun `getCountriesByContinent returns correct countries for Asia`() {
-        val countries = repository.getCountriesByContinent(Continent.ASIA)
-
-        assertTrue(countries.isNotEmpty())
-        countries.forEach { country ->
-            assertEquals(Continent.ASIA, country.continent)
-        }
-    }
-
-    @Test
-    fun `getCountriesByContinent returns correct countries for Africa`() {
-        val countries = repository.getCountriesByContinent(Continent.AFRICA)
-
-        assertTrue(countries.isNotEmpty())
-        countries.forEach { country ->
-            assertEquals(Continent.AFRICA, country.continent)
-        }
-    }
-
-    @Test
-    fun `getCountriesByContinent returns correct countries for South America`() {
-        val countries = repository.getCountriesByContinent(Continent.SOUTH_AMERICA)
-
-        assertTrue(countries.isNotEmpty())
-        countries.forEach { country ->
-            assertEquals(Continent.SOUTH_AMERICA, country.continent)
-        }
-    }
-
-    @Test
-    fun `getCountriesByContinent returns correct countries for Oceania`() {
-        val countries = repository.getCountriesByContinent(Continent.OCEANIA)
-
-        assertTrue(countries.isNotEmpty())
-        countries.forEach { country ->
-            assertEquals(Continent.OCEANIA, country.continent)
-        }
-    }
-
-    @Test
-    fun `getMapData returns non-empty list`() {
-        val mapData = repository.getMapData()
-
-        assertTrue(mapData.isNotEmpty())
-    }
-
-    @Test
-    fun `getMapData returns valid coordinates`() {
-        val mapData = repository.getMapData()
-
-        mapData.forEach { data ->
-            assertTrue(data.centerX >= 0f && data.centerX <= 1f)
-            assertTrue(data.centerY >= 0f && data.centerY <= 1f)
-            assertTrue(data.radius > 0f)
-        }
-    }
-
-    @Test
     fun `sample countries contains expected countries`() {
         val countries = repository.getAllCountries()
         val ids = countries.map { it.id }
@@ -383,29 +305,6 @@ class CountryRepositoryTest {
         }
     }
 
-    @Test
-    fun `getCountriesByContinent returns subset of all countries`() {
-        val allCountries = repository.getAllCountries()
-        val northAmerica = repository.getCountriesByContinent(Continent.NORTH_AMERICA)
-
-        assertTrue(northAmerica.size < allCountries.size)
-        assertTrue(allCountries.containsAll(northAmerica))
-    }
-
-    @Test
-    fun `getMapData countryIds exist in countries`() {
-        val countries = repository.getAllCountries()
-        val countryIds = countries.map { it.id }
-        val mapData = repository.getMapData()
-
-        mapData.forEach { data ->
-            assertTrue(
-                "Map data countryId ${data.countryId} should exist in countries",
-                countryIds.contains(data.countryId)
-            )
-        }
-    }
-
     // ==================== Additional Edge Case Tests ====================
 
     @Test
@@ -421,15 +320,6 @@ class CountryRepositoryTest {
         val country = repository.getCountryById("")
 
         assertNull(country)
-    }
-
-    @Test
-    fun `getCountriesByContinent returns Antarctica entry`() {
-        val countries = repository.getCountriesByContinent(Continent.ANTARCTICA)
-
-        assertEquals(1, countries.size)
-        assertEquals("aa", countries.first().id)
-        assertEquals("Antarctica", countries.first().name)
     }
 
     @Test
@@ -519,26 +409,6 @@ class CountryRepositoryTest {
     }
 
     @Test
-    fun `getMapData returns unique country ids`() {
-        val mapData = repository.getMapData()
-        val ids = mapData.map { it.countryId }
-
-        assertEquals(ids.size, ids.distinct().size)
-    }
-
-    @Test
-    fun `getMapData radius values are reasonable`() {
-        val mapData = repository.getMapData()
-
-        mapData.forEach { data ->
-            assertTrue(
-                "Radius should be between 0 and 0.5 for ${data.countryId}",
-                data.radius > 0f && data.radius <= 0.5f
-            )
-        }
-    }
-
-    @Test
     fun `multiple repositories return same data`() {
         val repo1 = CountryRepository()
         val repo2 = CountryRepository()
@@ -562,14 +432,4 @@ class CountryRepositoryTest {
         }
     }
 
-    @Test
-    fun `getCountriesByContinent sum equals total countries`() {
-        val allCountries = repository.getAllCountries()
-
-        val continentCounts = Continent.values().sumOf { continent ->
-            repository.getCountriesByContinent(continent).size
-        }
-
-        assertEquals(allCountries.size, continentCounts)
-    }
 }

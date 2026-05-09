@@ -42,35 +42,6 @@ class DateUtilsTest {
         assertTrue(result.contains("2024"))
     }
 
-    // ==================== Format Month Year Tests ====================
-
-    @Test
-    fun `formatMonthYear formats correctly`() {
-        val calendar = Calendar.getInstance().apply {
-            set(2024, Calendar.DECEMBER, 25, 12, 0, 0)
-        }
-        val timestamp = calendar.timeInMillis
-
-        val result = DateUtils.formatMonthYear(timestamp)
-
-        assertTrue(result.contains("December"))
-        assertTrue(result.contains("2024"))
-    }
-
-    // ==================== Format Time Tests ====================
-
-    @Test
-    fun `formatTime formats correctly`() {
-        val calendar = Calendar.getInstance().apply {
-            set(2024, Calendar.JANUARY, 1, 14, 30, 0)
-        }
-        val timestamp = calendar.timeInMillis
-
-        val result = DateUtils.formatTime(timestamp)
-
-        assertTrue(result.contains("2:30") || result.contains("14:30"))
-    }
-
     // ==================== Locale-Aware formatRelativeDate Tests ====================
 
     @Test
@@ -388,81 +359,6 @@ class DateUtilsTest {
         assertEquals(legacyResult, newResult)
     }
 
-    // ==================== Start/End of Day Tests ====================
-
-    @Test
-    fun `getStartOfDay returns midnight`() {
-        val calendar = Calendar.getInstance().apply {
-            set(2024, Calendar.JUNE, 15, 14, 30, 45)
-            set(Calendar.MILLISECOND, 500)
-        }
-        val timestamp = calendar.timeInMillis
-
-        val startOfDay = DateUtils.getStartOfDay(timestamp)
-        val resultCalendar = Calendar.getInstance().apply {
-            timeInMillis = startOfDay
-        }
-
-        assertEquals(0, resultCalendar.get(Calendar.HOUR_OF_DAY))
-        assertEquals(0, resultCalendar.get(Calendar.MINUTE))
-        assertEquals(0, resultCalendar.get(Calendar.SECOND))
-        assertEquals(0, resultCalendar.get(Calendar.MILLISECOND))
-        assertEquals(15, resultCalendar.get(Calendar.DAY_OF_MONTH))
-    }
-
-    @Test
-    fun `getEndOfDay returns 23-59-59-999`() {
-        val calendar = Calendar.getInstance().apply {
-            set(2024, Calendar.JUNE, 15, 8, 0, 0)
-        }
-        val timestamp = calendar.timeInMillis
-
-        val endOfDay = DateUtils.getEndOfDay(timestamp)
-        val resultCalendar = Calendar.getInstance().apply {
-            timeInMillis = endOfDay
-        }
-
-        assertEquals(23, resultCalendar.get(Calendar.HOUR_OF_DAY))
-        assertEquals(59, resultCalendar.get(Calendar.MINUTE))
-        assertEquals(59, resultCalendar.get(Calendar.SECOND))
-        assertEquals(999, resultCalendar.get(Calendar.MILLISECOND))
-        assertEquals(15, resultCalendar.get(Calendar.DAY_OF_MONTH))
-    }
-
-    @Test
-    fun `getStartOfDay and getEndOfDay span full day`() {
-        val calendar = Calendar.getInstance().apply {
-            set(2024, Calendar.JULY, 4, 12, 0, 0)
-        }
-        val timestamp = calendar.timeInMillis
-
-        val startOfDay = DateUtils.getStartOfDay(timestamp)
-        val endOfDay = DateUtils.getEndOfDay(timestamp)
-
-        // End of day should be start of day plus almost 24 hours
-        val diff = endOfDay - startOfDay
-        val expectedDiff = (24 * 60 * 60 * 1000L) - 1 // 24 hours minus 1 millisecond
-
-        assertEquals(expectedDiff, diff)
-    }
-
-    @Test
-    fun `getStartOfDay preserves date`() {
-        val calendar = Calendar.getInstance().apply {
-            set(2024, Calendar.FEBRUARY, 29, 23, 59, 59) // Leap year
-        }
-        val timestamp = calendar.timeInMillis
-
-        val startOfDay = DateUtils.getStartOfDay(timestamp)
-        val resultCalendar = Calendar.getInstance().apply {
-            timeInMillis = startOfDay
-        }
-
-        assertEquals(2024, resultCalendar.get(Calendar.YEAR))
-        assertEquals(Calendar.FEBRUARY, resultCalendar.get(Calendar.MONTH))
-        assertEquals(29, resultCalendar.get(Calendar.DAY_OF_MONTH))
-    }
-
     // ==================== Edge Case Tests ====================
 
     @Test
@@ -590,10 +486,6 @@ class DateUtilsTest {
                 DateUtils.formatFullDate(timestamp).isNotEmpty())
             assertTrue("formatShortDate returned empty for $timestamp",
                 DateUtils.formatShortDate(timestamp).isNotEmpty())
-            assertTrue("formatMonthYear returned empty for $timestamp",
-                DateUtils.formatMonthYear(timestamp).isNotEmpty())
-            assertTrue("formatTime returned empty for $timestamp",
-                DateUtils.formatTime(timestamp).isNotEmpty())
             assertTrue("formatRelativeDate returned empty for $timestamp",
                 DateUtils.formatRelativeDate(timestamp, "Today", "Yesterday").isNotEmpty())
         }

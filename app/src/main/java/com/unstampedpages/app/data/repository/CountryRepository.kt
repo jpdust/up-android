@@ -2,7 +2,6 @@ package com.unstampedpages.app.data.repository
 
 import com.unstampedpages.app.data.model.Continent
 import com.unstampedpages.app.data.model.Country
-import com.unstampedpages.app.data.model.CountryMapData
 import com.unstampedpages.app.data.model.SafetyLevel
 import com.unstampedpages.app.data.model.TravelAdvisories
 import com.unstampedpages.app.data.model.VisaRequirement
@@ -12,11 +11,6 @@ class CountryRepository {
     fun getAllCountries(): List<Country> = sampleCountries
 
     fun getCountryById(id: String): Country? = sampleCountries.find { it.id == id }
-
-    fun getCountriesByContinent(continent: Continent): List<Country> =
-        sampleCountries.filter { it.continent == continent }
-
-    fun getMapData(): List<CountryMapData> = countryMapPositions
 
     companion object {
         private fun defaultAdvisoryUrls(name: String, continent: Continent): TravelAdvisories {
@@ -95,48 +89,6 @@ class CountryRepository {
             "bt", "tl", "cn", "af", "ye", "sa", "ir",
             // Oceania
             "pg", "sb", "vu"
-        )
-
-        // Simplified map positions (normalized 0-1 coordinates)
-        // In production, these would be actual country polygon data
-        val countryMapPositions = listOf(
-            // North America
-            CountryMapData("us", 0.18f, 0.35f, 0.08f),
-            CountryMapData("ca", 0.18f, 0.22f, 0.09f),
-            CountryMapData("mx", 0.15f, 0.45f, 0.04f),
-
-            // South America
-            CountryMapData("br", 0.30f, 0.62f, 0.07f),
-            CountryMapData("ar", 0.27f, 0.78f, 0.04f),
-            CountryMapData("co", 0.24f, 0.52f, 0.03f),
-            CountryMapData("pe", 0.22f, 0.58f, 0.03f),
-
-            // Europe
-            CountryMapData("gb", 0.46f, 0.28f, 0.02f),
-            CountryMapData("fr", 0.47f, 0.33f, 0.025f),
-            CountryMapData("de", 0.50f, 0.30f, 0.02f),
-            CountryMapData("it", 0.51f, 0.36f, 0.02f),
-            CountryMapData("es", 0.45f, 0.37f, 0.025f),
-
-            // Africa
-            CountryMapData("eg", 0.55f, 0.42f, 0.03f),
-            CountryMapData("za", 0.54f, 0.72f, 0.03f),
-            CountryMapData("ng", 0.50f, 0.52f, 0.03f),
-            CountryMapData("ke", 0.58f, 0.55f, 0.025f),
-            CountryMapData("ma", 0.45f, 0.40f, 0.025f),
-
-            // Asia
-            CountryMapData("cn", 0.75f, 0.38f, 0.07f),
-            CountryMapData("jp", 0.85f, 0.38f, 0.025f),
-            CountryMapData("in", 0.68f, 0.45f, 0.05f),
-            CountryMapData("th", 0.73f, 0.50f, 0.025f),
-            CountryMapData("vn", 0.76f, 0.48f, 0.02f),
-            CountryMapData("kr", 0.82f, 0.36f, 0.015f),
-            CountryMapData("id", 0.78f, 0.58f, 0.04f),
-
-            // Oceania
-            CountryMapData("au", 0.82f, 0.70f, 0.06f),
-            CountryMapData("nz", 0.92f, 0.78f, 0.02f)
         )
 
         val sampleCountries = listOf(

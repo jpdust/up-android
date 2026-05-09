@@ -62,16 +62,6 @@ class ChecklistViewModel(application: Application) : AndroidViewModel(applicatio
         _uiState.value = _uiState.value.copy(newItemText = text)
     }
 
-    fun addItem() {
-        val text = _uiState.value.newItemText.trim()
-        if (text.isNotEmpty()) {
-            viewModelScope.launch {
-                repository.insertItem(ChecklistItem(content = text))
-                _uiState.value = _uiState.value.copy(newItemText = "")
-            }
-        }
-    }
-
     fun addItemWithDetails(name: String, category: ChecklistCategory, quantity: Int) {
         if (name.trim().isNotEmpty()) {
             viewModelScope.launch {
@@ -83,14 +73,6 @@ class ChecklistViewModel(application: Application) : AndroidViewModel(applicatio
                     )
                 )
                 _uiState.value = _uiState.value.copy(showAddItemDialog = false)
-            }
-        }
-    }
-
-    fun addItemFromText(text: String) {
-        if (text.trim().isNotEmpty()) {
-            viewModelScope.launch {
-                repository.insertItem(ChecklistItem(content = text.trim()))
             }
         }
     }
