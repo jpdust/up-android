@@ -33,6 +33,8 @@ android {
         }
         release {
             isMinifyEnabled = false
+            enableUnitTestCoverage = true
+            enableAndroidTestCoverage = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -121,35 +123,86 @@ tasks.withType<Test> {
     }
 }
 
-val exclusions = listOf(
+// ---------------------------------------------------------------------------
+// Classes that should be excluded from coverage measurement.
+// Covers generated code (R, BuildConfig, Compose internals, KSP stubs).
+// ---------------------------------------------------------------------------
+val jacocoExclusions = listOf(
     "**/R.class",
     "**/R\$*.class",
     "**/BuildConfig.*",
     "**/Manifest*.*",
     "**/*Test*.*",
     "android/**/*.*",
-    "**/*\$Lambda$*.*",
-    "**/*\$inlined$*.*",
+    "**/*\$Lambda\$*.*",
+    "**/*\$inlined\$*.*",
     "**/ComposableSingletons*.*",
+    "**/*_Factory*.*",
     "**/*\$*\$*.*"
 )
 
-tasks.register<JacocoReport>("jacocoTestReport") {
-    dependsOn("testDebugUnitTest")
+// ---------------------------------------------------------------------------
+// Register a JacocoReport task for every build type so that both debug and
+// release coverage can be generated independently. Output XML files land at:
+//   build/reports/jacoco/{buildType}/jacoco.xml
+// which is the path declared in sonar.coverage.jacoco.xmlReportPaths.
+//
+// Unit-test exec data:         outputs/unit_test_code_coverage/…/test*.exec
+// Instrumented-test exec data: outputs/code_coverage/…/connected/**/*.ec
+// Both are included; missing files are silently skipped by fileTree.
+// ---------------------------------------------------------------------------
+android.buildTypes.configureEach {
+    val buildTypeName = name
+    val capitalizedBuildType = buildTypeName.replaceFirstChar { it.uppercase() }
 
-    reports {
-        xml.required.set(true)
-        html.required.set(true)
-    }
+    tasks.register<JacocoReport>("jacoco${capitalizedBuildType}CoverageReport") {
+        group = "Reporting"
+        description = "Generate JaCoCo coverage report for the $buildTypeName build type."
+        dependsOn("test${capitalizedBuildType}UnitTest")
 
-    val javaClasses = fileTree(layout.buildDirectory.dir("intermediates/javac/debug/classes")) {
-        exclude(exclusions)
-    }
-    val kotlinClasses = fileTree(layout.buildDirectory.dir("tmp/kotlin-classes/debug")) {
-        exclude(exclusions)
-    }
+        reports {
+            xml.required.set(true)
+            xml.outputLocation.set(
+                layout.buildDirectory.file("reports/jacoco/$buildTypeName/jacoco.xml")
+            )
+            html.required.set(true)
+            html.outputLocation.set(
+                layout.buildDirectory.dir("reports/jacoco/$buildTypeName/html")
+            )
+        }
 
-    classDirectories.setFrom(files(javaClasses, kotlinClasses))
-    sourceDirectories.setFrom(files("src/main/java", "src/main/kotlin"))
-    executionData.setFrom(layout.buildDirectory.file("outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec"))
+        val javaClasses = fileTree(
+            layout.buildDirectory.dir("intermediates/javac/$buildTypeName")
+        ) { exclude(jacocoExclusions) }
+
+        val kotlinClasses = fileTree(
+            layout.buildDirectory.dir("tmp/kotlin-classes/$buildTypeName")
+        ) { exclude(jacocoExclusions) }
+
+        classDirectories.setFrom(files(javaClasses, kotlinClasses))
+        sourceDirectories.setFrom(files("src/main/java", "src/main/kotlin"))
+
+        // Collect execution data from both unit tests and instrumented tests.
+        // fileTree silently ignores paths that do not exist yet.
+        executionData.setFrom(
+            fileTree(layout.buildDirectory) {
+                include(
+                    "outputs/unit_test_code_coverage/${buildTypeName}UnitTest/" +
+                        "test${capitalizedBuildType}UnitTest.exec",
+                    "outputs/code_coverage/${buildTypeName}AndroidTest/connected/**/*.ec"
+                )
+            }
+        )
+    }
+}
+
+// Convenience task: generate coverage reports for all build types at once.
+tasks.register("jacocoAllCoverageReports") {
+    group = "Reporting"
+    description = "Generate JaCoCo coverage reports for all build types."
+    dependsOn(
+        android.buildTypes.map { buildType ->
+            "jacoco${buildType.name.replaceFirstChar { it.uppercase() }}CoverageReport"
+        }
+    )
 }
