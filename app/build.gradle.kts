@@ -171,15 +171,17 @@ android.buildTypes.configureEach {
             )
         }
 
-        val javaClasses = fileTree(
-            layout.buildDirectory.dir("intermediates/javac/$buildTypeName")
-        ) { exclude(jacocoExclusions) }
-
+        // AGP 9.x outputs compiled Kotlin classes to:
+        //   intermediates/built_in_kotlinc/{buildType}/compile{BuildType}Kotlin/classes
+        // The JaCoCo-instrumented copy under intermediates/classes must NOT be used here —
+        // the report task needs the original pre-instrumentation bytecode.
         val kotlinClasses = fileTree(
-            layout.buildDirectory.dir("tmp/kotlin-classes/$buildTypeName")
+            layout.buildDirectory.dir(
+                "intermediates/built_in_kotlinc/$buildTypeName/compile${capitalizedBuildType}Kotlin/classes"
+            )
         ) { exclude(jacocoExclusions) }
 
-        classDirectories.setFrom(files(javaClasses, kotlinClasses))
+        classDirectories.setFrom(files(kotlinClasses))
         sourceDirectories.setFrom(files("src/main/java", "src/main/kotlin"))
 
         // Collect execution data from both unit tests and instrumented tests.
