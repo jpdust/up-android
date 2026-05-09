@@ -53,10 +53,3 @@ enum class Continent(@StringRes val displayNameResId: Int) {
     OCEANIA(R.string.continent_oceania),
     ANTARCTICA(R.string.continent_antarctica)
 }
-
-data class CountryMapData(
-    val countryId: String,
-    val centerX: Float,
-    val centerY: Float,
-    val radius: Float
-)

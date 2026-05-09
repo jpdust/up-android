@@ -23,12 +23,17 @@ object DateUtils {
         return createFormat("MMM d, yyyy").format(Date(timestamp))
     }
 
-    fun formatMonthYear(timestamp: Long): String {
-        return createFormat("MMMM yyyy").format(Date(timestamp))
-    }
-
-    fun formatTime(timestamp: Long): String {
-        return createFormat("h:mm a").format(Date(timestamp))
+    /**
+     * Formats a timestamp as a relative date string using hardcoded English strings.
+     *
+     * @deprecated Use [formatRelativeDate] with explicit todayString and yesterdayString instead.
+     */
+    @Deprecated(
+        message = "Use formatRelativeDate with explicit localized strings instead.",
+        replaceWith = ReplaceWith("formatRelativeDate(timestamp, todayString, yesterdayString)")
+    )
+    fun formatRelativeDate(timestamp: Long): String {
+        return formatRelativeDate(timestamp, "Today", "Yesterday")
     }
 
     /**
@@ -56,18 +61,6 @@ object DateUtils {
         }
     }
 
-    /**
-     * Legacy method for backwards compatibility.
-     * Uses English strings - prefer the overload that accepts localized strings.
-     */
-    @Deprecated(
-        message = "Use formatRelativeDate(timestamp, todayString, yesterdayString) for locale-aware formatting",
-        replaceWith = ReplaceWith("formatRelativeDate(timestamp, todayString, yesterdayString)")
-    )
-    fun formatRelativeDate(timestamp: Long): String {
-        return formatRelativeDate(timestamp, "Today", "Yesterday")
-    }
-
     private fun isSameDay(cal1: Calendar, cal2: Calendar): Boolean {
         return cal1[Calendar.YEAR] == cal2[Calendar.YEAR] &&
                 cal1[Calendar.DAY_OF_YEAR] == cal2[Calendar.DAY_OF_YEAR]
@@ -90,23 +83,4 @@ object DateUtils {
         return cal1[Calendar.YEAR] == cal2[Calendar.YEAR]
     }
 
-    fun getStartOfDay(timestamp: Long): Long {
-        return Calendar.getInstance().apply {
-            timeInMillis = timestamp
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }.timeInMillis
-    }
-
-    fun getEndOfDay(timestamp: Long): Long {
-        return Calendar.getInstance().apply {
-            timeInMillis = timestamp
-            set(Calendar.HOUR_OF_DAY, 23)
-            set(Calendar.MINUTE, 59)
-            set(Calendar.SECOND, 59)
-            set(Calendar.MILLISECOND, 999)
-        }.timeInMillis
-    }
 }

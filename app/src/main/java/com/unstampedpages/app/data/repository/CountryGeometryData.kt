@@ -89,8 +89,4 @@ object CountryGeometryData {
     /** Low-resolution (110m) geometry — use for rendering at scale < [LOD_SCALE_THRESHOLD]. */
     fun getLowResGeometries(): List<CountryGeometry> = geometriesLoRes
 
-    fun getGeometryById(countryId: String): CountryGeometry? =
-        geometriesHiRes.find { it.countryId == countryId }
-
-    fun isInitialized(): Boolean = isLoaded.value
 }

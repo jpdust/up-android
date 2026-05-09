@@ -270,30 +270,3 @@ class ContinentTest {
         assertEquals(7, values.size)
     }
 }
-
-class CountryMapDataTest {
-
-    @Test
-    fun `CountryMapData holds correct values`() {
-        val mapData = CountryMapData(
-            countryId = "us",
-            centerX = 100f,
-            centerY = 200f,
-            radius = 50f
-        )
-
-        assertEquals("us", mapData.countryId)
-        assertEquals(100f, mapData.centerX, 0.001f)
-        assertEquals(200f, mapData.centerY, 0.001f)
-        assertEquals(50f, mapData.radius, 0.001f)
-    }
-
-    @Test
-    fun `CountryMapData copy works correctly`() {
-        val original = CountryMapData("fr", 50f, 75f, 25f)
-        val copy = original.copy(radius = 30f)
-
-        assertEquals(25f, original.radius, 0.001f)
-        assertEquals(30f, copy.radius, 0.001f)
-    }
-}

@@ -125,10 +125,6 @@ class TripLogViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun viewEntry(entry: TripLogEntry) {
-        _uiState.value = _uiState.value.copy(selectedEntry = entry)
-    }
-
     fun clearSelection() {
         _uiState.value = _uiState.value.copy(selectedEntry = null)
     }
