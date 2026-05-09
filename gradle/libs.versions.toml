@@ -21,6 +21,7 @@ test-rules = "1.7.0"
 test-core = "1.7.0"
 espresso = "3.7.0"
 browser = "1.10.0"
+sonarqube = "5.1.0.4882"
 
 [libraries]
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activity-compose" }
@@ -58,3 +59,4 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
