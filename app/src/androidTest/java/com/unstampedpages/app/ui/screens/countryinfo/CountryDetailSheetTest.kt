@@ -21,6 +21,65 @@ class CountryDetailSheetTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
+    // ---------------------------------------------------------------------------
+    // Helpers shared by both the original and the merged "additional" tests
+    // ---------------------------------------------------------------------------
+
+    /**
+     * Convenience launcher used by the merged tests that came from
+     * [CountryDetailSheetAdditionalTest]. The original tests use inline [setContent] blocks;
+     * this helper avoids repeating the boilerplate for the newer tests.
+     */
+    private fun launchSheet(country: Country?, visible: Boolean = true) {
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(country = country, visible = visible, onDismiss = {})
+            }
+        }
+        composeTestRule.waitForIdle()
+    }
+
+    /**
+     * Builds a [Country] with **EUR** as the default currency (so the currency converter
+     * is shown) and a **nullable** [travelAdvisories] parameter so tests can pass `null`
+     * to verify chip-hiding behaviour.
+     *
+     * Distinct from [createCountry] which defaults to USD and non-null advisories.
+     */
+    private fun country(
+        name: String = "Test Country",
+        currencyCode: String = "EUR",
+        currency: String = "Euro",
+        exchangeRateToUSD: Double = 1.08,
+        safetyLevel: SafetyLevel = SafetyLevel.NORMAL_SECURITY_PRECAUTIONS,
+        visaRequirement: VisaRequirement = VisaRequirement.VISA_NOT_REQUIRED,
+        outletType: String = "Type C/F (230V)",
+        continent: Continent = Continent.EUROPE,
+        flagEmoji: String = "\uD83C\uDDEB\uD83C\uDDF7",
+        passportValidity: String? = null,
+        travelAdvisories: TravelAdvisories? = TravelAdvisories(
+            us = "https://travel.state.gov",
+            uk = "https://gov.uk",
+            au = "https://smartraveller.gov.au",
+            ca = "https://travel.gc.ca"
+        )
+    ) = Country(
+        id = name.lowercase().replace(" ", "_"),
+        name = name,
+        safetyLevel = safetyLevel,
+        visaRequirement = visaRequirement,
+        currency = currency,
+        currencyCode = currencyCode,
+        exchangeRateToUSD = exchangeRateToUSD,
+        outletType = outletType,
+        continent = continent,
+        flagEmoji = flagEmoji,
+        passportValidity = passportValidity,
+        travelAdvisories = travelAdvisories
+    )
+
+    // ---------------------------------------------------------------------------
+
     private fun createCountry(
         id: String = "test",
         name: String = "Test Country",
@@ -2337,6 +2396,412 @@ class CountryDetailSheetTest {
         }
 
         composeTestRule.onNodeWithTag("bottom_sheet_scrim").assertExists()
+    }
+
+    // ============================================================
+    // Null Travel Advisories
+    // (Merged from CountryDetailSheetAdditionalTest)
+    // ============================================================
+
+    /**
+     * When [Country.travelAdvisories] is null the advisory chips must NOT appear,
+     * even though the country itself is non-null and the sheet is visible.
+     * This exercises the `if (advisories != null)` guard inside [SafetyLevelRow].
+     */
+    @Test
+    fun safetyLevelRow_chips_hiddenWhenAdvisoriesNull() {
+        launchSheet(country(travelAdvisories = null))
+
+        composeTestRule.onNodeWithText("US").assertDoesNotExist()
+        composeTestRule.onNodeWithText("UK").assertDoesNotExist()
+        composeTestRule.onNodeWithText("AU").assertDoesNotExist()
+        composeTestRule.onNodeWithText("CA").assertDoesNotExist()
+    }
+
+    @Test
+    fun safetyLevelRow_safetyLabel_stillDisplayedWhenAdvisoriesNull() {
+        // The Safety Level row itself (label + value) is always rendered regardless of advisories.
+        launchSheet(country(travelAdvisories = null))
+
+        composeTestRule.onNodeWithText("Safety Level").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Normal Security Precautions").assertIsDisplayed()
+    }
+
+    @Test
+    fun safetyLevelRow_chips_hiddenForHighRiskCountryWithNullAdvisories() {
+        // Even a DO_NOT_TRAVEL country should have no chips when advisories are null.
+        launchSheet(country(safetyLevel = SafetyLevel.DO_NOT_TRAVEL, travelAdvisories = null))
+
+        composeTestRule.onNodeWithText("US").assertDoesNotExist()
+        composeTestRule.onNodeWithText("CA").assertDoesNotExist()
+    }
+
+    @Test
+    fun safetyLevelRow_chipsPresent_whenAdvisoriesNonNull() {
+        // Positive counterpart: non-null advisories produce chips.
+        launchSheet(country(travelAdvisories = TravelAdvisories(
+            us = "https://travel.state.gov",
+            uk = "https://gov.uk",
+            au = "https://smartraveller.gov.au",
+            ca = "https://travel.gc.ca"
+        )))
+
+        composeTestRule.onNodeWithText("US").assertIsDisplayed()
+        composeTestRule.onNodeWithText("UK").assertIsDisplayed()
+        composeTestRule.onNodeWithText("AU").assertIsDisplayed()
+        composeTestRule.onNodeWithText("CA").assertIsDisplayed()
+    }
+
+    // ============================================================
+    // Passport Validity — uppercase and additional pattern matching
+    // (Merged from CountryDetailSheetAdditionalTest)
+    // ============================================================
+
+    /**
+     * [getLocalizedPassportValidity] uses case-insensitive `contains`. Verify that
+     * uppercase strings that match a pattern still produce the localized string.
+     */
+    @Test
+    fun passportValidity_sixMonthsUppercase_localizes() {
+        launchSheet(country(passportValidity = "6 MONTHS REMAINING"))
+
+        composeTestRule.onNodeWithText("6 months").assertIsDisplayed()
+    }
+
+    @Test
+    fun passportValidity_threeMonthsUppercase_localizes() {
+        launchSheet(country(passportValidity = "3 MONTHS"))
+
+        composeTestRule.onNodeWithText("3 months").assertIsDisplayed()
+    }
+
+    @Test
+    fun passportValidity_durationUppercase_localizes() {
+        launchSheet(country(passportValidity = "DURATION OF STAY"))
+
+        composeTestRule.onNodeWithText("Planned length of stay").assertIsDisplayed()
+    }
+
+    @Test
+    fun passportValidity_stayKeywordUppercase_localizes() {
+        launchSheet(country(passportValidity = "VALID FOR LENGTH OF STAY"))
+
+        composeTestRule.onNodeWithText("Planned length of stay").assertIsDisplayed()
+    }
+
+    /**
+     * "At least 3 months" should match the "3 month" pattern — parallel to the
+     * existing "At least 6 months" test.
+     */
+    @Test
+    fun passportValidity_atLeastThreeMonths_localizes() {
+        launchSheet(country(passportValidity = "At least 3 months beyond intended stay"))
+
+        composeTestRule.onNodeWithText("3 months").assertIsDisplayed()
+    }
+
+    /**
+     * "duration" by itself (not "duration of stay") still matches the `contains("duration")`
+     * branch and produces the localized string.
+     */
+    @Test
+    fun passportValidity_durationWordAlone_localizes() {
+        launchSheet(country(passportValidity = "duration"))
+
+        composeTestRule.onNodeWithText("Planned length of stay").assertIsDisplayed()
+    }
+
+    @Test
+    fun passportValidity_mixedCase_sixMonths_localizes() {
+        launchSheet(country(passportValidity = "Valid for at least 6 Month beyond departure"))
+
+        composeTestRule.onNodeWithText("6 months").assertIsDisplayed()
+    }
+
+    // ============================================================
+    // Currency Input — decimal validation
+    // (Merged from CountryDetailSheetAdditionalTest)
+    //
+    // Each test calls performTextClearance() explicitly after performClick() so
+    // that the field is empty before performTextInput() fires, rather than
+    // relying on the asynchronous FocusInteraction.Focus handler to do it.
+    // ============================================================
+
+    /**
+     * Typing letters into the USD field should be rejected by [isValidDecimalInput].
+     * The field should remain empty rather than displaying "abc".
+     */
+    @Test
+    fun currencyInput_usdField_rejectsLetterInput() {
+        launchSheet(country())
+
+        composeTestRule.onNodeWithTag("currency_input_usd").performClick()
+        composeTestRule.onNodeWithTag("currency_input_usd").performTextClearance()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag("currency_input_usd").performTextInput("abc")
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("abc").assertDoesNotExist()
+    }
+
+    @Test
+    fun currencyInput_foreignField_rejectsLetterInput() {
+        launchSheet(country())
+
+        composeTestRule.onNodeWithTag("currency_input_foreign").performClick()
+        composeTestRule.onNodeWithTag("currency_input_foreign").performTextClearance()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag("currency_input_foreign").performTextInput("xyz")
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("xyz").assertDoesNotExist()
+    }
+
+    /**
+     * Input with three decimal places ("1.234") exceeds the `\d{0,2}` constraint and
+     * must be rejected.
+     */
+    @Test
+    fun currencyInput_usdField_rejectsThreeDecimalPlaces() {
+        launchSheet(country())
+
+        composeTestRule.onNodeWithTag("currency_input_usd").performClick()
+        composeTestRule.onNodeWithTag("currency_input_usd").performTextClearance()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag("currency_input_usd").performTextInput("1.23")
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag("currency_input_usd").assertTextEquals("1.23")
+
+        // Appending a third decimal digit must be rejected.
+        composeTestRule.onNodeWithTag("currency_input_usd").performTextInput("4")
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag("currency_input_usd").assertTextEquals("1.23")
+    }
+
+    /**
+     * A lone decimal point "." satisfies `^\d*\.?\d{0,2}$` and must be accepted.
+     */
+    @Test
+    fun currencyInput_usdField_acceptsSingleDecimalPoint() {
+        launchSheet(country())
+
+        composeTestRule.onNodeWithTag("currency_input_usd").performClick()
+        composeTestRule.onNodeWithTag("currency_input_usd").performTextClearance()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag("currency_input_usd").performTextInput(".")
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag("currency_input_usd").assertTextEquals(".")
+    }
+
+    /**
+     * "1.2.3" contains two decimal points and must be rejected.
+     */
+    @Test
+    fun currencyInput_usdField_rejectsMultipleDecimalPoints() {
+        launchSheet(country())
+
+        composeTestRule.onNodeWithTag("currency_input_usd").performClick()
+        composeTestRule.onNodeWithTag("currency_input_usd").performTextClearance()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag("currency_input_usd").performTextInput("1.2")
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag("currency_input_usd").assertTextEquals("1.2")
+
+        composeTestRule.onNodeWithTag("currency_input_usd").performTextInput(".")
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag("currency_input_usd").assertTextEquals("1.2")
+    }
+
+    @Test
+    fun currencyInput_usdField_acceptsOneDecimalPlace() {
+        launchSheet(country())
+
+        composeTestRule.onNodeWithTag("currency_input_usd").performClick()
+        composeTestRule.onNodeWithTag("currency_input_usd").performTextClearance()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag("currency_input_usd").performTextInput("5.7")
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag("currency_input_usd").assertTextEquals("5.7")
+    }
+
+    @Test
+    fun currencyInput_usdField_acceptsTwoDecimalPlaces() {
+        launchSheet(country())
+
+        composeTestRule.onNodeWithTag("currency_input_usd").performClick()
+        composeTestRule.onNodeWithTag("currency_input_usd").performTextClearance()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag("currency_input_usd").performTextInput("5.75")
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag("currency_input_usd").assertTextEquals("5.75")
+    }
+
+    @Test
+    fun currencyInput_foreignField_rejectsThreeDecimalPlaces() {
+        launchSheet(country())
+
+        composeTestRule.onNodeWithTag("currency_input_foreign").performClick()
+        composeTestRule.onNodeWithTag("currency_input_foreign").performTextClearance()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag("currency_input_foreign").performTextInput("2.99")
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag("currency_input_foreign").assertTextEquals("2.99")
+
+        composeTestRule.onNodeWithTag("currency_input_foreign").performTextInput("9")
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag("currency_input_foreign").assertTextEquals("2.99")
+    }
+
+    // ============================================================
+    // Blur-without-typing restores pre-focus value
+    // (Merged from CountryDetailSheetAdditionalTest)
+    // ============================================================
+
+    /**
+     * When the user focuses a [CurrencyInputField] but types nothing, blurring the field
+     * must restore the value that was showing before focus.  This exercises the
+     * [FocusInteraction.Unfocus] branch that checks `textFieldValue.text.isEmpty()`.
+     */
+    @Test
+    fun currencyInput_usdField_blurWithNoInput_restoresValue() {
+        // EUR country: initial USD = "1"
+        launchSheet(country(exchangeRateToUSD = 1.08))
+
+        composeTestRule.onNodeWithTag("currency_input_usd").assertTextEquals("1")
+
+        // Focus USD (the Focus interaction clears it asynchronously)
+        composeTestRule.onNodeWithTag("currency_input_usd").performClick()
+        composeTestRule.waitForIdle()
+
+        // Dismiss focus via IME Done — avoids racing with a concurrent foreign Focus event
+        // and prevents accidentally clearing foreign field's displayed value.
+        composeTestRule.onNodeWithTag("currency_input_usd").performImeAction()
+        composeTestRule.waitForIdle()
+
+        // USD must have been restored to "1" (the preFocusValue)
+        composeTestRule.onNodeWithTag("currency_input_usd").assertTextEquals("1")
+    }
+
+    @Test
+    fun currencyInput_foreignField_blurWithNoInput_restoresValue() {
+        // EUR country: initial foreign = 1/1.08 ≈ "0.93"
+        launchSheet(country(exchangeRateToUSD = 1.08))
+
+        composeTestRule.onNodeWithTag("currency_input_foreign").assertTextEquals("0.93")
+
+        composeTestRule.onNodeWithTag("currency_input_foreign").performClick()
+        composeTestRule.waitForIdle()
+
+        // Dismiss focus via IME Done — avoids racing with a concurrent USD Focus event
+        // and prevents accidentally clearing USD field's displayed value.
+        composeTestRule.onNodeWithTag("currency_input_foreign").performImeAction()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag("currency_input_foreign").assertTextEquals("0.93")
+    }
+    
+    @Test
+    fun currencyInput_usdField_blurWithNoInput_doesNotShowZero() {
+        // Blurring USD without typing must not produce "0.00" in either field.
+        launchSheet(country(exchangeRateToUSD = 1.27, currencyCode = "GBP", currency = "British Pound"))
+
+        composeTestRule.onNodeWithTag("currency_input_usd").performClick()
+        composeTestRule.waitForIdle()
+        // Dismiss focus via IME Done — avoids racing with a concurrent foreign Focus event.
+        composeTestRule.onNodeWithTag("currency_input_usd").performImeAction()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("0.00").assertDoesNotExist()
+    }
+
+    // ============================================================
+    // Currency converter present / absent for various non-USD codes
+    // (Merged from CountryDetailSheetAdditionalTest)
+    // ============================================================
+
+    @Test
+    fun currencyConverter_present_forSubUnitCurrency() {
+        launchSheet(country(currencyCode = "JPY", currency = "Japanese Yen", exchangeRateToUSD = 0.0067))
+
+        composeTestRule.onNodeWithTag("currency_converter").assertExists()
+    }
+
+    @Test
+    fun currencyConverter_present_forSuperUnitCurrency() {
+        launchSheet(country(currencyCode = "KWD", currency = "Kuwaiti Dinar", exchangeRateToUSD = 3.26))
+
+        composeTestRule.onNodeWithTag("currency_converter").assertExists()
+    }
+
+    @Test
+    fun currencyConverter_absent_forUSD() {
+        launchSheet(country(currencyCode = "USD", currency = "US Dollar", exchangeRateToUSD = 1.0))
+
+        composeTestRule.onNodeWithTag("currency_converter").assertDoesNotExist()
+    }
+
+    // ============================================================
+    // Test-tag completeness guard
+    // (Merged from CountryDetailSheetAdditionalTest)
+    // ============================================================
+
+    /**
+     * Verifies that every declared test tag exists for a fully-populated country, ensuring
+     * that future refactoring of test tag strings would fail here rather than silently.
+     */
+    @Test
+    fun allDeclaredTestTags_existForFullyPopulatedCountry() {
+        launchSheet(country(
+            passportValidity = "6 months",
+            travelAdvisories = TravelAdvisories("https://a", "https://b", "https://c", "https://d"),
+            currencyCode = "EUR"
+        ))
+
+        val tags = listOf(
+            "country_detail_sheet",
+            "country_header",
+            "country_flag",
+            "country_name",
+            "country_continent",
+            "info_safety_level",
+            "info_safety_level_value",
+            "info_entry_requirement",
+            "info_entry_requirement_value",
+            "info_passport_validity",
+            "info_passport_validity_value",
+            "info_currency",
+            "info_currency_value",
+            "info_power_outlet",
+            "info_power_outlet_value",
+            "currency_converter",
+            "currency_input_usd",
+            "currency_input_foreign",
+            "bottom_sheet_scrim",
+            "bottom_sheet_close_button"
+        )
+
+        tags.forEach { tag ->
+            composeTestRule.onNodeWithTag(tag).assertExists()
+        }
+    }
+
+    /**
+     * For a USD country, the currency-converter-related tags must be absent.
+     */
+    @Test
+    fun converterTestTags_absentForUsdCountry() {
+        launchSheet(country(currencyCode = "USD", currency = "US Dollar", exchangeRateToUSD = 1.0))
+
+        listOf("currency_converter", "currency_input_usd", "currency_input_foreign")
+            .forEach { tag ->
+                composeTestRule.onNodeWithTag(tag).assertDoesNotExist()
+            }
     }
 
 }
