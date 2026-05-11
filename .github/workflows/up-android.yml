@@ -1,36 +1,152 @@
-# Basic workflow leveraging GitHub Actions
-
 name: CI
 
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "master" branch
   push:
-    branches: [ "master" ]
+    branches: ["master"]
   pull_request:
-    branches: [ "master" ]
-
-  # Allows you to run this workflow manually from the Actions tab
+    branches: ["master"]
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  test:
+    name: Test & Analyze
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
+      # ── Checkout ────────────────────────────────────────────────────────────
+      # fetch-depth: 0 gives SonarCloud the full history it needs for
+      # blame data and PR decoration; a shallow clone produces empty blame.
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
+      # ── Java ────────────────────────────────────────────────────────────────
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
+      # ── Gradle ──────────────────────────────────────────────────────────────
+      # Caches the Gradle wrapper, dependencies, and build outputs between runs.
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # ── Unit Tests ──────────────────────────────────────────────────────────
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest
+
+      # Preserve the HTML report so failures can be inspected in the
+      # Actions UI without having to re-run the build locally.
+      - name: Upload unit test report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-report
+          path: app/build/reports/tests/testDebugUnitTest/
+          retention-days: 7
+
+      # ── KVM (hardware acceleration for the Android emulator) ────────────────
+      # Required on ubuntu-latest; the udev rule grants the runner user
+      # access to /dev/kvm so QEMU can use hardware virtualisation.
+      - name: Enable KVM
         run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # ── AVD Cache ───────────────────────────────────────────────────────────
+      # Caching the AVD snapshot cuts emulator cold-boot time from ~3 min to
+      # ~30 s on cache hits.  The key encodes the API level and system image
+      # so a different emulator config always triggers a fresh snapshot.
+      - name: Cache Android emulator AVD
+        uses: actions/cache@v4
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-34-aosp_atd-${{ runner.os }}
+
+      # Only executed when there is no cached snapshot.
+      # Creates the AVD and boots it once so the snapshot is written to the
+      # cache paths above; subsequent runs skip this step entirely.
+      - name: Create AVD snapshot for caching
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: aosp_atd
+          arch: x86_64
+          profile: pixel_6
+          force-avd-creation: false
+          emulator-options: >-
+            -no-window
+            -gpu swiftshader_indirect
+            -noaudio
+            -no-boot-anim
+            -camera-back none
+          disable-animations: false
+          script: echo "AVD snapshot ready"
+
+      # ── Instrumented Tests ──────────────────────────────────────────────────
+      # reactivecircus/android-emulator-runner boots the emulator, waits for
+      # it to be fully ready, runs the script, then shuts it down.
+      # -no-snapshot-save prevents writing the dirty post-test state back to
+      # the snapshot so the cached image stays clean for the next run.
+      - name: Run instrumented tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: aosp_atd
+          arch: x86_64
+          profile: pixel_6
+          force-avd-creation: false
+          emulator-options: >-
+            -no-snapshot-save
+            -no-window
+            -gpu swiftshader_indirect
+            -noaudio
+            -no-boot-anim
+            -camera-back none
+          disable-animations: true
+          script: ./gradlew connectedDebugAndroidTest
+
+      - name: Upload instrumented test report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: instrumented-test-report
+          path: app/build/reports/androidTests/connected/
+          retention-days: 7
+
+      # ── JaCoCo Coverage Report ───────────────────────────────────────────────
+      # jacocoDebugCoverageReport reads exec data from:
+      #   Unit tests:         build/outputs/unit_test_code_coverage/debugUnitTest/*.exec
+      #   Instrumented tests: build/outputs/code_coverage/debugAndroidTest/connected/**/*.ec
+      # Both sets of exec files are present in the workspace from the steps
+      # above, so the merged XML contains full coverage from both test suites.
+      - name: Generate JaCoCo coverage report
+        run: ./gradlew jacocoDebugCoverageReport
+
+      # Upload the HTML report as a build artifact for easy browsing.
+      - name: Upload JaCoCo coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-coverage-report
+          path: app/build/reports/jacoco/debug/
+          retention-days: 14
+
+      # ── SonarCloud Analysis ─────────────────────────────────────────────────
+      # sonar.coverage.jacoco.xmlReportPaths is configured in build.gradle.kts
+      # and points at the XML produced by the step above.
+      # SONAR_TOKEN must be added to the repository's Actions secrets.
+      # GITHUB_TOKEN is automatically provided by GitHub Actions and is used
+      # by SonarCloud to post PR status checks and inline annotations.
+      - name: SonarCloud analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew sonar
