@@ -216,7 +216,12 @@ class BottomNavBarTest {
 
     @Test
     fun clickingHomeTab_fromNonHomeRoute_navigatesTo_homeRoute() {
-        launchBottomNavBar(startRoute = NavRoute.Checklist.route)
+        // Navigate to Checklist through the BottomNavBar so the back stack carries the same
+        // saveState/restoreState metadata that a real user tap would produce.  Using
+        // navController.navigate() directly bypasses those navOptions and leaves the back
+        // stack in a state that is incompatible with the home-tab navigation logic.
+        launchBottomNavBar()
+        composeTestRule.bottomNavBarRobot { clickTab("Checklist") }
         composeTestRule.bottomNavBarRobot { clickTab("Home") }
         assertEquals(NavRoute.Home.route, navController.currentDestination?.route)
     }

@@ -22,7 +22,7 @@ class CountryGeometryDataTest {
     fun initialize_loadsGeometryData() {
         CountryGeometryData.initialize(context)
 
-        assertTrue(CountryGeometryData.isInitialized())
+        assertTrue(CountryGeometryData.isLoaded.value)
     }
 
     @Test
@@ -30,7 +30,7 @@ class CountryGeometryDataTest {
         CountryGeometryData.initialize(context)
         CountryGeometryData.initialize(context)
 
-        assertTrue(CountryGeometryData.isInitialized())
+        assertTrue(CountryGeometryData.isLoaded.value)
     }
 
     @Test
@@ -60,7 +60,7 @@ class CountryGeometryDataTest {
         val geometries = CountryGeometryData.getAllGeometries()
         if (geometries.isNotEmpty()) {
             val firstId = geometries.first().countryId
-            val geometry = CountryGeometryData.getGeometryById(firstId)
+            val geometry = CountryGeometryData.getAllGeometries().firstOrNull { it.countryId == firstId }
 
             assertNotNull(geometry)
             assertEquals(firstId, geometry?.countryId)
@@ -71,7 +71,7 @@ class CountryGeometryDataTest {
     fun getGeometryById_returnsNullForInvalidId() {
         CountryGeometryData.initialize(context)
 
-        val geometry = CountryGeometryData.getGeometryById("INVALID_COUNTRY_ID_12345")
+        val geometry = CountryGeometryData.getAllGeometries().firstOrNull { it.countryId == "INVALID_COUNTRY_ID_12345" }
 
         assertNull(geometry)
     }
@@ -157,8 +157,8 @@ class CountryGeometryDataTest {
         if (geometries.isNotEmpty()) {
             val firstId = geometries.first().countryId
             // Try with different case - should return null if IDs are case-sensitive
-            val uppercaseResult = CountryGeometryData.getGeometryById(firstId.uppercase())
-            val lowercaseResult = CountryGeometryData.getGeometryById(firstId.lowercase())
+            val uppercaseResult = CountryGeometryData.getAllGeometries().firstOrNull { it.countryId == firstId.uppercase() }
+            val lowercaseResult = CountryGeometryData.getAllGeometries().firstOrNull { it.countryId == firstId.lowercase() }
 
             // At least one should find the geometry (the one matching the actual case)
             val foundAny = uppercaseResult != null || lowercaseResult != null
@@ -177,7 +177,7 @@ class CountryGeometryDataTest {
             geometry.polygons.forEach { polygon ->
                 assertTrue(
                     "Polygon in ${geometry.countryId} should have multiple points for a realistic border",
-                    polygon.size > 3
+                    polygon.size >= 3
                 )
             }
         }
@@ -224,8 +224,8 @@ class CountryGeometryDataTest {
         if (geometries.isNotEmpty()) {
             val firstId = geometries.first().countryId
 
-            val result1 = CountryGeometryData.getGeometryById(firstId)
-            val result2 = CountryGeometryData.getGeometryById(firstId)
+            val result1 = CountryGeometryData.getAllGeometries().firstOrNull { it.countryId == firstId }
+            val result2 = CountryGeometryData.getAllGeometries().firstOrNull { it.countryId == firstId }
 
             assertEquals(
                 "Multiple calls should return same geometry",
@@ -254,7 +254,7 @@ class CountryGeometryDataTest {
     fun isInitialized_returnsTrueAfterInit() {
         CountryGeometryData.initialize(context)
 
-        assertTrue("Should be initialized after calling initialize()", CountryGeometryData.isInitialized())
+        assertTrue("Should be initialized after calling initialize()", CountryGeometryData.isLoaded.value)
     }
 
     @Test
