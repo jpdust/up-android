@@ -33,6 +33,13 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      # ── Android SDK path ────────────────────────────────────────────────────
+      # local.properties is not committed to git, so Gradle cannot find the SDK
+      # on the CI runner.  Write it from the pre-installed ANDROID_HOME that
+      # GitHub's ubuntu-latest runner exposes automatically.
+      - name: Write local.properties
+        run: echo "sdk.dir=$ANDROID_HOME" >> local.properties
+
       # ── Unit Tests ──────────────────────────────────────────────────────────
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest
