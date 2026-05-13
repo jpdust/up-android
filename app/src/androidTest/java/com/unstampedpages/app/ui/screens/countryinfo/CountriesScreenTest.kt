@@ -26,64 +26,30 @@ class CountriesScreenTest {
     }
 
     @Test
-    fun countriesScreen_pageLoad_displaysSearchBar() {
+    fun countriesScreen_pageLoad() {
         composeTestRule.countriesRobot {
             verifyScreenDisplayed()
             verifySearchBarDisplayed()
-        }
-    }
-
-    @Test
-    fun countriesScreen_pageLoad_displaysWorldMap() {
-        composeTestRule.countriesRobot {
-            verifyScreenDisplayed()
             verifyWorldMapDisplayed()
             verifyWorldMapContainerDisplayed()
-        }
-    }
-
-    @Test
-    fun countriesScreen_pageLoad_displaysMapViewSelector() {
-        composeTestRule.countriesRobot {
-            verifyScreenDisplayed()
             verifyMapViewSelectorDisplayed()
             verifyMapModeOptionsDisplayed()
         }
     }
 
     @Test
-    fun countriesScreen_pageLoad_allMainComponentsDisplayed() {
-        composeTestRule.countriesRobot {
-            verifyPageLoad()
-        }
-    }
-
-    @Test
-    fun countriesScreen_panMapLeft_mapPansContinuously() {
+    fun countriesScreen_panMap_mapPansContinuously() {
         composeTestRule.countriesRobot {
             verifyWorldMapDisplayed()
             panMapLeft()
             verifyWorldMapDisplayed()
             panMapLeft()
             verifyWorldMapDisplayed()
-        }
-    }
-
-    @Test
-    fun countriesScreen_panMapRight_mapPansContinuously() {
-        composeTestRule.countriesRobot {
-            verifyWorldMapDisplayed()
             panMapRight()
             verifyWorldMapDisplayed()
             panMapRight()
             verifyWorldMapDisplayed()
-        }
-    }
 
-    @Test
-    fun countriesScreen_panMapContinuously_wrapsAround() {
-        composeTestRule.countriesRobot {
-            verifyWorldMapDisplayed()
             // Pan multiple times to test continuous wrapping
             repeat(5) {
                 panMapLeft()
@@ -94,17 +60,10 @@ class CountriesScreenTest {
     }
 
     @Test
-    fun countriesScreen_zoomInMap_mapZoomsIn() {
+    fun countriesScreen_zoomInMap_mapZooms() {
         composeTestRule.countriesRobot {
             verifyWorldMapDisplayed()
             zoomInMap()
-            verifyWorldMapDisplayed()
-        }
-    }
-
-    @Test
-    fun countriesScreen_zoomOutMap_mapZoomsOut() {
-        composeTestRule.countriesRobot {
             verifyWorldMapDisplayed()
             zoomInMap()
             zoomOutMap()
@@ -113,7 +72,7 @@ class CountriesScreenTest {
     }
 
     @Test
-    fun countriesScreen_zoomIn_thenSelectCountry_retainsCountryInfo() {
+    fun countriesScreen_Zoom_thenSelectCountry_retainsCountryInfo() {
         composeTestRule.countriesRobot {
             verifyWorldMapDisplayed()
             zoomInMap()
@@ -144,45 +103,10 @@ class CountriesScreenTest {
             verifyCountryFlagDisplayed()
             verifyBottomSheetCountryName("Germany")
             verifyCountryContinentDisplayed()
-        }
-    }
-
-    @Test
-    fun countriesScreen_selectCountry_displaysCurrencyInfo() {
-        composeTestRule.countriesRobot {
-            searchAndSelectCountry("Japan", "jp")
             verifyCurrencyInfoDisplayed()
-        }
-    }
-
-    @Test
-    fun countriesScreen_selectCountry_displaysSafetyRisk() {
-        composeTestRule.countriesRobot {
-            searchAndSelectCountry("Japan", "jp")
             verifySafetyLevelDisplayed()
-        }
-    }
-
-    @Test
-    fun countriesScreen_selectCountry_displaysEntryRequirement() {
-        composeTestRule.countriesRobot {
-            searchAndSelectCountry("Japan", "jp")
             verifyEntryRequirementDisplayed()
-        }
-    }
-
-    @Test
-    fun countriesScreen_selectCountry_displaysPowerOutlet() {
-        composeTestRule.countriesRobot {
-            searchAndSelectCountry("Japan", "jp")
             verifyPowerOutletDisplayed()
-        }
-    }
-
-    @Test
-    fun countriesScreen_selectCountry_displaysPassportValidity() {
-        composeTestRule.countriesRobot {
-            searchAndSelectCountry("Japan", "jp")
             verifyPassportValidityDisplayed()
         }
     }
@@ -243,79 +167,20 @@ class CountriesScreenTest {
     }
 
     @Test
-    fun countriesScreen_defaultMapModeSelected_byDefault() {
+    fun countriesScreen_selectMapMode_modeChanges() {
         composeTestRule.countriesRobot {
             verifyMapViewSelectorDisplayed()
             verifyDefaultMapModeSelected()
-        }
-    }
-
-    @Test
-    fun countriesScreen_selectSecurityRiskMode_modeChanges() {
-        composeTestRule.countriesRobot {
-            verifyMapViewSelectorDisplayed()
             selectSecurityRiskMapMode()
             verifySecurityRiskMapModeSelected()
-        }
-    }
-
-    @Test
-    fun countriesScreen_selectVisaRequirementsMode_modeChanges() {
-        composeTestRule.countriesRobot {
-            verifyMapViewSelectorDisplayed()
             selectVisaRequirementsMapMode()
             verifyVisaRequirementsMapModeSelected()
-        }
-    }
-
-    @Test
-    fun countriesScreen_selectPassportValidityMode_modeChanges() {
-        composeTestRule.countriesRobot {
-            verifyMapViewSelectorDisplayed()
             selectPassportValidityMapMode()
             verifyPassportValidityMapModeSelected()
-        }
-    }
 
-    @Test
-    fun countriesScreen_toggleBetweenModes_allModesWork() {
-        composeTestRule.countriesRobot {
-            verifyMapViewSelectorDisplayed()
-
-            // Default -> Security Risk
-            selectSecurityRiskMapMode()
-            verifySecurityRiskMapModeSelected()
-            waitForAnimation()
-
-            // Security Risk -> Visa Requirements
-            selectVisaRequirementsMapMode()
-            verifyVisaRequirementsMapModeSelected()
-            waitForAnimation()
-
-            // Visa Requirements -> Passport Validity
-            selectPassportValidityMapMode()
-            verifyPassportValidityMapModeSelected()
-            waitForAnimation()
-
-            // Passport Validity -> Default
             selectDefaultMapMode()
             verifyDefaultMapModeSelected()
-            waitForAnimation()
-        }
-    }
-
-    @Test
-    fun countriesScreen_toggleMapModes_withAnimation() {
-        composeTestRule.countriesRobot {
-            verifyMapViewSelectorDisplayed()
-
-            selectSecurityRiskMapMode()
-            waitForAnimation()
-            verifySecurityRiskMapModeSelected()
-
-            selectVisaRequirementsMapMode()
-            waitForAnimation()
-            verifyVisaRequirementsMapModeSelected()
+            //need Yellow Fever and Malaria
         }
     }
 
