@@ -116,8 +116,8 @@ class MyStampsViewModel(application: Application) : AndroidViewModel(application
                 if (stamp != null) {
                     stamp.imagePath?.let { path ->
                         val file = File(path)
-                        if (file.exists()) {
-                            file.delete()
+                        if (file.exists() && !file.delete()) {
+                            Log.w("MyStampsViewModel", "Failed to delete stamp image: $path")
                         }
                     }
                     repository?.deleteStampByCountryCode(countryCode)

@@ -74,6 +74,7 @@ import com.unstampedpages.app.ui.theme.MapHighlight
 import com.unstampedpages.app.ui.theme.MapLand
 import com.unstampedpages.app.ui.theme.MapOcean
 import androidx.compose.ui.graphics.nativeCanvas
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -408,7 +409,9 @@ private fun Modifier.mapGestures(
     onCountryTapped: (String?) -> Unit,
     colorMode: MapColorMode,
     onCompassTapped: () -> Unit,
-    tapScope: CoroutineScope
+    tapScope: CoroutineScope,
+    computeDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    mainDispatcher: CoroutineDispatcher = Dispatchers.Main
 ): Modifier = this.pointerInput(colorMode) {
     var tapJob: Job? = null
     awaitEachGesture {
@@ -458,7 +461,7 @@ private fun Modifier.mapGestures(
                 // a new one on the Default dispatcher so the main thread (and renderer)
                 // are never blocked by O(n·m) ray-casting.
                 tapJob?.cancel()
-                tapJob = tapScope.launch(Dispatchers.Default) {
+                tapJob = tapScope.launch(computeDispatcher) {
                     val result = hitTestCountry(
                         position = downPosition,
                         matrixValues = matrixValues,
@@ -468,7 +471,7 @@ private fun Modifier.mapGestures(
                         countryBounds = countryBounds,
                         currentScale = currentScale
                     )
-                    withContext(Dispatchers.Main) {
+                    withContext(mainDispatcher) {
                         onCountryTapped(result)
                     }
                 }
@@ -955,7 +958,9 @@ fun WorldMapCanvas(
     modifier: Modifier = Modifier,
     colorMode: MapColorMode = MapColorMode.DEFAULT,
     countries: Map<String, Country> = emptyMap(),
-    legendConfig: MapLegendConfig = MapLegendConfig()
+    legendConfig: MapLegendConfig = MapLegendConfig(),
+    computeDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    mainDispatcher: CoroutineDispatcher = Dispatchers.Main
 ) {
     val tapScope = rememberCoroutineScope()
     var transform by remember { mutableStateOf(TransformState()) }
@@ -1095,7 +1100,9 @@ fun WorldMapCanvas(
                     onCountryTapped = onCountryTapped,
                     colorMode = colorMode,
                     onCompassTapped = legendConfig.onCompassTapped,
-                    tapScope = tapScope
+                    tapScope = tapScope,
+                    computeDispatcher = computeDispatcher,
+                    mainDispatcher = mainDispatcher
                 )
         )
 
