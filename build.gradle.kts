@@ -24,6 +24,8 @@ sonar {
         // Source and test roots (relative to the root project directory)
         property("sonar.sources", "app/src/main/java")
         property("sonar.tests", "app/src/test/java,app/src/androidTest/java")
+        // Ensure main and test paths don't overlap
+        property("sonar.exclusions", "**/test/**")
 
         // Compiled class files — point at the debug variant for analysis
         property("sonar.java.binaries", "${rootDir}/app/build/tmp/kotlin-classes/debug")
