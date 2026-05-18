@@ -7,6 +7,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.unstampedpages.app.data.local.dao.ChecklistDao
 import com.unstampedpages.app.data.local.dao.StampDao
 import com.unstampedpages.app.data.local.dao.TripLogDao
+import com.unstampedpages.app.data.AppConstants
 import com.unstampedpages.app.data.local.entity.ChecklistItem
 import com.unstampedpages.app.data.local.entity.StampItem
 import com.unstampedpages.app.data.local.entity.TripLogEntry
@@ -297,19 +298,19 @@ class AppDatabaseTest {
 
     @Test
     fun stampDao_insertAndGetStamp() = runTest {
-        val stamp = StampItem(countryCode = "US", countryName = "United States")
+        val stamp = StampItem(countryCode = "US", countryName = AppConstants.CountryName.UNITED_STATES)
         stampDao.insertStamp(stamp)
 
         val retrieved = stampDao.getStampByCountryCode("US")
         assertNotNull(retrieved)
-        assertEquals("United States", retrieved?.countryName)
+        assertEquals(AppConstants.CountryName.UNITED_STATES, retrieved?.countryName)
     }
 
     @Test
     fun stampDao_getAllStamps_returnsStampsInAlphabeticalOrder() = runTest {
-        val stamp1 = StampItem(countryCode = "US", countryName = "United States")
-        val stamp2 = StampItem(countryCode = "FR", countryName = "France")
-        val stamp3 = StampItem(countryCode = "JP", countryName = "Japan")
+        val stamp1 = StampItem(countryCode = "US", countryName = AppConstants.CountryName.UNITED_STATES)
+        val stamp2 = StampItem(countryCode = "FR", countryName = AppConstants.CountryName.FRANCE)
+        val stamp3 = StampItem(countryCode = "JP", countryName = AppConstants.CountryName.JAPAN)
 
         stampDao.insertStamp(stamp1)
         stampDao.insertStamp(stamp2)
@@ -317,14 +318,14 @@ class AppDatabaseTest {
 
         val stamps = stampDao.getAllStamps().first()
         assertEquals(3, stamps.size)
-        assertEquals("France", stamps[0].countryName)
-        assertEquals("Japan", stamps[1].countryName)
-        assertEquals("United States", stamps[2].countryName)
+        assertEquals(AppConstants.CountryName.FRANCE, stamps[0].countryName)
+        assertEquals(AppConstants.CountryName.JAPAN, stamps[1].countryName)
+        assertEquals(AppConstants.CountryName.UNITED_STATES, stamps[2].countryName)
     }
 
     @Test
     fun stampDao_updateStamp() = runTest {
-        val stamp = StampItem(countryCode = "US", countryName = "United States")
+        val stamp = StampItem(countryCode = "US", countryName = AppConstants.CountryName.UNITED_STATES)
         stampDao.insertStamp(stamp)
 
         val updatedStamp = stamp.copy(imagePath = "/path/to/image.jpg")
@@ -336,7 +337,7 @@ class AppDatabaseTest {
 
     @Test
     fun stampDao_deleteStamp() = runTest {
-        val stamp = StampItem(countryCode = "US", countryName = "United States")
+        val stamp = StampItem(countryCode = "US", countryName = AppConstants.CountryName.UNITED_STATES)
         stampDao.insertStamp(stamp)
 
         val insertedStamp = stampDao.getStampByCountryCode("US")
@@ -350,7 +351,7 @@ class AppDatabaseTest {
 
     @Test
     fun stampDao_deleteStampByCountryCode() = runTest {
-        val stamp = StampItem(countryCode = "US", countryName = "United States")
+        val stamp = StampItem(countryCode = "US", countryName = AppConstants.CountryName.UNITED_STATES)
         stampDao.insertStamp(stamp)
 
         stampDao.deleteStampByCountryCode("US")
@@ -361,7 +362,7 @@ class AppDatabaseTest {
 
     @Test
     fun stampDao_updateStampImage() = runTest {
-        val stamp = StampItem(countryCode = "US", countryName = "United States")
+        val stamp = StampItem(countryCode = "US", countryName = AppConstants.CountryName.UNITED_STATES)
         stampDao.insertStamp(stamp)
 
         stampDao.updateStampImage("US", "/new/path/image.png")
@@ -372,7 +373,7 @@ class AppDatabaseTest {
 
     @Test
     fun stampDao_updateStampImage_toNull() = runTest {
-        val stamp = StampItem(countryCode = "US", countryName = "United States", imagePath = "/path/image.jpg")
+        val stamp = StampItem(countryCode = "US", countryName = AppConstants.CountryName.UNITED_STATES, imagePath = "/path/image.jpg")
         stampDao.insertStamp(stamp)
 
         stampDao.updateStampImage("US", null)
@@ -389,7 +390,7 @@ class AppDatabaseTest {
 
     @Test
     fun stampDao_insertWithConflictReplace() = runTest {
-        val stamp = StampItem(countryCode = "US", countryName = "United States")
+        val stamp = StampItem(countryCode = "US", countryName = AppConstants.CountryName.UNITED_STATES)
         stampDao.insertStamp(stamp)
 
         val replacementStamp = StampItem(countryCode = "US", countryName = "USA", imagePath = "/image.jpg")

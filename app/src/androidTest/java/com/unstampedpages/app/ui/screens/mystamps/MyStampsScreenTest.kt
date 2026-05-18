@@ -6,6 +6,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.unstampedpages.app.MainActivity
+import com.unstampedpages.app.data.AppConstants
 import com.unstampedpages.app.data.CountryList
 import com.unstampedpages.app.ui.screens.mystamps.MyStampsRobot.Companion.myStampsRobot
 import org.junit.Before
@@ -123,8 +124,8 @@ class MyStampsScreenTest {
     fun myStampsScreen_canScrollToSpecificCountry() {
         composeTestRule.myStampsRobot {
             verifyScreenDisplayed()
-            scrollToCountry("Japan")
-            verifyCountryDisplayed("Japan")
+            scrollToCountry(AppConstants.CountryName.JAPAN)
+            verifyCountryDisplayed(AppConstants.CountryName.JAPAN)
         }
     }
 
@@ -285,10 +286,10 @@ class MyStampsScreenTest {
             cancelAddingStamp()
 
             // Test another country (Japan)
-            scrollToCountry("Japan")
-            clickAddStampButtonByName("Japan")
+            scrollToCountry(AppConstants.CountryName.JAPAN)
+            clickAddStampButtonByName(AppConstants.CountryName.JAPAN)
             verifyAddStampDialogDisplayed()
-            verifyDialogShowsCountry("Japan")
+            verifyDialogShowsCountry(AppConstants.CountryName.JAPAN)
             cancelAddingStamp()
         }
     }

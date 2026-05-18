@@ -1,5 +1,6 @@
 package com.unstampedpages.app.ui.screens.mystamps
 
+import com.unstampedpages.app.data.AppConstants
 import com.unstampedpages.app.data.CountryListItem
 import org.junit.Assert.*
 import org.junit.Test
@@ -57,28 +58,28 @@ class MyStampsUiStateTest {
 
     @Test
     fun `state can be created with selected country`() {
-        val country = CountryListItem(code = "US", englishName = "United States")
+        val country = CountryListItem(code = "US", englishName = AppConstants.CountryName.UNITED_STATES)
         val state = MyStampsUiState(selectedCountry = country)
 
         assertNotNull(state.selectedCountry)
         assertEquals("US", state.selectedCountry?.code)
-        assertEquals("United States", state.selectedCountry?.englishName)
+        assertEquals(AppConstants.CountryName.UNITED_STATES, state.selectedCountry?.englishName)
     }
 
     @Test
     fun `state can be created with country stamps`() {
-        val country = CountryListItem(code = "JP", englishName = "Japan")
+        val country = CountryListItem(code = "JP", englishName = AppConstants.CountryName.JAPAN)
         val stamp = CountryStamp(country = country, imagePath = "/path/to/image.jpg")
         val state = MyStampsUiState(countryStamps = listOf(stamp))
 
         assertEquals(1, state.countryStamps.size)
-        assertEquals("Japan", state.countryStamps[0].country.englishName)
+        assertEquals(AppConstants.CountryName.JAPAN, state.countryStamps[0].country.englishName)
         assertEquals("/path/to/image.jpg", state.countryStamps[0].imagePath)
     }
 
     @Test
     fun `state copy preserves unchanged fields`() {
-        val country = CountryListItem(code = "US", englishName = "United States")
+        val country = CountryListItem(code = "US", englishName = AppConstants.CountryName.UNITED_STATES)
         val stamp = CountryStamp(country = country)
         val originalState = MyStampsUiState(
             countryStamps = listOf(stamp),
@@ -97,7 +98,7 @@ class MyStampsUiStateTest {
     @Test
     fun `state copy can update multiple fields`() {
         val state = MyStampsUiState()
-        val country = CountryListItem(code = "FR", englishName = "France")
+        val country = CountryListItem(code = "FR", englishName = AppConstants.CountryName.FRANCE)
 
         val newState = state.copy(
             selectedCountry = country,
@@ -125,7 +126,7 @@ class CountryStampTest {
 
     @Test
     fun `country stamp can be created with country only`() {
-        val country = CountryListItem(code = "US", englishName = "United States")
+        val country = CountryListItem(code = "US", englishName = AppConstants.CountryName.UNITED_STATES)
         val stamp = CountryStamp(country = country)
 
         assertEquals(country, stamp.country)
@@ -134,7 +135,7 @@ class CountryStampTest {
 
     @Test
     fun `country stamp can be created with image path`() {
-        val country = CountryListItem(code = "JP", englishName = "Japan")
+        val country = CountryListItem(code = "JP", englishName = AppConstants.CountryName.JAPAN)
         val stamp = CountryStamp(country = country, imagePath = "/path/to/stamp.jpg")
 
         assertEquals(country, stamp.country)
@@ -143,7 +144,7 @@ class CountryStampTest {
 
     @Test
     fun `country stamp with null image path`() {
-        val country = CountryListItem(code = "DE", englishName = "Germany")
+        val country = CountryListItem(code = "DE", englishName = AppConstants.CountryName.GERMANY)
         val stamp = CountryStamp(country = country, imagePath = null)
 
         assertNull(stamp.imagePath)
@@ -151,7 +152,7 @@ class CountryStampTest {
 
     @Test
     fun `country stamp equality with same data`() {
-        val country = CountryListItem(code = "FR", englishName = "France")
+        val country = CountryListItem(code = "FR", englishName = AppConstants.CountryName.FRANCE)
         val stamp1 = CountryStamp(country = country, imagePath = "/path/image.jpg")
         val stamp2 = CountryStamp(country = country, imagePath = "/path/image.jpg")
 
@@ -160,7 +161,7 @@ class CountryStampTest {
 
     @Test
     fun `country stamp inequality with different image paths`() {
-        val country = CountryListItem(code = "GB", englishName = "United Kingdom")
+        val country = CountryListItem(code = "GB", englishName = AppConstants.CountryName.UNITED_KINGDOM)
         val stamp1 = CountryStamp(country = country, imagePath = "/path/image1.jpg")
         val stamp2 = CountryStamp(country = country, imagePath = "/path/image2.jpg")
 
@@ -169,8 +170,8 @@ class CountryStampTest {
 
     @Test
     fun `country stamp inequality with different countries`() {
-        val country1 = CountryListItem(code = "US", englishName = "United States")
-        val country2 = CountryListItem(code = "CA", englishName = "Canada")
+        val country1 = CountryListItem(code = "US", englishName = AppConstants.CountryName.UNITED_STATES)
+        val country2 = CountryListItem(code = "CA", englishName = AppConstants.CountryName.CANADA)
         val stamp1 = CountryStamp(country = country1)
         val stamp2 = CountryStamp(country = country2)
 

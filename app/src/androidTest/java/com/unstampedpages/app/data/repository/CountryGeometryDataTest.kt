@@ -3,6 +3,7 @@ package com.unstampedpages.app.data.repository
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.unstampedpages.app.data.AppConstants
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -50,7 +51,7 @@ class CountryGeometryDataTest {
         val countryIds = geometries.map { it.countryId }
 
         // Check for some major countries that should be in the dataset
-        assertTrue("Should contain USA", countryIds.any { it.equals("USA", ignoreCase = true) || it.equals("US", ignoreCase = true) || it.equals("United States", ignoreCase = true) })
+        assertTrue("Should contain USA", countryIds.any { it.equals("USA", ignoreCase = true) || it.equals("US", ignoreCase = true) || it.equals(AppConstants.CountryName.UNITED_STATES, ignoreCase = true) })
     }
 
     @Test

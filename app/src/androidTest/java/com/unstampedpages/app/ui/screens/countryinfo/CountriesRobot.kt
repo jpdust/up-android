@@ -3,6 +3,7 @@ package com.unstampedpages.app.ui.screens.countryinfo
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.ComposeTestRule
+import com.unstampedpages.app.data.AppConstants
 
 /**
  * Robot Pattern implementation for testing CountryInfoScreen (Countries tab).
@@ -311,10 +312,10 @@ class CountriesRobot(private val composeTestRule: ComposeTestRule) {
         composeTestRule.onNodeWithTag("legend_item_medium_risk").assertIsDisplayed()
         composeTestRule.onNodeWithTag("legend_item_high_risk").assertIsDisplayed()
         composeTestRule.onNodeWithTag("legend_item_extreme_risk").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Normal Security Precautions").assertIsDisplayed()
-        composeTestRule.onNodeWithText("High Degree of Caution").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Reconsider Travel").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Do Not Travel").assertIsDisplayed()
+        composeTestRule.onNodeWithText(AppConstants.SafetyLevelDisplay.NORMAL_SECURITY_PRECAUTIONS).assertIsDisplayed()
+        composeTestRule.onNodeWithText(AppConstants.SafetyLevelDisplay.HIGH_DEGREE_CAUTION).assertIsDisplayed()
+        composeTestRule.onNodeWithText(AppConstants.SafetyLevelDisplay.RECONSIDER_TRAVEL).assertIsDisplayed()
+        composeTestRule.onNodeWithText(AppConstants.SafetyLevelDisplay.DO_NOT_TRAVEL).assertIsDisplayed()
         return this
     }
 
@@ -324,11 +325,11 @@ class CountriesRobot(private val composeTestRule: ComposeTestRule) {
         composeTestRule.onNodeWithTag("legend_item_visa_on_arrival").assertIsDisplayed()
         composeTestRule.onNodeWithTag("legend_item_visa_required").assertIsDisplayed()
         composeTestRule.onNodeWithTag("legend_item_restricted").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Visa Not Required").assertIsDisplayed()
-        composeTestRule.onNodeWithText("eVisa").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Visa On Arrival").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Visa Required").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Restricted").assertIsDisplayed()
+        composeTestRule.onNodeWithText(AppConstants.VisaRequirementDisplay.VISA_NOT_REQUIRED).assertIsDisplayed()
+        composeTestRule.onNodeWithText(AppConstants.VisaRequirementDisplay.E_VISA).assertIsDisplayed()
+        composeTestRule.onNodeWithText(AppConstants.VisaRequirementDisplay.VISA_ON_ARRIVAL).assertIsDisplayed()
+        composeTestRule.onNodeWithText(AppConstants.VisaRequirementDisplay.VISA_REQUIRED).assertIsDisplayed()
+        composeTestRule.onNodeWithText(AppConstants.VisaRequirementDisplay.RESTRICTED).assertIsDisplayed()
         return this
     }
 
