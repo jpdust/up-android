@@ -6,6 +6,10 @@ plugins {
     alias(libs.plugins.sonarqube)
 }
 
+dependencyLocking {
+    lockAllConfigurations()
+}
+
 // ---------------------------------------------------------------------------
 // SonarQube analysis configuration
 //

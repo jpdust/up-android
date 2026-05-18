@@ -5,6 +5,10 @@ plugins {
     id("jacoco")
 }
 
+dependencyLocking {
+    lockAllConfigurations()
+}
+
 jacoco {
     toolVersion = "0.8.12"
 }
@@ -32,7 +36,7 @@ android {
             enableAndroidTestCoverage = true
         }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             enableUnitTestCoverage = true
             enableAndroidTestCoverage = true
             proguardFiles(

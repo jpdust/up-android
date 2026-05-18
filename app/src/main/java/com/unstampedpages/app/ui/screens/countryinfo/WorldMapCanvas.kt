@@ -400,6 +400,16 @@ private fun handleSingleTouch(
 }
 
 /**
+ * Coroutine configuration for async tap hit-testing.
+ * Groups the scope and dispatchers so [mapGestures] stays within the parameter limit.
+ */
+private data class TapConfig(
+    val scope: CoroutineScope,
+    val computeDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    val mainDispatcher: CoroutineDispatcher = Dispatchers.Main
+)
+
+/**
  * Modifier extension for map gesture handling (pan, zoom, tap)
  */
 private fun Modifier.mapGestures(
@@ -409,9 +419,7 @@ private fun Modifier.mapGestures(
     onCountryTapped: (String?) -> Unit,
     colorMode: MapColorMode,
     onCompassTapped: () -> Unit,
-    tapScope: CoroutineScope,
-    computeDispatcher: CoroutineDispatcher = Dispatchers.Default,
-    mainDispatcher: CoroutineDispatcher = Dispatchers.Main
+    tapConfig: TapConfig
 ): Modifier = this.pointerInput(colorMode) {
     var tapJob: Job? = null
     awaitEachGesture {
@@ -461,7 +469,7 @@ private fun Modifier.mapGestures(
                 // a new one on the Default dispatcher so the main thread (and renderer)
                 // are never blocked by O(n·m) ray-casting.
                 tapJob?.cancel()
-                tapJob = tapScope.launch(computeDispatcher) {
+                tapJob = tapConfig.scope.launch(tapConfig.computeDispatcher) {
                     val result = hitTestCountry(
                         position = downPosition,
                         matrixValues = matrixValues,
@@ -471,7 +479,7 @@ private fun Modifier.mapGestures(
                         countryBounds = countryBounds,
                         currentScale = currentScale
                     )
-                    withContext(mainDispatcher) {
+                    withContext(tapConfig.mainDispatcher) {
                         onCountryTapped(result)
                     }
                 }
@@ -795,8 +803,8 @@ private fun DrawScope.drawMapCopy(
                 val h = bounds.heightNorm * layout.mapHeight * params.scale
                 maxOf(w, h) < SMALL_COUNTRY_THRESHOLD_PX
             }
-            val centroid = if (isSmall) {
-                Offset(bounds!!.centroidNormX * layout.mapWidth, bounds.centroidNormY * layout.mapHeight)
+            val centroid = if (isSmall && bounds != null) {
+                Offset(bounds.centroidNormX * layout.mapWidth, bounds.centroidNormY * layout.mapHeight)
             } else {
                 Offset.Zero
             }
@@ -958,9 +966,7 @@ fun WorldMapCanvas(
     modifier: Modifier = Modifier,
     colorMode: MapColorMode = MapColorMode.DEFAULT,
     countries: Map<String, Country> = emptyMap(),
-    legendConfig: MapLegendConfig = MapLegendConfig(),
-    computeDispatcher: CoroutineDispatcher = Dispatchers.Default,
-    mainDispatcher: CoroutineDispatcher = Dispatchers.Main
+    legendConfig: MapLegendConfig = MapLegendConfig()
 ) {
     val tapScope = rememberCoroutineScope()
     var transform by remember { mutableStateOf(TransformState()) }
@@ -1100,9 +1106,7 @@ fun WorldMapCanvas(
                     onCountryTapped = onCountryTapped,
                     colorMode = colorMode,
                     onCompassTapped = legendConfig.onCompassTapped,
-                    tapScope = tapScope,
-                    computeDispatcher = computeDispatcher,
-                    mainDispatcher = mainDispatcher
+                    tapConfig = TapConfig(scope = tapScope)
                 )
         )
 
