@@ -66,6 +66,7 @@ class CountriesScreenTest {
             zoomInMap()
             verifyWorldMapDisplayed()
             zoomInMap()
+            verifyWorldMapDisplayed()
             zoomOutMap()
             verifyWorldMapDisplayed()
         }
@@ -178,9 +179,13 @@ class CountriesScreenTest {
             selectPassportValidityMapMode()
             verifyPassportValidityMapModeSelected()
 
+            selectYellowFeverMapMode()
+            verifyYellowFeverMapModeSelected()
+            selectMalariaMapMode()
+            verifyMalariaMapModeSelected()
+
             selectDefaultMapMode()
             verifyDefaultMapModeSelected()
-            //need Yellow Fever and Malaria
         }
     }
 
@@ -221,7 +226,22 @@ class CountriesScreenTest {
             selectSecurityRiskMapMode()
             waitForAnimation()
             searchAndSelectCountry("United States", "us")
-            verifySafetyLevelDisplayed()
+            verifyBottomSheetDisplayed()
+            verifyCurrencyInfoDisplayed()
+            verifySafetyLevelValue("Normal Security Precautions")
+            verifyAllCountryInfoDisplayed()
+            verifyCurrencyConverterNotDisplayed()
+        }
+    }
+
+    @Test
+    fun countriesScreen_unitedStates_displaysCorrectInfoInVisaRequirementsMode() {
+        composeTestRule.countriesRobot {
+            selectVisaRequirementsMapMode()
+            waitForAnimation()
+            searchAndSelectCountry("United States", "us")
+            verifyEntryRequirementDisplayed()
+            verifySafetyLevelValue("Normal Security Precautions")
             verifyAllCountryInfoDisplayed()
         }
     }
@@ -233,17 +253,7 @@ class CountriesScreenTest {
             waitForAnimation()
             searchAndSelectCountry("Sudan", "sd")
             verifyEntryRequirementDisplayed()
-            verifyAllCountryInfoDisplayed()
-        }
-    }
-
-    @Test
-    fun countriesScreen_unitedStates_displaysCorrectInfoInVisaRequirementsMode() {
-        composeTestRule.countriesRobot {
-            selectVisaRequirementsMapMode()
-            waitForAnimation()
-            searchAndSelectCountry("United States", "us")
-            verifyEntryRequirementDisplayed()
+            verifySafetyLevelValue("Do Not Travel")
             verifyAllCountryInfoDisplayed()
         }
     }
@@ -265,16 +275,6 @@ class CountriesScreenTest {
             waitForAnimation()
             searchAndSelectCountry("Germany", "de")
             verifyAllCountryInfoDisplayed()
-        }
-    }
-
-    @Test
-    fun countriesScreen_usdCountry_doesNotShowCurrencyConverter() {
-        composeTestRule.countriesRobot {
-            searchAndSelectCountry("United States", "us")
-            verifyBottomSheetDisplayed()
-            verifyCurrencyInfoDisplayed()
-            verifyCurrencyConverterNotDisplayed()
         }
     }
 
