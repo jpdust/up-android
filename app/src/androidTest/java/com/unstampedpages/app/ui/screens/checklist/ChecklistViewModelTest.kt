@@ -169,13 +169,16 @@ class ChecklistUiStateTest {
 
     @Test
     fun state_equals_sameValues() {
+        // ChecklistItem has createdAt/updatedAt defaulting to System.currentTimeMillis(),
+        // so two separately constructed instances are never equal. Share one reference.
+        val item = ChecklistItem(id = 1, content = "Test")
         val state1 = ChecklistUiState(
-            items = listOf(ChecklistItem(id = 1, content = "Test")),
+            items = listOf(item),
             newItemText = "text",
             isLoading = true
         )
         val state2 = ChecklistUiState(
-            items = listOf(ChecklistItem(id = 1, content = "Test")),
+            items = listOf(item),
             newItemText = "text",
             isLoading = true
         )
