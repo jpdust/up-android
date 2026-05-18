@@ -2,6 +2,7 @@ package com.unstampedpages.app.ui.screens.countryinfo
 
 import androidx.compose.ui.graphics.Color
 import com.unstampedpages.app.R
+import com.unstampedpages.app.data.AppConstants
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -289,19 +290,19 @@ class WorldMapCanvasTest {
 
     @Test
     fun `getPassportValidityColor returns gray for 6 months`() {
-        val color = getPassportValidityColor("6 months")
+        val color = getPassportValidityColor(AppConstants.PassportValidity.SIX_MONTHS)
         assertEquals(PassportValidityColors.SixMonths, color)
     }
 
     @Test
     fun `getPassportValidityColor returns teal for 3 months`() {
-        val color = getPassportValidityColor("3 months")
+        val color = getPassportValidityColor(AppConstants.PassportValidity.THREE_MONTHS)
         assertEquals(PassportValidityColors.ThreeMonths, color)
     }
 
     @Test
     fun `getPassportValidityColor returns green for planned stay`() {
-        val color = getPassportValidityColor("Planned length of stay")
+        val color = getPassportValidityColor(AppConstants.PassportValidity.PLANNED_STAY)
         assertEquals(PassportValidityColors.PlannedStay, color)
     }
 
@@ -1431,21 +1432,21 @@ class WorldMapCanvasTest {
 
     @Test
     fun `getPassportValidityColor handles common variations of 6 months`() {
-        assertEquals(PassportValidityColors.SixMonths, getPassportValidityColor("6 months"))
+        assertEquals(PassportValidityColors.SixMonths, getPassportValidityColor(AppConstants.PassportValidity.SIX_MONTHS))
         assertEquals(PassportValidityColors.Other, getPassportValidityColor("6 Months"))
         assertEquals(PassportValidityColors.Other, getPassportValidityColor("six months"))
     }
 
     @Test
     fun `getPassportValidityColor handles common variations of 3 months`() {
-        assertEquals(PassportValidityColors.ThreeMonths, getPassportValidityColor("3 months"))
+        assertEquals(PassportValidityColors.ThreeMonths, getPassportValidityColor(AppConstants.PassportValidity.THREE_MONTHS))
         assertEquals(PassportValidityColors.Other, getPassportValidityColor("3 Months"))
         assertEquals(PassportValidityColors.Other, getPassportValidityColor("three months"))
     }
 
     @Test
     fun `getPassportValidityColor handles planned stay variations`() {
-        assertEquals(PassportValidityColors.PlannedStay, getPassportValidityColor("Planned length of stay"))
+        assertEquals(PassportValidityColors.PlannedStay, getPassportValidityColor(AppConstants.PassportValidity.PLANNED_STAY))
         assertEquals(PassportValidityColors.Other, getPassportValidityColor("planned length of stay"))
     }
 

@@ -1,5 +1,6 @@
 package com.unstampedpages.app.data.local.entity
 
+import com.unstampedpages.app.data.AppConstants
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -7,21 +8,21 @@ class StampItemTest {
 
     @Test
     fun `countryCode is set correctly`() {
-        val stamp = StampItem(countryCode = "US", countryName = "United States")
+        val stamp = StampItem(countryCode = "US", countryName = AppConstants.CountryName.UNITED_STATES)
 
         assertEquals("US", stamp.countryCode)
     }
 
     @Test
     fun `countryName is set correctly`() {
-        val stamp = StampItem(countryCode = "US", countryName = "United States")
+        val stamp = StampItem(countryCode = "US", countryName = AppConstants.CountryName.UNITED_STATES)
 
-        assertEquals("United States", stamp.countryName)
+        assertEquals(AppConstants.CountryName.UNITED_STATES, stamp.countryName)
     }
 
     @Test
     fun `default imagePath is null`() {
-        val stamp = StampItem(countryCode = "US", countryName = "United States")
+        val stamp = StampItem(countryCode = "US", countryName = AppConstants.CountryName.UNITED_STATES)
 
         assertNull(stamp.imagePath)
     }
@@ -30,7 +31,7 @@ class StampItemTest {
     fun `imagePath can be set`() {
         val stamp = StampItem(
             countryCode = "US",
-            countryName = "United States",
+            countryName = AppConstants.CountryName.UNITED_STATES,
             imagePath = "/path/to/stamp.jpg"
         )
 
@@ -40,7 +41,7 @@ class StampItemTest {
     @Test
     fun `createdAt is set to current time by default`() {
         val before = System.currentTimeMillis()
-        val stamp = StampItem(countryCode = "US", countryName = "United States")
+        val stamp = StampItem(countryCode = "US", countryName = AppConstants.CountryName.UNITED_STATES)
         val after = System.currentTimeMillis()
 
         assertTrue(stamp.createdAt >= before)
@@ -50,7 +51,7 @@ class StampItemTest {
     @Test
     fun `updatedAt is set to current time by default`() {
         val before = System.currentTimeMillis()
-        val stamp = StampItem(countryCode = "US", countryName = "United States")
+        val stamp = StampItem(countryCode = "US", countryName = AppConstants.CountryName.UNITED_STATES)
         val after = System.currentTimeMillis()
 
         assertTrue(stamp.updatedAt >= before)
@@ -62,7 +63,7 @@ class StampItemTest {
         val timestamp = 1234567890L
         val stamp = StampItem(
             countryCode = "US",
-            countryName = "United States",
+            countryName = AppConstants.CountryName.UNITED_STATES,
             createdAt = timestamp
         )
 
@@ -74,7 +75,7 @@ class StampItemTest {
         val timestamp = 1234567890L
         val stamp = StampItem(
             countryCode = "US",
-            countryName = "United States",
+            countryName = AppConstants.CountryName.UNITED_STATES,
             updatedAt = timestamp
         )
 
@@ -85,7 +86,7 @@ class StampItemTest {
     fun `copy creates new instance with same values`() {
         val original = StampItem(
             countryCode = "US",
-            countryName = "United States",
+            countryName = AppConstants.CountryName.UNITED_STATES,
             imagePath = "/path/to/image.jpg",
             createdAt = 1000L,
             updatedAt = 2000L
@@ -102,7 +103,7 @@ class StampItemTest {
 
     @Test
     fun `copy can modify imagePath`() {
-        val original = StampItem(countryCode = "US", countryName = "United States")
+        val original = StampItem(countryCode = "US", countryName = AppConstants.CountryName.UNITED_STATES)
 
         val modified = original.copy(imagePath = "/new/path.jpg")
 
@@ -114,7 +115,7 @@ class StampItemTest {
     fun `copy can set imagePath to null`() {
         val original = StampItem(
             countryCode = "US",
-            countryName = "United States",
+            countryName = AppConstants.CountryName.UNITED_STATES,
             imagePath = "/path/to/image.jpg"
         )
 
@@ -128,14 +129,14 @@ class StampItemTest {
     fun `equals returns true for same values`() {
         val stamp1 = StampItem(
             countryCode = "US",
-            countryName = "United States",
+            countryName = AppConstants.CountryName.UNITED_STATES,
             imagePath = "/path.jpg",
             createdAt = 1000L,
             updatedAt = 2000L
         )
         val stamp2 = StampItem(
             countryCode = "US",
-            countryName = "United States",
+            countryName = AppConstants.CountryName.UNITED_STATES,
             imagePath = "/path.jpg",
             createdAt = 1000L,
             updatedAt = 2000L
@@ -146,8 +147,8 @@ class StampItemTest {
 
     @Test
     fun `equals returns false for different countryCode`() {
-        val stamp1 = StampItem(countryCode = "US", countryName = "United States")
-        val stamp2 = StampItem(countryCode = "GB", countryName = "United States")
+        val stamp1 = StampItem(countryCode = "US", countryName = AppConstants.CountryName.UNITED_STATES)
+        val stamp2 = StampItem(countryCode = "GB", countryName = AppConstants.CountryName.UNITED_STATES)
 
         assertNotEquals(stamp1, stamp2)
     }
@@ -156,14 +157,14 @@ class StampItemTest {
     fun `hashCode is consistent for equal stamps`() {
         val stamp1 = StampItem(
             countryCode = "US",
-            countryName = "United States",
+            countryName = AppConstants.CountryName.UNITED_STATES,
             imagePath = "/path.jpg",
             createdAt = 1000L,
             updatedAt = 2000L
         )
         val stamp2 = StampItem(
             countryCode = "US",
-            countryName = "United States",
+            countryName = AppConstants.CountryName.UNITED_STATES,
             imagePath = "/path.jpg",
             createdAt = 1000L,
             updatedAt = 2000L
@@ -174,8 +175,8 @@ class StampItemTest {
 
     @Test
     fun `countryCode is case sensitive`() {
-        val stamp1 = StampItem(countryCode = "US", countryName = "United States")
-        val stamp2 = StampItem(countryCode = "us", countryName = "United States")
+        val stamp1 = StampItem(countryCode = "US", countryName = AppConstants.CountryName.UNITED_STATES)
+        val stamp2 = StampItem(countryCode = "us", countryName = AppConstants.CountryName.UNITED_STATES)
 
         assertNotEquals(stamp1, stamp2)
     }
@@ -185,7 +186,7 @@ class StampItemTest {
         val path = "/files/upimages/stamp_US_1234567890.jpg"
         val stamp = StampItem(
             countryCode = "US",
-            countryName = "United States",
+            countryName = AppConstants.CountryName.UNITED_STATES,
             imagePath = path
         )
 

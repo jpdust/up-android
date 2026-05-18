@@ -2,6 +2,7 @@ package com.unstampedpages.app.data.model
 
 import androidx.compose.ui.graphics.Color
 import com.unstampedpages.app.R
+import com.unstampedpages.app.data.AppConstants
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -10,8 +11,8 @@ class CountryTest {
     @Test
     fun `Country data class holds correct values`() {
         val country = Country(
-            id = "us",
-            name = "United States",
+            id = AppConstants.CountryCode.UNITED_STATES,
+            name = AppConstants.CountryName.UNITED_STATES,
             safetyLevel = SafetyLevel.NORMAL_SECURITY_PRECAUTIONS,
             visaRequirement = VisaRequirement.RESTRICTED,
             currency = "US Dollar",
@@ -23,7 +24,7 @@ class CountryTest {
         )
 
         assertEquals("us", country.id)
-        assertEquals("United States", country.name)
+        assertEquals(AppConstants.CountryName.UNITED_STATES, country.name)
         assertEquals(SafetyLevel.NORMAL_SECURITY_PRECAUTIONS, country.safetyLevel)
         assertEquals(VisaRequirement.RESTRICTED, country.visaRequirement)
         assertEquals("US Dollar", country.currency)
@@ -38,8 +39,8 @@ class CountryTest {
     @Test
     fun `Country with imageUrl`() {
         val country = Country(
-            id = "fr",
-            name = "France",
+            id = AppConstants.CountryCode.FRANCE,
+            name = AppConstants.CountryName.FRANCE,
             safetyLevel = SafetyLevel.NORMAL_SECURITY_PRECAUTIONS,
             visaRequirement = VisaRequirement.VISA_NOT_REQUIRED,
             currency = "Euro",
@@ -57,8 +58,8 @@ class CountryTest {
     @Test
     fun `Country with passportValidity`() {
         val country = Country(
-            id = "jp",
-            name = "Japan",
+            id = AppConstants.CountryCode.JAPAN,
+            name = AppConstants.CountryName.JAPAN,
             safetyLevel = SafetyLevel.NORMAL_SECURITY_PRECAUTIONS,
             visaRequirement = VisaRequirement.VISA_NOT_REQUIRED,
             currency = "Yen",
@@ -67,17 +68,17 @@ class CountryTest {
             outletType = "Type A/B",
             continent = Continent.ASIA,
             flagEmoji = "\uD83C\uDDEF\uD83C\uDDF5",
-            passportValidity = "Planned length of stay"
+            passportValidity = AppConstants.PassportValidity.PLANNED_STAY
         )
 
-        assertEquals("Planned length of stay", country.passportValidity)
+        assertEquals(AppConstants.PassportValidity.PLANNED_STAY, country.passportValidity)
     }
 
     @Test
     fun `Country copy creates new instance with modified values`() {
         val original = Country(
-            id = "jp",
-            name = "Japan",
+            id = AppConstants.CountryCode.JAPAN,
+            name = AppConstants.CountryName.JAPAN,
             safetyLevel = SafetyLevel.NORMAL_SECURITY_PRECAUTIONS,
             visaRequirement = VisaRequirement.VISA_NOT_REQUIRED,
             currency = "Yen",
@@ -90,7 +91,7 @@ class CountryTest {
 
         val copy = original.copy(name = "Nippon")
 
-        assertEquals("Japan", original.name)
+        assertEquals(AppConstants.CountryName.JAPAN, original.name)
         assertEquals("Nippon", copy.name)
         assertEquals(original.id, copy.id)
     }
@@ -98,8 +99,8 @@ class CountryTest {
     @Test
     fun `Country equals and hashCode work correctly`() {
         val country1 = Country(
-            id = "de",
-            name = "Germany",
+            id = AppConstants.CountryCode.GERMANY,
+            name = AppConstants.CountryName.GERMANY,
             safetyLevel = SafetyLevel.NORMAL_SECURITY_PRECAUTIONS,
             visaRequirement = VisaRequirement.VISA_NOT_REQUIRED,
             currency = "Euro",
@@ -111,8 +112,8 @@ class CountryTest {
         )
 
         val country2 = Country(
-            id = "de",
-            name = "Germany",
+            id = AppConstants.CountryCode.GERMANY,
+            name = AppConstants.CountryName.GERMANY,
             safetyLevel = SafetyLevel.NORMAL_SECURITY_PRECAUTIONS,
             visaRequirement = VisaRequirement.VISA_NOT_REQUIRED,
             currency = "Euro",

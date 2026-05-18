@@ -1,5 +1,6 @@
 package com.unstampedpages.app.data
 
+import com.unstampedpages.app.data.AppConstants
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -64,7 +65,7 @@ class CountryListTest {
         val us = CountryList.countries.find { it.code == "US" }
 
         assertNotNull(us)
-        assertEquals("United States", us?.englishName)
+        assertEquals(AppConstants.CountryName.UNITED_STATES, us?.englishName)
     }
 
     @Test
@@ -72,7 +73,7 @@ class CountryListTest {
         val gb = CountryList.countries.find { it.code == "GB" }
 
         assertNotNull(gb)
-        assertEquals("United Kingdom", gb?.englishName)
+        assertEquals(AppConstants.CountryName.UNITED_KINGDOM, gb?.englishName)
     }
 
     @Test
@@ -80,7 +81,7 @@ class CountryListTest {
         val jp = CountryList.countries.find { it.code == "JP" }
 
         assertNotNull(jp)
-        assertEquals("Japan", jp?.englishName)
+        assertEquals(AppConstants.CountryName.JAPAN, jp?.englishName)
     }
 
     @Test
@@ -137,37 +138,37 @@ class CountryListItemDataClassTest {
 
     @Test
     fun `CountryListItem has correct code`() {
-        val country = CountryListItem(code = "US", englishName = "United States")
+        val country = CountryListItem(code = "US", englishName = AppConstants.CountryName.UNITED_STATES)
 
         assertEquals("US", country.code)
     }
 
     @Test
     fun `CountryListItem has correct englishName`() {
-        val country = CountryListItem(code = "US", englishName = "United States")
+        val country = CountryListItem(code = "US", englishName = AppConstants.CountryName.UNITED_STATES)
 
-        assertEquals("United States", country.englishName)
+        assertEquals(AppConstants.CountryName.UNITED_STATES, country.englishName)
     }
 
     @Test
     fun `equals returns true for same values`() {
-        val country1 = CountryListItem(code = "US", englishName = "United States")
-        val country2 = CountryListItem(code = "US", englishName = "United States")
+        val country1 = CountryListItem(code = "US", englishName = AppConstants.CountryName.UNITED_STATES)
+        val country2 = CountryListItem(code = "US", englishName = AppConstants.CountryName.UNITED_STATES)
 
         assertEquals(country1, country2)
     }
 
     @Test
     fun `equals returns false for different code`() {
-        val country1 = CountryListItem(code = "US", englishName = "United States")
-        val country2 = CountryListItem(code = "GB", englishName = "United States")
+        val country1 = CountryListItem(code = "US", englishName = AppConstants.CountryName.UNITED_STATES)
+        val country2 = CountryListItem(code = "GB", englishName = AppConstants.CountryName.UNITED_STATES)
 
         assertNotEquals(country1, country2)
     }
 
     @Test
     fun `equals returns false for different name`() {
-        val country1 = CountryListItem(code = "US", englishName = "United States")
+        val country1 = CountryListItem(code = "US", englishName = AppConstants.CountryName.UNITED_STATES)
         val country2 = CountryListItem(code = "US", englishName = "America")
 
         assertNotEquals(country1, country2)
@@ -175,15 +176,15 @@ class CountryListItemDataClassTest {
 
     @Test
     fun `hashCode is consistent for equal countries`() {
-        val country1 = CountryListItem(code = "JP", englishName = "Japan")
-        val country2 = CountryListItem(code = "JP", englishName = "Japan")
+        val country1 = CountryListItem(code = "JP", englishName = AppConstants.CountryName.JAPAN)
+        val country2 = CountryListItem(code = "JP", englishName = AppConstants.CountryName.JAPAN)
 
         assertEquals(country1.hashCode(), country2.hashCode())
     }
 
     @Test
     fun `copy creates new instance`() {
-        val original = CountryListItem(code = "US", englishName = "United States")
+        val original = CountryListItem(code = "US", englishName = AppConstants.CountryName.UNITED_STATES)
 
         val copy = original.copy()
 
@@ -212,11 +213,11 @@ class CountryListItemDataClassTest {
 
     @Test
     fun `toString contains code and name`() {
-        val country = CountryListItem(code = "JP", englishName = "Japan")
+        val country = CountryListItem(code = "JP", englishName = AppConstants.CountryName.JAPAN)
 
         val string = country.toString()
 
         assertTrue(string.contains("JP"))
-        assertTrue(string.contains("Japan"))
+        assertTrue(string.contains(AppConstants.CountryName.JAPAN))
     }
 }

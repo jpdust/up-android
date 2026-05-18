@@ -6,6 +6,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.unstampedpages.app.MainActivity
+import com.unstampedpages.app.data.AppConstants
 import com.unstampedpages.app.ui.screens.countryinfo.CountriesRobot.Companion.countriesRobot
 import org.junit.Before
 import org.junit.Rule
@@ -78,7 +79,7 @@ class CountriesScreenTest {
             verifyWorldMapDisplayed()
             zoomInMap()
             // Search and select a country while zoomed
-            typeInSearchBar("Japan")
+            typeInSearchBar(AppConstants.CountryName.JAPAN)
             verifySearchResultsDisplayed()
             selectSearchResult("jp")
             verifyBottomSheetDisplayed()
@@ -89,7 +90,7 @@ class CountriesScreenTest {
     @Test
     fun countriesScreen_selectCountry_bottomSheetLoads() {
         composeTestRule.countriesRobot {
-            typeInSearchBar("France")
+            typeInSearchBar(AppConstants.CountryName.FRANCE)
             verifySearchResultsDisplayed()
             selectSearchResult("fr")
             verifyBottomSheetDisplayed()
@@ -99,10 +100,10 @@ class CountriesScreenTest {
     @Test
     fun countriesScreen_selectCountry_displaysCountryHeader() {
         composeTestRule.countriesRobot {
-            searchAndSelectCountry("Germany", "de")
+            searchAndSelectCountry(AppConstants.CountryName.GERMANY, AppConstants.CountryCode.GERMANY)
             verifyCountryHeaderDisplayed()
             verifyCountryFlagDisplayed()
-            verifyBottomSheetCountryName("Germany")
+            verifyBottomSheetCountryName(AppConstants.CountryName.GERMANY)
             verifyCountryContinentDisplayed()
             verifyCurrencyInfoDisplayed()
             verifySafetyLevelDisplayed()
@@ -115,34 +116,34 @@ class CountriesScreenTest {
     @Test
     fun countriesScreen_japanPassportValidity_displaysPlannedStay() {
         composeTestRule.countriesRobot {
-            searchAndSelectCountry("Japan", "jp")
+            searchAndSelectCountry(AppConstants.CountryName.JAPAN, AppConstants.CountryCode.JAPAN)
             verifyPassportValidityDisplayed()
-            verifyPassportValidityValue("Planned length of stay")
+            verifyPassportValidityValue(AppConstants.PassportValidity.PLANNED_STAY)
         }
     }
 
     @Test
     fun countriesScreen_germanyPassportValidity_displays3Months() {
         composeTestRule.countriesRobot {
-            searchAndSelectCountry("Germany", "de")
+            searchAndSelectCountry(AppConstants.CountryName.GERMANY, AppConstants.CountryCode.GERMANY)
             verifyPassportValidityDisplayed()
-            verifyPassportValidityValue("3 months")
+            verifyPassportValidityValue(AppConstants.PassportValidity.THREE_MONTHS)
         }
     }
 
     @Test
     fun countriesScreen_canadaPassportValidity_displays6Months() {
         composeTestRule.countriesRobot {
-            searchAndSelectCountry("Canada", "ca")
+            searchAndSelectCountry(AppConstants.CountryName.CANADA, AppConstants.CountryCode.CANADA)
             verifyPassportValidityDisplayed()
-            verifyPassportValidityValue("6 months")
+            verifyPassportValidityValue(AppConstants.PassportValidity.SIX_MONTHS)
         }
     }
 
     @Test
     fun countriesScreen_selectCountry_displaysAllCountryInfo() {
         composeTestRule.countriesRobot {
-            searchAndSelectCountry("Japan", "jp")
+            searchAndSelectCountry(AppConstants.CountryName.JAPAN, AppConstants.CountryCode.JAPAN)
             verifyAllCountryInfoDisplayed()
         }
     }
@@ -150,7 +151,7 @@ class CountriesScreenTest {
     @Test
     fun countriesScreen_closeBottomSheet_sheetCloses() {
         composeTestRule.countriesRobot {
-            searchAndSelectCountry("France", "fr")
+            searchAndSelectCountry(AppConstants.CountryName.FRANCE, AppConstants.CountryCode.FRANCE)
             verifyBottomSheetDisplayed()
             closeBottomSheet()
             verifyBottomSheetNotDisplayed()
@@ -160,7 +161,7 @@ class CountriesScreenTest {
     @Test
     fun countriesScreen_tapScrim_bottomSheetCloses() {
         composeTestRule.countriesRobot {
-            searchAndSelectCountry("France", "fr")
+            searchAndSelectCountry(AppConstants.CountryName.FRANCE, AppConstants.CountryCode.FRANCE)
             verifyBottomSheetDisplayed()
             closeBottomSheetByTappingScrim()
             verifyBottomSheetNotDisplayed()
@@ -214,7 +215,7 @@ class CountriesScreenTest {
         composeTestRule.countriesRobot {
             selectSecurityRiskMapMode()
             waitForAnimation()
-            searchAndSelectCountry("Sudan", "sd")
+            searchAndSelectCountry(AppConstants.CountryName.SUDAN, AppConstants.CountryCode.SUDAN)
             verifySafetyLevelDisplayed()
             verifyAllCountryInfoDisplayed()
         }
@@ -225,10 +226,10 @@ class CountriesScreenTest {
         composeTestRule.countriesRobot {
             selectSecurityRiskMapMode()
             waitForAnimation()
-            searchAndSelectCountry("United States", "us")
+            searchAndSelectCountry(AppConstants.CountryName.UNITED_STATES, AppConstants.CountryCode.UNITED_STATES)
             verifyBottomSheetDisplayed()
             verifyCurrencyInfoDisplayed()
-            verifySafetyLevelValue("Normal Security Precautions")
+            verifySafetyLevelValue(AppConstants.SafetyLevelDisplay.NORMAL_SECURITY_PRECAUTIONS)
             verifyAllCountryInfoDisplayed()
             verifyCurrencyConverterNotDisplayed()
         }
@@ -239,9 +240,9 @@ class CountriesScreenTest {
         composeTestRule.countriesRobot {
             selectVisaRequirementsMapMode()
             waitForAnimation()
-            searchAndSelectCountry("United States", "us")
+            searchAndSelectCountry(AppConstants.CountryName.UNITED_STATES, AppConstants.CountryCode.UNITED_STATES)
             verifyEntryRequirementDisplayed()
-            verifySafetyLevelValue("Normal Security Precautions")
+            verifySafetyLevelValue(AppConstants.SafetyLevelDisplay.NORMAL_SECURITY_PRECAUTIONS)
             verifyAllCountryInfoDisplayed()
         }
     }
@@ -251,9 +252,9 @@ class CountriesScreenTest {
         composeTestRule.countriesRobot {
             selectVisaRequirementsMapMode()
             waitForAnimation()
-            searchAndSelectCountry("Sudan", "sd")
+            searchAndSelectCountry(AppConstants.CountryName.SUDAN, AppConstants.CountryCode.SUDAN)
             verifyEntryRequirementDisplayed()
-            verifySafetyLevelValue("Do Not Travel")
+            verifySafetyLevelValue(AppConstants.SafetyLevelDisplay.DO_NOT_TRAVEL)
             verifyAllCountryInfoDisplayed()
         }
     }
@@ -263,7 +264,7 @@ class CountriesScreenTest {
         composeTestRule.countriesRobot {
             selectPassportValidityMapMode()
             waitForAnimation()
-            searchAndSelectCountry("Japan", "jp")
+            searchAndSelectCountry(AppConstants.CountryName.JAPAN, AppConstants.CountryCode.JAPAN)
             verifyAllCountryInfoDisplayed()
         }
     }
@@ -273,7 +274,7 @@ class CountriesScreenTest {
         composeTestRule.countriesRobot {
             selectPassportValidityMapMode()
             waitForAnimation()
-            searchAndSelectCountry("Germany", "de")
+            searchAndSelectCountry(AppConstants.CountryName.GERMANY, AppConstants.CountryCode.GERMANY)
             verifyAllCountryInfoDisplayed()
         }
     }
@@ -281,7 +282,7 @@ class CountriesScreenTest {
     @Test
     fun countriesScreen_nonUsdCountry_showsCurrencyConverter() {
         composeTestRule.countriesRobot {
-            searchAndSelectCountry("Japan", "jp")
+            searchAndSelectCountry(AppConstants.CountryName.JAPAN, AppConstants.CountryCode.JAPAN)
             verifyBottomSheetDisplayed()
             verifyCurrencyInfoDisplayed()
             verifyCurrencyConverterDisplayed()
@@ -294,7 +295,7 @@ class CountriesScreenTest {
         composeTestRule.countriesRobot {
             typeInSearchBar("Jap")
             verifySearchResultsDisplayed()
-            verifyCountryInSearchResults("Japan")
+            verifyCountryInSearchResults(AppConstants.CountryName.JAPAN)
         }
     }
 
@@ -303,26 +304,26 @@ class CountriesScreenTest {
         composeTestRule.countriesRobot {
             typeInSearchBar("United")
             verifySearchResultsDisplayed()
-            verifyCountryInSearchResults("United States")
-            verifyCountryInSearchResults("United Kingdom")
+            verifyCountryInSearchResults(AppConstants.CountryName.UNITED_STATES)
+            verifyCountryInSearchResults(AppConstants.CountryName.UNITED_KINGDOM)
         }
     }
 
     @Test
     fun countriesScreen_selectSearchResult_loadsCorrectCountryInfo() {
         composeTestRule.countriesRobot {
-            verifyCountryInfoFlow("Japan", "jp", "Japan")
+            verifyCountryInfoFlow(AppConstants.CountryName.JAPAN, AppConstants.CountryCode.JAPAN, AppConstants.CountryName.JAPAN)
         }
     }
 
     @Test
     fun countriesScreen_selectSearchResult_displaysCountryName() {
         composeTestRule.countriesRobot {
-            typeInSearchBar("France")
+            typeInSearchBar(AppConstants.CountryName.FRANCE)
             verifySearchResultsDisplayed()
-            selectSearchResult("fr")
+            selectSearchResult(AppConstants.CountryCode.FRANCE)
             verifyBottomSheetDisplayed()
-            verifyBottomSheetCountryName("France")
+            verifyBottomSheetCountryName(AppConstants.CountryName.FRANCE)
         }
     }
 
@@ -337,7 +338,7 @@ class CountriesScreenTest {
     @Test
     fun countriesScreen_clickClearButton_clearsSearchBar() {
         composeTestRule.countriesRobot {
-            typeInSearchBar("Japan")
+            typeInSearchBar(AppConstants.CountryName.JAPAN)
             verifySearchClearButtonDisplayed()
             clickSearchClearButton()
             verifySearchClearButtonNotDisplayed()
@@ -360,11 +361,11 @@ class CountriesScreenTest {
             verifyPageLoad()
 
             // Search for a country
-            typeInSearchBar("Germany")
+            typeInSearchBar(AppConstants.CountryName.GERMANY)
             verifySearchResultsDisplayed()
 
             // Select the country
-            selectSearchResult("de")
+            selectSearchResult(AppConstants.CountryCode.GERMANY)
             verifyBottomSheetDisplayed()
 
             // Verify all country info
@@ -384,9 +385,9 @@ class CountriesScreenTest {
             zoomInMap()
 
             // Search for another country
-            typeInSearchBar("Sudan")
+            typeInSearchBar(AppConstants.CountryName.SUDAN)
             verifySearchResultsDisplayed()
-            selectSearchResult("sd")
+            selectSearchResult(AppConstants.CountryCode.SUDAN)
             verifyBottomSheetDisplayed()
             verifyAllCountryInfoDisplayed()
         }
@@ -610,7 +611,7 @@ class CountriesScreenTest {
     fun countriesScreen_bottomSheetOpen_instructionsTextHidden() {
         composeTestRule.countriesRobot {
             verifyInstructionsTextDisplayed()
-            searchAndSelectCountry("Japan", "jp")
+            searchAndSelectCountry(AppConstants.CountryName.JAPAN, AppConstants.CountryCode.JAPAN)
             verifyBottomSheetDisplayed()
             verifyInstructionsTextNotDisplayed()
         }
@@ -619,7 +620,7 @@ class CountriesScreenTest {
     @Test
     fun countriesScreen_bottomSheetClosed_instructionsTextReappears() {
         composeTestRule.countriesRobot {
-            searchAndSelectCountry("Japan", "jp")
+            searchAndSelectCountry(AppConstants.CountryName.JAPAN, AppConstants.CountryCode.JAPAN)
             verifyBottomSheetDisplayed()
             verifyInstructionsTextNotDisplayed()
             closeBottomSheet()
@@ -632,7 +633,7 @@ class CountriesScreenTest {
     fun countriesScreen_searchResultsShowing_instructionsTextHidden() {
         composeTestRule.countriesRobot {
             verifyInstructionsTextDisplayed()
-            typeInSearchBar("Japan")
+            typeInSearchBar(AppConstants.CountryName.JAPAN)
             verifySearchResultsDisplayed()
             verifyInstructionsTextNotDisplayed()
         }
@@ -641,7 +642,7 @@ class CountriesScreenTest {
     @Test
     fun countriesScreen_searchResultsCleared_instructionsTextReappears() {
         composeTestRule.countriesRobot {
-            typeInSearchBar("Japan")
+            typeInSearchBar(AppConstants.CountryName.JAPAN)
             verifySearchResultsDisplayed()
             verifyInstructionsTextNotDisplayed()
             clickSearchClearButton()
@@ -684,8 +685,8 @@ class CountriesScreenTest {
         composeTestRule.countriesRobot {
             typeInSearchBar("Jap")
             verifySearchResultsDisplayed()
-            verifyCountryInSearchResults("Japan")
-            verifySearchResultContinent("Asia")
+            verifyCountryInSearchResults(AppConstants.CountryName.JAPAN)
+            verifySearchResultContinent(AppConstants.ContinentDisplay.ASIA)
         }
     }
 
@@ -694,10 +695,10 @@ class CountriesScreenTest {
         composeTestRule.countriesRobot {
             typeInSearchBar("United")
             verifySearchResultsDisplayed()
-            verifyCountryInSearchResults("United States")
-            verifyCountryInSearchResults("United Kingdom")
-            verifySearchResultContinent("North America")
-            verifySearchResultContinent("Europe")
+            verifyCountryInSearchResults(AppConstants.CountryName.UNITED_STATES)
+            verifyCountryInSearchResults(AppConstants.CountryName.UNITED_KINGDOM)
+            verifySearchResultContinent(AppConstants.ContinentDisplay.NORTH_AMERICA)
+            verifySearchResultContinent(AppConstants.ContinentDisplay.EUROPE)
         }
     }
 

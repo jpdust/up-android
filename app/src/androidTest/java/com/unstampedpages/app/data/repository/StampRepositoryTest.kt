@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.unstampedpages.app.data.AppConstants
 import com.unstampedpages.app.data.local.AppDatabase
 import com.unstampedpages.app.data.local.entity.StampItem
 import kotlinx.coroutines.flow.first
@@ -38,7 +39,7 @@ class StampRepositoryTest {
 
     @Test
     fun insertStamp_returnsRowId() = runTest {
-        val stamp = StampItem(countryCode = "US", countryName = "United States")
+        val stamp = StampItem(countryCode = "US", countryName = AppConstants.CountryName.UNITED_STATES)
 
         val rowId = repository.insertStamp(stamp)
 
@@ -47,19 +48,19 @@ class StampRepositoryTest {
 
     @Test
     fun insertStamp_andGetByCountryCode() = runTest {
-        val stamp = StampItem(countryCode = "FR", countryName = "France")
+        val stamp = StampItem(countryCode = "FR", countryName = AppConstants.CountryName.FRANCE)
         repository.insertStamp(stamp)
 
         val retrieved = repository.getStampByCountryCode("FR")
 
         assertNotNull(retrieved)
-        assertEquals("France", retrieved?.countryName)
+        assertEquals(AppConstants.CountryName.FRANCE, retrieved?.countryName)
     }
 
     @Test
     fun allStamps_emitsStamps() = runTest {
-        repository.insertStamp(StampItem(countryCode = "US", countryName = "United States"))
-        repository.insertStamp(StampItem(countryCode = "FR", countryName = "France"))
+        repository.insertStamp(StampItem(countryCode = "US", countryName = AppConstants.CountryName.UNITED_STATES))
+        repository.insertStamp(StampItem(countryCode = "FR", countryName = AppConstants.CountryName.FRANCE))
 
         val stamps = repository.allStamps.first()
 
@@ -68,20 +69,20 @@ class StampRepositoryTest {
 
     @Test
     fun allStamps_orderedAlphabetically() = runTest {
-        repository.insertStamp(StampItem(countryCode = "US", countryName = "United States"))
+        repository.insertStamp(StampItem(countryCode = "US", countryName = AppConstants.CountryName.UNITED_STATES))
         repository.insertStamp(StampItem(countryCode = "AU", countryName = "Australia"))
-        repository.insertStamp(StampItem(countryCode = "JP", countryName = "Japan"))
+        repository.insertStamp(StampItem(countryCode = "JP", countryName = AppConstants.CountryName.JAPAN))
 
         val stamps = repository.allStamps.first()
 
         assertEquals("Australia", stamps[0].countryName)
-        assertEquals("Japan", stamps[1].countryName)
-        assertEquals("United States", stamps[2].countryName)
+        assertEquals(AppConstants.CountryName.JAPAN, stamps[1].countryName)
+        assertEquals(AppConstants.CountryName.UNITED_STATES, stamps[2].countryName)
     }
 
     @Test
     fun updateStamp_modifiesData() = runTest {
-        val stamp = StampItem(countryCode = "DE", countryName = "Germany")
+        val stamp = StampItem(countryCode = "DE", countryName = AppConstants.CountryName.GERMANY)
         repository.insertStamp(stamp)
         val insertedStamp = repository.getStampByCountryCode("DE")!!
 
@@ -128,7 +129,7 @@ class StampRepositoryTest {
 
     @Test
     fun deleteStamp_removesFromDatabase() = runTest {
-        val stamp = StampItem(countryCode = "GB", countryName = "United Kingdom")
+        val stamp = StampItem(countryCode = "GB", countryName = AppConstants.CountryName.UNITED_KINGDOM)
         repository.insertStamp(stamp)
         val insertedStamp = repository.getStampByCountryCode("GB")!!
 
@@ -140,7 +141,7 @@ class StampRepositoryTest {
 
     @Test
     fun deleteStampByCountryCode_removesFromDatabase() = runTest {
-        val stamp = StampItem(countryCode = "CA", countryName = "Canada")
+        val stamp = StampItem(countryCode = "CA", countryName = AppConstants.CountryName.CANADA)
         repository.insertStamp(stamp)
 
         repository.deleteStampByCountryCode("CA")

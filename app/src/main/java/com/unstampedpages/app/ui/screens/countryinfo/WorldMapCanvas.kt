@@ -1,5 +1,6 @@
 package com.unstampedpages.app.ui.screens.countryinfo
 
+import com.unstampedpages.app.data.AppConstants
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -490,9 +491,9 @@ private fun getVisaRequirementColor(visaRequirement: VisaRequirement): Color {
  */
 internal fun getPassportValidityColor(passportValidity: String?): Color {
     return when (passportValidity) {
-        "6 months" -> PassportValidityColors.SixMonths
-        "3 months" -> PassportValidityColors.ThreeMonths
-        "Planned length of stay" -> PassportValidityColors.PlannedStay
+        AppConstants.PassportValidity.SIX_MONTHS -> PassportValidityColors.SixMonths
+        AppConstants.PassportValidity.THREE_MONTHS -> PassportValidityColors.ThreeMonths
+        AppConstants.PassportValidity.PLANNED_STAY -> PassportValidityColors.PlannedStay
         null -> PassportValidityColors.Other
         else -> PassportValidityColors.Other
     }

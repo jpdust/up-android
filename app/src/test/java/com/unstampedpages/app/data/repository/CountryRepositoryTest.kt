@@ -1,5 +1,6 @@
 package com.unstampedpages.app.data.repository
 
+import com.unstampedpages.app.data.AppConstants
 import com.unstampedpages.app.data.model.Continent
 import com.unstampedpages.app.data.model.SafetyLevel
 import com.unstampedpages.app.data.model.VisaRequirement
@@ -41,7 +42,7 @@ class CountryRepositoryTest {
         val country = repository.getCountryById("us")
 
         assertNotNull(country)
-        assertEquals("United States", country?.name)
+        assertEquals(AppConstants.CountryName.UNITED_STATES, country?.name)
     }
 
     @Test
@@ -252,11 +253,11 @@ class CountryRepositoryTest {
         val japan = repository.getCountryById("jp")
 
         assertNotNull(japan)
-        assertEquals("Japan", japan?.name)
+        assertEquals(AppConstants.CountryName.JAPAN, japan?.name)
         assertEquals(Continent.ASIA, japan?.continent)
         assertEquals("JPY", japan?.currencyCode)
         assertEquals("NORMAL_SECURITY_PRECAUTIONS", japan?.safetyLevel?.name)
-        assertEquals("Planned length of stay", japan?.passportValidity)
+        assertEquals(AppConstants.PassportValidity.PLANNED_STAY, japan?.passportValidity)
     }
 
     @Test
@@ -284,9 +285,9 @@ class CountryRepositoryTest {
     fun `passport validity has expected values`() {
         val countries = repository.getAllCountries()
         val validValidities = listOf(
-            "6 months",
-            "3 months",
-            "Planned length of stay",
+            AppConstants.PassportValidity.SIX_MONTHS,
+            AppConstants.PassportValidity.THREE_MONTHS,
+            AppConstants.PassportValidity.PLANNED_STAY,
             "150 days upon arrival",
             "120 Days Upon Arrival",
             "30 days after departure",

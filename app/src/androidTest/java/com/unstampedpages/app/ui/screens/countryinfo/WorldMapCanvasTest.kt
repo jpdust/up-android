@@ -5,6 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.unstampedpages.app.data.AppConstants
 import com.unstampedpages.app.ui.theme.UnstampedPagesTheme
 import org.junit.Rule
 import org.junit.Test
@@ -86,7 +87,7 @@ class WorldMapCanvasTest {
         }
 
         composeTestRule.onNodeWithTag("legend_item_low_risk").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Normal Security Precautions").assertIsDisplayed()
+        composeTestRule.onNodeWithText(AppConstants.SafetyLevelDisplay.NORMAL_SECURITY_PRECAUTIONS).assertIsDisplayed()
     }
 
     @Test
@@ -104,7 +105,7 @@ class WorldMapCanvasTest {
         }
 
         composeTestRule.onNodeWithTag("legend_item_medium_risk").assertIsDisplayed()
-        composeTestRule.onNodeWithText("High Degree of Caution").assertIsDisplayed()
+        composeTestRule.onNodeWithText(AppConstants.SafetyLevelDisplay.HIGH_DEGREE_CAUTION).assertIsDisplayed()
     }
 
     @Test
@@ -122,7 +123,7 @@ class WorldMapCanvasTest {
         }
 
         composeTestRule.onNodeWithTag("legend_item_high_risk").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Reconsider Travel").assertIsDisplayed()
+        composeTestRule.onNodeWithText(AppConstants.SafetyLevelDisplay.RECONSIDER_TRAVEL).assertIsDisplayed()
     }
 
     @Test
@@ -140,7 +141,7 @@ class WorldMapCanvasTest {
         }
 
         composeTestRule.onNodeWithTag("legend_item_extreme_risk").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Do Not Travel").assertIsDisplayed()
+        composeTestRule.onNodeWithText(AppConstants.SafetyLevelDisplay.DO_NOT_TRAVEL).assertIsDisplayed()
     }
 
     @Test
@@ -180,7 +181,7 @@ class WorldMapCanvasTest {
         }
 
         composeTestRule.onNodeWithTag("legend_item_visa_not_required").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Visa Not Required").assertIsDisplayed()
+        composeTestRule.onNodeWithText(AppConstants.VisaRequirementDisplay.VISA_NOT_REQUIRED).assertIsDisplayed()
     }
 
     @Test
@@ -198,7 +199,7 @@ class WorldMapCanvasTest {
         }
 
         composeTestRule.onNodeWithTag("legend_item_evisa").assertIsDisplayed()
-        composeTestRule.onNodeWithText("eVisa").assertIsDisplayed()
+        composeTestRule.onNodeWithText(AppConstants.VisaRequirementDisplay.E_VISA).assertIsDisplayed()
     }
 
     @Test
@@ -216,7 +217,7 @@ class WorldMapCanvasTest {
         }
 
         composeTestRule.onNodeWithTag("legend_item_visa_on_arrival").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Visa On Arrival").assertIsDisplayed()
+        composeTestRule.onNodeWithText(AppConstants.VisaRequirementDisplay.VISA_ON_ARRIVAL).assertIsDisplayed()
     }
 
     @Test
@@ -234,7 +235,7 @@ class WorldMapCanvasTest {
         }
 
         composeTestRule.onNodeWithTag("legend_item_visa_required").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Visa Required").assertIsDisplayed()
+        composeTestRule.onNodeWithText(AppConstants.VisaRequirementDisplay.VISA_REQUIRED).assertIsDisplayed()
     }
 
     @Test
