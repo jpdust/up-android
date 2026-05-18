@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import com.unstampedpages.app.R
 import com.unstampedpages.app.data.model.CountryGeometry
 import com.unstampedpages.app.util.GeoJsonParser
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -44,9 +45,13 @@ object CountryGeometryData {
      * Each dataset is read from its binary cache if available, otherwise parsed from
      * the bundled GeoJSON and written to the cache for subsequent launches.
      */
-    fun initializeAsync(context: Context) {
+    fun initializeAsync(
+        context: Context,
+        ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+        mainDispatcher: CoroutineDispatcher = Dispatchers.Main
+    ) {
         if (isLoaded.value) return
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(ioDispatcher).launch {
             val appContext = context.applicationContext
 
             // Parse both datasets concurrently.
@@ -64,7 +69,7 @@ object CountryGeometryData {
             val hiRes = hiResDeferred.await()
             val loRes = loResDeferred.await()
 
-            withContext(Dispatchers.Main) {
+            withContext(mainDispatcher) {
                 geometriesHiRes = hiRes
                 geometriesLoRes = loRes
                 isLoaded.value = true

@@ -31,7 +31,7 @@ jobs:
       # ── Gradle ──────────────────────────────────────────────────────────────
       # Caches the Gradle wrapper, dependencies, and build outputs between runs.
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
 
       # ── Android SDK path ────────────────────────────────────────────────────
       # local.properties is not committed to git, so Gradle cannot find the SDK
@@ -82,7 +82,7 @@ jobs:
       # cache paths above; subsequent runs skip this step entirely.
       - name: Create AVD snapshot for caching
         if: steps.avd-cache.outputs.cache-hit != 'true'
-        uses: reactivecircus/android-emulator-runner@v2
+        uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a # v2
         with:
           api-level: 34
           target: aosp_atd
@@ -104,7 +104,7 @@ jobs:
       # -no-snapshot-save prevents writing the dirty post-test state back to
       # the snapshot so the cached image stays clean for the next run.
       - name: Run instrumented tests
-        uses: reactivecircus/android-emulator-runner@v2
+        uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a # v2
         with:
           api-level: 34
           target: aosp_atd
