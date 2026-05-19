@@ -1,6 +1,7 @@
 package com.unstampedpages.app.ui.screens.home
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -33,7 +34,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -42,7 +46,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.stringResource
 import com.unstampedpages.app.R
 import com.unstampedpages.app.ui.theme.Primary
 import com.unstampedpages.app.ui.theme.PrimaryDark
@@ -59,120 +62,138 @@ fun HomeScreen(
     onNavigateToTripLog: () -> Unit = {},
     onNavigateToMyStamps: () -> Unit = {}
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.background,
-                        MaterialTheme.colorScheme.surface
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Background image — fills the full screen and crops to fit any size/orientation
+        Image(
+            painter = painterResource(R.drawable.up),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+
+        // Dark scrim overlay for text readability
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colorStops = arrayOf(
+                            0.0f to Color.Black.copy(alpha = 0.55f),
+                            0.4f to Color.Black.copy(alpha = 0.45f),
+                            1.0f to Color.Black.copy(alpha = 0.65f)
+                        )
                     )
                 )
-            )
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(24.dp)
-    ) {
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Compass Icon
-        CompassIcon(modifier = Modifier.size(120.dp))
-
-        // App Title - Stencil Font (auto-sized to fit width)
-        AutoSizeTitle(
-            text = stringResource(R.string.app_title),
-            modifier = Modifier.fillMaxWidth()
         )
 
-        Text(
-            text = stringResource(R.string.app_tagline),
-            style = MaterialTheme.typography.titleLarge,
-            color = Secondary,
-            fontStyle = FontStyle.Italic,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Welcome Card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        // Scrollable content on top
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Compass Icon
+            CompassIcon(modifier = Modifier.size(120.dp))
+
+            // App Title - Stencil Font (auto-sized to fit width)
+            AutoSizeTitle(
+                text = stringResource(R.string.app_title),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Text(
+                text = stringResource(R.string.app_tagline),
+                style = MaterialTheme.typography.titleLarge,
+                color = SecondaryLight,
+                fontStyle = FontStyle.Italic,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Welcome Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f)
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
-                Text(
-                    text = stringResource(R.string.home_welcome),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = stringResource(R.string.home_welcome),
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                Text(
-                    text = stringResource(R.string.home_description),
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                    Text(
+                        text = stringResource(R.string.home_description),
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
             }
+
+            // Feature Cards
+            FeatureCard(
+                title = stringResource(R.string.feature_explore_title),
+                description = stringResource(R.string.feature_explore_description),
+                iconContent = { Icon(Icons.Filled.Explore, contentDescription = null, tint = Secondary) },
+                onClick = onNavigateToCountries
+            )
+
+            FeatureCard(
+                title = stringResource(R.string.feature_checklist_title),
+                description = stringResource(R.string.feature_checklist_description),
+                iconContent = { ChecklistIcon() },
+                onClick = onNavigateToChecklist
+            )
+
+            FeatureCard(
+                title = stringResource(R.string.feature_journal_title),
+                description = stringResource(R.string.feature_journal_description),
+                iconContent = { JournalIcon() },
+                onClick = onNavigateToTripLog
+            )
+
+            FeatureCard(
+                title = stringResource(R.string.feature_stamps_title),
+                description = stringResource(R.string.feature_stamps_description),
+                iconContent = { StampIcon() },
+                onClick = onNavigateToMyStamps
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Inspirational Quote
+            Text(
+                text = stringResource(R.string.home_quote),
+                style = MaterialTheme.typography.bodyMedium,
+                fontStyle = FontStyle.Italic,
+                textAlign = TextAlign.Center,
+                color = Color.White.copy(alpha = 0.85f)
+            )
+
+            Text(
+                text = stringResource(R.string.home_quote_author),
+                style = MaterialTheme.typography.labelMedium,
+                color = SecondaryLight.copy(alpha = 0.80f)
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
         }
-
-        // Feature Cards
-        FeatureCard(
-            title = stringResource(R.string.feature_explore_title),
-            description = stringResource(R.string.feature_explore_description),
-            iconContent = { Icon(Icons.Filled.Explore, contentDescription = null, tint = Secondary) },
-            onClick = onNavigateToCountries
-        )
-
-        FeatureCard(
-            title = stringResource(R.string.feature_checklist_title),
-            description = stringResource(R.string.feature_checklist_description),
-            iconContent = { ChecklistIcon() },
-            onClick = onNavigateToChecklist
-        )
-
-        FeatureCard(
-            title = stringResource(R.string.feature_journal_title),
-            description = stringResource(R.string.feature_journal_description),
-            iconContent = { JournalIcon() },
-            onClick = onNavigateToTripLog
-        )
-
-        FeatureCard(
-            title = stringResource(R.string.feature_stamps_title),
-            description = stringResource(R.string.feature_stamps_description),
-            iconContent = { StampIcon() },
-            onClick = onNavigateToMyStamps
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Inspirational Quote
-        Text(
-            text = stringResource(R.string.home_quote),
-            style = MaterialTheme.typography.bodyMedium,
-            fontStyle = FontStyle.Italic,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-        )
-
-        Text(
-            text = stringResource(R.string.home_quote_author),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
     }
 }
 
@@ -465,7 +486,7 @@ private fun AutoSizeTitle(
             fontWeight = FontWeight.Bold,
             fontSize = optimalFontSize,
             letterSpacing = (optimalFontSize.value * 0.06f).sp,
-            color = MaterialTheme.colorScheme.primary,
+            color = Color.White,
             textAlign = TextAlign.Center,
             maxLines = 1
         )
