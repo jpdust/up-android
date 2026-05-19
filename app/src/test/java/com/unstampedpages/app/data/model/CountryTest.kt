@@ -163,7 +163,7 @@ class SafetyLevelTest {
 
     @Test
     fun `SafetyLevel values returns all levels`() {
-        val values = SafetyLevel.values()
+        val values = SafetyLevel.entries.toTypedArray()
         assertEquals(4, values.size)
         assertTrue(values.contains(SafetyLevel.NORMAL_SECURITY_PRECAUTIONS))
         assertTrue(values.contains(SafetyLevel.HIGH_DEGREE_CAUTION))
@@ -209,7 +209,7 @@ class VisaRequirementTest {
 
     @Test
     fun `VisaRequirement values returns all requirements`() {
-        val values = VisaRequirement.values()
+        val values = VisaRequirement.entries.toTypedArray()
         assertEquals(5, values.size)
         assertTrue(values.contains(VisaRequirement.VISA_NOT_REQUIRED))
         assertTrue(values.contains(VisaRequirement.E_VISA))
@@ -267,7 +267,7 @@ class ContinentTest {
 
     @Test
     fun `Continent values returns all continents`() {
-        val values = Continent.values()
+        val values = Continent.entries.toTypedArray()
         assertEquals(7, values.size)
     }
 }

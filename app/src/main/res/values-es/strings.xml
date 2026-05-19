@@ -91,6 +91,7 @@
     <string name="checklist_all_packed">¡Todo empacado!</string>
     <plurals name="checklist_progress">
         <item quantity="one">%1$d/%2$d artículo empacado</item>
+        <item quantity="many">%1$d/%2$d artículos empacados</item>
         <item quantity="other">%1$d/%2$d artículos empacados</item>
     </plurals>
     <string name="checklist_load_template">Cargar Plantilla</string>
@@ -104,6 +105,7 @@
     <string name="checklist_cancel">Cancelar</string>
     <plurals name="checklist_selected_count">
         <item quantity="one">%d artículo seleccionado</item>
+        <item quantity="many">%d artículos seleccionados</item>
         <item quantity="other">%d artículos seleccionados</item>
     </plurals>
     <string name="checklist_delete">Eliminar</string>
@@ -124,6 +126,7 @@
     <string name="template_dialog_description">Elige una plantilla para agregar artículos a tu lista</string>
     <plurals name="template_items_count">
         <item quantity="one">%d artículo</item>
+        <item quantity="many">%d artículos</item>
         <item quantity="other">%d artículos</item>
     </plurals>
     <string name="template_business_trip">Viaje de Negocios</string>

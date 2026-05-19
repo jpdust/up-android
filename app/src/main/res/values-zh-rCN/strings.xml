@@ -90,6 +90,7 @@
     <string name="checklist_empty_message">点击+按钮添加物品\n或加载模板开始</string>
     <string name="checklist_all_packed">全部打包完成！</string>
     <plurals name="checklist_progress">
+        <item quantity="many">%1$d/%2$d 件物品已打包</item>
         <item quantity="other">%1$d/%2$d 件物品已打包</item>
     </plurals>
     <string name="checklist_load_template">加载模板</string>
@@ -102,6 +103,7 @@
     <string name="checklist_add">添加</string>
     <string name="checklist_cancel">取消</string>
     <plurals name="checklist_selected_count">
+        <item quantity="many">已选择%d项</item>
         <item quantity="other">已选择%d项</item>
     </plurals>
     <string name="checklist_delete">删除</string>
@@ -121,6 +123,7 @@
     <string name="template_dialog_title">加载模板</string>
     <string name="template_dialog_description">选择一个模板添加物品到你的清单</string>
     <plurals name="template_items_count">
+        <item quantity="many">%d项物品</item>
         <item quantity="other">%d项物品</item>
     </plurals>
     <string name="template_business_trip">商务旅行</string>
