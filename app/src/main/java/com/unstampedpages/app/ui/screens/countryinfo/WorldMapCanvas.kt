@@ -803,7 +803,7 @@ private fun DrawScope.drawMapCopy(
                 val h = bounds.heightNorm * layout.mapHeight * params.scale
                 maxOf(w, h) < SMALL_COUNTRY_THRESHOLD_PX
             }
-            val centroid = if (isSmall && bounds != null) {
+            val centroid = if (isSmall) {
                 Offset(bounds.centroidNormX * layout.mapWidth, bounds.centroidNormY * layout.mapHeight)
             } else {
                 Offset.Zero

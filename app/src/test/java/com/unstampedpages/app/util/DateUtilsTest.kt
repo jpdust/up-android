@@ -7,8 +7,6 @@ import java.util.TimeZone
 
 class DateUtilsTest {
 
-    // ==================== Format Full Date Tests ====================
-
     @Test
     fun `formatFullDate formats correctly`() {
         // Use a fixed timestamp: January 15, 2024
@@ -26,8 +24,6 @@ class DateUtilsTest {
         assertTrue(result.contains("2024"))
     }
 
-    // ==================== Format Short Date Tests ====================
-
     @Test
     fun `formatShortDate formats correctly`() {
         val calendar = Calendar.getInstance().apply {
@@ -41,8 +37,6 @@ class DateUtilsTest {
         assertTrue(result.contains("20"))
         assertTrue(result.contains("2024"))
     }
-
-    // ==================== Locale-Aware formatRelativeDate Tests ====================
 
     @Test
     fun `formatRelativeDate with localized strings returns todayString for current day`() {
@@ -262,105 +256,6 @@ class DateUtilsTest {
         assertEquals("Today's Date!", result)
     }
 
-    // ==================== Legacy formatRelativeDate Tests (Deprecated) ====================
-
-    @Test
-    @Suppress("DEPRECATION")
-    fun `legacy formatRelativeDate returns Today for current day`() {
-        val now = System.currentTimeMillis()
-
-        val result = DateUtils.formatRelativeDate(now)
-
-        assertEquals("Today", result)
-    }
-
-    @Test
-    @Suppress("DEPRECATION")
-    fun `legacy formatRelativeDate returns Yesterday for previous day`() {
-        val yesterday = Calendar.getInstance().apply {
-            add(Calendar.DAY_OF_YEAR, -1)
-        }.timeInMillis
-
-        val result = DateUtils.formatRelativeDate(yesterday)
-
-        assertEquals("Yesterday", result)
-    }
-
-    @Test
-    @Suppress("DEPRECATION")
-    fun `legacy formatRelativeDate returns day name for same week`() {
-        val calendar = Calendar.getInstance()
-        val currentDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
-
-        // Go back 3 days but stay in same week if possible
-        if (currentDayOfWeek > Calendar.WEDNESDAY) {
-            calendar.add(Calendar.DAY_OF_YEAR, -3)
-            val timestamp = calendar.timeInMillis
-
-            val result = DateUtils.formatRelativeDate(timestamp)
-
-            // Should be a day name like "Monday", "Tuesday", etc.
-            val dayNames = listOf("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
-            assertTrue(dayNames.any { result.contains(it) } || result == "Today" || result == "Yesterday")
-        }
-    }
-
-    @Test
-    @Suppress("DEPRECATION")
-    fun `legacy formatRelativeDate returns month and day for same year different week`() {
-        val calendar = Calendar.getInstance().apply {
-            add(Calendar.WEEK_OF_YEAR, -2)
-        }
-        val timestamp = calendar.timeInMillis
-
-        val result = DateUtils.formatRelativeDate(timestamp)
-
-        // Should contain month name and day number
-        assertFalse(result == "Today")
-        assertFalse(result == "Yesterday")
-    }
-
-    // ==================== Consistency Tests ====================
-
-    @Test
-    fun `formatRelativeDate with English strings matches legacy behavior for today`() {
-        val now = System.currentTimeMillis()
-
-        @Suppress("DEPRECATION")
-        val legacyResult = DateUtils.formatRelativeDate(now)
-        val newResult = DateUtils.formatRelativeDate(now, "Today", "Yesterday")
-
-        assertEquals(legacyResult, newResult)
-    }
-
-    @Test
-    fun `formatRelativeDate with English strings matches legacy behavior for yesterday`() {
-        val yesterday = Calendar.getInstance().apply {
-            add(Calendar.DAY_OF_YEAR, -1)
-        }.timeInMillis
-
-        @Suppress("DEPRECATION")
-        val legacyResult = DateUtils.formatRelativeDate(yesterday)
-        val newResult = DateUtils.formatRelativeDate(yesterday, "Today", "Yesterday")
-
-        assertEquals(legacyResult, newResult)
-    }
-
-    @Test
-    fun `formatRelativeDate with English strings matches legacy behavior for older dates`() {
-        val twoWeeksAgo = Calendar.getInstance().apply {
-            add(Calendar.WEEK_OF_YEAR, -2)
-        }.timeInMillis
-
-        @Suppress("DEPRECATION")
-        val legacyResult = DateUtils.formatRelativeDate(twoWeeksAgo)
-        val newResult = DateUtils.formatRelativeDate(twoWeeksAgo, "Today", "Yesterday")
-
-        assertEquals(legacyResult, newResult)
-    }
-
-    // ==================== Edge Case Tests ====================
-
     @Test
     fun `formatRelativeDate handles year boundary correctly`() {
         // Test December 31st of last year
@@ -441,8 +336,6 @@ class DateUtilsTest {
         }
     }
 
-    // ==================== Week Boundary Tests ====================
-
     @Test
     fun `formatRelativeDate correctly identifies same week on Sunday`() {
         // Get the current week's Sunday
@@ -469,8 +362,6 @@ class DateUtilsTest {
             validResults.any { result.contains(it) } || result.matches(Regex(".*\\d+.*"))
         )
     }
-
-    // ==================== Format Methods Return Non-Empty Strings ====================
 
     @Test
     fun `all format methods return non-empty strings for valid timestamps`() {
