@@ -24,19 +24,6 @@ object DateUtils {
     }
 
     /**
-     * Formats a timestamp as a relative date string using hardcoded English strings.
-     *
-     * @deprecated Use [formatRelativeDate] with explicit todayString and yesterdayString instead.
-     */
-    @Deprecated(
-        message = "Use formatRelativeDate with explicit localized strings instead.",
-        replaceWith = ReplaceWith("formatRelativeDate(timestamp, todayString, yesterdayString)")
-    )
-    fun formatRelativeDate(timestamp: Long): String {
-        return formatRelativeDate(timestamp, "Today", "Yesterday")
-    }
-
-    /**
      * Formats a timestamp as a relative date string.
      *
      * @param timestamp The timestamp to format
