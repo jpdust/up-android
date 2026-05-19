@@ -6,7 +6,15 @@ plugins {
 }
 
 dependencyLocking {
-    lockAllConfigurations()
+    configurations.configureEach {
+        if (name.endsWith("RuntimeClasspath") ||
+            name.endsWith("CompileClasspath") ||
+            name.endsWith("AnnotationProcessorClasspath") ||
+            name == "classpath"
+        ) {
+            resolutionStrategy.activateDependencyLocking()
+        }
+    }
 }
 
 jacoco {
