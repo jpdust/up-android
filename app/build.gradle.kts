@@ -29,11 +29,7 @@ android {
         applicationId = "com.unstampedpages.app"
         minSdk = 26
         targetSdk = 36
-<<<<<<< Updated upstream
-        versionCode = 202605191
-=======
         versionCode = 202605201 // Set to the highest code in Play Console — workflow will increment from here
->>>>>>> Stashed changes
         versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
