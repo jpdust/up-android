@@ -128,7 +128,7 @@ jobs:
 
       # ── SonarCloud Analysis ──────────────────────────────────────────────────
       # sonar.qualitygate.wait=true blocks the step until SonarCloud returns a
-      # gate result and fails the job if the gate is not green — preventing a
+      # gate result and fails the job if the gate is not green, preventing a
       # release from shipping code that violates quality rules.
       - name: SonarCloud analysis
         env:
@@ -174,12 +174,12 @@ jobs:
 
       # ── Version Code ─────────────────────────────────────────────────────────
       # Scheme: YYYYMMDDn where n is omitted for the first release of the day,
-      # then 1, 2, 3 … for subsequent releases on the same calendar day (UTC).
+      # then 1, 2, 3 ... for subsequent releases on the same calendar day (UTC).
       #
-      # Examples for 2026-05-19:
-      #   First release  → 20260519
-      #   Second release → 202605191
-      #   Third release  → 202605192
+      # Examples for 2026-05-20:
+      #   First release  -> 20260520
+      #   Second release -> 202605201
+      #   Third release  -> 202605202
       - name: Compute and bump versionCode
         id: version
         run: |
@@ -200,16 +200,17 @@ jobs:
 
           sed -i "s/versionCode = ${CURRENT}/versionCode = ${NEW_CODE}/" app/build.gradle.kts
           echo "version_code=${NEW_CODE}" >> "$GITHUB_OUTPUT"
-          echo "Bumped versionCode: ${CURRENT} → ${NEW_CODE}"
+          echo "Bumped versionCode: ${CURRENT} -> ${NEW_CODE}"
 
       # ── Keystore ─────────────────────────────────────────────────────────────
       # KEYSTORE_BASE64 is the release keystore encoded with:
       #   base64 -i your-upload-key.jks | pbcopy   (macOS)
-      # Store the result as a GitHub Actions secret named KEYSTORE_BASE64.
+      # The secret is passed via env to avoid expanding it inline in the shell
+      # command, which is a Sonar security requirement.
       - name: Decode release keystore
-        run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode \
-            > "${{ github.workspace }}/release.jks"
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: echo "$KEYSTORE_BASE64" | base64 --decode > "${{ github.workspace }}/release.jks"
 
       # ── Build signed release AAB ──────────────────────────────────────────────
       # The signing config in app/build.gradle.kts reads these four env vars.
@@ -223,10 +224,9 @@ jobs:
 
       # ── Upload to Google Play ────────────────────────────────────────────────
       # PLAY_SERVICE_ACCOUNT_JSON is the full JSON content of a Google Cloud
-      # service account that has been granted the "Release Manager" role in
-      # Play Console → Users and permissions → Invite new users.
+      # service account granted the Release Manager role in Play Console.
       - name: Upload AAB to Google Play (internal testing)
-        uses: r0adkll/upload-google-play@v3
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.unstampedpages.app
