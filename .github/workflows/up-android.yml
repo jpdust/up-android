@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD
 
 on:
   push:
@@ -8,12 +8,16 @@ on:
   workflow_dispatch:
 
 jobs:
+  # ============================================================================
+  # Job 1 — Test & Analyze
+  # Runs on every push and every pull request to master.
+  # ============================================================================
   test:
     name: Test & Analyze
     runs-on: ubuntu-latest
 
     steps:
-      # ── Checkout ────────────────────────────────────────────────────────────
+      # ── Checkout ─────────────────────────────────────────────────────────────
       # fetch-depth: 0 gives SonarCloud the full history it needs for
       # blame data and PR decoration; a shallow clone produces empty blame.
       - name: Checkout
@@ -21,31 +25,25 @@ jobs:
         with:
           fetch-depth: 0
 
-      # ── Java ────────────────────────────────────────────────────────────────
+      # ── Java ─────────────────────────────────────────────────────────────────
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
-      # ── Gradle ──────────────────────────────────────────────────────────────
-      # Caches the Gradle wrapper, dependencies, and build outputs between runs.
+      # ── Gradle ───────────────────────────────────────────────────────────────
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
 
-      # ── Android SDK path ────────────────────────────────────────────────────
-      # local.properties is not committed to git, so Gradle cannot find the SDK
-      # on the CI runner.  Write it from the pre-installed ANDROID_HOME that
-      # GitHub's ubuntu-latest runner exposes automatically.
+      # ── Android SDK path ─────────────────────────────────────────────────────
       - name: Write local.properties
         run: echo "sdk.dir=$ANDROID_HOME" >> local.properties
 
-      # ── Unit Tests ──────────────────────────────────────────────────────────
+      # ── Unit Tests ───────────────────────────────────────────────────────────
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest
 
-      # Preserve the HTML report so failures can be inspected in the
-      # Actions UI without having to re-run the build locally.
       - name: Upload unit test report on failure
         if: failure()
         uses: actions/upload-artifact@v4
@@ -54,9 +52,7 @@ jobs:
           path: app/build/reports/tests/testDebugUnitTest/
           retention-days: 7
 
-      # ── KVM (hardware acceleration for the Android emulator) ────────────────
-      # Required on ubuntu-latest; the udev rule grants the runner user
-      # access to /dev/kvm so QEMU can use hardware virtualisation.
+      # ── KVM (hardware acceleration for the Android emulator) ─────────────────
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
@@ -64,10 +60,7 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      # ── AVD Cache ───────────────────────────────────────────────────────────
-      # Caching the AVD snapshot cuts emulator cold-boot time from ~3 min to
-      # ~30 s on cache hits.  The key encodes the API level and system image
-      # so a different emulator config always triggers a fresh snapshot.
+      # ── AVD Cache ────────────────────────────────────────────────────────────
       - name: Cache Android emulator AVD
         uses: actions/cache@v4
         id: avd-cache
@@ -77,9 +70,6 @@ jobs:
             ~/.android/adb*
           key: avd-34-aosp_atd-${{ runner.os }}
 
-      # Only executed when there is no cached snapshot.
-      # Creates the AVD and boots it once so the snapshot is written to the
-      # cache paths above; subsequent runs skip this step entirely.
       - name: Create AVD snapshot for caching
         if: steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a # v2
@@ -98,11 +88,7 @@ jobs:
           disable-animations: false
           script: echo "AVD snapshot ready"
 
-      # ── Instrumented Tests ──────────────────────────────────────────────────
-      # reactivecircus/android-emulator-runner boots the emulator, waits for
-      # it to be fully ready, runs the script, then shuts it down.
-      # -no-snapshot-save prevents writing the dirty post-test state back to
-      # the snapshot so the cached image stays clean for the next run.
+      # ── Instrumented Tests ───────────────────────────────────────────────────
       - name: Run instrumented tests
         uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a # v2
         with:
@@ -130,15 +116,9 @@ jobs:
           retention-days: 7
 
       # ── JaCoCo Coverage Report ───────────────────────────────────────────────
-      # jacocoDebugCoverageReport reads exec data from:
-      #   Unit tests:         build/outputs/unit_test_code_coverage/debugUnitTest/*.exec
-      #   Instrumented tests: build/outputs/code_coverage/debugAndroidTest/connected/**/*.ec
-      # Both sets of exec files are present in the workspace from the steps
-      # above, so the merged XML contains full coverage from both test suites.
       - name: Generate JaCoCo coverage report
         run: ./gradlew jacocoDebugCoverageReport
 
-      # Upload the HTML report as a build artifact for easy browsing.
       - name: Upload JaCoCo coverage report
         uses: actions/upload-artifact@v4
         with:
@@ -146,14 +126,120 @@ jobs:
           path: app/build/reports/jacoco/debug/
           retention-days: 14
 
-      # ── SonarCloud Analysis ─────────────────────────────────────────────────
-      # sonar.coverage.jacoco.xmlReportPaths is configured in build.gradle.kts
-      # and points at the XML produced by the step above.
-      # SONAR_TOKEN must be added to the repository's Actions secrets.
-      # GITHUB_TOKEN is automatically provided by GitHub Actions and is used
-      # by SonarCloud to post PR status checks and inline annotations.
+      # ── SonarCloud Analysis ──────────────────────────────────────────────────
+      # sonar.qualitygate.wait=true blocks the step until SonarCloud returns a
+      # gate result and fails the job if the gate is not green, preventing a
+      # release from shipping code that violates quality rules.
       - name: SonarCloud analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew sonar --info
+        run: ./gradlew sonar --info -Dsonar.qualitygate.wait=true
+
+  # ============================================================================
+  # Job 2 — Sign & Deploy to Internal Testing
+  # Runs only after the test job passes, and only on master (not PRs).
+  # Computes the next versionCode, builds a signed AAB, uploads it to the
+  # Play Store internal track, then commits the version bump back to master.
+  # ============================================================================
+  release:
+    name: Sign & Deploy to Internal Testing
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/master'
+    permissions:
+      contents: write
+
+    steps:
+      # ── Checkout ─────────────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ── Java ─────────────────────────────────────────────────────────────────
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      # ── Gradle ───────────────────────────────────────────────────────────────
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
+
+      # ── Android SDK path ─────────────────────────────────────────────────────
+      - name: Write local.properties
+        run: echo "sdk.dir=$ANDROID_HOME" >> local.properties
+
+      # ── Version Code ─────────────────────────────────────────────────────────
+      # Scheme: YYYYMMDDn where n is omitted for the first release of the day,
+      # then 1, 2, 3 ... for subsequent releases on the same calendar day (UTC).
+      #
+      # Examples for 2026-05-20:
+      #   First release  -> 20260520
+      #   Second release -> 202605201
+      #   Third release  -> 202605202
+      - name: Compute and bump versionCode
+        id: version
+        run: |
+          DATE=$(date -u +%Y%m%d)
+          CURRENT=$(grep -oP '(?<=versionCode = )\d+' app/build.gradle.kts)
+
+          if [[ "$CURRENT" == "${DATE}"* ]]; then
+            SUFFIX="${CURRENT#$DATE}"
+            if [[ -z "$SUFFIX" ]]; then
+              NEW_N=1
+            else
+              NEW_N=$((SUFFIX + 1))
+            fi
+            NEW_CODE="${DATE}${NEW_N}"
+          else
+            NEW_CODE="${DATE}"
+          fi
+
+          sed -i "s/versionCode = ${CURRENT}/versionCode = ${NEW_CODE}/" app/build.gradle.kts
+          echo "version_code=${NEW_CODE}" >> "$GITHUB_OUTPUT"
+          echo "Bumped versionCode: ${CURRENT} -> ${NEW_CODE}"
+
+      # ── Keystore ─────────────────────────────────────────────────────────────
+      # KEYSTORE_BASE64 is the release keystore encoded with:
+      #   base64 -i your-upload-key.jks | pbcopy   (macOS)
+      # The secret is passed via env to avoid expanding it inline in the shell
+      # command, which is a Sonar security requirement.
+      - name: Decode release keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: echo "$KEYSTORE_BASE64" | base64 --decode > "${{ github.workspace }}/release.jks"
+
+      # ── Build signed release AAB ──────────────────────────────────────────────
+      # The signing config in app/build.gradle.kts reads these four env vars.
+      - name: Build signed release AAB
+        env:
+          KEYSTORE_PATH: ${{ github.workspace }}/release.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew bundleRelease
+
+      # ── Upload to Google Play ────────────────────────────────────────────────
+      # PLAY_SERVICE_ACCOUNT_JSON is the full JSON content of a Google Cloud
+      # service account granted the Release Manager role in Play Console.
+      - name: Upload AAB to Google Play (internal testing)
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.unstampedpages.app
+          releaseFiles: app/build/outputs/bundle/release/app-release.aab
+          track: internal
+          status: completed
+
+      # ── Commit version bump ───────────────────────────────────────────────────
+      # [skip ci] prevents this commit from re-triggering the workflow.
+      - name: Commit versionCode bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add app/build.gradle.kts
+          git commit -m "ci: bump versionCode to ${{ steps.version.outputs.version_code }} [skip ci]"
+          git push origin HEAD:master
