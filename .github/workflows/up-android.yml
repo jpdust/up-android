@@ -175,27 +175,36 @@ jobs:
       # ── Version Code ─────────────────────────────────────────────────────────
       # Scheme: YYYYMMDDn where n is omitted for the first release of the day,
       # then 1, 2, 3 ... for subsequent releases on the same calendar day (UTC).
+      # The result is always strictly greater than the value in build.gradle.kts,
+      # even if a previous manual upload left a higher code there.
       #
       # Examples for 2026-05-20:
-      #   First release  -> 20260520
-      #   Second release -> 202605201
-      #   Third release  -> 202605202
+      #   First release of the day  -> 20260520
+      #   Second release            -> 202605201
+      #   Third release             -> 202605202
       - name: Compute and bump versionCode
         id: version
         run: |
           DATE=$(date -u +%Y%m%d)
           CURRENT=$(grep -oP '(?<=versionCode = )\d+' app/build.gradle.kts)
 
-          if [[ "$CURRENT" == "${DATE}"* ]]; then
+          if [[ "$DATE" -gt "$CURRENT" ]]; then
+            # Plain date is already larger — use it directly (first release of day)
+            NEW_CODE="$DATE"
+          elif [[ "$CURRENT" == "${DATE}"* ]]; then
+            # Current code already has today's date prefix — increment the suffix
             SUFFIX="${CURRENT#$DATE}"
-            if [[ -z "$SUFFIX" ]]; then
-              NEW_N=1
-            else
-              NEW_N=$((SUFFIX + 1))
-            fi
+            NEW_N=$(( ${SUFFIX:-0} + 1 ))
             NEW_CODE="${DATE}${NEW_N}"
           else
-            NEW_CODE="${DATE}"
+            # Current code is larger than today's plain date (e.g. carried a suffix
+            # from a previous day, or was set manually to a higher value).
+            # Find the smallest suffix N such that DATE+N > CURRENT.
+            N=1
+            while [[ "${DATE}${N}" -le "$CURRENT" ]]; do
+              N=$((N + 1))
+            done
+            NEW_CODE="${DATE}${N}"
           fi
 
           sed -i "s/versionCode = ${CURRENT}/versionCode = ${NEW_CODE}/" app/build.gradle.kts
