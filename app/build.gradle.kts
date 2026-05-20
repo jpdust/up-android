@@ -29,7 +29,7 @@ android {
         applicationId = "com.unstampedpages.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 202604291
+        versionCode = 202605191
         versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -38,15 +38,30 @@ android {
         }
     }
 
+    // Release signing reads from environment variables injected by CI.
+    // Local builds without these vars will produce an unsigned release AAB.
+    signingConfigs {
+        val keystorePath = System.getenv("KEYSTORE_PATH")
+        if (!keystorePath.isNullOrBlank()) {
+            create("release") {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
+                keyAlias = System.getenv("KEY_ALIAS") ?: ""
+                keyPassword = System.getenv("KEY_PASSWORD") ?: ""
+            }
+        }
+    }
+
     buildTypes {
         debug {
             enableUnitTestCoverage = true
             enableAndroidTestCoverage = true
+            isDebuggable = true
         }
         release {
+            isDebuggable = false
             isMinifyEnabled = true
-            enableUnitTestCoverage = true
-            enableAndroidTestCoverage = true
+            signingConfigs.findByName("release")?.let { signingConfig = it }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
