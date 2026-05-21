@@ -140,7 +140,7 @@ internal data class VerticalPanBounds(
 /**
  * Layout dimensions for the map
  */
-private data class MapLayout(
+internal data class MapLayout(
     val mapWidth: Float,
     val mapHeight: Float,
     val canvasOffsetX: Float,
@@ -152,7 +152,7 @@ private data class MapLayout(
 /**
  * Calculate map layout dimensions based on canvas size
  */
-private fun calculateMapLayout(canvasWidth: Float, canvasHeight: Float): MapLayout {
+internal fun calculateMapLayout(canvasWidth: Float, canvasHeight: Float): MapLayout {
     val mapAspectRatio = MercatorProjection.getAspectRatio()
     val canvasAspectRatio = canvasWidth / canvasHeight
 
@@ -939,6 +939,39 @@ internal fun calculateHorizontalWrapOffsets(
 }
 
 /**
+ * Select the fill colour for one country polygon.
+ * Extracted so the colour-selection logic can be unit-tested independently of
+ * the [DrawScope] that calls it.
+ */
+internal fun selectCountryFillColor(
+    countryId: String,
+    selectedCountryId: String?,
+    transitionProgress: Float,
+    previousModeColors: Map<String, Color>,
+    currentModeColors: Map<String, Color>
+): Color = when {
+    countryId == selectedCountryId -> MapHighlight
+    transitionProgress < 1f -> lerp(
+        previousModeColors[countryId] ?: MapLand,
+        currentModeColors[countryId] ?: MapLand,
+        transitionProgress
+    )
+    else -> currentModeColors[countryId] ?: MapLand
+}
+
+/**
+ * Return true if a country's largest rendered dimension is below the dot-marker threshold.
+ * Extracted so the size-test logic can be unit-tested independently of [DrawScope].
+ */
+internal fun isCountrySmall(
+    widthNorm: Float,
+    heightNorm: Float,
+    mapWidth: Float,
+    mapHeight: Float,
+    scale: Float
+): Boolean = maxOf(widthNorm * mapWidth * scale, heightNorm * mapHeight * scale) < SMALL_COUNTRY_THRESHOLD_PX
+
+/**
  * Draw a single copy of the map (used for horizontal wrapping).
  * The caller chooses enough horizontal copies to cover the viewport, including
  * padded neighbors to avoid precision gaps while panning at high zoom.
@@ -975,26 +1008,18 @@ private fun DrawScope.drawMapCopy(
         params.geometries.forEach { geometry ->
             val bounds = params.countryBounds[geometry.countryId]
             val isSelected = geometry.countryId == params.selectedCountryId
-            val fillColor = when {
-                isSelected -> MapHighlight
-                useTransition -> {
-                    val prev = params.previousModeColors[geometry.countryId] ?: MapLand
-                    val curr = params.currentModeColors[geometry.countryId] ?: MapLand
-                    lerp(prev, curr, params.transitionProgress)
-                }
-                else -> params.currentModeColors[geometry.countryId] ?: MapLand
-            }
+            val fillColor = selectCountryFillColor(
+                geometry.countryId, params.selectedCountryId, params.transitionProgress,
+                params.previousModeColors, params.currentModeColors
+            )
 
             val path = pathCacheHolder.getOrBuild(
                 geometry = geometry,
                 mapWidth = layout.mapWidth,
                 mapHeight = layout.mapHeight
             )
-            val isSmall = bounds != null && run {
-                val w = bounds.widthNorm * layout.mapWidth * params.scale
-                val h = bounds.heightNorm * layout.mapHeight * params.scale
-                maxOf(w, h) < SMALL_COUNTRY_THRESHOLD_PX
-            }
+            val isSmall = bounds != null &&
+                isCountrySmall(bounds.widthNorm, bounds.heightNorm, layout.mapWidth, layout.mapHeight, params.scale)
             val centroid = if (isSmall) {
                 Offset(bounds.centroidNormX * layout.mapWidth, bounds.centroidNormY * layout.mapHeight)
             } else {
@@ -1044,6 +1069,21 @@ private fun DrawScope.drawMapCopy(
  *
  * Labels are drawn after all map copies so they always render on top of country fills.
  */
+
+/**
+ * Return true when a label whose centre maps to ([screenX], [screenY]) and whose text
+ * bounding box is [tw] × [th] pixels falls entirely outside the visible canvas.
+ * Extracted so the culling predicate can be unit-tested without a [DrawScope].
+ */
+internal fun isLabelCulled(
+    screenX: Float,
+    screenY: Float,
+    tw: Float,
+    th: Float,
+    canvasWidth: Float,
+    canvasHeight: Float
+): Boolean = screenX < -tw || screenX > canvasWidth + tw || screenY < -th || screenY > canvasHeight + th
+
 private fun DrawScope.drawCountryLabels(
     wrapOffset: Float,
     layout: MapLayout,
@@ -1084,8 +1124,7 @@ private fun DrawScope.drawCountryLabels(
         val th = textLayout.size.height.toFloat()
 
         // Cull labels whose centroid is off-screen (with a half-label margin).
-        if (screenX < -tw || screenX > layout.canvasWidth  + tw) return@geometryLabels
-        if (screenY < -th || screenY > layout.canvasHeight + th) return@geometryLabels
+        if (isLabelCulled(screenX, screenY, tw, th, layout.canvasWidth, layout.canvasHeight)) return@geometryLabels
 
         // topLeft that centres the TextLayoutResult on the centroid.
         val topLeft   = Offset(screenX - tw / 2f, screenY - th / 2f)
@@ -1653,6 +1692,14 @@ private fun DrawScope.drawCompassRose() {
 }
 
 /**
+ * Compute how many zoom-indicator bars to show for the given [scale].
+ * Maps the range (1, 200] linearly onto [1, 5].
+ * Extracted so the bar-count formula can be unit-tested without a [DrawScope].
+ */
+internal fun computeZoomBarCount(scale: Float): Int =
+    ((scale - 1f) / (200f - 1f) * 5f).toInt().coerceIn(1, 5)
+
+/**
  * Draw zoom level indicator.
  */
 private fun DrawScope.drawZoomIndicator(scale: Float) {
@@ -1662,7 +1709,7 @@ private fun DrawScope.drawZoomIndicator(scale: Float) {
 
         // Zoom indicator bars (more bars = more zoom)
         // Max zoom is 200x, so scale appropriately for 5 bars
-        val barCount = ((scale - 1f) / (200f - 1f) * 5f).toInt().coerceIn(1, 5)
+        val barCount = computeZoomBarCount(scale)
         val barWidth = 4.dp.toPx()
         val barSpacing = 3.dp.toPx()
         val maxBarHeight = 16.dp.toPx()

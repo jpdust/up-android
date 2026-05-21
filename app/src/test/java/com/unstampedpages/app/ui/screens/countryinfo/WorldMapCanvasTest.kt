@@ -3017,3 +3017,444 @@ class HitTestNormalizedPointTest {
         assertNull(result)
     }
 }
+
+// =============================================================================
+// CalculateMapLayout Tests
+// =============================================================================
+
+class CalculateMapLayoutTest {
+
+    private val mapAspectRatio = MercatorProjection.getAspectRatio()
+
+    @Test
+    fun `wide canvas fits to height and centers horizontally`() {
+        // Make canvas much wider than the map aspect ratio so it takes the "fit to height" branch.
+        val canvasWidth = 2000f
+        val canvasHeight = 500f
+        val layout = calculateMapLayout(canvasWidth, canvasHeight)
+
+        val expectedMapHeight = canvasHeight
+        val expectedMapWidth = canvasHeight * mapAspectRatio
+
+        assertEquals(expectedMapWidth, layout.mapWidth, 0.01f)
+        assertEquals(expectedMapHeight, layout.mapHeight, 0.01f)
+        assertEquals((canvasWidth - expectedMapWidth) / 2f, layout.canvasOffsetX, 0.01f)
+        assertEquals(0f, layout.canvasOffsetY, 0.01f)
+        assertEquals(canvasWidth, layout.canvasWidth, 0.01f)
+        assertEquals(canvasHeight, layout.canvasHeight, 0.01f)
+    }
+
+    @Test
+    fun `tall canvas fits to width and aligns to top`() {
+        // Make canvas much taller than the map aspect ratio so it takes the "fit to width" branch.
+        val canvasWidth = 400f
+        val canvasHeight = 2000f
+        val layout = calculateMapLayout(canvasWidth, canvasHeight)
+
+        val expectedMapWidth = canvasWidth
+        val expectedMapHeight = canvasWidth / mapAspectRatio
+
+        assertEquals(expectedMapWidth, layout.mapWidth, 0.01f)
+        assertEquals(expectedMapHeight, layout.mapHeight, 0.01f)
+        assertEquals(0f, layout.canvasOffsetX, 0.01f)
+        assertEquals(0f, layout.canvasOffsetY, 0.01f)
+        assertEquals(canvasWidth, layout.canvasWidth, 0.01f)
+        assertEquals(canvasHeight, layout.canvasHeight, 0.01f)
+    }
+
+    @Test
+    fun `square canvas selects correct branch based on map aspect ratio`() {
+        // The Mercator map is wider than tall, so a square canvas is taller relative to the map.
+        val side = 800f
+        val layout = calculateMapLayout(side, side)
+
+        // square canvas aspect = 1.0; map aspect > 1.0 → canvas is effectively "taller" → fit-to-width
+        assertTrue("mapWidth should equal canvasWidth", layout.mapWidth == side)
+        assertTrue("mapHeight should be less than canvasHeight", layout.mapHeight < side)
+    }
+
+    @Test
+    fun `map dimensions maintain aspect ratio for wide canvas`() {
+        val layout = calculateMapLayout(1920f, 600f)
+        val actualAspect = layout.mapWidth / layout.mapHeight
+        assertEquals(mapAspectRatio, actualAspect, 0.001f)
+    }
+
+    @Test
+    fun `map dimensions maintain aspect ratio for tall canvas`() {
+        val layout = calculateMapLayout(600f, 1920f)
+        val actualAspect = layout.mapWidth / layout.mapHeight
+        assertEquals(mapAspectRatio, actualAspect, 0.001f)
+    }
+
+    @Test
+    fun `canvasOffsetX is zero for tall canvas`() {
+        val layout = calculateMapLayout(600f, 1200f)
+        assertEquals(0f, layout.canvasOffsetX, 0.001f)
+    }
+
+    @Test
+    fun `canvasOffsetX is positive for wide canvas`() {
+        val layout = calculateMapLayout(1920f, 600f)
+        assertTrue("canvasOffsetX should be > 0 for wide canvas", layout.canvasOffsetX > 0f)
+    }
+
+    @Test
+    fun `canvasOffsetY is always zero`() {
+        assertEquals(0f, calculateMapLayout(1920f, 600f).canvasOffsetY, 0.001f)
+        assertEquals(0f, calculateMapLayout(600f, 1920f).canvasOffsetY, 0.001f)
+        assertEquals(0f, calculateMapLayout(800f, 800f).canvasOffsetY, 0.001f)
+    }
+}
+
+// =============================================================================
+// SelectCountryFillColor Tests
+// =============================================================================
+
+class SelectCountryFillColorTest {
+
+    private val red   = Color(0xFFFF0000)
+    private val green = Color(0xFF00FF00)
+    private val blue  = Color(0xFF0000FF)
+
+    // ── selected country ─────────────────────────────────────────────────────
+
+    @Test
+    fun `selected country always returns MapHighlight`() {
+        val color = selectCountryFillColor(
+            countryId = "fr", selectedCountryId = "fr",
+            transitionProgress = 1f,
+            previousModeColors = mapOf("fr" to red),
+            currentModeColors  = mapOf("fr" to green)
+        )
+        assertEquals(com.unstampedpages.app.ui.theme.MapHighlight, color)
+    }
+
+    @Test
+    fun `selected country returns MapHighlight even mid-transition`() {
+        val color = selectCountryFillColor(
+            countryId = "de", selectedCountryId = "de",
+            transitionProgress = 0.5f,
+            previousModeColors = mapOf("de" to red),
+            currentModeColors  = mapOf("de" to blue)
+        )
+        assertEquals(com.unstampedpages.app.ui.theme.MapHighlight, color)
+    }
+
+    // ── transition in progress ───────────────────────────────────────────────
+
+    @Test
+    fun `mid-transition returns lerped color`() {
+        val from = Color(0xFF000000)
+        val to   = Color(0xFFFFFFFF)
+        val color = selectCountryFillColor(
+            countryId = "us", selectedCountryId = null,
+            transitionProgress = 0.5f,
+            previousModeColors = mapOf("us" to from),
+            currentModeColors  = mapOf("us" to to)
+        )
+        // Compose lerp works in linear-light space, so verify against the same lerp call
+        val expected = androidx.compose.ui.graphics.lerp(from, to, 0.5f)
+        assertEquals(expected, color)
+    }
+
+    @Test
+    fun `transition at exactly 0 returns previous color`() {
+        val color = selectCountryFillColor(
+            countryId = "jp", selectedCountryId = null,
+            transitionProgress = 0f,
+            previousModeColors = mapOf("jp" to red),
+            currentModeColors  = mapOf("jp" to blue)
+        )
+        assertEquals(red, color)
+    }
+
+    @Test
+    fun `transition missing previous color falls back to MapLand`() {
+        val color = selectCountryFillColor(
+            countryId = "zz", selectedCountryId = null,
+            transitionProgress = 0.5f,
+            previousModeColors = emptyMap(),
+            currentModeColors  = mapOf("zz" to blue)
+        )
+        // lerp(MapLand, blue, 0.5)
+        val expected = androidx.compose.ui.graphics.lerp(
+            com.unstampedpages.app.ui.theme.MapLand, blue, 0.5f
+        )
+        assertEquals(expected, color)
+    }
+
+    @Test
+    fun `transition missing current color falls back to MapLand`() {
+        val color = selectCountryFillColor(
+            countryId = "zz", selectedCountryId = null,
+            transitionProgress = 0.5f,
+            previousModeColors = mapOf("zz" to red),
+            currentModeColors  = emptyMap()
+        )
+        val expected = androidx.compose.ui.graphics.lerp(
+            red, com.unstampedpages.app.ui.theme.MapLand, 0.5f
+        )
+        assertEquals(expected, color)
+    }
+
+    // ── stable state (transitionProgress == 1) ───────────────────────────────
+
+    @Test
+    fun `stable state returns current color`() {
+        val color = selectCountryFillColor(
+            countryId = "fr", selectedCountryId = null,
+            transitionProgress = 1f,
+            previousModeColors = mapOf("fr" to red),
+            currentModeColors  = mapOf("fr" to blue)
+        )
+        assertEquals(blue, color)
+    }
+
+    @Test
+    fun `stable state missing current color falls back to MapLand`() {
+        val color = selectCountryFillColor(
+            countryId = "xx", selectedCountryId = null,
+            transitionProgress = 1f,
+            previousModeColors = mapOf("xx" to red),
+            currentModeColors  = emptyMap()
+        )
+        assertEquals(com.unstampedpages.app.ui.theme.MapLand, color)
+    }
+
+    @Test
+    fun `non-selected country is not affected by different selected country`() {
+        val color = selectCountryFillColor(
+            countryId = "de", selectedCountryId = "fr",
+            transitionProgress = 1f,
+            previousModeColors = mapOf("de" to red),
+            currentModeColors  = mapOf("de" to green)
+        )
+        assertEquals(green, color)
+    }
+}
+
+// =============================================================================
+// IsCountrySmall Tests
+// =============================================================================
+
+class IsCountrySmallTest {
+
+    private val mapWidth  = 1000f
+    private val mapHeight = 500f
+
+    @Test
+    fun `tiny country with both dims below threshold returns true`() {
+        // 0.005 * 1000 * 1 = 5px < 8px
+        assertTrue(isCountrySmall(0.005f, 0.005f, mapWidth, mapHeight, scale = 1f))
+    }
+
+    @Test
+    fun `country at exactly threshold is not small`() {
+        // width that gives exactly 8px: 8 / (1000 * 1) = 0.008
+        val w = SMALL_COUNTRY_THRESHOLD_PX / (mapWidth * 1f)
+        assertFalse(isCountrySmall(w, 0.001f, mapWidth, mapHeight, scale = 1f))
+    }
+
+    @Test
+    fun `country just below threshold is small`() {
+        // 7.9px < 8px
+        val w = 7.9f / (mapWidth * 1f)
+        assertTrue(isCountrySmall(w, 0.001f, mapWidth, mapHeight, scale = 1f))
+    }
+
+    @Test
+    fun `wide country exceeding threshold is not small`() {
+        // 0.1 * 1000 * 1 = 100px >> 8px
+        assertFalse(isCountrySmall(0.1f, 0.001f, mapWidth, mapHeight, scale = 1f))
+    }
+
+    @Test
+    fun `tall country exceeding threshold is not small`() {
+        // height: 0.1 * 500 * 1 = 50px >> 8px
+        assertFalse(isCountrySmall(0.001f, 0.1f, mapWidth, mapHeight, scale = 1f))
+    }
+
+    @Test
+    fun `zoom scale pushes small country above threshold`() {
+        // 0.003 * 1000 * 1 = 3px (small), but with scale=4: 0.003*1000*4 = 12px (not small)
+        assertTrue(isCountrySmall(0.003f, 0.003f, mapWidth, mapHeight, scale = 1f))
+        assertFalse(isCountrySmall(0.003f, 0.003f, mapWidth, mapHeight, scale = 4f))
+    }
+
+    @Test
+    fun `isSmall uses maxOf width and height dimensions`() {
+        // widthPx = 0.003 * 1000 = 3px, heightPx = 0.012 * 500 = 6px → max = 6px < 8px
+        assertTrue(isCountrySmall(0.003f, 0.012f, mapWidth, mapHeight, scale = 1f))
+        // heightPx = 0.02 * 500 = 10px → max = 10px >= 8px
+        assertFalse(isCountrySmall(0.003f, 0.02f, mapWidth, mapHeight, scale = 1f))
+    }
+
+    @Test
+    fun `scale=1 country just above threshold is not small`() {
+        val w = (SMALL_COUNTRY_THRESHOLD_PX + 0.01f) / mapWidth
+        assertFalse(isCountrySmall(w, 0.001f, mapWidth, mapHeight, scale = 1f))
+    }
+}
+
+// =============================================================================
+// IsLabelCulled Tests
+// =============================================================================
+
+class IsLabelCulledTest {
+
+    private val canvasWidth  = 800f
+    private val canvasHeight = 600f
+    private val tw = 60f   // typical label text width
+    private val th = 20f   // typical label text height
+
+    // ── visible (not culled) ─────────────────────────────────────────────────
+
+    @Test
+    fun `label centred on canvas is visible`() {
+        assertFalse(isLabelCulled(400f, 300f, tw, th, canvasWidth, canvasHeight))
+    }
+
+    @Test
+    fun `label at origin is visible`() {
+        assertFalse(isLabelCulled(0f, 0f, tw, th, canvasWidth, canvasHeight))
+    }
+
+    @Test
+    fun `label at canvas bottom-right is visible`() {
+        assertFalse(isLabelCulled(canvasWidth, canvasHeight, tw, th, canvasWidth, canvasHeight))
+    }
+
+    @Test
+    fun `label partially off left edge but within margin is visible`() {
+        // screenX = -tw + 1 is inside the margin
+        assertFalse(isLabelCulled(-tw + 1f, 300f, tw, th, canvasWidth, canvasHeight))
+    }
+
+    @Test
+    fun `label partially off right edge but within margin is visible`() {
+        assertFalse(isLabelCulled(canvasWidth + tw - 1f, 300f, tw, th, canvasWidth, canvasHeight))
+    }
+
+    @Test
+    fun `label partially off top edge but within margin is visible`() {
+        assertFalse(isLabelCulled(400f, -th + 1f, tw, th, canvasWidth, canvasHeight))
+    }
+
+    @Test
+    fun `label partially off bottom edge but within margin is visible`() {
+        assertFalse(isLabelCulled(400f, canvasHeight + th - 1f, tw, th, canvasWidth, canvasHeight))
+    }
+
+    // ── culled (off-screen) ──────────────────────────────────────────────────
+
+    @Test
+    fun `label fully off left edge is culled`() {
+        assertTrue(isLabelCulled(-tw - 1f, 300f, tw, th, canvasWidth, canvasHeight))
+    }
+
+    @Test
+    fun `label fully off right edge is culled`() {
+        assertTrue(isLabelCulled(canvasWidth + tw + 1f, 300f, tw, th, canvasWidth, canvasHeight))
+    }
+
+    @Test
+    fun `label fully off top edge is culled`() {
+        assertTrue(isLabelCulled(400f, -th - 1f, tw, th, canvasWidth, canvasHeight))
+    }
+
+    @Test
+    fun `label fully off bottom edge is culled`() {
+        assertTrue(isLabelCulled(400f, canvasHeight + th + 1f, tw, th, canvasWidth, canvasHeight))
+    }
+
+    @Test
+    fun `label off both left and top is culled`() {
+        assertTrue(isLabelCulled(-tw - 1f, -th - 1f, tw, th, canvasWidth, canvasHeight))
+    }
+
+    @Test
+    fun `label exactly at left boundary is culled`() {
+        // screenX < -tw → strictly less than, so -tw exactly is NOT culled
+        assertFalse(isLabelCulled(-tw, 300f, tw, th, canvasWidth, canvasHeight))
+    }
+
+    @Test
+    fun `label exactly at right boundary is culled`() {
+        // screenX > canvasWidth + tw → strictly greater, so canvasWidth+tw exactly is NOT culled
+        assertFalse(isLabelCulled(canvasWidth + tw, 300f, tw, th, canvasWidth, canvasHeight))
+    }
+}
+
+// =============================================================================
+// ComputeZoomBarCount Tests
+// =============================================================================
+
+class ComputeZoomBarCountTest {
+
+    @Test
+    fun `scale at minimum visible threshold gives 1 bar`() {
+        // Just above 1.1f threshold but very close to 1 — formula: (1.11-1)/(199)*5 ≈ 0.0028 → 0, clamped to 1
+        assertEquals(1, computeZoomBarCount(1.11f))
+    }
+
+    @Test
+    fun `scale=1 gives 1 bar (clamped from 0)`() {
+        assertEquals(1, computeZoomBarCount(1f))
+    }
+
+    @Test
+    fun `scale just above 1 gives 1 bar`() {
+        assertEquals(1, computeZoomBarCount(1.5f))
+    }
+
+    @Test
+    fun `scale at 40x gives 1 bar`() {
+        // (40-1)/(199)*5 = 195/199*5 ≈ 0.98 → toInt()=0 → clamped to 1
+        assertEquals(1, computeZoomBarCount(40f))
+    }
+
+    @Test
+    fun `scale at midpoint gives 2-3 bars`() {
+        // (100-1)/(199)*5 = 99/199*5 ≈ 2.49 → toInt()=2
+        assertEquals(2, computeZoomBarCount(100f))
+    }
+
+    @Test
+    fun `scale at 161 gives 4 bars`() {
+        // (161-1)/199*5 = 160/199*5 ≈ 4.02 → toInt()=4
+        assertEquals(4, computeZoomBarCount(161f))
+    }
+
+    @Test
+    fun `scale at max (200) gives 5 bars`() {
+        // (200-1)/(199)*5 = 1.0*5 = 5.0 → toInt()=5
+        assertEquals(5, computeZoomBarCount(200f))
+    }
+
+    @Test
+    fun `scale beyond 200 is clamped to 5 bars`() {
+        assertEquals(5, computeZoomBarCount(500f))
+    }
+
+    @Test
+    fun `result is always in range 1 to 5`() {
+        val testScales = listOf(0f, 1f, 1.1f, 2f, 10f, 50f, 100f, 150f, 200f, 300f)
+        for (s in testScales) {
+            val bars = computeZoomBarCount(s)
+            assertTrue("bars=$bars out of range for scale=$s", bars in 1..5)
+        }
+    }
+
+    @Test
+    fun `bar count is monotonically non-decreasing with scale`() {
+        val scales = listOf(1f, 5f, 10f, 40f, 80f, 120f, 161f, 180f, 200f)
+        val counts = scales.map { computeZoomBarCount(it) }
+        for (i in 1 until counts.size) {
+            assertTrue(
+                "bar count should not decrease: ${counts[i-1]} > ${counts[i]} at scale ${scales[i]}",
+                counts[i] >= counts[i - 1]
+            )
+        }
+    }
+}
