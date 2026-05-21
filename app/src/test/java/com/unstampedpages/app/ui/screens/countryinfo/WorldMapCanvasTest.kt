@@ -1,5 +1,6 @@
 package com.unstampedpages.app.ui.screens.countryinfo
 
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import com.unstampedpages.app.R
 import com.unstampedpages.app.data.AppConstants
@@ -3456,5 +3457,425 @@ class ComputeZoomBarCountTest {
                 counts[i] >= counts[i - 1]
             )
         }
+    }
+}
+
+// =============================================================================
+// ComputeZoomBarSpecs Tests
+// =============================================================================
+
+class ComputeZoomBarSpecsTest {
+
+    // Fixed pixel values that stand in for dp.toPx() results in tests.
+    private val canvasHeight  = 600f
+    private val xPx           = 48f
+    private val yOffsetPx     = 48f
+    private val barWidthPx    = 16f
+    private val barSpacingPx  = 12f
+    private val maxBarHeightPx = 64f
+
+    private fun specs(scale: Float) = computeZoomBarSpecs(
+        scale, canvasHeight, xPx, yOffsetPx, barWidthPx, barSpacingPx, maxBarHeightPx
+    )
+
+    // ── hidden (scale ≤ 1.1) ─────────────────────────────────────────────────
+
+    @Test
+    fun `returns null for scale 1`() {
+        assertNull(specs(1f))
+    }
+
+    @Test
+    fun `returns null for scale exactly 1_1`() {
+        assertNull(specs(1.1f))
+    }
+
+    @Test
+    fun `returns non-null for scale just above 1_1`() {
+        assertNotNull(specs(1.11f))
+    }
+
+    // ── bar count ─────────────────────────────────────────────────────────────
+
+    @Test
+    fun `bar count matches computeZoomBarCount`() {
+        for (scale in listOf(2f, 10f, 50f, 100f, 150f, 200f)) {
+            val expected = computeZoomBarCount(scale)
+            assertEquals("scale=$scale", expected, specs(scale)!!.size)
+        }
+    }
+
+    @Test
+    fun `scale 200 produces 5 bars`() {
+        assertEquals(5, specs(200f)!!.size)
+    }
+
+    // ── bar geometry ──────────────────────────────────────────────────────────
+
+    @Test
+    fun `every bar has the correct width`() {
+        val list = specs(200f)!!
+        list.forEachIndexed { i, spec ->
+            assertEquals("bar $i width", barWidthPx, spec.width, 0.001f)
+        }
+    }
+
+    @Test
+    fun `bar heights increase linearly with index`() {
+        val list = specs(200f)!!
+        list.forEachIndexed { i, spec ->
+            val expected = maxBarHeightPx * (i + 1) / 5f
+            assertEquals("bar $i height", expected, spec.height, 0.001f)
+        }
+    }
+
+    @Test
+    fun `bar topLeftX increases by barWidth plus barSpacing each step`() {
+        val list = specs(200f)!!
+        list.forEachIndexed { i, spec ->
+            val expected = xPx + i * (barWidthPx + barSpacingPx)
+            assertEquals("bar $i topLeftX", expected, spec.topLeftX, 0.001f)
+        }
+    }
+
+    @Test
+    fun `bar topLeftY equals baseY minus barHeight`() {
+        val baseY = canvasHeight - yOffsetPx
+        val list = specs(200f)!!
+        list.forEachIndexed { i, spec ->
+            val barHeight = maxBarHeightPx * (i + 1) / 5f
+            assertEquals("bar $i topLeftY", baseY - barHeight, spec.topLeftY, 0.001f)
+        }
+    }
+
+    @Test
+    fun `first bar is shortest and last bar is tallest`() {
+        val list = specs(200f)!!
+        assertTrue(list.first().height < list.last().height)
+    }
+
+    @Test
+    fun `single bar has correct geometry`() {
+        // A scale that maps to 1 bar: (scale-1)/199*5 < 1 → scale < 40.8
+        val list = specs(5f)!!
+        assertEquals(1, list.size)
+        val bar = list[0]
+        assertEquals(xPx, bar.topLeftX, 0.001f)
+        assertEquals(maxBarHeightPx / 5f, bar.height, 0.001f)
+        assertEquals(barWidthPx, bar.width, 0.001f)
+    }
+}
+
+// =============================================================================
+// ComputeVisibleLabelSpecs Tests
+// =============================================================================
+
+class ComputeVisibleLabelSpecsTest {
+
+    private val mapWidth     = 1000f
+    private val mapHeight    = 500f
+    private val canvasWidth  = 800f
+    private val canvasHeight = 600f
+
+    // A large-bounding-box country: widthNorm=0.4 → 400px ≫ LABEL_FULL_SCREEN_PX(80px).
+    // computeLabelSizeAlpha(400) = 1.0, so finalAlpha = labelAlpha.
+    private fun largeBounds(cx: Float = 0.5f, cy: Float = 0.5f) = CountryBounds(
+        centroidNormX = cx, centroidNormY = cy,
+        minX = cx - 0.2f, maxX = cx + 0.2f,
+        minY = cy - 0.1f, maxY = cy + 0.1f,
+        polygonBounds = emptyList()
+    )
+
+    // screenMaxDim between SMALL_COUNTRY_THRESHOLD_PX(8) and LABEL_MIN_SCREEN_PX(20)
+    // → sizeAlpha = 0 → finalAlpha = 0 → label is skipped.
+    private fun dimBounds(cx: Float = 0.5f, cy: Float = 0.5f) = CountryBounds(
+        centroidNormX = cx, centroidNormY = cy,
+        minX = cx - 0.006f, maxX = cx + 0.006f,  // widthNorm=0.012, 12px at scale=1
+        minY = cy - 0.006f, maxY = cy + 0.006f,
+        polygonBounds = emptyList()
+    )
+
+    private fun geom(id: String) =
+        com.unstampedpages.app.data.model.CountryGeometry(id, emptyList())
+
+    // Identity mapper: leaves pts untouched (simulates a no-op matrix).
+    private val identity: (FloatArray) -> Unit = { }
+
+    private fun defaultSpecs(
+        wrapOffset: Float = 0f,
+        labelAlpha: Float = 1f,
+        matrixValid: Boolean = true,
+        scale: Float = 1f,
+        geometries: List<com.unstampedpages.app.data.model.CountryGeometry> = listOf(geom("FRA")),
+        countryBounds: Map<String, CountryBounds> = mapOf("FRA" to largeBounds()),
+        labelTextSizes: Map<String, Pair<Float, Float>> = mapOf("FRA" to (60f to 20f)),
+        screenMapper: (FloatArray) -> Unit = identity
+    ) = computeVisibleLabelSpecs(
+        wrapOffset, labelAlpha, matrixValid, scale,
+        mapWidth, mapHeight, canvasWidth, canvasHeight,
+        geometries, countryBounds, labelTextSizes, screenMapper
+    )
+
+    // ── early-return guards ───────────────────────────────────────────────────
+
+    @Test
+    fun `returns empty map when labelAlpha is below threshold`() {
+        assertTrue(defaultSpecs(labelAlpha = 0.005f).isEmpty())
+    }
+
+    @Test
+    fun `returns empty map when labelAlpha is exactly 0`() {
+        assertTrue(defaultSpecs(labelAlpha = 0f).isEmpty())
+    }
+
+    @Test
+    fun `returns empty map when matrixValid is false`() {
+        assertTrue(defaultSpecs(matrixValid = false).isEmpty())
+    }
+
+    @Test
+    fun `returns empty map when both alpha low and matrix invalid`() {
+        assertTrue(defaultSpecs(labelAlpha = 0f, matrixValid = false).isEmpty())
+    }
+
+    // ── per-geometry skip conditions ──────────────────────────────────────────
+
+    @Test
+    fun `returns empty map for empty geometry list`() {
+        assertTrue(defaultSpecs(geometries = emptyList()).isEmpty())
+    }
+
+    @Test
+    fun `skips country with no text size entry`() {
+        val result = defaultSpecs(labelTextSizes = emptyMap())
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `skips country with no bounds entry`() {
+        val result = defaultSpecs(countryBounds = emptyMap())
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `skips country whose finalAlpha is below threshold`() {
+        // dimBounds → screenMaxDim=12px → sizeAlpha=0 → finalAlpha=0
+        val result = defaultSpecs(
+            geometries = listOf(geom("FRA")),
+            countryBounds = mapOf("FRA" to dimBounds()),
+            labelTextSizes = mapOf("FRA" to (60f to 20f))
+        )
+        assertTrue(result.isEmpty())
+    }
+
+    // ── culling ───────────────────────────────────────────────────────────────
+
+    @Test
+    fun `culls label whose screenX is off the left edge`() {
+        // Move centroid far left so (centNormX+0)*mapWidth < 0 after no-op mapper.
+        val result = defaultSpecs(
+            geometries = listOf(geom("FRA")),
+            countryBounds = mapOf("FRA" to largeBounds(cx = -0.1f)),
+            labelTextSizes = mapOf("FRA" to (60f to 20f))
+        )
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `culls label whose screenX is off the right edge`() {
+        // centNormX=1.2 → screenX=1200 > 800+60=860
+        val result = defaultSpecs(
+            geometries = listOf(geom("FRA")),
+            countryBounds = mapOf("FRA" to largeBounds(cx = 1.2f)),
+            labelTextSizes = mapOf("FRA" to (60f to 20f))
+        )
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `culls label whose screenY is off the top edge`() {
+        // centNormY=-0.1 → screenY=-50 < -20
+        val result = defaultSpecs(
+            geometries = listOf(geom("FRA")),
+            countryBounds = mapOf("FRA" to largeBounds(cy = -0.1f)),
+            labelTextSizes = mapOf("FRA" to (60f to 20f))
+        )
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `culls label whose screenY is off the bottom edge`() {
+        // centNormY=1.5 → screenY=750 > 600+20=620
+        val result = defaultSpecs(
+            geometries = listOf(geom("FRA")),
+            countryBounds = mapOf("FRA" to largeBounds(cy = 1.5f)),
+            labelTextSizes = mapOf("FRA" to (60f to 20f))
+        )
+        assertTrue(result.isEmpty())
+    }
+
+    // ── valid label spec ──────────────────────────────────────────────────────
+
+    @Test
+    fun `visible label is present in result map`() {
+        val result = defaultSpecs()
+        assertTrue(result.containsKey("FRA"))
+    }
+
+    @Test
+    fun `topLeft centres text on centroid screenX`() {
+        // centroid (0.5,0.5), identity mapper → screenX=500, tw=60 → topLeft.x=470
+        val spec = defaultSpecs()["FRA"]!!
+        assertEquals(470f, spec.topLeft.x, 0.01f)
+    }
+
+    @Test
+    fun `topLeft centres text on centroid screenY`() {
+        // screenY=250, th=20 → topLeft.y=240
+        val spec = defaultSpecs()["FRA"]!!
+        assertEquals(240f, spec.topLeft.y, 0.01f)
+    }
+
+    @Test
+    fun `shadowOffset is 8 percent of text height`() {
+        val spec = defaultSpecs()["FRA"]!!
+        assertEquals(20f * 0.08f, spec.shadowOffset, 0.001f)
+    }
+
+    @Test
+    fun `shadowColor alpha is finalAlpha times 0_67`() {
+        val labelAlpha = 0.8f
+        val spec = defaultSpecs(labelAlpha = labelAlpha)["FRA"]!!
+        // largeBounds → sizeAlpha=1 → finalAlpha=0.8
+        // Color stores alpha as 8-bit, so allow ≈1/255 ≈ 0.004 rounding error.
+        assertEquals(labelAlpha * 0.67f, spec.shadowColor.alpha, 0.005f)
+        assertEquals(0f, spec.shadowColor.red,   0.001f)  // Color.Black base
+        assertEquals(0f, spec.shadowColor.green, 0.001f)
+        assertEquals(0f, spec.shadowColor.blue,  0.001f)
+    }
+
+    @Test
+    fun `fillColor alpha equals finalAlpha`() {
+        val labelAlpha = 0.6f
+        val spec = defaultSpecs(labelAlpha = labelAlpha)["FRA"]!!
+        assertEquals(labelAlpha, spec.fillColor.alpha, 0.001f)
+        assertEquals(1f, spec.fillColor.red,   0.001f)  // Color.White base
+        assertEquals(1f, spec.fillColor.green, 0.001f)
+        assertEquals(1f, spec.fillColor.blue,  0.001f)
+    }
+
+    // ── wrapOffset shifts the path-space X coordinate ─────────────────────────
+
+    @Test
+    fun `wrapOffset shifts screenX proportionally`() {
+        // wrapOffset=0 → pts[0] = 0.5*1000 = 500, topLeft.x = 470
+        // wrapOffset=0.3 → pts[0] = 0.8*1000 = 800, topLeft.x = 770
+        val spec0  = defaultSpecs(wrapOffset = 0f)["FRA"]!!
+        val spec03 = defaultSpecs(wrapOffset = 0.3f)["FRA"]!!
+        assertEquals(470f, spec0.topLeft.x,  0.01f)
+        assertEquals(770f, spec03.topLeft.x, 0.01f)
+    }
+
+    // ── screenMapper is called and transforms pts ─────────────────────────────
+
+    @Test
+    fun `screenMapper translation shifts topLeft`() {
+        // mapper shifts x by +50 → screenX=550 → topLeft.x = 550-30 = 520
+        val shiftMapper: (FloatArray) -> Unit = { pts -> pts[0] += 50f }
+        val spec = defaultSpecs(screenMapper = shiftMapper)["FRA"]!!
+        assertEquals(520f, spec.topLeft.x, 0.01f)
+    }
+
+    // ── centroid overrides ────────────────────────────────────────────────────
+
+    @Test
+    fun `uses LABEL_CENTROID_OVERRIDES when available`() {
+        // "NZL" has an override at ~longitude 173° → normX ≈ 0.981.
+        // Use a wide canvas (3000px) so the label is not culled.
+        val override = LABEL_CENTROID_OVERRIDES["NZL"]!!
+        val cx = override.first
+        val cy = override.second
+        val expectedScreenX = cx * mapWidth
+        val expectedScreenY = cy * mapHeight
+        val result = computeVisibleLabelSpecs(
+            wrapOffset = 0f, labelAlpha = 1f, matrixValid = true,
+            scale = 1f, mapWidth = mapWidth, mapHeight = mapHeight,
+            canvasWidth = 3000f, canvasHeight = canvasHeight,
+            geometries    = listOf(geom("NZL")),
+            countryBounds = mapOf("NZL" to largeBounds(cx, cy)),
+            labelTextSizes = mapOf("NZL" to (60f to 20f)),
+            screenMapper  = identity
+        )
+        val spec = result["NZL"]!!
+        assertEquals(expectedScreenX - 30f, spec.topLeft.x, 0.01f)
+        assertEquals(expectedScreenY - 10f, spec.topLeft.y, 0.01f)
+    }
+
+    @Test
+    fun `uses bounds centroid when no override exists`() {
+        // "DEU" has no override; centroid from bounds should be used.
+        val cx = 0.52f; val cy = 0.38f
+        val result = computeVisibleLabelSpecs(
+            wrapOffset = 0f, labelAlpha = 1f, matrixValid = true,
+            scale = 1f, mapWidth = mapWidth, mapHeight = mapHeight,
+            canvasWidth = canvasWidth, canvasHeight = canvasHeight,
+            geometries    = listOf(geom("DEU")),
+            countryBounds = mapOf("DEU" to largeBounds(cx, cy)),
+            labelTextSizes = mapOf("DEU" to (60f to 20f)),
+            screenMapper  = identity
+        )
+        val spec = result["DEU"]!!
+        assertEquals(cx * mapWidth - 30f, spec.topLeft.x, 0.01f)
+        assertEquals(cy * mapHeight - 10f, spec.topLeft.y, 0.01f)
+    }
+
+    // ── multiple geometries ───────────────────────────────────────────────────
+
+    @Test
+    fun `multiple visible countries all appear in result`() {
+        val result = computeVisibleLabelSpecs(
+            wrapOffset = 0f, labelAlpha = 1f, matrixValid = true,
+            scale = 1f, mapWidth = mapWidth, mapHeight = mapHeight,
+            canvasWidth = canvasWidth, canvasHeight = canvasHeight,
+            geometries    = listOf(geom("FRA"), geom("DEU"), geom("ESP")),
+            countryBounds = mapOf(
+                "FRA" to largeBounds(0.3f, 0.4f),
+                "DEU" to largeBounds(0.5f, 0.4f),
+                "ESP" to largeBounds(0.4f, 0.5f)
+            ),
+            labelTextSizes = mapOf(
+                "FRA" to (60f to 20f),
+                "DEU" to (50f to 20f),
+                "ESP" to (55f to 20f)
+            ),
+            screenMapper = identity
+        )
+        assertEquals(3, result.size)
+        assertTrue(result.containsKey("FRA"))
+        assertTrue(result.containsKey("DEU"))
+        assertTrue(result.containsKey("ESP"))
+    }
+
+    @Test
+    fun `mix of valid and invalid countries yields only valid ones`() {
+        // "FRA" valid, "XXX" has no bounds, "YYY" has dim bounds (finalAlpha=0)
+        val result = computeVisibleLabelSpecs(
+            wrapOffset = 0f, labelAlpha = 1f, matrixValid = true,
+            scale = 1f, mapWidth = mapWidth, mapHeight = mapHeight,
+            canvasWidth = canvasWidth, canvasHeight = canvasHeight,
+            geometries    = listOf(geom("FRA"), geom("XXX"), geom("YYY")),
+            countryBounds = mapOf(
+                "FRA" to largeBounds(),
+                "YYY" to dimBounds()
+            ),
+            labelTextSizes = mapOf(
+                "FRA" to (60f to 20f),
+                "XXX" to (60f to 20f),
+                "YYY" to (60f to 20f)
+            ),
+            screenMapper = identity
+        )
+        assertEquals(1, result.size)
+        assertTrue(result.containsKey("FRA"))
     }
 }

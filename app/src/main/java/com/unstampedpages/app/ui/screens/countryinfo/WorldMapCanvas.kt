@@ -1084,59 +1084,111 @@ internal fun isLabelCulled(
     canvasHeight: Float
 ): Boolean = screenX < -tw || screenX > canvasWidth + tw || screenY < -th || screenY > canvasHeight + th
 
+/**
+ * Drawing parameters computed for one visible country label.
+ * All values are in screen-pixel space; no framework types are required.
+ */
+internal data class LabelDrawSpec(
+    val topLeft: Offset,
+    val shadowOffset: Float,
+    val shadowColor: Color,
+    val fillColor: Color
+)
+
+/**
+ * Compute [LabelDrawSpec] for every label that should be rendered in one horizontal
+ * wrap copy, without referencing [DrawScope], [Density], or Android framework types.
+ *
+ * [labelTextSizes] maps geoJsonId → (width_px, height_px), derived by the caller from
+ * [TextLayoutResult.size] before calling this function.
+ * [screenMapper] wraps [android.graphics.Matrix.mapPoints] so the Matrix itself stays
+ * in the [DrawScope] caller.
+ *
+ * Returns an empty map when [labelAlpha] < 0.01 or [matrixValid] is false,
+ * matching the early-return logic in [drawCountryLabels].
+ */
+internal fun computeVisibleLabelSpecs(
+    wrapOffset: Float,
+    labelAlpha: Float,
+    matrixValid: Boolean,
+    scale: Float,
+    mapWidth: Float,
+    mapHeight: Float,
+    canvasWidth: Float,
+    canvasHeight: Float,
+    geometries: List<CountryGeometry>,
+    countryBounds: Map<String, CountryBounds>,
+    labelTextSizes: Map<String, Pair<Float, Float>>,
+    screenMapper: (FloatArray) -> Unit
+): Map<String, LabelDrawSpec> {
+    if (labelAlpha < 0.01f || !matrixValid) return emptyMap()
+
+    return buildMap {
+        for (geometry in geometries) {
+            val (tw, th) = labelTextSizes[geometry.countryId] ?: continue
+            val bounds   = countryBounds[geometry.countryId]  ?: continue
+
+            val screenMaxDim = maxOf(
+                bounds.widthNorm  * mapWidth  * scale,
+                bounds.heightNorm * mapHeight * scale
+            )
+            val finalAlpha = labelAlpha * computeLabelSizeAlpha(screenMaxDim)
+            if (finalAlpha < 0.01f) continue
+
+            val (centNormX, centNormY) = LABEL_CENTROID_OVERRIDES[geometry.countryId]
+                ?: (bounds.centroidNormX to bounds.centroidNormY)
+
+            // Map the centroid from path space to screen space via the captured forward matrix.
+            // Adding wrapOffset to centNormX shifts the point one full map width in X,
+            // matching what the withTransform does for each horizontal wrap copy.
+            val pts = floatArrayOf(
+                (centNormX + wrapOffset) * mapWidth,
+                centNormY * mapHeight
+            )
+            screenMapper(pts)
+
+            if (isLabelCulled(pts[0], pts[1], tw, th, canvasWidth, canvasHeight)) continue
+
+            put(geometry.countryId, LabelDrawSpec(
+                topLeft      = Offset(pts[0] - tw / 2f, pts[1] - th / 2f),
+                shadowOffset = th * 0.08f,
+                shadowColor  = Color.Black.copy(alpha = finalAlpha * 0.67f),
+                fillColor    = Color.White.copy(alpha = finalAlpha)
+            ))
+        }
+    }
+}
+
 private fun DrawScope.drawCountryLabels(
     wrapOffset: Float,
     layout: MapLayout,
     params: MapDrawParams,
     gestureState: MapGestureState
 ) {
-    if (params.labelAlpha < 0.01f || !gestureState.matrixValid) return
-    val s = params.scale
-
-    params.geometries.forEach geometryLabels@{ geometry ->
-        val textLayout = params.labelTextLayouts[geometry.countryId] ?: return@geometryLabels
-        val bounds     = params.countryBounds[geometry.countryId]    ?: return@geometryLabels
-
-        val screenMaxDim = maxOf(
-            bounds.widthNorm  * layout.mapWidth  * s,
-            bounds.heightNorm * layout.mapHeight * s
-        )
-        val sizeAlpha = computeLabelSizeAlpha(screenMaxDim)
-        val finalAlpha = params.labelAlpha * sizeAlpha
-        if (finalAlpha < 0.01f) return@geometryLabels
-
-        val (centNormX, centNormY) = LABEL_CENTROID_OVERRIDES[geometry.countryId]
-            ?: (bounds.centroidNormX to bounds.centroidNormY)
-
-        // Map the centroid from path space to canvas-local screen space using the actual
-        // rendering matrix. Adding wrapOffset to centNormX is equivalent to what the
-        // withTransform does when effectivePanX = panX + wrapOffset: it shifts the path
-        // content one full map width in the X direction.
-        val pts = floatArrayOf(
-            (centNormX + wrapOffset) * layout.mapWidth,
-            centNormY * layout.mapHeight
-        )
-        gestureState.forwardMatrix.mapPoints(pts)
-        val screenX = pts[0]
-        val screenY = pts[1]
-
-        val tw = textLayout.size.width.toFloat()
-        val th = textLayout.size.height.toFloat()
-
-        // Cull labels whose centroid is off-screen (with a half-label margin).
-        if (isLabelCulled(screenX, screenY, tw, th, layout.canvasWidth, layout.canvasHeight)) return@geometryLabels
-
-        // topLeft that centres the TextLayoutResult on the centroid.
-        val topLeft   = Offset(screenX - tw / 2f, screenY - th / 2f)
-        val shadowOff = th * 0.08f
-
-        val shadowColor = Color.Black.copy(alpha = finalAlpha * 0.67f)
-        val fillColor   = Color.White.copy(alpha = finalAlpha)
-        drawText(textLayout, color = shadowColor, topLeft = topLeft + Offset(0f,        -shadowOff))
-        drawText(textLayout, color = shadowColor, topLeft = topLeft + Offset(0f,        +shadowOff))
-        drawText(textLayout, color = shadowColor, topLeft = topLeft + Offset(-shadowOff, 0f))
-        drawText(textLayout, color = shadowColor, topLeft = topLeft + Offset(+shadowOff, 0f))
-        drawText(textLayout, color = fillColor,   topLeft = topLeft)
+    val textSizes = params.labelTextLayouts.mapValues { (_, tl) ->
+        tl.size.width.toFloat() to tl.size.height.toFloat()
+    }
+    val specs = computeVisibleLabelSpecs(
+        wrapOffset    = wrapOffset,
+        labelAlpha    = params.labelAlpha,
+        matrixValid   = gestureState.matrixValid,
+        scale         = params.scale,
+        mapWidth      = layout.mapWidth,
+        mapHeight     = layout.mapHeight,
+        canvasWidth   = layout.canvasWidth,
+        canvasHeight  = layout.canvasHeight,
+        geometries    = params.geometries,
+        countryBounds = params.countryBounds,
+        labelTextSizes = textSizes,
+        screenMapper  = { pts -> gestureState.forwardMatrix.mapPoints(pts) }
+    )
+    for ((countryId, spec) in specs) {
+        val textLayout = params.labelTextLayouts[countryId] ?: continue
+        drawText(textLayout, color = spec.shadowColor, topLeft = spec.topLeft + Offset(0f,              -spec.shadowOffset))
+        drawText(textLayout, color = spec.shadowColor, topLeft = spec.topLeft + Offset(0f,              +spec.shadowOffset))
+        drawText(textLayout, color = spec.shadowColor, topLeft = spec.topLeft + Offset(-spec.shadowOffset, 0f))
+        drawText(textLayout, color = spec.shadowColor, topLeft = spec.topLeft + Offset(+spec.shadowOffset, 0f))
+        drawText(textLayout, color = spec.fillColor,   topLeft = spec.topLeft)
     }
 }
 
@@ -1700,29 +1752,65 @@ internal fun computeZoomBarCount(scale: Float): Int =
     ((scale - 1f) / (200f - 1f) * 5f).toInt().coerceIn(1, 5)
 
 /**
+ * Screen-space geometry for one zoom-indicator bar.
+ */
+internal data class ZoomBarSpec(
+    val topLeftX: Float,
+    val topLeftY: Float,
+    val width: Float,
+    val height: Float
+)
+
+/**
+ * Compute the list of [ZoomBarSpec]s to draw for the zoom indicator, given
+ * already-resolved pixel sizes from the caller's [DrawScope]/[Density] context.
+ *
+ * Returns null when [scale] ≤ 1.1 (the indicator is hidden at 1× zoom).
+ * Extracted so bar geometry can be verified in JVM unit tests without a [DrawScope].
+ */
+internal fun computeZoomBarSpecs(
+    scale: Float,
+    canvasHeight: Float,
+    xPx: Float,
+    yOffsetPx: Float,
+    barWidthPx: Float,
+    barSpacingPx: Float,
+    maxBarHeightPx: Float
+): List<ZoomBarSpec>? {
+    if (scale <= 1.1f) return null
+    val barCount = computeZoomBarCount(scale)
+    val baseY    = canvasHeight - yOffsetPx
+    return List(barCount) { i ->
+        val barHeight = maxBarHeightPx * (i + 1) / 5f
+        ZoomBarSpec(
+            topLeftX = xPx + i * (barWidthPx + barSpacingPx),
+            topLeftY = baseY - barHeight,
+            width    = barWidthPx,
+            height   = barHeight
+        )
+    }
+}
+
+/**
  * Draw zoom level indicator.
  */
 private fun DrawScope.drawZoomIndicator(scale: Float) {
-    if (scale > 1.1f) {
-        val x = 12.dp.toPx()
-        val y = size.height - 12.dp.toPx()
-
-        // Zoom indicator bars (more bars = more zoom)
-        // Max zoom is 200x, so scale appropriately for 5 bars
-        val barCount = computeZoomBarCount(scale)
-        val barWidth = 4.dp.toPx()
-        val barSpacing = 3.dp.toPx()
-        val maxBarHeight = 16.dp.toPx()
-
-        for (i in 0 until barCount) {
-            val barHeight = maxBarHeight * (i + 1) / 5f
-            drawRoundRect(
-                color = Color(0xCCFFFFFF),
-                topLeft = Offset(x + i * (barWidth + barSpacing), y - barHeight),
-                size = Size(barWidth, barHeight),
-                cornerRadius = androidx.compose.ui.geometry.CornerRadius(2.dp.toPx())
-            )
-        }
+    val specs = computeZoomBarSpecs(
+        scale, size.height,
+        xPx          = 12.dp.toPx(),
+        yOffsetPx    = 12.dp.toPx(),
+        barWidthPx   = 4.dp.toPx(),
+        barSpacingPx = 3.dp.toPx(),
+        maxBarHeightPx = 16.dp.toPx()
+    ) ?: return
+    val cornerRadius = androidx.compose.ui.geometry.CornerRadius(2.dp.toPx())
+    for (spec in specs) {
+        drawRoundRect(
+            color        = Color(0xCCFFFFFF),
+            topLeft      = Offset(spec.topLeftX, spec.topLeftY),
+            size         = Size(spec.width, spec.height),
+            cornerRadius = cornerRadius
+        )
     }
 }
 
