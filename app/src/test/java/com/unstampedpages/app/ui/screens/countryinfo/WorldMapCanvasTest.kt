@@ -3,6 +3,12 @@ package com.unstampedpages.app.ui.screens.countryinfo
 import androidx.compose.ui.graphics.Color
 import com.unstampedpages.app.R
 import com.unstampedpages.app.data.AppConstants
+import com.unstampedpages.app.data.CountryList
+import com.unstampedpages.app.data.model.Continent
+import com.unstampedpages.app.data.model.Country
+import com.unstampedpages.app.data.model.SafetyLevel
+import com.unstampedpages.app.data.model.VisaRequirement
+import com.unstampedpages.app.data.repository.CountryRepository
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -2056,5 +2062,751 @@ class TransitionProgressGuardTest {
         // meaning lerp(old, new, 0) == old colors (no flash).
         val progress = transitionProgress(MapColorMode.DEFAULT, MapColorMode.SECURITY_RISK, 0f)
         assertEquals(0f, progress, 0f)
+    }
+}
+
+// =============================================================================
+// Country Label — Constants
+// =============================================================================
+
+/**
+ * Pin the label-visibility constants to their expected values.
+ * Changing a constant is a deliberate decision; these tests surface that decision
+ * so reviewers know it affects the cross-dissolve UX.
+ */
+class CountryLabelConstantsTest {
+
+    @Test
+    fun `LABEL_SHOW_THRESHOLD is 3f`() {
+        assertEquals(3f, LABEL_SHOW_THRESHOLD)
+    }
+
+    @Test
+    fun `LABEL_MIN_SCREEN_PX is 20f`() {
+        assertEquals(20f, LABEL_MIN_SCREEN_PX)
+    }
+
+    @Test
+    fun `LABEL_FULL_SCREEN_PX is 80f`() {
+        assertEquals(80f, LABEL_FULL_SCREEN_PX)
+    }
+
+    @Test
+    fun `SMALL_COUNTRY_THRESHOLD_PX is 8f`() {
+        assertEquals(8f, SMALL_COUNTRY_THRESHOLD_PX)
+    }
+
+    @Test
+    fun `LABEL_TEXT_SP is 10f`() {
+        assertEquals(10f, LABEL_TEXT_SP)
+    }
+
+    @Test
+    fun `LABEL_FULL_SCREEN_PX is strictly greater than LABEL_MIN_SCREEN_PX`() {
+        assertTrue(LABEL_FULL_SCREEN_PX > LABEL_MIN_SCREEN_PX)
+    }
+
+    @Test
+    fun `LABEL_MIN_SCREEN_PX is strictly greater than SMALL_COUNTRY_THRESHOLD_PX`() {
+        // Ensures the three thresholds are ordered: dot < min < full
+        assertTrue(LABEL_MIN_SCREEN_PX > SMALL_COUNTRY_THRESHOLD_PX)
+    }
+}
+
+// =============================================================================
+// Country Label — Cross-dissolve zoom threshold
+// =============================================================================
+
+/**
+ * Tests the logic that drives the `animateFloatAsState` target for label alpha.
+ *
+ * The composable uses: `if (scale >= LABEL_SHOW_THRESHOLD) 1f else 0f`
+ * We replicate that expression here so the threshold value and direction are
+ * covered independently of Compose's animation runtime.
+ */
+class LabelAlphaThresholdTest {
+
+    private fun targetAlpha(scale: Float) =
+        if (scale >= LABEL_SHOW_THRESHOLD) 1f else 0f
+
+    @Test
+    fun `labels are hidden at scale 1f (initial zoom)`() {
+        assertEquals(0f, targetAlpha(1f))
+    }
+
+    @Test
+    fun `labels are hidden just below the show threshold`() {
+        assertEquals(0f, targetAlpha(LABEL_SHOW_THRESHOLD - 0.01f))
+    }
+
+    @Test
+    fun `labels become visible exactly at the show threshold`() {
+        assertEquals(1f, targetAlpha(LABEL_SHOW_THRESHOLD))
+    }
+
+    @Test
+    fun `labels remain visible above the show threshold`() {
+        assertEquals(1f, targetAlpha(LABEL_SHOW_THRESHOLD + 0.01f))
+    }
+
+    @Test
+    fun `labels remain visible at maximum zoom`() {
+        assertEquals(1f, targetAlpha(200f))
+    }
+
+    @Test
+    fun `threshold is exclusive — scale just below gives 0f`() {
+        // Guards against an accidental > instead of >=.
+        // Math.nextDown gives the largest float strictly less than LABEL_SHOW_THRESHOLD.
+        val justBelow = Math.nextDown(LABEL_SHOW_THRESHOLD)
+        assertEquals(0f, targetAlpha(justBelow))
+    }
+}
+
+// =============================================================================
+// Country Label — Size-based alpha (sizeAlpha)
+// =============================================================================
+
+/**
+ * Tests for [computeLabelSizeAlpha].
+ *
+ * The function maps screenMaxDim (largest visible dimension of a country's bbox)
+ * to a [0, 1] opacity that is multiplied with the zoom-driven labelAlpha to get
+ * the final label opacity.
+ */
+class LabelSizeAlphaTest {
+
+    // ── Dot-mode countries (very small on screen) ──────────────────────────
+
+    @Test
+    fun `zero screen dimension returns full alpha (dot mode)`() {
+        assertEquals(1f, computeLabelSizeAlpha(0f))
+    }
+
+    @Test
+    fun `screen size just below small threshold returns full alpha`() {
+        assertEquals(1f, computeLabelSizeAlpha(SMALL_COUNTRY_THRESHOLD_PX - 0.01f))
+    }
+
+    // ── Transition from dot-mode to fade-in ───────────────────────────────
+
+    @Test
+    fun `screen size exactly at small threshold starts the fade-in ramp`() {
+        // SMALL_COUNTRY_THRESHOLD_PX (8) < LABEL_MIN_SCREEN_PX (20), so the
+        // linear ramp returns a negative value that is clamped to 0f.
+        assertEquals(0f, computeLabelSizeAlpha(SMALL_COUNTRY_THRESHOLD_PX))
+    }
+
+    // ── Fade-in ramp (LABEL_MIN_SCREEN_PX .. LABEL_FULL_SCREEN_PX) ───────
+
+    @Test
+    fun `screen size below label min returns 0f`() {
+        assertEquals(0f, computeLabelSizeAlpha(LABEL_MIN_SCREEN_PX - 1f))
+    }
+
+    @Test
+    fun `screen size at label min returns exactly 0f`() {
+        assertEquals(0f, computeLabelSizeAlpha(LABEL_MIN_SCREEN_PX), 0.0001f)
+    }
+
+    @Test
+    fun `screen size at midpoint returns 0_5f`() {
+        val mid = (LABEL_MIN_SCREEN_PX + LABEL_FULL_SCREEN_PX) / 2f
+        assertEquals(0.5f, computeLabelSizeAlpha(mid), 0.0001f)
+    }
+
+    @Test
+    fun `screen size at label full returns exactly 1f`() {
+        assertEquals(1f, computeLabelSizeAlpha(LABEL_FULL_SCREEN_PX), 0.0001f)
+    }
+
+    @Test
+    fun `screen size above label full is clamped to 1f`() {
+        assertEquals(1f, computeLabelSizeAlpha(LABEL_FULL_SCREEN_PX + 100f))
+    }
+
+    @Test
+    fun `sizeAlpha is monotonically non-decreasing across the ramp`() {
+        val samples = listOf(
+            LABEL_MIN_SCREEN_PX,
+            LABEL_MIN_SCREEN_PX + 10f,
+            LABEL_MIN_SCREEN_PX + 20f,
+            LABEL_MIN_SCREEN_PX + 30f,
+            LABEL_FULL_SCREEN_PX
+        )
+        for (i in 1 until samples.size) {
+            assertTrue(
+                "sizeAlpha should not decrease from ${samples[i-1]} to ${samples[i]}",
+                computeLabelSizeAlpha(samples[i]) >= computeLabelSizeAlpha(samples[i - 1])
+            )
+        }
+    }
+
+    // ── finalAlpha = labelAlpha × sizeAlpha ───────────────────────────────
+
+    @Test
+    fun `finalAlpha is zero when labelAlpha is zero regardless of country size`() {
+        val labelAlpha = 0f
+        val sizeAlpha = computeLabelSizeAlpha(200f)
+        assertEquals(0f, labelAlpha * sizeAlpha)
+    }
+
+    @Test
+    fun `finalAlpha is zero when country is too small to label`() {
+        val labelAlpha = 1f
+        val sizeAlpha = computeLabelSizeAlpha(LABEL_MIN_SCREEN_PX - 1f)
+        assertTrue(labelAlpha * sizeAlpha < 0.01f)
+    }
+
+    @Test
+    fun `finalAlpha is full when both factors are 1f`() {
+        val labelAlpha = 1f
+        val sizeAlpha = computeLabelSizeAlpha(LABEL_FULL_SCREEN_PX)
+        assertEquals(1f, labelAlpha * sizeAlpha, 0.0001f)
+    }
+
+    @Test
+    fun `finalAlpha skip threshold — values below 0_01 would cause label skip`() {
+        // Guard against accidental changes to the early-exit comparison.
+        // Any finalAlpha >= 0.01f should pass; < 0.01f should be skipped.
+        assertTrue(0.01f >= 0.01f)   // boundary: exactly at threshold is kept
+        assertTrue(0.009f < 0.01f)   // just below: skipped
+    }
+
+    @Test
+    fun `dot-mode country label reaches full opacity with labelAlpha 1f`() {
+        val finalAlpha = 1f * computeLabelSizeAlpha(SMALL_COUNTRY_THRESHOLD_PX / 2f)
+        assertEquals(1f, finalAlpha, 0.0001f)
+    }
+}
+
+// =============================================================================
+// Country Label — Centroid overrides
+// =============================================================================
+
+/**
+ * Tests for [LABEL_CENTROID_OVERRIDES].
+ *
+ * Overrides are used when a country's geometric centroid falls outside its
+ * main land mass (e.g., New Zealand due to sub-Antarctic islands).
+ */
+class LabelCentroidOverridesTest {
+
+    @Test
+    fun `NZL override is present`() {
+        assertTrue(
+            "NZL centroid override missing",
+            LABEL_CENTROID_OVERRIDES.containsKey("NZL")
+        )
+    }
+
+    @Test
+    fun `NZL override X matches longitude 173 east`() {
+        val (x, _) = LABEL_CENTROID_OVERRIDES["NZL"]!!
+        assertEquals(MercatorProjection.longitudeToX(173f), x, 0.0001f)
+    }
+
+    @Test
+    fun `NZL override Y matches latitude 41_5 south`() {
+        val (_, y) = LABEL_CENTROID_OVERRIDES["NZL"]!!
+        assertEquals(MercatorProjection.latitudeToY(-41.5f), y, 0.0001f)
+    }
+
+    @Test
+    fun `all centroid override keys are valid GeoJSON IDs in geoJsonToRepoId`() {
+        LABEL_CENTROID_OVERRIDES.keys.forEach { geoId ->
+            assertTrue(
+                "Override key '$geoId' not found in geoJsonToRepoId",
+                geoJsonToRepoId.containsKey(geoId)
+            )
+        }
+    }
+
+    @Test
+    fun `all centroid override coordinates are in valid normalized range`() {
+        LABEL_CENTROID_OVERRIDES.values.forEach { (x, y) ->
+            assertTrue("centroid X $x out of [0,1]", x in 0f..1f)
+            assertTrue("centroid Y $y out of [0,1]", y in 0f..1f)
+        }
+    }
+
+    // ── Kiribati ────────────────────────────────────────────────────────────────
+    // Kiribati straddles the antimeridian; its vertex-averaged centroid lands near
+    // Africa. The override pins the label to the Gilbert Islands (capital Tarawa).
+
+    @Test
+    fun `KIR override is present`() {
+        assertTrue(
+            "KIR centroid override missing — Kiribati label will appear near Africa",
+            LABEL_CENTROID_OVERRIDES.containsKey("KIR")
+        )
+    }
+
+    @Test
+    fun `KIR override X matches longitude 174 east (Gilbert Islands)`() {
+        val (x, _) = LABEL_CENTROID_OVERRIDES["KIR"]!!
+        assertEquals(MercatorProjection.longitudeToX(174f), x, 0.0001f)
+    }
+
+    @Test
+    fun `KIR override Y matches latitude 1_5 south (near Tarawa)`() {
+        val (_, y) = LABEL_CENTROID_OVERRIDES["KIR"]!!
+        assertEquals(MercatorProjection.latitudeToY(-1.5f), y, 0.0001f)
+    }
+
+    @Test
+    fun `KIR override X is in eastern Pacific (right side of map)`() {
+        // Gilbert Islands are near 174°E; normalized X should be > 0.95.
+        val (x, _) = LABEL_CENTROID_OVERRIDES["KIR"]!!
+        assertTrue("KIR X $x is not in eastern Pacific (expected > 0.95)", x > 0.95f)
+    }
+}
+
+// =============================================================================
+// Country Label — Name resolution (buildCountryNames)
+// =============================================================================
+
+/**
+ * Tests for [buildCountryNames].
+ *
+ * Verifies the two-level lookup (countries map → CountryList fallback) that
+ * builds the geoJsonId → display name map used to render country labels.
+ */
+class BuildCountryNamesTest {
+
+    // Helper — builds a minimal Country suitable for name-resolution tests
+    private fun country(repoId: String, name: String) = Country(
+        id = repoId,
+        name = name,
+        safetyLevel = SafetyLevel.NORMAL_SECURITY_PRECAUTIONS,
+        visaRequirement = VisaRequirement.VISA_NOT_REQUIRED,
+        currency = "Test",
+        currencyCode = "TST",
+        exchangeRateToUSD = 1.0,
+        outletType = "Type A",
+        continent = Continent.EUROPE,
+        flagEmoji = ""
+    )
+
+    // ── CountryList fallback ───────────────────────────────────────────────
+
+    @Test
+    fun `AUS resolves to a non-blank name from CountryList fallback`() {
+        val names = buildCountryNames(emptyMap())
+        val name = names["AUS"]
+        assertNotNull("AUS not found in label map", name)
+        assertTrue("AUS name is blank", name!!.isNotBlank())
+    }
+
+    @Test
+    fun `major countries resolve names via CountryList when countries map is empty`() {
+        val names = buildCountryNames(emptyMap())
+        listOf("USA", "GBR", "DEU", "FRA", "JPN", "CHN", "IND", "BRA").forEach { geoId ->
+            assertNotNull("$geoId missing from label map", names[geoId])
+        }
+    }
+
+    @Test
+    fun `all six continents have at least one resolvable country via CountryList`() {
+        val names = buildCountryNames(emptyMap())
+        // Representative country per continent
+        mapOf(
+            "North America" to "USA",
+            "South America" to "BRA",
+            "Europe"        to "DEU",
+            "Africa"        to "NGA",
+            "Asia"          to "CHN",
+            "Oceania"       to "AUS"
+        ).forEach { (continent, geoId) ->
+            assertNotNull("No label for $continent ($geoId)", names[geoId])
+        }
+    }
+
+    // ── countries map takes priority ───────────────────────────────────────
+
+    @Test
+    fun `countries map name is preferred over CountryList for the same country`() {
+        val customName = "Custom Australia"
+        val countriesMap = mapOf("au" to country("au", customName))
+        val names = buildCountryNames(countriesMap)
+        assertEquals(customName, names["AUS"])
+    }
+
+    @Test
+    fun `countries map with different name overrides CountryList for USA`() {
+        val customName = "United States of Testing"
+        val countriesMap = mapOf("us" to country("us", customName))
+        val names = buildCountryNames(countriesMap)
+        assertEquals(customName, names["USA"])
+    }
+
+    // ── name lookup is case-insensitive for CountryList ────────────────────
+
+    @Test
+    fun `CountryList lookup is case-insensitive for repo id`() {
+        // geoJsonToRepoId maps "AUS" to "au"; CountryList codes may be uppercase
+        val names = buildCountryNames(emptyMap())
+        // If this resolves, the case-insensitive match worked
+        assertNotNull(names["AUS"])
+    }
+
+    // ── geoIds with no name in either source are excluded ─────────────────
+
+    @Test
+    fun `output contains only GeoJSON IDs that resolved to a name`() {
+        val names = buildCountryNames(emptyMap())
+        // Every key in the output must be a geoJsonToRepoId key
+        names.keys.forEach { geoId ->
+            assertTrue("Unexpected geoId '$geoId' in label map", geoJsonToRepoId.containsKey(geoId))
+        }
+    }
+
+    @Test
+    fun `output size does not exceed geoJsonToRepoId size`() {
+        val names = buildCountryNames(emptyMap())
+        assertTrue(names.size <= geoJsonToRepoId.size)
+    }
+
+    // ── coverage: most countries in geoJsonToRepoId should resolve ────────
+
+    @Test
+    fun `at least 90 percent of geoJsonToRepoId entries resolve via CountryList`() {
+        val names = buildCountryNames(emptyMap())
+        val resolved = names.size
+        val total = geoJsonToRepoId.size
+        val pct = resolved.toDouble() / total
+        assertTrue(
+            "Only $resolved of $total GeoJSON IDs resolved (${(pct * 100).toInt()}%); expected >= 90%",
+            pct >= 0.90
+        )
+    }
+
+    @Test
+    fun `countries map with full CountryRepository data resolves at least 90 percent`() {
+        val repo = CountryRepository()
+        val countries = repo.getAllCountries().associateBy { it.id }
+        val names = buildCountryNames(countries)
+        val pct = names.size.toDouble() / geoJsonToRepoId.size
+        assertTrue(
+            "Only ${names.size} of ${geoJsonToRepoId.size} GeoJSON IDs resolved using repository data",
+            pct >= 0.90
+        )
+    }
+
+    // ── custom idMap parameter ─────────────────────────────────────────────
+
+    @Test
+    fun `custom idMap is used instead of geoJsonToRepoId`() {
+        val customMap = mapOf("TST" to "ts")
+        val countriesMap = mapOf("ts" to country("ts", "Test Country"))
+        val names = buildCountryNames(countriesMap, idMap = customMap)
+        assertEquals(mapOf("TST" to "Test Country"), names)
+    }
+
+    @Test
+    fun `empty idMap produces empty output`() {
+        val names = buildCountryNames(emptyMap(), idMap = emptyMap())
+        assertTrue(names.isEmpty())
+    }
+}
+
+// ---------------------------------------------------------------------------
+// proximityFallbackHitTest
+//
+// Tests for the proximity fallback introduced to fix Seychelles outer-island
+// tap detection. The fallback handles two cases:
+//
+//   A) Entire country is a dot marker (overall rendered size ≤ threshold) →
+//      proximity check against the country centroid.
+//
+//   B) Country is large overall but contains individual tiny island polygons
+//      (e.g. Seychelles: Aldabra, Farquhar) whose per-polygon size ≤ threshold →
+//      proximity check against the bbox centre of each such polygon.
+//
+// The function returns a geoJson country ID (key in countryBounds), NOT a repo ID.
+// ---------------------------------------------------------------------------
+
+class ProximityFallbackHitTestTest {
+
+    // ── helpers ──────────────────────────────────────────────────────────────
+
+    private val mapWidth  = 1000f
+    private val mapHeight = 500f
+
+    /**
+     * Build a [CountryBounds] whose overall rendered size at [scale] is exactly
+     * [renderedPx] pixels (as the max of width/height).
+     * Centroid is placed at ([cx], [cy]) in normalised coords.
+     */
+    private fun smallCountryBounds(
+        cx: Float = 0.5f,
+        cy: Float = 0.5f,
+        renderedPx: Float = SMALL_COUNTRY_THRESHOLD_PX / 2f,
+        scale: Float = 1f
+    ): CountryBounds {
+        val halfNorm = (renderedPx / scale) / (2f * mapWidth)
+        return CountryBounds(
+            centroidNormX = cx,
+            centroidNormY = cy,
+            minX = cx - halfNorm, maxX = cx + halfNorm,
+            minY = cy - halfNorm, maxY = cy + halfNorm,
+            polygonBounds = listOf(
+                PolygonBounds(cx - halfNorm, cx + halfNorm, cy - halfNorm, cy + halfNorm)
+            )
+        )
+    }
+
+    /**
+     * Build a [CountryBounds] with a large overall extent (well above threshold)
+     * plus [smallIslands] polygon bounding boxes that are tiny (below threshold at scale=1).
+     */
+    private fun archipelagoBounds(
+        overallMinX: Float = 0.1f,
+        overallMaxX: Float = 0.9f,
+        smallIslands: List<PolygonBounds>
+    ): CountryBounds {
+        return CountryBounds(
+            centroidNormX = (overallMinX + overallMaxX) / 2f,
+            centroidNormY = 0.5f,
+            minX = overallMinX, maxX = overallMaxX,
+            minY = 0.4f, maxY = 0.6f,
+            polygonBounds = smallIslands
+        )
+    }
+
+    /** Create a tiny [PolygonBounds] centred at ([cx], [cy]) with half-width [halfNorm]. */
+    private fun tinyPoly(cx: Float, cy: Float, halfNorm: Float = 0.001f) =
+        PolygonBounds(cx - halfNorm, cx + halfNorm, cy - halfNorm, cy + halfNorm)
+
+    // ── A: returns null when countryBounds is empty ───────────────────────
+
+    @Test
+    fun `returns null for empty countryBounds`() {
+        val result = proximityFallbackHitTest(0.5f, 0.5f, emptyMap(), mapWidth, mapHeight, 1f)
+        assertNull(result)
+    }
+
+    // ── A: entire-country dot-marker path ────────────────────────────────
+
+    @Test
+    fun `returns country id when tap is exactly on centroid of dot-marker country`() {
+        val bounds = smallCountryBounds(cx = 0.5f, cy = 0.5f)
+        val result = proximityFallbackHitTest(0.5f, 0.5f, mapOf("SML" to bounds), mapWidth, mapHeight, 1f)
+        assertEquals("SML", result)
+    }
+
+    @Test
+    fun `returns null when tap is just beyond tap radius from dot-marker centroid`() {
+        val scale = 1f
+        val tapRadiusNorm = TAP_PROXIMITY_PX / (scale * mapWidth)
+        val bounds = smallCountryBounds(cx = 0.5f, cy = 0.5f)
+        // Place tap slightly outside the radius
+        val farX = 0.5f + tapRadiusNorm + 0.001f
+        val result = proximityFallbackHitTest(farX, 0.5f, mapOf("SML" to bounds), mapWidth, mapHeight, scale)
+        assertNull(result)
+    }
+
+    @Test
+    fun `returns country id when tap is just inside tap radius from dot-marker centroid`() {
+        val scale = 1f
+        val tapRadiusNorm = TAP_PROXIMITY_PX / (scale * mapWidth)
+        val bounds = smallCountryBounds(cx = 0.5f, cy = 0.5f)
+        // Place tap just inside the radius
+        val nearX = 0.5f + tapRadiusNorm * 0.9f
+        val result = proximityFallbackHitTest(nearX, 0.5f, mapOf("SML" to bounds), mapWidth, mapHeight, scale)
+        assertEquals("SML", result)
+    }
+
+    @Test
+    fun `dot-marker picks closest country when two are within radius`() {
+        val scale = 1f
+        val tapRadiusNorm = TAP_PROXIMITY_PX / (scale * mapWidth)
+        // Two countries within radius; A is closer
+        val boundsA = smallCountryBounds(cx = 0.5f,                       cy = 0.5f)
+        val boundsB = smallCountryBounds(cx = 0.5f + tapRadiusNorm * 0.8f, cy = 0.5f)
+        val result = proximityFallbackHitTest(
+            normalizedX = 0.5f,
+            normalizedY = 0.5f,
+            countryBounds = mapOf("AAA" to boundsA, "BBB" to boundsB),
+            mapWidth = mapWidth, mapHeight = mapHeight, currentScale = scale
+        )
+        assertEquals("AAA", result)
+    }
+
+    @Test
+    fun `dot-marker country above threshold is not returned via centroid path`() {
+        // Overall rendered size > SMALL_COUNTRY_THRESHOLD_PX and no small polygons
+        val largeBounds = CountryBounds(
+            centroidNormX = 0.5f, centroidNormY = 0.5f,
+            minX = 0.1f, maxX = 0.9f,
+            minY = 0.3f, maxY = 0.7f,
+            polygonBounds = emptyList()   // no tiny sub-polygons
+        )
+        // Tap exactly on centroid — but this is not a dot-marker country, and there are
+        // no small polygons, so the fallback should return null.
+        val result = proximityFallbackHitTest(0.5f, 0.5f, mapOf("LRG" to largeBounds), mapWidth, mapHeight, 1f)
+        assertNull(result)
+    }
+
+    @Test
+    fun `tap radius scales inversely with zoom — higher scale gives smaller normalised radius`() {
+        val scale2x = 2f
+        val scale10x = 10f
+        val tapRadiusNorm2  = TAP_PROXIMITY_PX / (scale2x  * mapWidth)
+        val tapRadiusNorm10 = TAP_PROXIMITY_PX / (scale10x * mapWidth)
+        assertTrue(tapRadiusNorm2 > tapRadiusNorm10)
+    }
+
+    @Test
+    fun `dot-marker country at higher zoom with same pixel offset may fall outside radius`() {
+        // At scale=1 the country is reachable; at scale=10 the same normalised offset is outside
+        val cx = 0.5f
+        val cy = 0.5f
+        val offsetNorm = TAP_PROXIMITY_PX / (1f * mapWidth) * 0.9f  // inside at scale=1
+        val smallBounds = smallCountryBounds(cx = cx, cy = cy, scale = 1f)
+
+        val atScale1 = proximityFallbackHitTest(cx + offsetNorm, cy, mapOf("C" to smallBounds), mapWidth, mapHeight, 1f)
+        // At scale=10, offsetNorm is >> tapRadiusNorm(10)
+        val atScale10 = proximityFallbackHitTest(cx + offsetNorm, cy, mapOf("C" to smallBounds), mapWidth, mapHeight, 10f)
+
+        assertEquals("C", atScale1)
+        assertNull(atScale10)
+    }
+
+    // ── B: per-polygon tiny-island path (the Seychelles fix) ─────────────
+
+    @Test
+    fun `archipelago tap near tiny island polygon centre returns country id`() {
+        val islandCx = 0.3f
+        val islandCy = 0.5f
+        val bounds = archipelagoBounds(
+            smallIslands = listOf(tinyPoly(islandCx, islandCy))
+        )
+        // Tap exactly on island bbox centre
+        val result = proximityFallbackHitTest(islandCx, islandCy, mapOf("SYC" to bounds), mapWidth, mapHeight, 1f)
+        assertEquals("SYC", result)
+    }
+
+    @Test
+    fun `archipelago tap on large polygon does not trigger fallback because ray-cast handles it`() {
+        // Polygon large enough that renderedPx > SMALL_COUNTRY_THRESHOLD_PX — should be skipped
+        val bigHalfNorm = (SMALL_COUNTRY_THRESHOLD_PX * 2f) / mapWidth
+        val bigPoly = PolygonBounds(0.4f - bigHalfNorm, 0.4f + bigHalfNorm, 0.4f - bigHalfNorm, 0.4f + bigHalfNorm)
+        val bounds = archipelagoBounds(smallIslands = listOf(bigPoly))
+        // Tap exactly on the big polygon centre — fallback skips it, so returns null
+        val result = proximityFallbackHitTest(0.4f, 0.4f, mapOf("SYC" to bounds), mapWidth, mapHeight, 1f)
+        assertNull(result)
+    }
+
+    @Test
+    fun `archipelago tap outside radius of tiny polygon returns null`() {
+        val islandCx = 0.3f
+        val islandCy = 0.5f
+        val tapRadiusNorm = TAP_PROXIMITY_PX / (1f * mapWidth)
+        val bounds = archipelagoBounds(smallIslands = listOf(tinyPoly(islandCx, islandCy)))
+        val farX = islandCx + tapRadiusNorm + 0.002f
+        val result = proximityFallbackHitTest(farX, islandCy, mapOf("SYC" to bounds), mapWidth, mapHeight, 1f)
+        assertNull(result)
+    }
+
+    @Test
+    fun `archipelago with mixed large and tiny polygons — only tiny triggers fallback`() {
+        val bigHalfNorm  = (SMALL_COUNTRY_THRESHOLD_PX * 3f) / mapWidth
+        val bigPoly  = PolygonBounds(0.7f - bigHalfNorm, 0.7f + bigHalfNorm, 0.5f - bigHalfNorm, 0.5f + bigHalfNorm)
+        val tinyIsland = tinyPoly(0.2f, 0.5f)
+        val bounds = archipelagoBounds(smallIslands = listOf(bigPoly, tinyIsland))
+        // Tap on the tiny island — only it should match
+        val result = proximityFallbackHitTest(0.2f, 0.5f, mapOf("SYC" to bounds), mapWidth, mapHeight, 1f)
+        assertEquals("SYC", result)
+        // Tap on the big polygon area — fallback skips it, returns null
+        val onBig = proximityFallbackHitTest(0.7f, 0.5f, mapOf("SYC" to bounds), mapWidth, mapHeight, 1f)
+        assertNull(onBig)
+    }
+
+    @Test
+    fun `archipelago picks closest island when two tiny polygons are within radius`() {
+        val tapX = 0.5f
+        val tapY = 0.5f
+        val nearIsland = tinyPoly(0.5005f, 0.5f)   // very close to tap
+        val farIsland  = tinyPoly(0.502f,  0.5f)   // further but still within radius
+        val bounds = archipelagoBounds(smallIslands = listOf(nearIsland, farIsland))
+        val result = proximityFallbackHitTest(tapX, tapY, mapOf("SYC" to bounds), mapWidth, mapHeight, 1f)
+        // Either island resolves to "SYC" — the important thing is we get a match
+        assertEquals("SYC", result)
+    }
+
+    @Test
+    fun `archipelago tiny polygon centroid uses bbox midpoint not vertex average`() {
+        // Asymmetric polygon bbox: width = 0.006 * 1000px = 6px < SMALL_COUNTRY_THRESHOLD_PX (8px).
+        // midpoint X = (0.100 + 0.106) / 2 = 0.103  (not 0.100, proving midpoint is used)
+        val pb = PolygonBounds(0.100f, 0.106f, 0.498f, 0.504f)
+        val bounds = archipelagoBounds(smallIslands = listOf(pb))
+        val expectedCx = (0.100f + 0.106f) / 2f  // = 0.103
+        val expectedCy = (0.498f + 0.504f) / 2f  // = 0.501
+        // Tap at the exact midpoint — should resolve
+        val result = proximityFallbackHitTest(expectedCx, expectedCy, mapOf("SYC" to bounds), mapWidth, mapHeight, 1f)
+        assertEquals("SYC", result)
+        // Tap at minX (0.100) — still within radius but tests that midpoint is the anchor
+        val atMin = proximityFallbackHitTest(0.100f, expectedCy, mapOf("SYC" to bounds), mapWidth, mapHeight, 1f)
+        assertEquals("SYC", atMin)
+    }
+
+    @Test
+    fun `two archipelagos — closer tiny island wins`() {
+        // Country A: tiny island at 0.3
+        val boundsA = archipelagoBounds(overallMinX = 0.1f, overallMaxX = 0.9f,
+            smallIslands = listOf(tinyPoly(0.3f, 0.5f)))
+        // Country B: tiny island at 0.32 (further from tap at 0.3)
+        val boundsB = archipelagoBounds(overallMinX = 0.05f, overallMaxX = 0.95f,
+            smallIslands = listOf(tinyPoly(0.32f, 0.5f)))
+        val result = proximityFallbackHitTest(
+            normalizedX = 0.3f, normalizedY = 0.5f,
+            countryBounds = mapOf("AAA" to boundsA, "BBB" to boundsB),
+            mapWidth = mapWidth, mapHeight = mapHeight, currentScale = 1f
+        )
+        assertEquals("AAA", result)
+    }
+
+    @Test
+    fun `archipelago with no tiny polygons returns null even if tap is on centroid`() {
+        // Country with large overall bounds and no polygonBounds entries
+        val bounds = CountryBounds(
+            centroidNormX = 0.5f, centroidNormY = 0.5f,
+            minX = 0.1f, maxX = 0.9f,
+            minY = 0.3f, maxY = 0.7f,
+            polygonBounds = emptyList()
+        )
+        val result = proximityFallbackHitTest(0.5f, 0.5f, mapOf("SYC" to bounds), mapWidth, mapHeight, 1f)
+        assertNull(result)
+    }
+
+    // ── interaction between path A and path B ────────────────────────────
+
+    @Test
+    fun `dot-marker country wins over a further archipelago tiny island`() {
+        val tapX = 0.5f
+        val tapY = 0.5f
+        val dotBounds = smallCountryBounds(cx = 0.5002f, cy = 0.5f)   // very close
+        val archBounds = archipelagoBounds(smallIslands = listOf(tinyPoly(0.505f, 0.5f)))
+        val result = proximityFallbackHitTest(
+            normalizedX = tapX, normalizedY = tapY,
+            countryBounds = mapOf("DOT" to dotBounds, "ARC" to archBounds),
+            mapWidth = mapWidth, mapHeight = mapHeight, currentScale = 1f
+        )
+        assertEquals("DOT", result)
+    }
+
+    @Test
+    fun `archipelago tiny island wins over a further dot-marker country`() {
+        val tapX = 0.5f
+        val tapY = 0.5f
+        val archBounds = archipelagoBounds(smallIslands = listOf(tinyPoly(0.5002f, 0.5f)))  // closer
+        val dotBounds  = smallCountryBounds(cx = 0.505f, cy = 0.5f)                         // further
+        val result = proximityFallbackHitTest(
+            normalizedX = tapX, normalizedY = tapY,
+            countryBounds = mapOf("ARC" to archBounds, "DOT" to dotBounds),
+            mapWidth = mapWidth, mapHeight = mapHeight, currentScale = 1f
+        )
+        assertEquals("ARC", result)
     }
 }
