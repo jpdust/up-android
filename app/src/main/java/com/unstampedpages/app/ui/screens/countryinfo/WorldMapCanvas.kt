@@ -265,6 +265,37 @@ internal fun calculateVerticalPanBounds(
  * The function returns the closest match within [TAP_PROXIMITY_PX] of the tap point,
  * expressed in normalised [0,1] map coordinates.
  */
+/**
+ * Returns the squared distance from ([normalizedX], [normalizedY]) to the nearest tiny island
+ * polygon (rendered width/height below [SMALL_COUNTRY_THRESHOLD_PX]) in [polygonBounds],
+ * or [Float.MAX_VALUE] if no such polygon exists.
+ *
+ * Extracted from [proximityFallbackHitTest] to keep that function's cognitive complexity
+ * within the allowed limit.
+ */
+private fun closestIslandDistSq(
+    normalizedX: Float,
+    normalizedY: Float,
+    polygonBounds: List<PolygonBounds>,
+    mapWidth: Float,
+    mapHeight: Float,
+    currentScale: Float
+): Float {
+    var minDistSq = Float.MAX_VALUE
+    for (pb in polygonBounds) {
+        val pbRenderedPx = maxOf(
+            (pb.maxX - pb.minX) * mapWidth,
+            (pb.maxY - pb.minY) * mapHeight
+        ) * currentScale
+        if (pbRenderedPx > SMALL_COUNTRY_THRESHOLD_PX) continue
+        val dx = normalizedX - (pb.minX + pb.maxX) / 2f
+        val dy = normalizedY - (pb.minY + pb.maxY) / 2f
+        val d = dx * dx + dy * dy
+        if (d < minDistSq) minDistSq = d
+    }
+    return minDistSq
+}
+
 internal fun proximityFallbackHitTest(
     normalizedX: Float,
     normalizedY: Float,
@@ -283,36 +314,19 @@ internal fun proximityFallbackHitTest(
             bounds.heightNorm * mapHeight
         ) * currentScale
 
-        if (overallRenderedPx <= SMALL_COUNTRY_THRESHOLD_PX) {
-            // Entire country is a dot marker — check proximity to its centroid.
+        // Dot-marker country: compare distance to its centroid.
+        // Archipelago country: find the nearest tiny island polygon bbox centre.
+        val candidateDistSq = if (overallRenderedPx <= SMALL_COUNTRY_THRESHOLD_PX) {
             val dx = normalizedX - bounds.centroidNormX
             val dy = normalizedY - bounds.centroidNormY
-            val distSq = dx * dx + dy * dy
-            if (distSq < closestDistSq) {
-                closestDistSq = distSq
-                closestId = countryId
-            }
+            dx * dx + dy * dy
         } else {
-            // Country is large overall but may have individual tiny island polygons
-            // (e.g. Seychelles outer islands: Aldabra, Farquhar, Amirantes).
-            // Check proximity to the bbox centre of each polygon below the threshold.
-            for (pb in bounds.polygonBounds) {
-                val pbRenderedPx = maxOf(
-                    (pb.maxX - pb.minX) * mapWidth,
-                    (pb.maxY - pb.minY) * mapHeight
-                ) * currentScale
-                if (pbRenderedPx > SMALL_COUNTRY_THRESHOLD_PX) continue
+            closestIslandDistSq(normalizedX, normalizedY, bounds.polygonBounds, mapWidth, mapHeight, currentScale)
+        }
 
-                val polyCentX = (pb.minX + pb.maxX) / 2f
-                val polyCentY = (pb.minY + pb.maxY) / 2f
-                val dx = normalizedX - polyCentX
-                val dy = normalizedY - polyCentY
-                val distSq = dx * dx + dy * dy
-                if (distSq < closestDistSq) {
-                    closestDistSq = distSq
-                    closestId = countryId
-                }
-            }
+        if (candidateDistSq < closestDistSq) {
+            closestDistSq = candidateDistSq
+            closestId = countryId
         }
     }
     return closestId
@@ -986,7 +1000,6 @@ private fun DrawScope.drawMapCopy(
     gestureState: MapGestureState
 ) {
     val effectivePanX = transform.panX + wrapOffset
-    val useTransition = params.transitionProgress < 1f
     val s = transform.scale
 
     withTransform({
@@ -1096,6 +1109,20 @@ internal data class LabelDrawSpec(
 )
 
 /**
+ * Rendering context that groups the scalar canvas/gesture values needed by
+ * [computeVisibleLabelSpecs], keeping its parameter count within Sonar limits.
+ */
+internal data class LabelRenderContext(
+    val labelAlpha: Float,
+    val matrixValid: Boolean,
+    val scale: Float,
+    val mapWidth: Float,
+    val mapHeight: Float,
+    val canvasWidth: Float,
+    val canvasHeight: Float
+)
+
+/**
  * Compute [LabelDrawSpec] for every label that should be rendered in one horizontal
  * wrap copy, without referencing [DrawScope], [Density], or Android framework types.
  *
@@ -1104,23 +1131,19 @@ internal data class LabelDrawSpec(
  * [screenMapper] wraps [android.graphics.Matrix.mapPoints] so the Matrix itself stays
  * in the [DrawScope] caller.
  *
- * Returns an empty map when [labelAlpha] < 0.01 or [matrixValid] is false,
- * matching the early-return logic in [drawCountryLabels].
+ * Returns an empty map when [LabelRenderContext.labelAlpha] < 0.01 or
+ * [LabelRenderContext.matrixValid] is false, matching the early-return logic in
+ * [drawCountryLabels].
  */
 internal fun computeVisibleLabelSpecs(
     wrapOffset: Float,
-    labelAlpha: Float,
-    matrixValid: Boolean,
-    scale: Float,
-    mapWidth: Float,
-    mapHeight: Float,
-    canvasWidth: Float,
-    canvasHeight: Float,
+    context: LabelRenderContext,
     geometries: List<CountryGeometry>,
     countryBounds: Map<String, CountryBounds>,
     labelTextSizes: Map<String, Pair<Float, Float>>,
     screenMapper: (FloatArray) -> Unit
 ): Map<String, LabelDrawSpec> {
+    val (labelAlpha, matrixValid, scale, mapWidth, mapHeight, canvasWidth, canvasHeight) = context
     if (labelAlpha < 0.01f || !matrixValid) return emptyMap()
 
     return buildMap {
@@ -1168,15 +1191,18 @@ private fun DrawScope.drawCountryLabels(
     val textSizes = params.labelTextLayouts.mapValues { (_, tl) ->
         tl.size.width.toFloat() to tl.size.height.toFloat()
     }
+    val ctx = LabelRenderContext(
+        labelAlpha  = params.labelAlpha,
+        matrixValid = gestureState.matrixValid,
+        scale       = params.scale,
+        mapWidth    = layout.mapWidth,
+        mapHeight   = layout.mapHeight,
+        canvasWidth = layout.canvasWidth,
+        canvasHeight = layout.canvasHeight
+    )
     val specs = computeVisibleLabelSpecs(
         wrapOffset    = wrapOffset,
-        labelAlpha    = params.labelAlpha,
-        matrixValid   = gestureState.matrixValid,
-        scale         = params.scale,
-        mapWidth      = layout.mapWidth,
-        mapHeight     = layout.mapHeight,
-        canvasWidth   = layout.canvasWidth,
-        canvasHeight  = layout.canvasHeight,
+        context       = ctx,
         geometries    = params.geometries,
         countryBounds = params.countryBounds,
         labelTextSizes = textSizes,
