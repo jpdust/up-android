@@ -90,7 +90,8 @@ private const val ANIMATION_DURATION = 300
 fun CountryDetailSheet(
     country: Country?,
     visible: Boolean,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    displayName: String? = null
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         // Scrim (dark overlay)
@@ -141,7 +142,7 @@ fun CountryDetailSheet(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         // Header with country image/gradient
-                        CountryHeader(country = it, onClose = onDismiss)
+                        CountryHeader(country = it, displayName = displayName, onClose = onDismiss)
 
                         // Country details
                         Column(
@@ -227,7 +228,8 @@ fun CountryDetailSheet(
 @Composable
 private fun CountryHeader(
     country: Country,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    displayName: String? = null
 ) {
     Box(
         modifier = Modifier
@@ -275,9 +277,9 @@ private fun CountryHeader(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Country name
+            // Country / territory name
             Text(
-                text = country.name,
+                text = displayName ?: country.name,
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,

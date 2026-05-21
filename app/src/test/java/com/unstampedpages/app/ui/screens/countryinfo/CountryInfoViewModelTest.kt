@@ -471,6 +471,186 @@ class CountryInfoViewModelTest {
         }
     }
 
+    // ==================== updateLocale Tests ====================
+
+    @Test
+    fun `updateLocale with same locale as current does not change countries list`() {
+        val before = viewModel.uiState.value.countries.map { it.id }
+        // The ViewModel starts with Locale.getDefault(); calling updateLocale with the
+        // same locale should be a no-op (guard clause in updateLocale).
+        viewModel.updateLocale(java.util.Locale.getDefault())
+        val after = viewModel.uiState.value.countries.map { it.id }
+        assertEquals(before, after)
+    }
+
+    @Test
+    fun `updateLocale with a different locale refreshes the countries list`() {
+        val before = viewModel.uiState.value.countries
+        val newLocale = if (java.util.Locale.getDefault() == java.util.Locale.ENGLISH)
+            java.util.Locale("es") else java.util.Locale.ENGLISH
+        viewModel.updateLocale(newLocale)
+        // The list should still be non-empty and the same size — only names may differ.
+        val after = viewModel.uiState.value.countries
+        assertTrue(after.isNotEmpty())
+        assertEquals(before.size, after.size)
+    }
+
+    @Test
+    fun `updateLocale keeps isLoading false`() {
+        viewModel.updateLocale(java.util.Locale("es"))
+        assertFalse(viewModel.uiState.value.isLoading)
+    }
+
+    @Test
+    fun `updateLocale preserves country ids`() {
+        val idsBefore = viewModel.uiState.value.countries.map { it.id }.toSet()
+        viewModel.updateLocale(java.util.Locale("fr"))
+        val idsAfter = viewModel.uiState.value.countries.map { it.id }.toSet()
+        assertEquals(idsBefore, idsAfter)
+    }
+
+    @Test
+    fun `updateLocale clears any existing search query`() {
+        // updateLocale reloads via loadCountries, which resets the full state.
+        viewModel.updateSearchQuery("Japan")
+        assertTrue(viewModel.uiState.value.searchResults.isNotEmpty())
+        viewModel.updateLocale(java.util.Locale("es"))
+        // After locale change the state is reset — search results are cleared.
+        assertEquals("", viewModel.uiState.value.searchQuery)
+        assertTrue(viewModel.uiState.value.searchResults.isEmpty())
+    }
+
+    @Test
+    fun `calling updateLocale twice with the same new locale only reloads once`() {
+        val newLocale = java.util.Locale("es")
+        viewModel.updateLocale(newLocale)
+        val stateAfterFirst = viewModel.uiState.value
+        // Second call with the same locale should be a no-op (guard clause).
+        viewModel.updateLocale(newLocale)
+        val stateAfterSecond = viewModel.uiState.value
+        assertEquals(stateAfterFirst, stateAfterSecond)
+    }
+
+    // ==================== selectCountry displayName Tests ====================
+
+    @Test
+    fun `selectCountry with displayName stores it in selectedDisplayName`() {
+        viewModel.selectCountry("gb", "Cayman Islands")
+        assertEquals("Cayman Islands", viewModel.uiState.value.selectedDisplayName)
+    }
+
+    @Test
+    fun `selectCountry without displayName leaves selectedDisplayName null`() {
+        viewModel.selectCountry("us")
+        assertNull(viewModel.uiState.value.selectedDisplayName)
+    }
+
+    @Test
+    fun `selectCountry with null displayName leaves selectedDisplayName null`() {
+        viewModel.selectCountry("gb", displayName = null)
+        assertNull(viewModel.uiState.value.selectedDisplayName)
+    }
+
+    @Test
+    fun `clearSelection clears selectedDisplayName`() {
+        viewModel.selectCountry("gb", "Cayman Islands")
+        assertNotNull(viewModel.uiState.value.selectedDisplayName)
+
+        viewModel.clearSelection()
+
+        assertNull(viewModel.uiState.value.selectedDisplayName)
+        assertNull(viewModel.uiState.value.selectedCountry)
+    }
+
+    @Test
+    fun `selecting a new country replaces previous displayName`() {
+        viewModel.selectCountry("gb", "Cayman Islands")
+        assertEquals("Cayman Islands", viewModel.uiState.value.selectedDisplayName)
+
+        viewModel.selectCountry("dk", "Greenland")
+        assertEquals("Greenland", viewModel.uiState.value.selectedDisplayName)
+    }
+
+    @Test
+    fun `selecting a country without displayName after one with displayName clears displayName`() {
+        viewModel.selectCountry("gb", "Cayman Islands")
+        assertNotNull(viewModel.uiState.value.selectedDisplayName)
+
+        viewModel.selectCountry("us")
+        assertNull(viewModel.uiState.value.selectedDisplayName)
+    }
+
+    // ==================== Territory Search Tests ====================
+
+    @Test
+    fun `searching Easter Island returns Chile`() {
+        viewModel.updateSearchQuery("Easter Island")
+
+        val results = viewModel.uiState.value.searchResults
+        assertTrue(results.isNotEmpty())
+        val suggestion = results.first()
+        assertEquals("Easter Island", suggestion.displayName)
+        assertEquals("cl", suggestion.country.id)
+        assertNotNull(suggestion.parentCountryName)
+    }
+
+    @Test
+    fun `searching Cayman Islands returns United Kingdom`() {
+        viewModel.updateSearchQuery("Cayman")
+
+        val results = viewModel.uiState.value.searchResults
+        assertTrue(results.isNotEmpty())
+        assertTrue(results.any { it.displayName == "Cayman Islands" && it.country.id == "gb" })
+    }
+
+    @Test
+    fun `searching Azores returns Portugal`() {
+        viewModel.updateSearchQuery("Azores")
+
+        val results = viewModel.uiState.value.searchResults
+        assertTrue(results.isNotEmpty())
+        assertTrue(results.any { it.displayName == "Azores" && it.country.id == "pt" })
+    }
+
+    @Test
+    fun `territory result has parentCountryName set`() {
+        viewModel.updateSearchQuery("Puerto Rico")
+
+        val results = viewModel.uiState.value.searchResults
+        val suggestion = results.find { it.displayName == "Puerto Rico" }
+        assertNotNull(suggestion)
+        assertNotNull(suggestion!!.parentCountryName)
+        assertEquals("us", suggestion.country.id)
+    }
+
+    @Test
+    fun `direct country result has null parentCountryName`() {
+        viewModel.updateSearchQuery(AppConstants.CountryName.FRANCE)
+
+        val results = viewModel.uiState.value.searchResults
+        val franceSuggestion = results.find { it.displayName == AppConstants.CountryName.FRANCE }
+        assertNotNull(franceSuggestion)
+        assertNull(franceSuggestion!!.parentCountryName)
+    }
+
+    @Test
+    fun `territory suggestion id delegates to parent country id`() {
+        viewModel.updateSearchQuery("Bermuda")
+
+        val results = viewModel.uiState.value.searchResults
+        val suggestion = results.find { it.displayName == "Bermuda" }
+        assertNotNull(suggestion)
+        assertEquals("gb", suggestion!!.id)
+    }
+
+    @Test
+    fun `results are still limited to 5 when territory matches are included`() {
+        // "Island" appears in many territory names
+        viewModel.updateSearchQuery("Island")
+
+        assertTrue(viewModel.uiState.value.searchResults.size <= 5)
+    }
+
     // ==================== Search Result Order Tests ====================
 
     @Test
@@ -639,7 +819,7 @@ class CountryInfoUiStateTest {
     @Test
     fun `state component1 returns countries`() {
         val state = CountryInfoUiState()
-        val (countries, _, _, _, _) = state
+        val (countries, _, _, _, _, _) = state
 
         assertTrue(countries.isEmpty())
     }
@@ -647,31 +827,39 @@ class CountryInfoUiStateTest {
     @Test
     fun `state component2 returns selectedCountry`() {
         val state = CountryInfoUiState()
-        val (_, selectedCountry, _, _, _) = state
+        val (_, selectedCountry, _, _, _, _) = state
 
         assertNull(selectedCountry)
     }
 
     @Test
-    fun `state component3 returns isLoading`() {
+    fun `state component3 returns selectedDisplayName`() {
+        val state = CountryInfoUiState(selectedDisplayName = "Easter Island")
+        val (_, _, selectedDisplayName, _, _, _) = state
+
+        assertEquals("Easter Island", selectedDisplayName)
+    }
+
+    @Test
+    fun `state component4 returns isLoading`() {
         val state = CountryInfoUiState(isLoading = true)
-        val (_, _, isLoading, _, _) = state
+        val (_, _, _, isLoading, _, _) = state
 
         assertTrue(isLoading)
     }
 
     @Test
-    fun `state component4 returns searchQuery`() {
+    fun `state component5 returns searchQuery`() {
         val state = CountryInfoUiState(searchQuery = "test")
-        val (_, _, _, searchQuery, _) = state
+        val (_, _, _, _, searchQuery, _) = state
 
         assertEquals("test", searchQuery)
     }
 
     @Test
-    fun `state component5 returns searchResults`() {
+    fun `state component6 returns searchResults`() {
         val state = CountryInfoUiState()
-        val (_, _, _, _, searchResults) = state
+        val (_, _, _, _, _, searchResults) = state
 
         assertTrue(searchResults.isEmpty())
     }

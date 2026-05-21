@@ -932,14 +932,29 @@ class WorldMapCanvasTest {
     }
 
     @Test
-    fun `geoJsonToRepoId has no duplicate values`() {
-        val values = geoJsonToRepoId.values.toList()
-        val uniqueValues = values.distinct()
-        assertEquals(
-            "All repo IDs should be unique",
-            values.size,
-            uniqueValues.size
-        )
+    fun `geoJsonToRepoId all values are non-blank`() {
+        // Every entry must resolve to a non-empty parent repo ID;
+        // duplicates are expected now that territories map to sovereign parents.
+        geoJsonToRepoId.forEach { (key, value) ->
+            assertTrue("Entry $key must have a non-blank repo ID", value.isNotBlank())
+        }
+    }
+
+    @Test
+    fun `geoJsonToRepoId territory entries map to parent sovereign countries`() {
+        // UK overseas territories
+        assertEquals("gb", geoJsonToRepoId["CYM"]) // Cayman Islands
+        assertEquals("gb", geoJsonToRepoId["BMU"]) // Bermuda
+        assertEquals("gb", geoJsonToRepoId["FLK"]) // Falkland Islands
+        // US territories
+        assertEquals("us", geoJsonToRepoId["PRI"]) // Puerto Rico
+        assertEquals("us", geoJsonToRepoId["GUM"]) // Guam
+        // French territories
+        assertEquals("fr", geoJsonToRepoId["PYF"]) // French Polynesia
+        // Netherlands territories
+        assertEquals("nl", geoJsonToRepoId["CUW"]) // Curaçao
+        // New Zealand territories
+        assertEquals("nz", geoJsonToRepoId["COK"]) // Cook Islands
     }
 
     // ==================== Additional getLegendItems Color Tests ====================
@@ -1821,6 +1836,49 @@ class ComputeGeometryBoundsTest {
         assertEquals(MercatorProjection.longitudeToX(-10f), bounds.minX, 0.0001f)
         assertEquals(MercatorProjection.longitudeToX(10f),  bounds.maxX, 0.0001f)
     }
+
+    @Test
+    fun `single polygon label centroid equals overall centroid`() {
+        val geometry = com.unstampedpages.app.data.model.CountryGeometry("sq", listOf(squarePolygon))
+        val bounds = computeGeometryBounds(geometry)
+        assertEquals(bounds.centroidNormX, bounds.labelCentroidNormX, 0.0001f)
+        assertEquals(bounds.centroidNormY, bounds.labelCentroidNormY, 0.0001f)
+    }
+
+    @Test
+    fun `multipolygon label centroid comes from the largest polygon not the overall centroid`() {
+        // Large polygon centred near (0, 0); small outlier polygon far to the east.
+        // The overall centroid is pulled east; the label centroid should stay near (0, 0).
+        val smallEastPolygon = listOf(
+            latLng(1f, 170f), latLng(1f, 175f),
+            latLng(-1f, 175f), latLng(-1f, 170f)
+        )
+        val geometry = com.unstampedpages.app.data.model.CountryGeometry(
+            "usa-like", listOf(squarePolygon, smallEastPolygon)
+        )
+        val bounds = computeGeometryBounds(geometry)
+        // squarePolygon is the larger bounding box → label centroid is its centroid
+        val mainCx = MercatorProjection.longitudeToX(0f)
+        assertEquals(mainCx, bounds.labelCentroidNormX, 0.01f)
+        // Overall centroid is pulled toward the east outlier and differs from label centroid
+        assertTrue(bounds.centroidNormX > bounds.labelCentroidNormX)
+    }
+
+    @Test
+    fun `label centroid is from the largest polygon even when it is not the first`() {
+        // Put a tiny polygon first, then the large square second.
+        val tinyPolygon = listOf(
+            latLng(1f, 170f), latLng(1f, 171f),
+            latLng(0f, 171f), latLng(0f, 170f)
+        )
+        val geometry = com.unstampedpages.app.data.model.CountryGeometry(
+            "reversed", listOf(tinyPolygon, squarePolygon)
+        )
+        val bounds = computeGeometryBounds(geometry)
+        // squarePolygon is still largest → label centroid matches its centroid
+        val mainCx = MercatorProjection.longitudeToX(0f)
+        assertEquals(mainCx, bounds.labelCentroidNormX, 0.01f)
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -2509,6 +2567,85 @@ class BuildCountryNamesTest {
         val names = buildCountryNames(emptyMap(), idMap = emptyMap())
         assertTrue(names.isEmpty())
     }
+
+    // ── locale parameter ───────────────────────────────────────────────────
+
+    @Test
+    fun `territory geoId CYM resolves to a name (not the parent country name) regardless of locale`() {
+        // CYM → parent repo id "gb". The territory name (Cayman Islands or localized equivalent)
+        // must take priority over the parent country name (United Kingdom / Reino Unido).
+        val repo = CountryRepository()
+        val countries = repo.getAllCountries().associateBy { it.id }
+        val names = buildCountryNames(countries, locale = java.util.Locale.ENGLISH)
+        val caymanName = names["CYM"]
+        assertNotNull("CYM should resolve to a territory name", caymanName)
+        assertFalse(
+            "CYM should not resolve to the parent country name 'United Kingdom', got: $caymanName",
+            caymanName!!.equals("United Kingdom", ignoreCase = true)
+        )
+        assertTrue("CYM name should contain 'Cayman', got: $caymanName",
+            caymanName.contains("Cayman", ignoreCase = true))
+    }
+
+    @Test
+    fun `territory geoId GRL resolves to Greenland not Denmark`() {
+        val repo = CountryRepository()
+        val countries = repo.getAllCountries().associateBy { it.id }
+        val names = buildCountryNames(countries, locale = java.util.Locale.ENGLISH)
+        val greenlandName = names["GRL"]
+        assertNotNull("GRL should resolve to a name", greenlandName)
+        assertFalse("GRL should not resolve to 'Denmark'",
+            greenlandName!!.equals("Denmark", ignoreCase = true))
+        assertTrue("GRL name should contain 'Greenland', got: $greenlandName",
+            greenlandName.contains("Greenland", ignoreCase = true))
+    }
+
+    @Test
+    fun `territory geoId PYF resolves to French Polynesia not France`() {
+        val repo = CountryRepository()
+        val countries = repo.getAllCountries().associateBy { it.id }
+        val names = buildCountryNames(countries, locale = java.util.Locale.ENGLISH)
+        val name = names["PYF"]
+        assertNotNull("PYF should resolve to a name", name)
+        assertFalse("PYF should not resolve to 'France'", name!!.equals("France", ignoreCase = true))
+        assertTrue("PYF name should contain 'Polynesia', got: $name",
+            name.contains("Polynesia", ignoreCase = true))
+    }
+
+    @Test
+    fun `Spanish locale produces non-blank names for territory geoIds`() {
+        val repo = CountryRepository()
+        val countries = repo.getAllCountries(java.util.Locale("es")).associateBy { it.id }
+        val names = buildCountryNames(countries, locale = java.util.Locale("es"))
+        // All resolved names must be non-blank regardless of locale.
+        names.values.forEach { name ->
+            assertTrue("Territory name should be non-blank in Spanish, got: '$name'", name.isNotBlank())
+        }
+    }
+
+    @Test
+    fun `Spanish locale still prioritizes territory name over parent country name for CYM`() {
+        val repo = CountryRepository()
+        val countries = repo.getAllCountries(java.util.Locale("es")).associateBy { it.id }
+        val names = buildCountryNames(countries, locale = java.util.Locale("es"))
+        val caymanName = names["CYM"]
+        assertNotNull("CYM should resolve to a name in Spanish", caymanName)
+        // Whatever the Spanish JVM returns, it must not be the Spanish name for United Kingdom.
+        val ukSpanish = repo.getCountryById("gb", java.util.Locale("es"))!!.name
+        assertFalse(
+            "CYM should not resolve to parent country name '$ukSpanish' in Spanish, got: $caymanName",
+            caymanName!!.equals(ukSpanish, ignoreCase = true)
+        )
+    }
+
+    @Test
+    fun `locale parameter does not reduce overall map size vs default locale`() {
+        val defaultNames = buildCountryNames(emptyMap())
+        val spanishNames = buildCountryNames(emptyMap(), locale = java.util.Locale("es"))
+        // Changing locale should not reduce coverage — every entry that resolved in English
+        // must also resolve in Spanish (territory fallback covers any gaps).
+        assertTrue(spanishNames.size >= defaultNames.size)
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -2690,13 +2827,29 @@ class ProximityFallbackHitTestTest {
 
     @Test
     fun `archipelago tap on large polygon does not trigger fallback because ray-cast handles it`() {
-        // Polygon large enough that renderedPx > SMALL_COUNTRY_THRESHOLD_PX — should be skipped
-        val bigHalfNorm = (SMALL_COUNTRY_THRESHOLD_PX * 2f) / mapWidth
+        // Polygon large enough that renderedPx > TAP_PROXIMITY_PX * 2 — should be skipped.
+        // Half-width produces a full rendered dim of TAP_PROXIMITY_PX * 3 = 60px > 40px threshold.
+        val bigHalfNorm = (TAP_PROXIMITY_PX * 1.5f) / mapWidth  // half of 60px
         val bigPoly = PolygonBounds(0.4f - bigHalfNorm, 0.4f + bigHalfNorm, 0.4f - bigHalfNorm, 0.4f + bigHalfNorm)
         val bounds = archipelagoBounds(smallIslands = listOf(bigPoly))
         // Tap exactly on the big polygon centre — fallback skips it, so returns null
         val result = proximityFallbackHitTest(0.4f, 0.4f, mapOf("SYC" to bounds), mapWidth, mapHeight, 1f)
         assertNull(result)
+    }
+
+    @Test
+    fun `isolated territory between old and new threshold is now tappable via proximity`() {
+        // Simulates Easter Island: a tiny polygon of a large country that rendered at ~20px
+        // (above old SMALL_COUNTRY_THRESHOLD_PX=8px but below new TAP_PROXIMITY_PX*2=40px).
+        val islandHalfNorm = (TAP_PROXIMITY_PX * 0.9f) / mapWidth  // half of 18px → full dim = 36px < 40px
+        val islandPoly = PolygonBounds(
+            0.2f - islandHalfNorm, 0.2f + islandHalfNorm,
+            0.5f - islandHalfNorm, 0.5f + islandHalfNorm
+        )
+        val bounds = archipelagoBounds(smallIslands = listOf(islandPoly))
+        // Tap exactly on the island bbox centre
+        val result = proximityFallbackHitTest(0.2f, 0.5f, mapOf("CHL" to bounds), mapWidth, mapHeight, 1f)
+        assertEquals("CHL", result)
     }
 
     @Test
@@ -2712,6 +2865,8 @@ class ProximityFallbackHitTestTest {
 
     @Test
     fun `archipelago with mixed large and tiny polygons — only tiny triggers fallback`() {
+        // bigHalfNorm produces full dim = TAP_PROXIMITY_PX * 3 * 2 / mapWidth * mapWidth
+        //   = SMALL_COUNTRY_THRESHOLD_PX * 6 = 48px > TAP_PROXIMITY_PX * 2 (40px) → excluded
         val bigHalfNorm  = (SMALL_COUNTRY_THRESHOLD_PX * 3f) / mapWidth
         val bigPoly  = PolygonBounds(0.7f - bigHalfNorm, 0.7f + bigHalfNorm, 0.5f - bigHalfNorm, 0.5f + bigHalfNorm)
         val tinyIsland = tinyPoly(0.2f, 0.5f)
@@ -2719,7 +2874,7 @@ class ProximityFallbackHitTestTest {
         // Tap on the tiny island — only it should match
         val result = proximityFallbackHitTest(0.2f, 0.5f, mapOf("SYC" to bounds), mapWidth, mapHeight, 1f)
         assertEquals("SYC", result)
-        // Tap on the big polygon area — fallback skips it, returns null
+        // Tap on the big polygon area — fallback skips it (>40px threshold), returns null
         val onBig = proximityFallbackHitTest(0.7f, 0.5f, mapOf("SYC" to bounds), mapWidth, mapHeight, 1f)
         assertNull(onBig)
     }

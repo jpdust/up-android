@@ -1,19 +1,35 @@
 package com.unstampedpages.app.data.repository
 
 import com.unstampedpages.app.data.AppConstants
+import com.unstampedpages.app.data.CountryList
 import com.unstampedpages.app.data.model.Continent
 import com.unstampedpages.app.data.model.Country
 import com.unstampedpages.app.data.model.SafetyLevel
 import com.unstampedpages.app.data.model.TravelAdvisories
 import com.unstampedpages.app.data.model.VisaRequirement
+import java.util.Locale
 
 class CountryRepository {
 
-    fun getAllCountries(): List<Country> = sampleCountries
+    /**
+     * Returns all countries with names localized to [locale] (defaults to the device locale).
+     * The ISO alpha-2 [Country.id] is used as the lookup key for Android's built-in locale data.
+     */
+    fun getAllCountries(locale: Locale = Locale.getDefault()): List<Country> =
+        sampleCountries.map { country -> country.localizedCopy(locale) }
 
-    fun getCountryById(id: String): Country? = sampleCountries.find { it.id == id }
+    fun getCountryById(id: String, locale: Locale = Locale.getDefault()): Country? =
+        sampleCountries.find { it.id == id }?.localizedCopy(locale)
 
     companion object {
+        /** Returns a copy of [Country] with its name replaced by the device-locale translation. */
+        private fun Country.localizedCopy(locale: Locale): Country {
+            val localized = CountryList.countries
+                .find { it.code.equals(id, ignoreCase = true) }
+                ?.getLocalizedName(locale)
+            return if (localized != null) copy(name = localized) else this
+        }
+
         private fun defaultAdvisoryUrls(name: String, continent: Continent): TravelAdvisories {
             val slug = name.lowercase().replace(" ", "-")
             val auContinent = when (continent) {

@@ -66,6 +66,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.annotation.StringRes
 import com.unstampedpages.app.R
@@ -281,13 +282,19 @@ private fun closestIslandDistSq(
     mapHeight: Float,
     currentScale: Float
 ): Float {
+    // Use 2× the tap-proximity radius as the "too small to ray-cast reliably" threshold.
+    // A polygon ≤ (2 * TAP_PROXIMITY_PX) wide fits inside one finger-tap diameter, so a
+    // tap anywhere on it is guaranteed to be within TAP_PROXIMITY_PX of the bbox centre.
+    // This is intentionally larger than SMALL_COUNTRY_THRESHOLD_PX (which drives rendering)
+    // so that isolated territories like Easter Island (Chile) are tappable at moderate zoom.
+    val islandTapThresholdPx = TAP_PROXIMITY_PX * 2f
     var minDistSq = Float.MAX_VALUE
     for (pb in polygonBounds) {
         val pbRenderedPx = maxOf(
             (pb.maxX - pb.minX) * mapWidth,
             (pb.maxY - pb.minY) * mapHeight
         ) * currentScale
-        if (pbRenderedPx > SMALL_COUNTRY_THRESHOLD_PX) continue
+        if (pbRenderedPx > islandTapThresholdPx) continue
         val dx = normalizedX - (pb.minX + pb.maxX) / 2f
         val dy = normalizedY - (pb.minY + pb.maxY) / 2f
         val d = dx * dx + dy * dy
@@ -340,7 +347,9 @@ internal fun proximityFallbackHitTest(
  * The matrix is supplied as a pre-read 9-float array and reconstructed here to avoid
  * sharing the live [android.graphics.Matrix] object across threads.
  *
- * Returns the repo country ID (e.g. "fr") or null if no country was hit.
+ * Returns the repo country ID (e.g. "fr") and an optional territory display name
+ * (e.g. "Cayman Islands") if the tapped feature is a known standalone territory.
+ * Both values are null when no country was hit.
  */
 private fun hitTestCountry(
     position: Offset,
@@ -349,10 +358,24 @@ private fun hitTestCountry(
     mapHeight: Float,
     geometries: List<CountryGeometry>,
     countryBounds: Map<String, CountryBounds>,
-    currentScale: Float
-): String? = floatArrayOf(position.x, position.y)
-    .also { android.graphics.Matrix().apply { setValues(matrixValues) }.mapPoints(it) }
-    .let { hitTestNormalizedPoint(normalizeNormalizedX(it[0] / mapWidth), it[1] / mapHeight, geometries, countryBounds, mapWidth, mapHeight, currentScale) }
+    currentScale: Float,
+    locale: java.util.Locale = java.util.Locale.getDefault()
+): Pair<String?, String?> {
+    val pts = floatArrayOf(position.x, position.y)
+    android.graphics.Matrix().apply { setValues(matrixValues) }.mapPoints(pts)
+    val normX = normalizeNormalizedX(pts[0] / mapWidth)
+    val normY = pts[1] / mapHeight
+
+    // Primary: exact polygon ray-cast — captures geoJsonId for territory name lookup.
+    val geoJsonId = findCountryAtNormalizedPoint(normX, normY, geometries, countryBounds)
+    if (geoJsonId != null) {
+        return geoJsonToRepoId[geoJsonId] to getLocalizedTerritoryName(geoJsonId, locale)
+    }
+
+    // Fallback: proximity to small dot-marker countries and tiny island polygons.
+    val fallbackId = proximityFallbackHitTest(normX, normY, countryBounds, mapWidth, mapHeight, currentScale)
+    return (fallbackId?.let { geoJsonToRepoId[it] }) to (fallbackId?.let { getLocalizedTerritoryName(it, locale) })
+}
 
 /**
  * Pure coordinate-space hit test — no Android matrix code, safe to call on any thread
@@ -410,9 +433,10 @@ internal class MapGestureState(
     var countryBounds: Map<String, CountryBounds> = emptyMap(),
     var currentScale: Float = 1f,
     // Stored here so mapGestures can use pointerInput(Unit) and avoid restarting
-    // the gesture coroutine on every color mode toggle.
+    // the gesture coroutine on every color mode toggle or locale change.
     var colorMode: MapColorMode = MapColorMode.DEFAULT,
     var onCompassTapped: () -> Unit = {},
+    var currentLocale: java.util.Locale = java.util.Locale.getDefault(),
     // Forward rendering matrix (captured from nativeCanvas inside withTransform for wrapOffset=0).
     // Used by drawCountryLabels to position labels in the same coordinate space as the polygons,
     // bypassing any analytic formula that might mis-model the scale pivot or compose order.
@@ -514,7 +538,7 @@ private fun Modifier.mapGestures(
     gestureState: MapGestureState,
     currentTransform: () -> TransformState,
     onTransformChange: (TransformState) -> Unit,
-    onCountryTapped: (String?) -> Unit,
+    onCountryTapped: (String?, String?) -> Unit,
     tapConfig: TapConfig
 ): Modifier = this.pointerInput(Unit) {
     var tapJob: Job? = null
@@ -560,27 +584,29 @@ private fun Modifier.mapGestures(
                 val geometries = gestureState.geometries
                 val countryBounds = gestureState.countryBounds
                 val currentScale = gestureState.currentScale
+                val locale = gestureState.currentLocale
 
                 // Cancel any in-flight hit-test from a previous rapid tap, then start
                 // a new one on the Default dispatcher so the main thread (and renderer)
                 // are never blocked by O(n·m) ray-casting.
                 tapJob?.cancel()
                 tapJob = tapConfig.scope.launch(tapConfig.computeDispatcher) {
-                    val result = hitTestCountry(
+                    val (repoId, territoryName) = hitTestCountry(
                         position = downPosition,
                         matrixValues = matrixValues,
                         mapWidth = mapWidth,
                         mapHeight = mapHeight,
                         geometries = geometries,
                         countryBounds = countryBounds,
-                        currentScale = currentScale
+                        currentScale = currentScale,
+                        locale = locale
                     )
                     withContext(tapConfig.mainDispatcher) {
-                        onCountryTapped(result)
+                        onCountryTapped(repoId, territoryName)
                     }
                 }
             } else {
-                onCountryTapped(null)
+                onCountryTapped(null, null)
             }
         }
     }
@@ -750,11 +776,17 @@ internal fun computeLabelSizeAlpha(screenMaxDim: Float): Float {
  */
 internal fun buildCountryNames(
     countries: Map<String, com.unstampedpages.app.data.model.Country>,
-    idMap: Map<String, String> = geoJsonToRepoId
+    idMap: Map<String, String> = geoJsonToRepoId,
+    locale: java.util.Locale = java.util.Locale.getDefault()
 ): Map<String, String> = buildMap {
     idMap.forEach { (geoId, repoId) ->
-        val name = countries[repoId]?.name
-            ?: CountryList.countries.find { it.code.equals(repoId, ignoreCase = true) }?.englishName
+        // Territories resolve to their own localized name first.
+        // Sovereign countries use the name already on the Country object (localized by the
+        // repository), falling back to CountryList for any GeoJSON features not in the repo.
+        val name = getLocalizedTerritoryName(geoId, locale)
+            ?: countries[repoId]?.name
+            ?: CountryList.countries.find { it.code.equals(repoId, ignoreCase = true) }
+                ?.getLocalizedName(locale)
         if (name != null) put(geoId, name)
     }
 }
@@ -810,6 +842,9 @@ internal data class PolygonBounds(
 internal data class CountryBounds(
     val centroidNormX: Float,
     val centroidNormY: Float,
+    /** Centroid of the largest polygon by bounding-box area; used for label placement. */
+    val labelCentroidNormX: Float,
+    val labelCentroidNormY: Float,
     val minX: Float,
     val maxX: Float,
     val minY: Float,
@@ -818,6 +853,25 @@ internal data class CountryBounds(
 ) {
     val widthNorm: Float get() = maxX - minX
     val heightNorm: Float get() = maxY - minY
+
+    /**
+     * Convenience constructor for single-landmass cases (tests, degenerate geometries)
+     * where the label centroid equals the overall centroid.
+     */
+    constructor(
+        centroidNormX: Float,
+        centroidNormY: Float,
+        minX: Float,
+        maxX: Float,
+        minY: Float,
+        maxY: Float,
+        polygonBounds: List<PolygonBounds> = emptyList()
+    ) : this(
+        centroidNormX, centroidNormY,
+        centroidNormX, centroidNormY,
+        minX, maxX, minY, maxY,
+        polygonBounds
+    )
 }
 
 /**
@@ -901,16 +955,33 @@ internal fun computePolygonBounds(polygon: List<LatLng>): PolygonBounds {
 internal fun computeGeometryBounds(geometry: CountryGeometry): CountryBounds {
     val polygonBoundsList = mutableListOf<PolygonBounds>()
     val global = BoundsAccumulator()
-    for (polygon in geometry.polygons) {
-        polygonBoundsList.add(computePolygonBounds(polygon))
+    var largestArea = -1f
+    var largestPolygonIndex = 0
+    for ((index, polygon) in geometry.polygons.withIndex()) {
+        val pb = computePolygonBounds(polygon)
+        polygonBoundsList.add(pb)
+        val area = (pb.maxX - pb.minX) * (pb.maxY - pb.minY)
+        if (area > largestArea) {
+            largestArea = area
+            largestPolygonIndex = index
+        }
         for (point in polygon) {
             global.addPoint(MercatorProjection.longitudeToX(point.lng), MercatorProjection.latitudeToY(point.lat))
         }
     }
     return if (global.isValid) {
+        // Compute label centroid from the largest polygon so multi-part countries
+        // (e.g. USA, France, NZL) place their label on the main landmass rather
+        // than at the vertex-weighted mean of all territories combined.
+        val labelAcc = BoundsAccumulator()
+        for (point in geometry.polygons[largestPolygonIndex]) {
+            labelAcc.addPoint(MercatorProjection.longitudeToX(point.lng), MercatorProjection.latitudeToY(point.lat))
+        }
         CountryBounds(
             centroidNormX = global.sumX / global.count,
             centroidNormY = global.sumY / global.count,
+            labelCentroidNormX = labelAcc.sumX / labelAcc.count,
+            labelCentroidNormY = labelAcc.sumY / labelAcc.count,
             minX = global.minX, maxX = global.maxX,
             minY = global.minY, maxY = global.maxY,
             polygonBounds = polygonBoundsList
@@ -1159,7 +1230,7 @@ internal fun computeVisibleLabelSpecs(
             if (finalAlpha < 0.01f) continue
 
             val (centNormX, centNormY) = LABEL_CENTROID_OVERRIDES[geometry.countryId]
-                ?: (bounds.centroidNormX to bounds.centroidNormY)
+                ?: (bounds.labelCentroidNormX to bounds.labelCentroidNormY)
 
             // Map the centroid from path space to screen space via the captured forward matrix.
             // Adding wrapOffset to centNormX shifts the point one full map width in X,
@@ -1270,7 +1341,35 @@ internal val geoJsonToRepoId = mapOf(
     "VUT" to "vu", "NCL" to "nc", "KIR" to "ki", "MHL" to "mh", "FSM" to "fm",
     "NRU" to "nr", "PLW" to "pw", "WSM" to "ws", "TON" to "to", "TUV" to "tv",
     // Antarctica
-    "ATA" to "aa"
+    "ATA" to "aa",
+    // Territories & Dependencies — separate GeoJSON features not mapped above.
+    // Each resolves to the administering sovereign country so map taps open
+    // that country's bottom sheet.
+    // UK overseas territories
+    "AIA" to "gb", "BMU" to "gb", "CYM" to "gb", "FLK" to "gb", "GGY" to "gb",
+    "GIB" to "gb", "IMN" to "gb", "IOT" to "gb", "JEY" to "gb", "MSR" to "gb",
+    "PCN" to "gb", "SGS" to "gb", "SHN" to "gb", "TCA" to "gb", "VGB" to "gb",
+    // US territories
+    "ASM" to "us", "GUM" to "us", "MNP" to "us", "PRI" to "us", "VIR" to "us",
+    "UMI" to "us",
+    // French territories (NCL already mapped above)
+    "ATF" to "fr", "BLM" to "fr", "MAF" to "fr", "PYF" to "fr", "SPM" to "fr",
+    "WLF" to "fr",
+    // Netherlands territories (ABW already mapped above as Aruba)
+    "CUW" to "nl", "SXM" to "nl",
+    // Danish territories (GRL already mapped above)
+    "FRO" to "dk",
+    // Australian territories
+    "HMD" to "au", "NFK" to "au",
+    // New Zealand territories
+    "COK" to "nz", "NIU" to "nz",
+    // Finnish territories
+    "ALD" to "fi",
+    // Chinese territories (HKG already mapped above)
+    "MAC" to "cn",
+    // Other
+    "SAH" to "ma",  // Western Sahara — administered by Morocco (disputed)
+    "KOS" to "rs"   // Kosovo — administered by Serbia (disputed)
 )
 
 /**
@@ -1352,7 +1451,7 @@ internal fun normalizeOffsetX(offset: Float): Float {
 @Composable
 fun WorldMapCanvas(
     selectedCountryId: String?,
-    onCountryTapped: (countryId: String?) -> Unit,
+    onCountryTapped: (countryId: String?, displayName: String?) -> Unit,
     modifier: Modifier = Modifier,
     colorMode: MapColorMode = MapColorMode.DEFAULT,
     countries: Map<String, Country> = emptyMap(),
@@ -1373,10 +1472,13 @@ fun WorldMapCanvas(
     val gestureState = remember { MapGestureState(geometriesHiRes, android.graphics.Matrix()) }
     gestureState.geometries = geometriesHiRes
     gestureState.countryBounds = boundsHiRes
-    // Keep colorMode and compass callback current so mapGestures (keyed on Unit) never needs
-    // to restart its coroutine when either value changes — reads happen at tap time.
+    // Pre-compute locale once so both gestureState and countryNames share the same snapshot.
+    val currentLocale = LocalConfiguration.current.locales[0]
+    // Keep colorMode, compass callback, and locale current so mapGestures (keyed on Unit) never
+    // needs to restart its coroutine when any of these change — reads happen at tap time.
     gestureState.colorMode = colorMode
     gestureState.onCompassTapped = legendConfig.onCompassTapped
+    gestureState.currentLocale = currentLocale
 
     // Separate path caches per resolution — both use countryId as key, so they must
     // not share a cache or they'd collide when the same ID maps to different geometry.
@@ -1433,8 +1535,8 @@ fun WorldMapCanvas(
     val drawBounds      = if (isHiRes) boundsHiRes     else boundsLoRes
     val activePathCache = if (isHiRes) pathCacheHiRes  else pathCacheLoRes
 
-    // Pre-compute geoJsonId → display name once per countries-map change.
-    val countryNames = remember(countries) { buildCountryNames(countries) }
+    // Pre-compute geoJsonId → display name once per countries-map or locale change.
+    val countryNames = remember(countries, currentLocale) { buildCountryNames(countries, locale = currentLocale) }
 
     // Animate labels in/out as a cross-dissolve keyed on whether scale has crossed the
     // show threshold. animateFloatAsState drives Canvas redraws automatically.

@@ -31,6 +31,7 @@ import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
@@ -57,6 +59,10 @@ fun CountryInfoScreen(
     viewModel: CountryInfoViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val currentLocale = LocalConfiguration.current.locales[0]
+    LaunchedEffect(currentLocale) {
+        viewModel.updateLocale(currentLocale)
+    }
     val isMapLoaded by CountryGeometryData.isLoaded
     var showSheet by remember { mutableStateOf(false) }
     var showLegend by remember { mutableStateOf(false) }
@@ -72,12 +78,16 @@ fun CountryInfoScreen(
         uiState.countries.associateBy { it.id }
     }
 
-    // Keep a local copy of the country for the exit animation
-    // This prevents the content from disappearing before the animation completes
+    // Keep local copies for the exit animation — prevents content from disappearing
+    // before the slide-out animation completes.
     var displayedCountry by remember { mutableStateOf(uiState.selectedCountry) }
+    var displayedDisplayName by remember { mutableStateOf(uiState.selectedDisplayName) }
 
-    // Update displayed country when a new one is selected (but not when cleared)
-    uiState.selectedCountry?.let { displayedCountry = it }
+    // Update displayed values when a new country is selected (but not when cleared)
+    uiState.selectedCountry?.let {
+        displayedCountry = it
+        displayedDisplayName = uiState.selectedDisplayName
+    }
 
     // Lock orientation to portrait for this screen
     LockOrientationPortrait()
@@ -110,9 +120,9 @@ fun CountryInfoScreen(
             ) {
                 WorldMapCanvas(
                     selectedCountryId = uiState.selectedCountry?.id,
-                    onCountryTapped = { countryId ->
+                    onCountryTapped = { countryId, displayName ->
                         countryId?.let {
-                            viewModel.selectCountry(it)
+                            viewModel.selectCountry(it, displayName)
                             focusManager.clearFocus()
                             viewModel.clearSearch()
                             showSheet = true
@@ -175,8 +185,9 @@ fun CountryInfoScreen(
         // Autocomplete Dropdown - overlays on top of map
         SearchResultsDropdown(
             searchResults = uiState.searchResults,
-            onCountrySelected = { country ->
-                viewModel.selectCountry(country.id)
+            onCountrySelected = { suggestion ->
+                val displayName = if (suggestion.parentCountryName != null) suggestion.displayName else null
+                viewModel.selectCountry(suggestion.country.id, displayName)
                 viewModel.clearSearch()
                 focusManager.clearFocus()
                 showSheet = true
@@ -186,6 +197,7 @@ fun CountryInfoScreen(
         // Country Detail Bottom Sheet - overlays everything
         CountryDetailSheet(
             country = displayedCountry,
+            displayName = displayedDisplayName,
             visible = showSheet,
             onDismiss = {
                 showSheet = false
@@ -261,8 +273,8 @@ private fun CountrySearchBar(
 
 @Composable
 private fun SearchResultsDropdown(
-    searchResults: List<Country>,
-    onCountrySelected: (Country) -> Unit
+    searchResults: List<SearchSuggestion>,
+    onCountrySelected: (SearchSuggestion) -> Unit
 ) {
     if (searchResults.isEmpty()) return
 
@@ -282,11 +294,18 @@ private fun SearchResultsDropdown(
         LazyColumn(
             modifier = Modifier.testTag("search_results_list")
         ) {
-            items(searchResults) { country ->
+            items(searchResults) { suggestion ->
                 CountrySearchItem(
-                    country = country,
-                    onClick = { onCountrySelected(country) },
-                    testTag = "search_result_${country.id}"
+                    suggestion = suggestion,
+                    onClick = { onCountrySelected(suggestion) },
+                    // Direct country matches keep the stable "search_result_{id}" tag used by
+                    // existing robot helpers. Territory matches use their display name so that
+                    // multiple territories of the same parent (e.g. two US territories) never
+                    // share a tag and never collide with the parent's direct-match tag.
+                    testTag = if (suggestion.parentCountryName == null)
+                        "search_result_${suggestion.country.id}"
+                    else
+                        "search_result_territory_${suggestion.displayName.filter { it.isLetterOrDigit() }}"
                 )
             }
         }
@@ -295,10 +314,13 @@ private fun SearchResultsDropdown(
 
 @Composable
 private fun CountrySearchItem(
-    country: Country,
+    suggestion: SearchSuggestion,
     onClick: () -> Unit,
     testTag: String = ""
 ) {
+    val subtitleText = suggestion.parentCountryName
+        ?: stringResource(suggestion.country.continent.displayNameResId)
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -307,13 +329,13 @@ private fun CountrySearchItem(
             .testTag(testTag)
     ) {
         Text(
-            text = "${country.flagEmoji} ${country.name}",
+            text = "${suggestion.country.flagEmoji} ${suggestion.displayName}",
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface
         )
         Text(
-            text = stringResource(country.continent.displayNameResId),
+            text = subtitleText,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         )
