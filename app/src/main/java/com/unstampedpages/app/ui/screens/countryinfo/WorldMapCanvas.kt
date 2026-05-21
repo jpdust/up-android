@@ -336,13 +336,30 @@ private fun hitTestCountry(
     geometries: List<CountryGeometry>,
     countryBounds: Map<String, CountryBounds>,
     currentScale: Float
-): String? {
-    val inverseMatrix = android.graphics.Matrix().apply { setValues(matrixValues) }
-    val screenPts = floatArrayOf(position.x, position.y)
-    inverseMatrix.mapPoints(screenPts)
-    val normalizedX = normalizeNormalizedX(screenPts[0] / mapWidth)
-    val normalizedY = screenPts[1] / mapHeight
+): String? = floatArrayOf(position.x, position.y)
+    .also { android.graphics.Matrix().apply { setValues(matrixValues) }.mapPoints(it) }
+    .let { hitTestNormalizedPoint(normalizeNormalizedX(it[0] / mapWidth), it[1] / mapHeight, geometries, countryBounds, mapWidth, mapHeight, currentScale) }
 
+/**
+ * Pure coordinate-space hit test — no Android matrix code, safe to call on any thread
+ * and exercisable from JVM unit tests.
+ *
+ * Given Mercator-normalised coordinates already mapped out of screen space, runs:
+ *  1. Ray-cast against every polygon in [geometries] (exact hit).
+ *  2. [proximityFallbackHitTest] for small dot-marker countries and tiny island
+ *     polygons within larger countries (e.g. Seychelles outer islands).
+ *
+ * Returns the repo country ID (e.g. "sc") or null.
+ */
+internal fun hitTestNormalizedPoint(
+    normalizedX: Float,
+    normalizedY: Float,
+    geometries: List<CountryGeometry>,
+    countryBounds: Map<String, CountryBounds>,
+    mapWidth: Float,
+    mapHeight: Float,
+    currentScale: Float
+): String? {
     // Primary: exact polygon ray-cast
     val geoJsonId = findCountryAtNormalizedPoint(normalizedX, normalizedY, geometries, countryBounds)
     if (geoJsonId != null) return geoJsonToRepoId[geoJsonId]

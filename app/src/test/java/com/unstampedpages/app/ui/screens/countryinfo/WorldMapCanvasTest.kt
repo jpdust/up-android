@@ -2810,3 +2810,210 @@ class ProximityFallbackHitTestTest {
         assertEquals("ARC", result)
     }
 }
+
+// ---------------------------------------------------------------------------
+// hitTestNormalizedPoint
+//
+// Tests for the extracted pure-coordinate hit-test function. This exercises
+// the two code paths inside the function:
+//
+//   1. Ray-cast path  — findCountryAtNormalizedPoint returns a geoJson ID
+//      which is translated via geoJsonToRepoId and returned.
+//
+//   2. Fallback path  — ray-cast returns null; proximityFallbackHitTest is
+//      called and its result (possibly null) is translated and returned.
+//
+// The function also validates the geoJsonToRepoId translation for real country
+// codes so any regression in the ID map is caught here.
+// ---------------------------------------------------------------------------
+
+class HitTestNormalizedPointTest {
+
+    // ── helpers ──────────────────────────────────────────────────────────────
+
+    private val mapWidth  = 1000f
+    private val mapHeight = 500f
+    private val scale     = 1f
+
+    private fun latLng(lat: Float, lng: Float) =
+        com.unstampedpages.app.data.model.LatLng(lat, lng)
+
+    /** A medium-sized triangle polygon centred at (lat=0, lng=0). */
+    private val triangleAtOrigin = listOf(
+        latLng(5f, -5f), latLng(5f, 5f), latLng(-5f, 0f)
+    )
+
+    private fun geometryAt(geoId: String, polygon: List<com.unstampedpages.app.data.model.LatLng>) =
+        com.unstampedpages.app.data.model.CountryGeometry(geoId, listOf(polygon))
+
+    private fun boundsFor(geometry: com.unstampedpages.app.data.model.CountryGeometry) =
+        computeGeometryBounds(geometry)
+
+    // ── path 1: ray-cast hit ─────────────────────────────────────────────
+
+    @Test
+    fun `ray-cast hit returns translated repo id`() {
+        // Use a real geoJsonToRepoId entry: "FRA" -> "fr"
+        val geometry = geometryAt("FRA", triangleAtOrigin)
+        val bounds = mapOf("FRA" to boundsFor(geometry))
+        // Tap at centroid of triangle (lat≈2, lng≈0) → should land inside
+        val centX = MercatorProjection.longitudeToX(0f)
+        val centY = MercatorProjection.latitudeToY(2f)
+        val result = hitTestNormalizedPoint(centX, centY, listOf(geometry), bounds, mapWidth, mapHeight, scale)
+        assertEquals("fr", result)
+    }
+
+    @Test
+    fun `ray-cast hit for Germany returns correct repo id`() {
+        // DEU -> "de"
+        val geometry = geometryAt("DEU", triangleAtOrigin)
+        val bounds = mapOf("DEU" to boundsFor(geometry))
+        val centX = MercatorProjection.longitudeToX(0f)
+        val centY = MercatorProjection.latitudeToY(2f)
+        val result = hitTestNormalizedPoint(centX, centY, listOf(geometry), bounds, mapWidth, mapHeight, scale)
+        assertEquals("de", result)
+    }
+
+    @Test
+    fun `ray-cast hit for Japan returns correct repo id`() {
+        // JPN -> "jp"
+        val geometry = geometryAt("JPN", triangleAtOrigin)
+        val bounds = mapOf("JPN" to boundsFor(geometry))
+        val centX = MercatorProjection.longitudeToX(0f)
+        val centY = MercatorProjection.latitudeToY(2f)
+        val result = hitTestNormalizedPoint(centX, centY, listOf(geometry), bounds, mapWidth, mapHeight, scale)
+        assertEquals("jp", result)
+    }
+
+    @Test
+    fun `ray-cast miss falls through to null when no fallback matches`() {
+        val geometry = geometryAt("FRA", triangleAtOrigin)
+        val bounds = mapOf("FRA" to boundsFor(geometry))
+        // Tap far away from the polygon and from any centroid
+        val result = hitTestNormalizedPoint(0.9f, 0.1f, listOf(geometry), bounds, mapWidth, mapHeight, scale)
+        assertNull(result)
+    }
+
+    @Test
+    fun `ray-cast with unknown geoId not in geoJsonToRepoId returns null`() {
+        // GeoId "ZZZ" is not in geoJsonToRepoId so the repo ID lookup returns null
+        val geometry = geometryAt("ZZZ", triangleAtOrigin)
+        val bounds = mapOf("ZZZ" to boundsFor(geometry))
+        val centX = MercatorProjection.longitudeToX(0f)
+        val centY = MercatorProjection.latitudeToY(2f)
+        val result = hitTestNormalizedPoint(centX, centY, listOf(geometry), bounds, mapWidth, mapHeight, scale)
+        assertNull(result)
+    }
+
+    // ── path 2: fallback hit ─────────────────────────────────────────────
+
+    @Test
+    fun `fallback hit for dot-marker country returns translated repo id`() {
+        // Place a dot-marker country (SYC -> "sc") with its centroid near the tap.
+        // Use halfNorm that keeps rendered size well below threshold (3px < 8px).
+        val sycCx = 0.65f
+        val sycCy = 0.50f
+        val halfNorm = (SMALL_COUNTRY_THRESHOLD_PX * 0.375f) / mapWidth  // 3px half-size
+        val bounds = CountryBounds(
+            centroidNormX = sycCx, centroidNormY = sycCy,
+            minX = sycCx - halfNorm, maxX = sycCx + halfNorm,
+            minY = sycCy - halfNorm, maxY = sycCy + halfNorm,
+            polygonBounds = listOf(PolygonBounds(sycCx - halfNorm, sycCx + halfNorm, sycCy - halfNorm, sycCy + halfNorm))
+        )
+        // No geometries → ray-cast misses → falls to proximity fallback
+        val result = hitTestNormalizedPoint(
+            normalizedX = sycCx, normalizedY = sycCy,
+            geometries = emptyList(),
+            countryBounds = mapOf("SYC" to bounds),
+            mapWidth = mapWidth, mapHeight = mapHeight, currentScale = scale
+        )
+        assertEquals("sc", result)
+    }
+
+    @Test
+    fun `fallback hit for archipelago tiny island returns translated repo id`() {
+        val islandCx = 0.65f
+        val islandCy = 0.50f
+        val halfNorm = 0.001f  // tiny polygon, well below threshold
+        // Overall bounds are large (spanning the map) — forces per-polygon path
+        val bounds = CountryBounds(
+            centroidNormX = 0.5f, centroidNormY = 0.5f,
+            minX = 0.1f, maxX = 0.9f,
+            minY = 0.3f, maxY = 0.7f,
+            polygonBounds = listOf(
+                PolygonBounds(islandCx - halfNorm, islandCx + halfNorm, islandCy - halfNorm, islandCy + halfNorm)
+            )
+        )
+        val result = hitTestNormalizedPoint(
+            normalizedX = islandCx, normalizedY = islandCy,
+            geometries = emptyList(),
+            countryBounds = mapOf("SYC" to bounds),
+            mapWidth = mapWidth, mapHeight = mapHeight, currentScale = scale
+        )
+        assertEquals("sc", result)
+    }
+
+    @Test
+    fun `fallback with unknown geoId returns null even if proximity matches`() {
+        // "ZZZ" is not in geoJsonToRepoId — fallback finds it by proximity but translation is null.
+        // Use halfNorm that keeps rendered size well below threshold (3px < 8px).
+        val cx = 0.5f; val cy = 0.5f
+        val halfNorm = (SMALL_COUNTRY_THRESHOLD_PX * 0.375f) / mapWidth  // 3px half-size
+        val bounds = CountryBounds(
+            centroidNormX = cx, centroidNormY = cy,
+            minX = cx - halfNorm, maxX = cx + halfNorm,
+            minY = cy - halfNorm, maxY = cy + halfNorm,
+            polygonBounds = listOf(PolygonBounds(cx - halfNorm, cx + halfNorm, cy - halfNorm, cy + halfNorm))
+        )
+        val result = hitTestNormalizedPoint(cx, cy, emptyList(), mapOf("ZZZ" to bounds), mapWidth, mapHeight, scale)
+        assertNull(result)
+    }
+
+    // ── priority: ray-cast wins over fallback ────────────────────────────
+
+    @Test
+    fun `ray-cast result wins over nearby fallback candidate`() {
+        // Polygon at origin (ray-cast will hit FRA), plus a dot-marker SYC also nearby
+        val fGeom = geometryAt("FRA", triangleAtOrigin)
+        val fBounds = boundsFor(fGeom)
+
+        val sycCx = MercatorProjection.longitudeToX(0f)
+        val sycCy = MercatorProjection.latitudeToY(2f)
+        val halfNorm = (SMALL_COUNTRY_THRESHOLD_PX * 0.375f) / mapWidth  // 3px half-size, clearly below threshold
+        val sycBounds = CountryBounds(
+            centroidNormX = sycCx, centroidNormY = sycCy,
+            minX = sycCx - halfNorm, maxX = sycCx + halfNorm,
+            minY = sycCy - halfNorm, maxY = sycCy + halfNorm,
+            polygonBounds = listOf(PolygonBounds(sycCx - halfNorm, sycCx + halfNorm, sycCy - halfNorm, sycCy + halfNorm))
+        )
+
+        val result = hitTestNormalizedPoint(
+            normalizedX = sycCx, normalizedY = sycCy,
+            geometries = listOf(fGeom),
+            countryBounds = mapOf("FRA" to fBounds, "SYC" to sycBounds),
+            mapWidth = mapWidth, mapHeight = mapHeight, currentScale = scale
+        )
+        // FRA wins because ray-cast fires first
+        assertEquals("fr", result)
+    }
+
+    // ── empty inputs ─────────────────────────────────────────────────────
+
+    @Test
+    fun `returns null for empty geometries and empty countryBounds`() {
+        val result = hitTestNormalizedPoint(0.5f, 0.5f, emptyList(), emptyMap(), mapWidth, mapHeight, scale)
+        assertNull(result)
+    }
+
+    @Test
+    fun `returns null for empty geometries with no proximity match`() {
+        val farBounds = CountryBounds(
+            centroidNormX = 0.1f, centroidNormY = 0.1f,
+            minX = 0.1f, maxX = 0.9f,
+            minY = 0.1f, maxY = 0.9f,
+            polygonBounds = emptyList()
+        )
+        val result = hitTestNormalizedPoint(0.8f, 0.8f, emptyList(), mapOf("LRG" to farBounds), mapWidth, mapHeight, scale)
+        assertNull(result)
+    }
+}
