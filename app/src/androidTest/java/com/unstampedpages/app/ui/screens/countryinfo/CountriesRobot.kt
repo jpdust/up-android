@@ -107,7 +107,14 @@ class CountriesRobot(private val composeTestRule: ComposeTestRule) {
     }
 
     fun verifyCountryInSearchResults(countryName: String): CountriesRobot {
-        composeTestRule.onNodeWithText(countryName, substring = true).assertIsDisplayed()
+        // Territory matches whose parent country is countryName produce a subtitle node whose
+        // text equals countryName exactly. Combined with the direct match's flag+name node that
+        // contains countryName as a substring, there can be multiple nodes matching the query.
+        // Use onAllNodesWithText + onFirst so the assertion passes as long as at least one
+        // visible node contains the expected name, rather than requiring a unique match.
+        composeTestRule.onAllNodesWithText(countryName, substring = true)
+            .onFirst()
+            .assertIsDisplayed()
         return this
     }
 

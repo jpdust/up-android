@@ -298,7 +298,14 @@ private fun SearchResultsDropdown(
                 CountrySearchItem(
                     suggestion = suggestion,
                     onClick = { onCountrySelected(suggestion) },
-                    testTag = "search_result_${suggestion.country.id}"
+                    // Direct country matches keep the stable "search_result_{id}" tag used by
+                    // existing robot helpers. Territory matches use their display name so that
+                    // multiple territories of the same parent (e.g. two US territories) never
+                    // share a tag and never collide with the parent's direct-match tag.
+                    testTag = if (suggestion.parentCountryName == null)
+                        "search_result_${suggestion.country.id}"
+                    else
+                        "search_result_territory_${suggestion.displayName.filter { it.isLetterOrDigit() }}"
                 )
             }
         }
