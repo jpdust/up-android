@@ -3609,10 +3609,11 @@ class ComputeVisibleLabelSpecsTest {
         geometries: List<com.unstampedpages.app.data.model.CountryGeometry> = listOf(geom("FRA")),
         countryBounds: Map<String, CountryBounds> = mapOf("FRA" to largeBounds()),
         labelTextSizes: Map<String, Pair<Float, Float>> = mapOf("FRA" to (60f to 20f)),
-        screenMapper: (FloatArray) -> Unit = identity
+        screenMapper: (FloatArray) -> Unit = identity,
+        overrideCanvasWidth: Float = canvasWidth
     ) = computeVisibleLabelSpecs(
-        wrapOffset, labelAlpha, matrixValid, scale,
-        mapWidth, mapHeight, canvasWidth, canvasHeight,
+        wrapOffset,
+        LabelRenderContext(labelAlpha, matrixValid, scale, mapWidth, mapHeight, overrideCanvasWidth, canvasHeight),
         geometries, countryBounds, labelTextSizes, screenMapper
     )
 
@@ -3797,14 +3798,11 @@ class ComputeVisibleLabelSpecsTest {
         val cy = override.second
         val expectedScreenX = cx * mapWidth
         val expectedScreenY = cy * mapHeight
-        val result = computeVisibleLabelSpecs(
-            wrapOffset = 0f, labelAlpha = 1f, matrixValid = true,
-            scale = 1f, mapWidth = mapWidth, mapHeight = mapHeight,
-            canvasWidth = 3000f, canvasHeight = canvasHeight,
-            geometries    = listOf(geom("NZL")),
-            countryBounds = mapOf("NZL" to largeBounds(cx, cy)),
+        val result = defaultSpecs(
+            geometries     = listOf(geom("NZL")),
+            countryBounds  = mapOf("NZL" to largeBounds(cx, cy)),
             labelTextSizes = mapOf("NZL" to (60f to 20f)),
-            screenMapper  = identity
+            overrideCanvasWidth = 3000f
         )
         val spec = result["NZL"]!!
         assertEquals(expectedScreenX - 30f, spec.topLeft.x, 0.01f)
@@ -3815,14 +3813,10 @@ class ComputeVisibleLabelSpecsTest {
     fun `uses bounds centroid when no override exists`() {
         // "DEU" has no override; centroid from bounds should be used.
         val cx = 0.52f; val cy = 0.38f
-        val result = computeVisibleLabelSpecs(
-            wrapOffset = 0f, labelAlpha = 1f, matrixValid = true,
-            scale = 1f, mapWidth = mapWidth, mapHeight = mapHeight,
-            canvasWidth = canvasWidth, canvasHeight = canvasHeight,
-            geometries    = listOf(geom("DEU")),
-            countryBounds = mapOf("DEU" to largeBounds(cx, cy)),
-            labelTextSizes = mapOf("DEU" to (60f to 20f)),
-            screenMapper  = identity
+        val result = defaultSpecs(
+            geometries     = listOf(geom("DEU")),
+            countryBounds  = mapOf("DEU" to largeBounds(cx, cy)),
+            labelTextSizes = mapOf("DEU" to (60f to 20f))
         )
         val spec = result["DEU"]!!
         assertEquals(cx * mapWidth - 30f, spec.topLeft.x, 0.01f)
@@ -3833,10 +3827,7 @@ class ComputeVisibleLabelSpecsTest {
 
     @Test
     fun `multiple visible countries all appear in result`() {
-        val result = computeVisibleLabelSpecs(
-            wrapOffset = 0f, labelAlpha = 1f, matrixValid = true,
-            scale = 1f, mapWidth = mapWidth, mapHeight = mapHeight,
-            canvasWidth = canvasWidth, canvasHeight = canvasHeight,
+        val result = defaultSpecs(
             geometries    = listOf(geom("FRA"), geom("DEU"), geom("ESP")),
             countryBounds = mapOf(
                 "FRA" to largeBounds(0.3f, 0.4f),
@@ -3847,8 +3838,7 @@ class ComputeVisibleLabelSpecsTest {
                 "FRA" to (60f to 20f),
                 "DEU" to (50f to 20f),
                 "ESP" to (55f to 20f)
-            ),
-            screenMapper = identity
+            )
         )
         assertEquals(3, result.size)
         assertTrue(result.containsKey("FRA"))
@@ -3859,10 +3849,7 @@ class ComputeVisibleLabelSpecsTest {
     @Test
     fun `mix of valid and invalid countries yields only valid ones`() {
         // "FRA" valid, "XXX" has no bounds, "YYY" has dim bounds (finalAlpha=0)
-        val result = computeVisibleLabelSpecs(
-            wrapOffset = 0f, labelAlpha = 1f, matrixValid = true,
-            scale = 1f, mapWidth = mapWidth, mapHeight = mapHeight,
-            canvasWidth = canvasWidth, canvasHeight = canvasHeight,
+        val result = defaultSpecs(
             geometries    = listOf(geom("FRA"), geom("XXX"), geom("YYY")),
             countryBounds = mapOf(
                 "FRA" to largeBounds(),
@@ -3872,8 +3859,7 @@ class ComputeVisibleLabelSpecsTest {
                 "FRA" to (60f to 20f),
                 "XXX" to (60f to 20f),
                 "YYY" to (60f to 20f)
-            ),
-            screenMapper = identity
+            )
         )
         assertEquals(1, result.size)
         assertTrue(result.containsKey("FRA"))
