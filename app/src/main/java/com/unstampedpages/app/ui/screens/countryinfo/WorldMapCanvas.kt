@@ -340,40 +340,50 @@ internal fun proximityFallbackHitTest(
 }
 
 /**
+ * Immutable snapshot of the map state required for a single hit-test dispatch.
+ *
+ * All six fields are captured on the main thread before the work is sent to
+ * [Dispatchers.Default], ensuring no shared mutable state crosses thread boundaries.
+ * [matrixValues] is a freshly copied 9-float array so the live
+ * [android.graphics.Matrix] is never shared across threads.
+ */
+private class HitTestSnapshot(
+    val matrixValues: FloatArray,
+    val mapWidth: Float,
+    val mapHeight: Float,
+    val geometries: List<CountryGeometry>,
+    val countryBounds: Map<String, CountryBounds>,
+    val currentScale: Float,
+)
+
+/**
  * Pure hit-test function — safe to call on any thread.
  *
- * All mutable state is passed as value parameters so the caller can snapshot them on the
- * main thread and then dispatch this function to [Dispatchers.Default] without races.
- * The matrix is supplied as a pre-read 9-float array and reconstructed here to avoid
- * sharing the live [android.graphics.Matrix] object across threads.
- *
- * Returns the repo country ID (e.g. "fr") and an optional territory display name
- * (e.g. "Cayman Islands") if the tapped feature is a known standalone territory.
- * Both values are null when no country was hit.
+ * All mutable state is supplied via [snapshot], which is captured on the main thread
+ * before dispatch to [Dispatchers.Default]. Returns the repo country ID (e.g. "fr") and
+ * an optional territory display name (e.g. "Cayman Islands") if the tapped feature is a
+ * known standalone territory. Both values are null when no country was hit.
  */
 private fun hitTestCountry(
     position: Offset,
-    matrixValues: FloatArray,
-    mapWidth: Float,
-    mapHeight: Float,
-    geometries: List<CountryGeometry>,
-    countryBounds: Map<String, CountryBounds>,
-    currentScale: Float,
+    snapshot: HitTestSnapshot,
     locale: java.util.Locale = java.util.Locale.getDefault()
 ): Pair<String?, String?> {
     val pts = floatArrayOf(position.x, position.y)
-    android.graphics.Matrix().apply { setValues(matrixValues) }.mapPoints(pts)
-    val normX = normalizeNormalizedX(pts[0] / mapWidth)
-    val normY = pts[1] / mapHeight
+    android.graphics.Matrix().apply { setValues(snapshot.matrixValues) }.mapPoints(pts)
+    val normX = normalizeNormalizedX(pts[0] / snapshot.mapWidth)
+    val normY = pts[1] / snapshot.mapHeight
 
     // Primary: exact polygon ray-cast — captures geoJsonId for territory name lookup.
-    val geoJsonId = findCountryAtNormalizedPoint(normX, normY, geometries, countryBounds)
+    val geoJsonId = findCountryAtNormalizedPoint(normX, normY, snapshot.geometries, snapshot.countryBounds)
     if (geoJsonId != null) {
         return geoJsonToRepoId[geoJsonId] to getLocalizedTerritoryName(geoJsonId, locale)
     }
 
     // Fallback: proximity to small dot-marker countries and tiny island polygons.
-    val fallbackId = proximityFallbackHitTest(normX, normY, countryBounds, mapWidth, mapHeight, currentScale)
+    val fallbackId = proximityFallbackHitTest(
+        normX, normY, snapshot.countryBounds, snapshot.mapWidth, snapshot.mapHeight, snapshot.currentScale
+    )
     return (fallbackId?.let { geoJsonToRepoId[it] }) to (fallbackId?.let { getLocalizedTerritoryName(it, locale) })
 }
 
@@ -591,14 +601,17 @@ private fun Modifier.mapGestures(
                 // are never blocked by O(n·m) ray-casting.
                 tapJob?.cancel()
                 tapJob = tapConfig.scope.launch(tapConfig.computeDispatcher) {
-                    val (repoId, territoryName) = hitTestCountry(
-                        position = downPosition,
+                    val snapshot = HitTestSnapshot(
                         matrixValues = matrixValues,
                         mapWidth = mapWidth,
                         mapHeight = mapHeight,
                         geometries = geometries,
                         countryBounds = countryBounds,
                         currentScale = currentScale,
+                    )
+                    val (repoId, territoryName) = hitTestCountry(
+                        position = downPosition,
+                        snapshot = snapshot,
                         locale = locale
                     )
                     withContext(tapConfig.mainDispatcher) {
