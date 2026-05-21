@@ -471,6 +471,115 @@ class CountryInfoViewModelTest {
         }
     }
 
+    // ==================== updateLocale Tests ====================
+
+    @Test
+    fun `updateLocale with same locale as current does not change countries list`() {
+        val before = viewModel.uiState.value.countries.map { it.id }
+        // The ViewModel starts with Locale.getDefault(); calling updateLocale with the
+        // same locale should be a no-op (guard clause in updateLocale).
+        viewModel.updateLocale(java.util.Locale.getDefault())
+        val after = viewModel.uiState.value.countries.map { it.id }
+        assertEquals(before, after)
+    }
+
+    @Test
+    fun `updateLocale with a different locale refreshes the countries list`() {
+        val before = viewModel.uiState.value.countries
+        val newLocale = if (java.util.Locale.getDefault() == java.util.Locale.ENGLISH)
+            java.util.Locale("es") else java.util.Locale.ENGLISH
+        viewModel.updateLocale(newLocale)
+        // The list should still be non-empty and the same size — only names may differ.
+        val after = viewModel.uiState.value.countries
+        assertTrue(after.isNotEmpty())
+        assertEquals(before.size, after.size)
+    }
+
+    @Test
+    fun `updateLocale keeps isLoading false`() {
+        viewModel.updateLocale(java.util.Locale("es"))
+        assertFalse(viewModel.uiState.value.isLoading)
+    }
+
+    @Test
+    fun `updateLocale preserves country ids`() {
+        val idsBefore = viewModel.uiState.value.countries.map { it.id }.toSet()
+        viewModel.updateLocale(java.util.Locale("fr"))
+        val idsAfter = viewModel.uiState.value.countries.map { it.id }.toSet()
+        assertEquals(idsBefore, idsAfter)
+    }
+
+    @Test
+    fun `updateLocale clears any existing search query`() {
+        // updateLocale reloads via loadCountries, which resets the full state.
+        viewModel.updateSearchQuery("Japan")
+        assertTrue(viewModel.uiState.value.searchResults.isNotEmpty())
+        viewModel.updateLocale(java.util.Locale("es"))
+        // After locale change the state is reset — search results are cleared.
+        assertEquals("", viewModel.uiState.value.searchQuery)
+        assertTrue(viewModel.uiState.value.searchResults.isEmpty())
+    }
+
+    @Test
+    fun `calling updateLocale twice with the same new locale only reloads once`() {
+        val newLocale = java.util.Locale("es")
+        viewModel.updateLocale(newLocale)
+        val stateAfterFirst = viewModel.uiState.value
+        // Second call with the same locale should be a no-op (guard clause).
+        viewModel.updateLocale(newLocale)
+        val stateAfterSecond = viewModel.uiState.value
+        assertEquals(stateAfterFirst, stateAfterSecond)
+    }
+
+    // ==================== selectCountry displayName Tests ====================
+
+    @Test
+    fun `selectCountry with displayName stores it in selectedDisplayName`() {
+        viewModel.selectCountry("gb", "Cayman Islands")
+        assertEquals("Cayman Islands", viewModel.uiState.value.selectedDisplayName)
+    }
+
+    @Test
+    fun `selectCountry without displayName leaves selectedDisplayName null`() {
+        viewModel.selectCountry("us")
+        assertNull(viewModel.uiState.value.selectedDisplayName)
+    }
+
+    @Test
+    fun `selectCountry with null displayName leaves selectedDisplayName null`() {
+        viewModel.selectCountry("gb", displayName = null)
+        assertNull(viewModel.uiState.value.selectedDisplayName)
+    }
+
+    @Test
+    fun `clearSelection clears selectedDisplayName`() {
+        viewModel.selectCountry("gb", "Cayman Islands")
+        assertNotNull(viewModel.uiState.value.selectedDisplayName)
+
+        viewModel.clearSelection()
+
+        assertNull(viewModel.uiState.value.selectedDisplayName)
+        assertNull(viewModel.uiState.value.selectedCountry)
+    }
+
+    @Test
+    fun `selecting a new country replaces previous displayName`() {
+        viewModel.selectCountry("gb", "Cayman Islands")
+        assertEquals("Cayman Islands", viewModel.uiState.value.selectedDisplayName)
+
+        viewModel.selectCountry("dk", "Greenland")
+        assertEquals("Greenland", viewModel.uiState.value.selectedDisplayName)
+    }
+
+    @Test
+    fun `selecting a country without displayName after one with displayName clears displayName`() {
+        viewModel.selectCountry("gb", "Cayman Islands")
+        assertNotNull(viewModel.uiState.value.selectedDisplayName)
+
+        viewModel.selectCountry("us")
+        assertNull(viewModel.uiState.value.selectedDisplayName)
+    }
+
     // ==================== Territory Search Tests ====================
 
     @Test

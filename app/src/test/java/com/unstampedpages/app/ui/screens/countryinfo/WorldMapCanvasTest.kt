@@ -2567,6 +2567,85 @@ class BuildCountryNamesTest {
         val names = buildCountryNames(emptyMap(), idMap = emptyMap())
         assertTrue(names.isEmpty())
     }
+
+    // ── locale parameter ───────────────────────────────────────────────────
+
+    @Test
+    fun `territory geoId CYM resolves to a name (not the parent country name) regardless of locale`() {
+        // CYM → parent repo id "gb". The territory name (Cayman Islands or localized equivalent)
+        // must take priority over the parent country name (United Kingdom / Reino Unido).
+        val repo = CountryRepository()
+        val countries = repo.getAllCountries().associateBy { it.id }
+        val names = buildCountryNames(countries, locale = java.util.Locale.ENGLISH)
+        val caymanName = names["CYM"]
+        assertNotNull("CYM should resolve to a territory name", caymanName)
+        assertFalse(
+            "CYM should not resolve to the parent country name 'United Kingdom', got: $caymanName",
+            caymanName!!.equals("United Kingdom", ignoreCase = true)
+        )
+        assertTrue("CYM name should contain 'Cayman', got: $caymanName",
+            caymanName.contains("Cayman", ignoreCase = true))
+    }
+
+    @Test
+    fun `territory geoId GRL resolves to Greenland not Denmark`() {
+        val repo = CountryRepository()
+        val countries = repo.getAllCountries().associateBy { it.id }
+        val names = buildCountryNames(countries, locale = java.util.Locale.ENGLISH)
+        val greenlandName = names["GRL"]
+        assertNotNull("GRL should resolve to a name", greenlandName)
+        assertFalse("GRL should not resolve to 'Denmark'",
+            greenlandName!!.equals("Denmark", ignoreCase = true))
+        assertTrue("GRL name should contain 'Greenland', got: $greenlandName",
+            greenlandName.contains("Greenland", ignoreCase = true))
+    }
+
+    @Test
+    fun `territory geoId PYF resolves to French Polynesia not France`() {
+        val repo = CountryRepository()
+        val countries = repo.getAllCountries().associateBy { it.id }
+        val names = buildCountryNames(countries, locale = java.util.Locale.ENGLISH)
+        val name = names["PYF"]
+        assertNotNull("PYF should resolve to a name", name)
+        assertFalse("PYF should not resolve to 'France'", name!!.equals("France", ignoreCase = true))
+        assertTrue("PYF name should contain 'Polynesia', got: $name",
+            name.contains("Polynesia", ignoreCase = true))
+    }
+
+    @Test
+    fun `Spanish locale produces non-blank names for territory geoIds`() {
+        val repo = CountryRepository()
+        val countries = repo.getAllCountries(java.util.Locale("es")).associateBy { it.id }
+        val names = buildCountryNames(countries, locale = java.util.Locale("es"))
+        // All resolved names must be non-blank regardless of locale.
+        names.values.forEach { name ->
+            assertTrue("Territory name should be non-blank in Spanish, got: '$name'", name.isNotBlank())
+        }
+    }
+
+    @Test
+    fun `Spanish locale still prioritizes territory name over parent country name for CYM`() {
+        val repo = CountryRepository()
+        val countries = repo.getAllCountries(java.util.Locale("es")).associateBy { it.id }
+        val names = buildCountryNames(countries, locale = java.util.Locale("es"))
+        val caymanName = names["CYM"]
+        assertNotNull("CYM should resolve to a name in Spanish", caymanName)
+        // Whatever the Spanish JVM returns, it must not be the Spanish name for United Kingdom.
+        val ukSpanish = repo.getCountryById("gb", java.util.Locale("es"))!!.name
+        assertFalse(
+            "CYM should not resolve to parent country name '$ukSpanish' in Spanish, got: $caymanName",
+            caymanName!!.equals(ukSpanish, ignoreCase = true)
+        )
+    }
+
+    @Test
+    fun `locale parameter does not reduce overall map size vs default locale`() {
+        val defaultNames = buildCountryNames(emptyMap())
+        val spanishNames = buildCountryNames(emptyMap(), locale = java.util.Locale("es"))
+        // Changing locale should not reduce coverage — every entry that resolved in English
+        // must also resolve in Spanish (territory fallback covers any gaps).
+        assertTrue(spanishNames.size >= defaultNames.size)
+    }
 }
 
 // ---------------------------------------------------------------------------

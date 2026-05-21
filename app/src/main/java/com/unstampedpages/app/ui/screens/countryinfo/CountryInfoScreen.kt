@@ -31,6 +31,7 @@ import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
@@ -57,6 +59,10 @@ fun CountryInfoScreen(
     viewModel: CountryInfoViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val currentLocale = LocalConfiguration.current.locales[0]
+    LaunchedEffect(currentLocale) {
+        viewModel.updateLocale(currentLocale)
+    }
     val isMapLoaded by CountryGeometryData.isLoaded
     var showSheet by remember { mutableStateOf(false) }
     var showLegend by remember { mutableStateOf(false) }

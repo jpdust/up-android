@@ -306,6 +306,102 @@ class CountryRepositoryTest {
         }
     }
 
+    // ==================== Locale-aware Tests ====================
+
+    @Test
+    fun `getAllCountries with English locale returns English name for US`() {
+        val countries = repository.getAllCountries(java.util.Locale.ENGLISH)
+        val us = countries.find { it.id == "us" }
+        assertNotNull(us)
+        assertEquals(AppConstants.CountryName.UNITED_STATES, us!!.name)
+    }
+
+    @Test
+    fun `getAllCountries with Spanish locale returns non-blank names`() {
+        val countries = repository.getAllCountries(java.util.Locale("es"))
+        assertTrue(countries.isNotEmpty())
+        countries.forEach { country ->
+            assertTrue("Country ${country.id} has blank name in Spanish", country.name.isNotBlank())
+        }
+    }
+
+    @Test
+    fun `getAllCountries with Spanish locale returns different name for US than English`() {
+        val englishCountries = repository.getAllCountries(java.util.Locale.ENGLISH)
+        val spanishCountries = repository.getAllCountries(java.util.Locale("es"))
+
+        val usEnglish = englishCountries.find { it.id == "us" }!!.name
+        val usSpanish = spanishCountries.find { it.id == "us" }!!.name
+
+        // Spanish JVM ICU data provides a different display name for the US than English.
+        assertNotEquals(
+            "Expected Spanish name for US to differ from English",
+            usEnglish, usSpanish
+        )
+    }
+
+    @Test
+    fun `getAllCountries with Spanish locale preserves country ids`() {
+        val englishIds = repository.getAllCountries(java.util.Locale.ENGLISH).map { it.id }.toSet()
+        val spanishIds = repository.getAllCountries(java.util.Locale("es")).map { it.id }.toSet()
+        assertEquals(englishIds, spanishIds)
+    }
+
+    @Test
+    fun `getAllCountries with Spanish locale returns same count as English`() {
+        val englishCount = repository.getAllCountries(java.util.Locale.ENGLISH).size
+        val spanishCount = repository.getAllCountries(java.util.Locale("es")).size
+        assertEquals(englishCount, spanishCount)
+    }
+
+    @Test
+    fun `getCountryById with English locale returns English name`() {
+        val country = repository.getCountryById("jp", java.util.Locale.ENGLISH)
+        assertNotNull(country)
+        assertEquals(AppConstants.CountryName.JAPAN, country!!.name)
+    }
+
+    @Test
+    fun `getCountryById with Spanish locale returns non-blank name`() {
+        val country = repository.getCountryById("jp", java.util.Locale("es"))
+        assertNotNull(country)
+        assertTrue(country!!.name.isNotBlank())
+    }
+
+    @Test
+    fun `getCountryById with Spanish locale returns localized name different from English for Japan`() {
+        val english = repository.getCountryById("jp", java.util.Locale.ENGLISH)!!.name
+        val spanish = repository.getCountryById("jp", java.util.Locale("es"))!!.name
+        assertNotEquals("Expected Spanish name for Japan to differ from English", english, spanish)
+    }
+
+    @Test
+    fun `getCountryById with French locale returns non-blank name`() {
+        val country = repository.getCountryById("de", java.util.Locale("fr"))
+        assertNotNull(country)
+        assertTrue(country!!.name.isNotBlank())
+    }
+
+    @Test
+    fun `getCountryById preserves all non-name fields when localizing`() {
+        val english = repository.getCountryById("us", java.util.Locale.ENGLISH)!!
+        val spanish = repository.getCountryById("us", java.util.Locale("es"))!!
+
+        assertEquals(english.id, spanish.id)
+        assertEquals(english.continent, spanish.continent)
+        assertEquals(english.currency, spanish.currency)
+        assertEquals(english.currencyCode, spanish.currencyCode)
+        assertEquals(english.exchangeRateToUSD, spanish.exchangeRateToUSD, 0.0001)
+        assertEquals(english.safetyLevel, spanish.safetyLevel)
+        assertEquals(english.visaRequirement, spanish.visaRequirement)
+    }
+
+    @Test
+    fun `getCountryById with invalid id returns null regardless of locale`() {
+        assertNull(repository.getCountryById("invalid_id", java.util.Locale.ENGLISH))
+        assertNull(repository.getCountryById("invalid_id", java.util.Locale("es")))
+    }
+
     // ==================== Additional Edge Case Tests ====================
 
     @Test

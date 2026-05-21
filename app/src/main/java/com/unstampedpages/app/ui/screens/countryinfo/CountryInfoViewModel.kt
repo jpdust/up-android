@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import com.unstampedpages.app.data.model.Continent
 import com.unstampedpages.app.data.model.Country
 import com.unstampedpages.app.data.repository.CountryRepository
+import java.util.Locale
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -41,6 +42,10 @@ class CountryInfoViewModel : ViewModel() {
 
     private val repository = CountryRepository()
 
+    // Starts with the JVM/system default; the composable pushes the true app locale
+    // via updateLocale() on first composition and on every subsequent locale change.
+    private var currentLocale: Locale = Locale.getDefault()
+
     private val _uiState = MutableStateFlow(CountryInfoUiState())
     val uiState: StateFlow<CountryInfoUiState> = _uiState.asStateFlow()
 
@@ -48,15 +53,26 @@ class CountryInfoViewModel : ViewModel() {
         loadCountries()
     }
 
+    /**
+     * Called by the composable whenever [LocalConfiguration.current.locales[0]] changes.
+     * Uses the resource-configuration locale, which correctly reflects both system locale
+     * changes and Android 13+ per-app language settings (unlike [Locale.getDefault]).
+     */
+    fun updateLocale(locale: Locale) {
+        if (locale == currentLocale) return
+        currentLocale = locale
+        loadCountries()
+    }
+
     private fun loadCountries() {
         _uiState.value = CountryInfoUiState(
-            countries = repository.getAllCountries(),
+            countries = repository.getAllCountries(currentLocale),
             isLoading = false
         )
     }
 
     fun selectCountry(countryId: String, displayName: String? = null) {
-        val country = repository.getCountryById(countryId)
+        val country = repository.getCountryById(countryId, currentLocale)
         _uiState.value = _uiState.value.copy(
             selectedCountry = country,
             selectedDisplayName = displayName
@@ -71,17 +87,18 @@ class CountryInfoViewModel : ViewModel() {
     }
 
     fun updateSearchQuery(query: String) {
+        val locale = currentLocale
         val results = if (query.isBlank()) {
             emptyList()
         } else {
-            val directMatches = repository.getAllCountries()
+            val directMatches = repository.getAllCountries(locale)
                 .filter { it.name.contains(query, ignoreCase = true) }
                 .map { SearchSuggestion(country = it, displayName = it.name) }
 
-            val territoryMatches = TERRITORY_ALIASES
+            val territoryMatches = getCombinedTerritoryAliases(locale)
                 .filter { (name, _) -> name.contains(query, ignoreCase = true) }
                 .mapNotNull { (name, parentId) ->
-                    repository.getCountryById(parentId)?.let { parent ->
+                    repository.getCountryById(parentId, locale)?.let { parent ->
                         SearchSuggestion(
                             country = parent,
                             displayName = name,
