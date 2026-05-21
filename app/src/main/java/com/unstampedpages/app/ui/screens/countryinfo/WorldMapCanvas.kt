@@ -1,6 +1,7 @@
 package com.unstampedpages.app.ui.screens.countryinfo
 
 import com.unstampedpages.app.data.AppConstants
+import com.unstampedpages.app.data.CountryList
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -57,7 +58,12 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
@@ -134,7 +140,7 @@ internal data class VerticalPanBounds(
 /**
  * Layout dimensions for the map
  */
-private data class MapLayout(
+internal data class MapLayout(
     val mapWidth: Float,
     val mapHeight: Float,
     val canvasOffsetX: Float,
@@ -146,7 +152,7 @@ private data class MapLayout(
 /**
  * Calculate map layout dimensions based on canvas size
  */
-private fun calculateMapLayout(canvasWidth: Float, canvasHeight: Float): MapLayout {
+internal fun calculateMapLayout(canvasWidth: Float, canvasHeight: Float): MapLayout {
     val mapAspectRatio = MercatorProjection.getAspectRatio()
     val canvasAspectRatio = canvasWidth / canvasHeight
 
@@ -244,6 +250,75 @@ internal fun calculateVerticalPanBounds(
 }
 
 /**
+ * Proximity fallback for hit-testing.
+ *
+ * Returns the geoJson country ID (e.g. "SYC") of the closest candidate, or null.
+ * Two kinds of candidates are considered:
+ *
+ *  1. Entire countries whose overall rendered size is ≤ [SMALL_COUNTRY_THRESHOLD_PX] —
+ *     these are drawn as dot markers, so proximity to the country centroid is used.
+ *
+ *  2. Individual island polygons within larger countries (e.g. Seychelles outer islands:
+ *     Aldabra, Farquhar, Amirantes) whose per-polygon rendered size is ≤ the threshold.
+ *     The bbox centre of each such polygon is used as a stand-in centroid.
+ *
+ * The function returns the closest match within [TAP_PROXIMITY_PX] of the tap point,
+ * expressed in normalised [0,1] map coordinates.
+ */
+internal fun proximityFallbackHitTest(
+    normalizedX: Float,
+    normalizedY: Float,
+    countryBounds: Map<String, CountryBounds>,
+    mapWidth: Float,
+    mapHeight: Float,
+    currentScale: Float
+): String? {
+    val tapRadiusNorm = TAP_PROXIMITY_PX / (currentScale * mapWidth)
+    var closestId: String? = null
+    var closestDistSq = tapRadiusNorm * tapRadiusNorm
+
+    for ((countryId, bounds) in countryBounds) {
+        val overallRenderedPx = maxOf(
+            bounds.widthNorm * mapWidth,
+            bounds.heightNorm * mapHeight
+        ) * currentScale
+
+        if (overallRenderedPx <= SMALL_COUNTRY_THRESHOLD_PX) {
+            // Entire country is a dot marker — check proximity to its centroid.
+            val dx = normalizedX - bounds.centroidNormX
+            val dy = normalizedY - bounds.centroidNormY
+            val distSq = dx * dx + dy * dy
+            if (distSq < closestDistSq) {
+                closestDistSq = distSq
+                closestId = countryId
+            }
+        } else {
+            // Country is large overall but may have individual tiny island polygons
+            // (e.g. Seychelles outer islands: Aldabra, Farquhar, Amirantes).
+            // Check proximity to the bbox centre of each polygon below the threshold.
+            for (pb in bounds.polygonBounds) {
+                val pbRenderedPx = maxOf(
+                    (pb.maxX - pb.minX) * mapWidth,
+                    (pb.maxY - pb.minY) * mapHeight
+                ) * currentScale
+                if (pbRenderedPx > SMALL_COUNTRY_THRESHOLD_PX) continue
+
+                val polyCentX = (pb.minX + pb.maxX) / 2f
+                val polyCentY = (pb.minY + pb.maxY) / 2f
+                val dx = normalizedX - polyCentX
+                val dy = normalizedY - polyCentY
+                val distSq = dx * dx + dy * dy
+                if (distSq < closestDistSq) {
+                    closestDistSq = distSq
+                    closestId = countryId
+                }
+            }
+        }
+    }
+    return closestId
+}
+
+/**
  * Pure hit-test function — safe to call on any thread.
  *
  * All mutable state is passed as value parameters so the caller can snapshot them on the
@@ -261,39 +336,37 @@ private fun hitTestCountry(
     geometries: List<CountryGeometry>,
     countryBounds: Map<String, CountryBounds>,
     currentScale: Float
-): String? {
-    val inverseMatrix = android.graphics.Matrix().apply { setValues(matrixValues) }
-    val screenPts = floatArrayOf(position.x, position.y)
-    inverseMatrix.mapPoints(screenPts)
-    val normalizedX = normalizeNormalizedX(screenPts[0] / mapWidth)
-    val normalizedY = screenPts[1] / mapHeight
+): String? = floatArrayOf(position.x, position.y)
+    .also { android.graphics.Matrix().apply { setValues(matrixValues) }.mapPoints(it) }
+    .let { hitTestNormalizedPoint(normalizeNormalizedX(it[0] / mapWidth), it[1] / mapHeight, geometries, countryBounds, mapWidth, mapHeight, currentScale) }
 
+/**
+ * Pure coordinate-space hit test — no Android matrix code, safe to call on any thread
+ * and exercisable from JVM unit tests.
+ *
+ * Given Mercator-normalised coordinates already mapped out of screen space, runs:
+ *  1. Ray-cast against every polygon in [geometries] (exact hit).
+ *  2. [proximityFallbackHitTest] for small dot-marker countries and tiny island
+ *     polygons within larger countries (e.g. Seychelles outer islands).
+ *
+ * Returns the repo country ID (e.g. "sc") or null.
+ */
+internal fun hitTestNormalizedPoint(
+    normalizedX: Float,
+    normalizedY: Float,
+    geometries: List<CountryGeometry>,
+    countryBounds: Map<String, CountryBounds>,
+    mapWidth: Float,
+    mapHeight: Float,
+    currentScale: Float
+): String? {
     // Primary: exact polygon ray-cast
     val geoJsonId = findCountryAtNormalizedPoint(normalizedX, normalizedY, geometries, countryBounds)
     if (geoJsonId != null) return geoJsonToRepoId[geoJsonId]
 
-    // Fallback: proximity to small dot-marker countries
-    val tapRadiusNorm = TAP_PROXIMITY_PX / (currentScale * mapWidth)
-    var closestId: String? = null
-    var closestDistSq = tapRadiusNorm * tapRadiusNorm
-
-    for ((countryId, bounds) in countryBounds) {
-        // Only consider countries rendered as dot markers at this zoom level
-        val renderedPx = maxOf(
-            bounds.widthNorm * mapWidth,
-            bounds.heightNorm * mapHeight
-        ) * currentScale
-        if (renderedPx > SMALL_COUNTRY_THRESHOLD_PX) continue
-
-        val dx = normalizedX - bounds.centroidNormX
-        val dy = normalizedY - bounds.centroidNormY
-        val distSq = dx * dx + dy * dy
-        if (distSq < closestDistSq) {
-            closestDistSq = distSq
-            closestId = countryId
-        }
-    }
-    return closestId?.let { geoJsonToRepoId[it] }
+    // Fallback: proximity to small dot-marker countries and small island polygons
+    val fallbackId = proximityFallbackHitTest(normalizedX, normalizedY, countryBounds, mapWidth, mapHeight, currentScale)
+    return fallbackId?.let { geoJsonToRepoId[it] }
 }
 
 /**
@@ -325,7 +398,11 @@ internal class MapGestureState(
     // Stored here so mapGestures can use pointerInput(Unit) and avoid restarting
     // the gesture coroutine on every color mode toggle.
     var colorMode: MapColorMode = MapColorMode.DEFAULT,
-    var onCompassTapped: () -> Unit = {}
+    var onCompassTapped: () -> Unit = {},
+    // Forward rendering matrix (captured from nativeCanvas inside withTransform for wrapOffset=0).
+    // Used by drawCountryLabels to position labels in the same coordinate space as the polygons,
+    // bypassing any analytic formula that might mis-model the scale pivot or compose order.
+    val forwardMatrix: android.graphics.Matrix = android.graphics.Matrix()
 )
 
 /**
@@ -549,7 +626,13 @@ private data class MapDrawParams(
     val scale: Float,
     val countryBounds: Map<String, CountryBounds>,
     val currentModeColors: Map<String, Color>,
-    val previousModeColors: Map<String, Color>
+    val previousModeColors: Map<String, Color>,
+    /** geoJsonId (3-letter) → display name, pre-computed once per countries-map change. */
+    val countryNames: Map<String, String> = emptyMap(),
+    /** Animated alpha for country name labels; 0 = hidden, 1 = fully visible. */
+    val labelAlpha: Float = 0f,
+    /** Pre-measured text layouts for country name labels. Measured once per name-set change. */
+    val labelTextLayouts: Map<String, TextLayoutResult> = emptyMap()
 )
 
 private data class CountryRenderStyle(
@@ -560,16 +643,107 @@ private data class CountryRenderStyle(
 )
 
 /** Threshold in screen pixels below which a country polygon is replaced by a dot marker */
-private const val SMALL_COUNTRY_THRESHOLD_PX = 8f
+internal const val SMALL_COUNTRY_THRESHOLD_PX = 8f
 
 /** Minimum dot radius in dp for guaranteed-visible small country markers */
 private const val MIN_DOT_RADIUS_DP = 3.5f
 
 /** Tap proximity radius in screen pixels for small country hit detection */
-private const val TAP_PROXIMITY_PX = 20f
+internal const val TAP_PROXIMITY_PX = 20f
 
 /** Extra wrapped world copies to draw just outside the calculated viewport. */
 private const val WRAP_COPY_PADDING = 1
+
+// ── Country label constants ───────────────────────────────────────────────────
+/** Scale at which country name labels begin cross-dissolving into view. */
+internal const val LABEL_SHOW_THRESHOLD = 3f
+
+/**
+ * Country label font size in sp, calibrated at [LABEL_SHOW_THRESHOLD].
+ * Text is drawn in map space, so glyphs grow proportionally with further zoom.
+ */
+internal const val LABEL_TEXT_SP = 10f
+
+/**
+ * Minimum screen-space width (px) a polygon country must span before its label
+ * starts to appear. Countries narrower than this are skipped at the current zoom.
+ */
+internal const val LABEL_MIN_SCREEN_PX = 20f
+
+/**
+ * Screen-space width (px) at which a polygon country label reaches full opacity.
+ * Labels fade linearly from 0 at [LABEL_MIN_SCREEN_PX] to 1 here.
+ */
+internal const val LABEL_FULL_SCREEN_PX = 80f
+
+
+/**
+ * Per-country centroid overrides for labelling.
+ *
+ * The geometric centroid of some countries falls outside their main land mass — e.g. New Zealand
+ * (centroid lands near the Cook Strait between the two main islands) or countries with many
+ * scattered islands. Values are normalised Mercator (X, Y) in [0,1].
+ *
+ * Keys are GeoJSON 3-letter ISO codes (the same key used in [geoJsonToRepoId]).
+ */
+internal val LABEL_CENTROID_OVERRIDES: Map<String, Pair<Float, Float>> by lazy {
+    mapOf(
+        // NZ: geometric centroid drifts south due to outlier sub-Antarctic islands;
+        // override to sit visually between the North and South Islands.
+        "NZL" to (MercatorProjection.longitudeToX(173.0f) to MercatorProjection.latitudeToY(-41.5f)),
+
+        // Kiribati: territory straddles the antimeridian — Gilbert Islands (~174°E),
+        // Phoenix Islands (~172°W) and Line Islands (~157°W) sit on opposite sides of 180°.
+        // Vertex-averaging the normalised X coordinates yields a midpoint near Africa.
+        // Override to the Gilbert Islands (capital Tarawa, ~174°E / 1.5°S), the main
+        // populated group, so the label appears in the central Pacific.
+        "KIR" to (MercatorProjection.longitudeToX(174.0f) to MercatorProjection.latitudeToY(-1.5f))
+    )
+}
+
+/**
+ * Compute the size-based opacity factor for a country label.
+ *
+ * Countries whose bounding box is smaller than [SMALL_COUNTRY_THRESHOLD_PX] are rendered
+ * as dot markers; their labels should always be fully opaque (sizeAlpha = 1f) so the name
+ * appears as soon as the global labelAlpha rises above zero.
+ *
+ * For larger countries the label fades in linearly between [LABEL_MIN_SCREEN_PX] and
+ * [LABEL_FULL_SCREEN_PX]:
+ *   - < [LABEL_MIN_SCREEN_PX]  → 0f (country still too small to label)
+ *   - in range               → linear interpolation clamped to [0, 1]
+ *   - ≥ [LABEL_FULL_SCREEN_PX] → 1f (fully opaque)
+ *
+ * @param screenMaxDim The larger of the country's screen-space width and height in pixels.
+ */
+internal fun computeLabelSizeAlpha(screenMaxDim: Float): Float {
+    if (screenMaxDim < SMALL_COUNTRY_THRESHOLD_PX) return 1f
+    return ((screenMaxDim - LABEL_MIN_SCREEN_PX) / (LABEL_FULL_SCREEN_PX - LABEL_MIN_SCREEN_PX))
+        .coerceIn(0f, 1f)
+}
+
+/**
+ * Build the geoJsonId → display name map used for country labels.
+ *
+ * Lookup order:
+ * 1. [countries] keyed by 2-letter repo id (preferred — shorter common names).
+ * 2. [CountryList] fallback for geometry entries that have no repository counterpart.
+ *
+ * GeoJson IDs with no name in either source are omitted from the result.
+ *
+ * Extracted as a standalone function so it can be unit-tested independently of the
+ * Compose composable that calls it.
+ */
+internal fun buildCountryNames(
+    countries: Map<String, com.unstampedpages.app.data.model.Country>,
+    idMap: Map<String, String> = geoJsonToRepoId
+): Map<String, String> = buildMap {
+    idMap.forEach { (geoId, repoId) ->
+        val name = countries[repoId]?.name
+            ?: CountryList.countries.find { it.code.equals(repoId, ignoreCase = true) }?.englishName
+        if (name != null) put(geoId, name)
+    }
+}
 
 /**
  * Pre-computed Mercator Y and X positions for grid lines, in normalised [0,1] coordinates.
@@ -765,6 +939,39 @@ internal fun calculateHorizontalWrapOffsets(
 }
 
 /**
+ * Select the fill colour for one country polygon.
+ * Extracted so the colour-selection logic can be unit-tested independently of
+ * the [DrawScope] that calls it.
+ */
+internal fun selectCountryFillColor(
+    countryId: String,
+    selectedCountryId: String?,
+    transitionProgress: Float,
+    previousModeColors: Map<String, Color>,
+    currentModeColors: Map<String, Color>
+): Color = when {
+    countryId == selectedCountryId -> MapHighlight
+    transitionProgress < 1f -> lerp(
+        previousModeColors[countryId] ?: MapLand,
+        currentModeColors[countryId] ?: MapLand,
+        transitionProgress
+    )
+    else -> currentModeColors[countryId] ?: MapLand
+}
+
+/**
+ * Return true if a country's largest rendered dimension is below the dot-marker threshold.
+ * Extracted so the size-test logic can be unit-tested independently of [DrawScope].
+ */
+internal fun isCountrySmall(
+    widthNorm: Float,
+    heightNorm: Float,
+    mapWidth: Float,
+    mapHeight: Float,
+    scale: Float
+): Boolean = maxOf(widthNorm * mapWidth * scale, heightNorm * mapHeight * scale) < SMALL_COUNTRY_THRESHOLD_PX
+
+/**
  * Draw a single copy of the map (used for horizontal wrapping).
  * The caller chooses enough horizontal copies to cover the viewport, including
  * padded neighbors to avoid precision gaps while panning at high zoom.
@@ -801,26 +1008,18 @@ private fun DrawScope.drawMapCopy(
         params.geometries.forEach { geometry ->
             val bounds = params.countryBounds[geometry.countryId]
             val isSelected = geometry.countryId == params.selectedCountryId
-            val fillColor = when {
-                isSelected -> MapHighlight
-                useTransition -> {
-                    val prev = params.previousModeColors[geometry.countryId] ?: MapLand
-                    val curr = params.currentModeColors[geometry.countryId] ?: MapLand
-                    lerp(prev, curr, params.transitionProgress)
-                }
-                else -> params.currentModeColors[geometry.countryId] ?: MapLand
-            }
+            val fillColor = selectCountryFillColor(
+                geometry.countryId, params.selectedCountryId, params.transitionProgress,
+                params.previousModeColors, params.currentModeColors
+            )
 
             val path = pathCacheHolder.getOrBuild(
                 geometry = geometry,
                 mapWidth = layout.mapWidth,
                 mapHeight = layout.mapHeight
             )
-            val isSmall = bounds != null && run {
-                val w = bounds.widthNorm * layout.mapWidth * params.scale
-                val h = bounds.heightNorm * layout.mapHeight * params.scale
-                maxOf(w, h) < SMALL_COUNTRY_THRESHOLD_PX
-            }
+            val isSmall = bounds != null &&
+                isCountrySmall(bounds.widthNorm, bounds.heightNorm, layout.mapWidth, layout.mapHeight, params.scale)
             val centroid = if (isSmall) {
                 Offset(bounds.centroidNormX * layout.mapWidth, bounds.centroidNormY * layout.mapHeight)
             } else {
@@ -836,13 +1035,160 @@ private fun DrawScope.drawMapCopy(
             )
         }
 
-        // Capture inverse matrix for tap detection (center copy only)
+        // Capture rendering matrices for tap detection and label positioning (center copy only).
+        // forwardMatrix is saved before inversion so drawCountryLabels can use the same
+        // coordinate mapping as the polygon paths — avoiding any analytic formula error.
         if (wrapOffset == 0f) {
             val matrix = android.graphics.Matrix()
             @Suppress("DEPRECATION") // getMatrix(Matrix) is the non-deprecated overload
             drawContext.canvas.nativeCanvas.getMatrix(matrix)
+            gestureState.forwardMatrix.set(matrix)
             gestureState.matrixValid = matrix.invert(gestureState.inverseMatrix)
         }
+    }
+}
+
+/**
+ * Draw country name labels for one horizontal wrap copy in canvas-local (screen) space.
+ *
+ * Why forward matrix instead of an analytic formula:
+ *   Compose's DrawTransform.scale(s, s) defaults to pivoting around the canvas *center*,
+ *   not the origin. Any analytic formula must account for this pivot and for the exact
+ *   matrix-composition order (pre- vs post-concat). Getting either detail wrong produces
+ *   a systematic offset that is hard to detect without running the app. The forward
+ *   rendering matrix captured from nativeCanvas.getMatrix() inside the withTransform
+ *   embeds ALL of these details automatically — using it to position labels guarantees
+ *   they land in exactly the same coordinate space as the polygon paths.
+ *
+ * Handling wrap copies:
+ *   The forward matrix is captured for wrapOffset = 0. For copy w, the effective
+ *   transform is identical to copy 0 except that the path X coordinates are shifted
+ *   by w × mapWidth (because effectivePanX = panX + w shifts the T2 translate by
+ *   w × mapWidth in path space). Therefore:
+ *     screenPos_w = forwardMatrix * (centNormX + w, centNormY) * (mapWidth, mapHeight)
+ *
+ * Labels are drawn after all map copies so they always render on top of country fills.
+ */
+
+/**
+ * Return true when a label whose centre maps to ([screenX], [screenY]) and whose text
+ * bounding box is [tw] × [th] pixels falls entirely outside the visible canvas.
+ * Extracted so the culling predicate can be unit-tested without a [DrawScope].
+ */
+internal fun isLabelCulled(
+    screenX: Float,
+    screenY: Float,
+    tw: Float,
+    th: Float,
+    canvasWidth: Float,
+    canvasHeight: Float
+): Boolean = screenX < -tw || screenX > canvasWidth + tw || screenY < -th || screenY > canvasHeight + th
+
+/**
+ * Drawing parameters computed for one visible country label.
+ * All values are in screen-pixel space; no framework types are required.
+ */
+internal data class LabelDrawSpec(
+    val topLeft: Offset,
+    val shadowOffset: Float,
+    val shadowColor: Color,
+    val fillColor: Color
+)
+
+/**
+ * Compute [LabelDrawSpec] for every label that should be rendered in one horizontal
+ * wrap copy, without referencing [DrawScope], [Density], or Android framework types.
+ *
+ * [labelTextSizes] maps geoJsonId → (width_px, height_px), derived by the caller from
+ * [TextLayoutResult.size] before calling this function.
+ * [screenMapper] wraps [android.graphics.Matrix.mapPoints] so the Matrix itself stays
+ * in the [DrawScope] caller.
+ *
+ * Returns an empty map when [labelAlpha] < 0.01 or [matrixValid] is false,
+ * matching the early-return logic in [drawCountryLabels].
+ */
+internal fun computeVisibleLabelSpecs(
+    wrapOffset: Float,
+    labelAlpha: Float,
+    matrixValid: Boolean,
+    scale: Float,
+    mapWidth: Float,
+    mapHeight: Float,
+    canvasWidth: Float,
+    canvasHeight: Float,
+    geometries: List<CountryGeometry>,
+    countryBounds: Map<String, CountryBounds>,
+    labelTextSizes: Map<String, Pair<Float, Float>>,
+    screenMapper: (FloatArray) -> Unit
+): Map<String, LabelDrawSpec> {
+    if (labelAlpha < 0.01f || !matrixValid) return emptyMap()
+
+    return buildMap {
+        for (geometry in geometries) {
+            val (tw, th) = labelTextSizes[geometry.countryId] ?: continue
+            val bounds   = countryBounds[geometry.countryId]  ?: continue
+
+            val screenMaxDim = maxOf(
+                bounds.widthNorm  * mapWidth  * scale,
+                bounds.heightNorm * mapHeight * scale
+            )
+            val finalAlpha = labelAlpha * computeLabelSizeAlpha(screenMaxDim)
+            if (finalAlpha < 0.01f) continue
+
+            val (centNormX, centNormY) = LABEL_CENTROID_OVERRIDES[geometry.countryId]
+                ?: (bounds.centroidNormX to bounds.centroidNormY)
+
+            // Map the centroid from path space to screen space via the captured forward matrix.
+            // Adding wrapOffset to centNormX shifts the point one full map width in X,
+            // matching what the withTransform does for each horizontal wrap copy.
+            val pts = floatArrayOf(
+                (centNormX + wrapOffset) * mapWidth,
+                centNormY * mapHeight
+            )
+            screenMapper(pts)
+
+            if (isLabelCulled(pts[0], pts[1], tw, th, canvasWidth, canvasHeight)) continue
+
+            put(geometry.countryId, LabelDrawSpec(
+                topLeft      = Offset(pts[0] - tw / 2f, pts[1] - th / 2f),
+                shadowOffset = th * 0.08f,
+                shadowColor  = Color.Black.copy(alpha = finalAlpha * 0.67f),
+                fillColor    = Color.White.copy(alpha = finalAlpha)
+            ))
+        }
+    }
+}
+
+private fun DrawScope.drawCountryLabels(
+    wrapOffset: Float,
+    layout: MapLayout,
+    params: MapDrawParams,
+    gestureState: MapGestureState
+) {
+    val textSizes = params.labelTextLayouts.mapValues { (_, tl) ->
+        tl.size.width.toFloat() to tl.size.height.toFloat()
+    }
+    val specs = computeVisibleLabelSpecs(
+        wrapOffset    = wrapOffset,
+        labelAlpha    = params.labelAlpha,
+        matrixValid   = gestureState.matrixValid,
+        scale         = params.scale,
+        mapWidth      = layout.mapWidth,
+        mapHeight     = layout.mapHeight,
+        canvasWidth   = layout.canvasWidth,
+        canvasHeight  = layout.canvasHeight,
+        geometries    = params.geometries,
+        countryBounds = params.countryBounds,
+        labelTextSizes = textSizes,
+        screenMapper  = { pts -> gestureState.forwardMatrix.mapPoints(pts) }
+    )
+    for ((countryId, spec) in specs) {
+        val textLayout = params.labelTextLayouts[countryId] ?: continue
+        drawText(textLayout, color = spec.shadowColor, topLeft = spec.topLeft + Offset(0f,              -spec.shadowOffset))
+        drawText(textLayout, color = spec.shadowColor, topLeft = spec.topLeft + Offset(0f,              +spec.shadowOffset))
+        drawText(textLayout, color = spec.shadowColor, topLeft = spec.topLeft + Offset(-spec.shadowOffset, 0f))
+        drawText(textLayout, color = spec.shadowColor, topLeft = spec.topLeft + Offset(+spec.shadowOffset, 0f))
+        drawText(textLayout, color = spec.fillColor,   topLeft = spec.topLeft)
     }
 }
 
@@ -1061,6 +1407,26 @@ fun WorldMapCanvas(
     val drawBounds      = if (isHiRes) boundsHiRes     else boundsLoRes
     val activePathCache = if (isHiRes) pathCacheHiRes  else pathCacheLoRes
 
+    // Pre-compute geoJsonId → display name once per countries-map change.
+    val countryNames = remember(countries) { buildCountryNames(countries) }
+
+    // Animate labels in/out as a cross-dissolve keyed on whether scale has crossed the
+    // show threshold. animateFloatAsState drives Canvas redraws automatically.
+    val labelAlpha by animateFloatAsState(
+        targetValue = if (transform.scale >= LABEL_SHOW_THRESHOLD) 1f else 0f,
+        animationSpec = tween(durationMillis = 400),
+        label = "countryLabelAlpha"
+    )
+
+    // Measure each country name once per name-set change.
+    // TextMeasurer has an internal cache, but pre-measuring here avoids any per-frame
+    // measurement inside the draw loop.
+    val textMeasurer = rememberTextMeasurer()
+    val labelStyle = TextStyle(fontSize = LABEL_TEXT_SP.sp, fontWeight = FontWeight.Bold)
+    val labelTextLayouts = remember(countryNames) {
+        countryNames.mapValues { (_, name) -> textMeasurer.measure(text = name, style = labelStyle) }
+    }
+
     // Don't use remember here — animated values must trigger Canvas redraw on each frame
     val drawParams = MapDrawParams(
         geometries = drawGeometries,
@@ -1069,7 +1435,10 @@ fun WorldMapCanvas(
         scale = transform.scale,
         countryBounds = drawBounds,
         currentModeColors = currentModeColors,
-        previousModeColors = previousModeColors
+        previousModeColors = previousModeColors,
+        countryNames = countryNames,
+        labelAlpha = labelAlpha,
+        labelTextLayouts = labelTextLayouts
     )
 
     Box(
@@ -1103,14 +1472,17 @@ fun WorldMapCanvas(
                 dotRadius = (MIN_DOT_RADIUS_DP.dp.toPx() / scale).coerceAtLeast(1f)
             )
 
-            // Draw enough horizontal copies to cover the viewport at the current zoom.
-            calculateHorizontalWrapOffsets(
+            // Cache wrap offsets — used for both map geometry and label drawing.
+            val wrapOffsets = calculateHorizontalWrapOffsets(
                 panX = transform.panX,
                 scale = transform.scale,
                 mapWidth = layout.mapWidth,
                 canvasOffsetX = layout.canvasOffsetX,
                 canvasWidth = layout.canvasWidth
-            ).forEach { wrapOffset ->
+            )
+
+            // Draw enough horizontal copies to cover the viewport at the current zoom.
+            wrapOffsets.forEach { wrapOffset ->
                 drawMapCopy(
                     wrapOffset = wrapOffset.toFloat(),
                     transform = transform,
@@ -1118,6 +1490,17 @@ fun WorldMapCanvas(
                     params = drawParams,
                     pathCacheHolder = activePathCache,
                     renderStyle = renderStyle,
+                    gestureState = gestureState
+                )
+            }
+
+            // Labels drawn after all map copies so they render on top of every country fill.
+            // Positions are derived from the forward rendering matrix (see drawCountryLabels).
+            wrapOffsets.forEach { wrapOffset ->
+                drawCountryLabels(
+                    wrapOffset = wrapOffset.toFloat(),
+                    layout = layout,
+                    params = drawParams,
                     gestureState = gestureState
                 )
             }
@@ -1361,29 +1744,73 @@ private fun DrawScope.drawCompassRose() {
 }
 
 /**
+ * Compute how many zoom-indicator bars to show for the given [scale].
+ * Maps the range (1, 200] linearly onto [1, 5].
+ * Extracted so the bar-count formula can be unit-tested without a [DrawScope].
+ */
+internal fun computeZoomBarCount(scale: Float): Int =
+    ((scale - 1f) / (200f - 1f) * 5f).toInt().coerceIn(1, 5)
+
+/**
+ * Screen-space geometry for one zoom-indicator bar.
+ */
+internal data class ZoomBarSpec(
+    val topLeftX: Float,
+    val topLeftY: Float,
+    val width: Float,
+    val height: Float
+)
+
+/**
+ * Compute the list of [ZoomBarSpec]s to draw for the zoom indicator, given
+ * already-resolved pixel sizes from the caller's [DrawScope]/[Density] context.
+ *
+ * Returns null when [scale] ≤ 1.1 (the indicator is hidden at 1× zoom).
+ * Extracted so bar geometry can be verified in JVM unit tests without a [DrawScope].
+ */
+internal fun computeZoomBarSpecs(
+    scale: Float,
+    canvasHeight: Float,
+    xPx: Float,
+    yOffsetPx: Float,
+    barWidthPx: Float,
+    barSpacingPx: Float,
+    maxBarHeightPx: Float
+): List<ZoomBarSpec>? {
+    if (scale <= 1.1f) return null
+    val barCount = computeZoomBarCount(scale)
+    val baseY    = canvasHeight - yOffsetPx
+    return List(barCount) { i ->
+        val barHeight = maxBarHeightPx * (i + 1) / 5f
+        ZoomBarSpec(
+            topLeftX = xPx + i * (barWidthPx + barSpacingPx),
+            topLeftY = baseY - barHeight,
+            width    = barWidthPx,
+            height   = barHeight
+        )
+    }
+}
+
+/**
  * Draw zoom level indicator.
  */
 private fun DrawScope.drawZoomIndicator(scale: Float) {
-    if (scale > 1.1f) {
-        val x = 12.dp.toPx()
-        val y = size.height - 12.dp.toPx()
-
-        // Zoom indicator bars (more bars = more zoom)
-        // Max zoom is 200x, so scale appropriately for 5 bars
-        val barCount = ((scale - 1f) / (200f - 1f) * 5f).toInt().coerceIn(1, 5)
-        val barWidth = 4.dp.toPx()
-        val barSpacing = 3.dp.toPx()
-        val maxBarHeight = 16.dp.toPx()
-
-        for (i in 0 until barCount) {
-            val barHeight = maxBarHeight * (i + 1) / 5f
-            drawRoundRect(
-                color = Color(0xCCFFFFFF),
-                topLeft = Offset(x + i * (barWidth + barSpacing), y - barHeight),
-                size = Size(barWidth, barHeight),
-                cornerRadius = androidx.compose.ui.geometry.CornerRadius(2.dp.toPx())
-            )
-        }
+    val specs = computeZoomBarSpecs(
+        scale, size.height,
+        xPx          = 12.dp.toPx(),
+        yOffsetPx    = 12.dp.toPx(),
+        barWidthPx   = 4.dp.toPx(),
+        barSpacingPx = 3.dp.toPx(),
+        maxBarHeightPx = 16.dp.toPx()
+    ) ?: return
+    val cornerRadius = androidx.compose.ui.geometry.CornerRadius(2.dp.toPx())
+    for (spec in specs) {
+        drawRoundRect(
+            color        = Color(0xCCFFFFFF),
+            topLeft      = Offset(spec.topLeftX, spec.topLeftY),
+            size         = Size(spec.width, spec.height),
+            cornerRadius = cornerRadius
+        )
     }
 }
 
