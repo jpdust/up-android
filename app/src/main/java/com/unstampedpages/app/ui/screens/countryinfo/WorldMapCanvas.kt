@@ -35,7 +35,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -310,7 +309,7 @@ internal fun normalizeNormalizedX(x: Float): Float {
 /**
  * State holder for map gesture handling
  */
-private class MapGestureState(
+internal class MapGestureState(
     var geometries: List<CountryGeometry>,
     val inverseMatrix: android.graphics.Matrix,
     var matrixValid: Boolean = false,
@@ -322,7 +321,11 @@ private class MapGestureState(
     var compassCenterY: Float = 0f,
     var compassRadius: Float = 0f,
     var countryBounds: Map<String, CountryBounds> = emptyMap(),
-    var currentScale: Float = 1f
+    var currentScale: Float = 1f,
+    // Stored here so mapGestures can use pointerInput(Unit) and avoid restarting
+    // the gesture coroutine on every color mode toggle.
+    var colorMode: MapColorMode = MapColorMode.DEFAULT,
+    var onCompassTapped: () -> Unit = {}
 )
 
 /**
@@ -410,17 +413,19 @@ private data class TapConfig(
 )
 
 /**
- * Modifier extension for map gesture handling (pan, zoom, tap)
+ * Modifier extension for map gesture handling (pan, zoom, tap).
+ *
+ * Keyed on [Unit] so the coroutine is never restarted when the color mode changes.
+ * Color mode and compass callback are read from [gestureState] which is updated
+ * each recomposition — no restart needed to pick up the new values.
  */
 private fun Modifier.mapGestures(
     gestureState: MapGestureState,
     currentTransform: () -> TransformState,
     onTransformChange: (TransformState) -> Unit,
     onCountryTapped: (String?) -> Unit,
-    colorMode: MapColorMode,
-    onCompassTapped: () -> Unit,
     tapConfig: TapConfig
-): Modifier = this.pointerInput(colorMode) {
+): Modifier = this.pointerInput(Unit) {
     var tapJob: Job? = null
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false)
@@ -451,8 +456,8 @@ private fun Modifier.mapGestures(
 
         if (!wasDragged) {
             // Check if compass was tapped (only for non-default modes)
-            if (colorMode != MapColorMode.DEFAULT && gestureState.isCompassTap(downPosition)) {
-                onCompassTapped()
+            if (gestureState.colorMode != MapColorMode.DEFAULT && gestureState.isCompassTap(downPosition)) {
+                gestureState.onCompassTapped()
             } else if (gestureState.isReadyForHitTest()) {
                 // Snapshot all mutable state on the main thread before dispatching.
                 // android.graphics.Matrix is not thread-safe — copy its 9 float values.
@@ -565,6 +570,19 @@ private const val TAP_PROXIMITY_PX = 20f
 
 /** Extra wrapped world copies to draw just outside the calculated viewport. */
 private const val WRAP_COPY_PADDING = 1
+
+/**
+ * Pre-computed Mercator Y and X positions for grid lines, in normalised [0,1] coordinates.
+ * Computed once at first use — eliminates ln/tan/atan transcendental calls on every draw frame.
+ * Each pair is (normalisedPosition, isMajorLine).
+ */
+internal val GRID_POSITIONS: Pair<List<Pair<Float, Boolean>>, List<Pair<Float, Boolean>>> by lazy {
+    val latYs = listOf(-80f, -60f, -40f, -20f, 0f, 20f, 40f, 60f, 80f)
+        .map { lat -> MercatorProjection.latitudeToY(lat) to (lat == 0f) }
+    val lngXs = listOf(-180f, -150f, -120f, -90f, -60f, -30f, 0f, 30f, 60f, 90f, 120f, 150f, 180f)
+        .map { lng -> MercatorProjection.longitudeToX(lng) to (lng == 0f) }
+    latYs to lngXs
+}
 
 /**
  * LOD hysteresis thresholds.
@@ -983,33 +1001,46 @@ fun WorldMapCanvas(
     val gestureState = remember { MapGestureState(geometriesHiRes, android.graphics.Matrix()) }
     gestureState.geometries = geometriesHiRes
     gestureState.countryBounds = boundsHiRes
+    // Keep colorMode and compass callback current so mapGestures (keyed on Unit) never needs
+    // to restart its coroutine when either value changes — reads happen at tap time.
+    gestureState.colorMode = colorMode
+    gestureState.onCompassTapped = legendConfig.onCompassTapped
 
     // Separate path caches per resolution — both use countryId as key, so they must
     // not share a cache or they'd collide when the same ID maps to different geometry.
     val pathCacheHiRes = remember { PathCacheHolder() }
     val pathCacheLoRes = remember { PathCacheHolder() }
 
-    // Animation state for color mode transitions
+    // Animation state for color mode transitions.
+    //
+    // Why Animatable instead of animateFloatAsState:
+    //   animateFloatAsState required resetting targetValue to 0f inside finishedListener,
+    //   which triggered a spurious 400 ms reverse animation after every toggle.
+    //
+    // Why initialized at 0f (not 1f):
+    //   LaunchedEffect runs one frame after colorMode first changes. If the animatable
+    //   starts at 1f, that first frame has transitionProgress=1 → useTransition=false →
+    //   the new colors render immediately (visible flash) before the cross-dissolve begins.
+    //   Starting at 0f means the first frame correctly shows the OLD colors (lerp at 0),
+    //   and the LaunchedEffect then animates 0→1 for the smooth dissolve.
+    //
+    // Why snapTo(0f) at the end of each animation:
+    //   Resets the animatable so the NEXT toggle's first frame also starts at 0.
     var previousColorMode by remember { mutableStateOf(colorMode) }
-    var animationTarget by remember { mutableFloatStateOf(0f) }
+    val transitionAnimatable = remember { androidx.compose.animation.core.Animatable(0f) }
 
     LaunchedEffect(colorMode) {
         if (colorMode != previousColorMode) {
-            animationTarget = 1f
+            transitionAnimatable.snapTo(0f)
+            transitionAnimatable.animateTo(1f, tween(durationMillis = 400))
+            previousColorMode = colorMode
+            transitionAnimatable.snapTo(0f)  // Ready for the next toggle; no animation
         }
     }
 
-    val animationProgress by animateFloatAsState(
-        targetValue = animationTarget,
-        animationSpec = tween(durationMillis = 400),
-        finishedListener = {
-            previousColorMode = colorMode
-            animationTarget = 0f  // Reset for next transition
-        },
-        label = "colorModeTransition"
-    )
-
-    val transitionProgress = if (previousColorMode == colorMode) 1f else animationProgress
+    // When no transition is active (previous == current), short-circuit to 1f so the
+    // draw path skips the per-country lerp entirely.
+    val transitionProgress = if (previousColorMode == colorMode) 1f else transitionAnimatable.value
 
     // Pre-compute fill colors for all countries — O(240) work, cached until mode or countries change.
     // Eliminates per-country per-frame branching in the hot draw path.
@@ -1104,8 +1135,6 @@ fun WorldMapCanvas(
                     currentTransform = { currentTransform },
                     onTransformChange = { transform = it },
                     onCountryTapped = onCountryTapped,
-                    colorMode = colorMode,
-                    onCompassTapped = legendConfig.onCompassTapped,
                     tapConfig = TapConfig(scope = tapScope)
                 )
         )
@@ -1249,12 +1278,11 @@ private fun DrawScope.drawMercatorGrid(mapWidth: Float, mapHeight: Float, scale:
     val lineWidth = (0.3f.dp.toPx() / scale).coerceAtLeast(0.1f.dp.toPx())
     val majorLineWidth = (0.6f.dp.toPx() / scale).coerceAtLeast(0.15f.dp.toPx())
 
-    // Latitude lines (every 20 degrees)
-    val latitudes = listOf(-80f, -60f, -40f, -20f, 0f, 20f, 40f, 60f, 80f)
-    latitudes.forEach { lat ->
-        val y = MercatorProjection.latitudeToY(lat) * mapHeight
-        val isMajor = lat == 0f
+    val (latYs, lngXs) = GRID_POSITIONS
 
+    // Latitude lines (every 20 degrees) — positions pre-computed, no transcendental calls per frame
+    latYs.forEach { (normY, isMajor) ->
+        val y = normY * mapHeight
         drawLine(
             color = if (isMajor) majorGridColor else gridColor,
             start = Offset(0f, y),
@@ -1263,12 +1291,9 @@ private fun DrawScope.drawMercatorGrid(mapWidth: Float, mapHeight: Float, scale:
         )
     }
 
-    // Longitude lines (every 30 degrees)
-    val longitudes = listOf(-180f, -150f, -120f, -90f, -60f, -30f, 0f, 30f, 60f, 90f, 120f, 150f, 180f)
-    longitudes.forEach { lng ->
-        val x = MercatorProjection.longitudeToX(lng) * mapWidth
-        val isMajor = lng == 0f
-
+    // Longitude lines (every 30 degrees) — positions pre-computed
+    lngXs.forEach { (normX, isMajor) ->
+        val x = normX * mapWidth
         drawLine(
             color = if (isMajor) majorGridColor else gridColor,
             start = Offset(x, 0f),

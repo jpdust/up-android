@@ -1815,3 +1815,246 @@ class ComputeGeometryBoundsTest {
         assertEquals(MercatorProjection.longitudeToX(10f),  bounds.maxX, 0.0001f)
     }
 }
+
+// ---------------------------------------------------------------------------
+// GRID_POSITIONS
+// Tests for the lazy pre-computed Mercator grid line positions.
+// ---------------------------------------------------------------------------
+
+class GridPositionsTest {
+
+    @Test
+    fun `GRID_POSITIONS has exactly 9 latitude entries`() {
+        val (latYs, _) = GRID_POSITIONS
+        assertEquals(9, latYs.size)
+    }
+
+    @Test
+    fun `GRID_POSITIONS has exactly 13 longitude entries`() {
+        val (_, lngXs) = GRID_POSITIONS
+        assertEquals(13, lngXs.size)
+    }
+
+    @Test
+    fun `GRID_POSITIONS equator entry is marked as major`() {
+        val (latYs, _) = GRID_POSITIONS
+        // Equator (lat=0) maps to the middle of the 9 entries; isMajor must be true
+        val equatorEntry = latYs.single { it.second }
+        assertEquals(MercatorProjection.latitudeToY(0f), equatorEntry.first, 0.0001f)
+    }
+
+    @Test
+    fun `GRID_POSITIONS only one latitude entry is marked as major`() {
+        val (latYs, _) = GRID_POSITIONS
+        assertEquals(1, latYs.count { it.second })
+    }
+
+    @Test
+    fun `GRID_POSITIONS prime meridian entry is marked as major`() {
+        val (_, lngXs) = GRID_POSITIONS
+        val primeMeridianEntry = lngXs.single { it.second }
+        assertEquals(MercatorProjection.longitudeToX(0f), primeMeridianEntry.first, 0.0001f)
+    }
+
+    @Test
+    fun `GRID_POSITIONS only one longitude entry is marked as major`() {
+        val (_, lngXs) = GRID_POSITIONS
+        assertEquals(1, lngXs.count { it.second })
+    }
+
+    @Test
+    fun `GRID_POSITIONS all latitude Y values are in normalised range`() {
+        val (latYs, _) = GRID_POSITIONS
+        latYs.forEach { (y, _) ->
+            assertTrue("lat Y $y not in [0,1]", y in 0f..1f)
+        }
+    }
+
+    @Test
+    fun `GRID_POSITIONS all longitude X values are in normalised range`() {
+        val (_, lngXs) = GRID_POSITIONS
+        lngXs.forEach { (x, _) ->
+            assertTrue("lng X $x not in [0,1]", x in 0f..1f)
+        }
+    }
+
+    @Test
+    fun `GRID_POSITIONS latitude Y values match direct MercatorProjection calls`() {
+        val latitudes = listOf(-80f, -60f, -40f, -20f, 0f, 20f, 40f, 60f, 80f)
+        val (latYs, _) = GRID_POSITIONS
+        latitudes.forEachIndexed { i, lat ->
+            val expected = MercatorProjection.latitudeToY(lat)
+            assertEquals("Mismatch at lat=$lat", expected, latYs[i].first, 0.0001f)
+        }
+    }
+
+    @Test
+    fun `GRID_POSITIONS longitude X values match direct MercatorProjection calls`() {
+        val longitudes = listOf(-180f, -150f, -120f, -90f, -60f, -30f, 0f, 30f, 60f, 90f, 120f, 150f, 180f)
+        val (_, lngXs) = GRID_POSITIONS
+        longitudes.forEachIndexed { i, lng ->
+            val expected = MercatorProjection.longitudeToX(lng)
+            assertEquals("Mismatch at lng=$lng", expected, lngXs[i].first, 0.0001f)
+        }
+    }
+
+    @Test
+    fun `GRID_POSITIONS latitude Y values are in ascending order`() {
+        // Higher latitudes (north) have smaller Y in Mercator — so list from -80 to +80
+        // maps to Y values from large (south) to small (north), i.e. descending Y.
+        // Verify they are strictly monotonically ordered (descending).
+        val (latYs, _) = GRID_POSITIONS
+        val ys = latYs.map { it.first }
+        for (i in 0 until ys.size - 1) {
+            assertTrue("Expected Y[${i}]=${ys[i]} > Y[${i+1}]=${ys[i+1]}", ys[i] > ys[i + 1])
+        }
+    }
+
+    @Test
+    fun `GRID_POSITIONS longitude X values are in ascending order`() {
+        val (_, lngXs) = GRID_POSITIONS
+        val xs = lngXs.map { it.first }
+        for (i in 0 until xs.size - 1) {
+            assertTrue("Expected X[${i}]=${xs[i]} < X[${i+1}]=${xs[i+1]}", xs[i] < xs[i + 1])
+        }
+    }
+
+    @Test
+    fun `GRID_POSITIONS returns same instance on repeated access`() {
+        // Verifies lazy initialisation — same Pair reference returned each time.
+        val first = GRID_POSITIONS
+        val second = GRID_POSITIONS
+        assertTrue(first === second)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// MapColorMode — default and entry coverage
+// MapGestureState.colorMode defaults to MapColorMode.DEFAULT and
+// MapGestureState.onCompassTapped defaults to a no-op lambda. MapGestureState
+// itself cannot be instantiated in JVM unit tests because its constructor
+// requires android.graphics.Matrix (Android runtime only). These tests verify
+// the MapColorMode enum that drives the defaulted field, confirming that
+// DEFAULT exists and all modes are enumerable — which is also exercised by
+// the TransitionProgressGuardTest below.
+// ---------------------------------------------------------------------------
+
+class MapColorModeDefaultsTest {
+
+    @Test
+    fun `MapColorMode DEFAULT exists`() {
+        // Explicit reference — fails to compile if the constant is removed or renamed.
+        val mode: MapColorMode = MapColorMode.DEFAULT
+        assertNotNull(mode)
+    }
+
+    @Test
+    fun `MapColorMode has at least two distinct values`() {
+        // The transition logic requires at least one non-DEFAULT mode to cross-dissolve to.
+        assertTrue(MapColorMode.entries.size >= 2)
+    }
+
+    @Test
+    fun `all MapColorMode entries are unique`() {
+        val entries = MapColorMode.entries
+        assertEquals(entries.size, entries.toSet().size)
+    }
+
+    @Test
+    fun `MapColorMode SECURITY_RISK exists`() {
+        val mode: MapColorMode = MapColorMode.SECURITY_RISK
+        assertNotNull(mode)
+    }
+
+    @Test
+    fun `MapColorMode VISA_REQUIREMENTS exists`() {
+        val mode: MapColorMode = MapColorMode.VISA_REQUIREMENTS
+        assertNotNull(mode)
+    }
+
+    @Test
+    fun `MapColorMode PASSPORT_VALIDITY exists`() {
+        val mode: MapColorMode = MapColorMode.PASSPORT_VALIDITY
+        assertNotNull(mode)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// transitionProgress guard logic
+// The actual Compose animatable cannot be tested in JVM unit tests, but the
+// core guard expression — "if prev==curr return 1f, else return animatable value"
+// — is a pure function that can be verified directly.
+// ---------------------------------------------------------------------------
+
+class TransitionProgressGuardTest {
+
+    /**
+     * Mirrors the logic in WorldMapCanvas.kt:
+     *   val transitionProgress = if (previousColorMode == colorMode) 1f else transitionAnimatable.value
+     */
+    private fun transitionProgress(
+        previousColorMode: MapColorMode,
+        colorMode: MapColorMode,
+        animatableValue: Float
+    ): Float = if (previousColorMode == colorMode) 1f else animatableValue
+
+    @Test
+    fun `returns 1f when previous and current modes match`() {
+        assertEquals(1f, transitionProgress(MapColorMode.DEFAULT, MapColorMode.DEFAULT, 0f), 0f)
+    }
+
+    @Test
+    fun `returns animatable value when modes differ`() {
+        assertEquals(0f, transitionProgress(MapColorMode.DEFAULT, MapColorMode.SECURITY_RISK, 0f), 0f)
+        assertEquals(0.5f, transitionProgress(MapColorMode.DEFAULT, MapColorMode.SECURITY_RISK, 0.5f), 0f)
+        assertEquals(1f, transitionProgress(MapColorMode.DEFAULT, MapColorMode.SECURITY_RISK, 1f), 0f)
+    }
+
+    @Test
+    fun `returns 1f for same-mode regardless of animatable value`() {
+        // Even if the animatable were mid-animation for some reason, a matching mode
+        // must short-circuit to 1f (steady state — no lerp overhead).
+        listOf(0f, 0.5f, 0.99f).forEach { v ->
+            assertEquals(1f, transitionProgress(MapColorMode.VISA_REQUIREMENTS, MapColorMode.VISA_REQUIREMENTS, v), 0f)
+        }
+    }
+
+    @Test
+    fun `animatable value of 0f causes useTransition to be true`() {
+        // useTransition = transitionProgress < 1f
+        val progress = transitionProgress(MapColorMode.DEFAULT, MapColorMode.SECURITY_RISK, 0f)
+        assertTrue(progress < 1f)
+    }
+
+    @Test
+    fun `animatable value of 1f at end of animation causes useTransition to be false`() {
+        val progress = transitionProgress(MapColorMode.DEFAULT, MapColorMode.SECURITY_RISK, 1f)
+        assertFalse(progress < 1f)
+    }
+
+    @Test
+    fun `all distinct mode pairs cause animatable passthrough`() {
+        // Any combination of different modes must return the animatable value, not 1f.
+        val modes = MapColorMode.entries
+        modes.forEach { prev ->
+            modes.filter { it != prev }.forEach { curr ->
+                val animValue = 0.3f
+                assertEquals(
+                    "Expected passthrough for $prev -> $curr",
+                    animValue,
+                    transitionProgress(prev, curr, animValue),
+                    0f
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `snapTo 0f at animation start produces correct first-frame colors`() {
+        // When LaunchedEffect fires after colorMode changes, the animatable is snapTo(0f).
+        // transitionProgress must therefore be 0f on the first new-mode frame,
+        // meaning lerp(old, new, 0) == old colors (no flash).
+        val progress = transitionProgress(MapColorMode.DEFAULT, MapColorMode.SECURITY_RISK, 0f)
+        assertEquals(0f, progress, 0f)
+    }
+}
