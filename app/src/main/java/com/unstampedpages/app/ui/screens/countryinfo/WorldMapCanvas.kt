@@ -281,13 +281,19 @@ private fun closestIslandDistSq(
     mapHeight: Float,
     currentScale: Float
 ): Float {
+    // Use 2× the tap-proximity radius as the "too small to ray-cast reliably" threshold.
+    // A polygon ≤ (2 * TAP_PROXIMITY_PX) wide fits inside one finger-tap diameter, so a
+    // tap anywhere on it is guaranteed to be within TAP_PROXIMITY_PX of the bbox centre.
+    // This is intentionally larger than SMALL_COUNTRY_THRESHOLD_PX (which drives rendering)
+    // so that isolated territories like Easter Island (Chile) are tappable at moderate zoom.
+    val islandTapThresholdPx = TAP_PROXIMITY_PX * 2f
     var minDistSq = Float.MAX_VALUE
     for (pb in polygonBounds) {
         val pbRenderedPx = maxOf(
             (pb.maxX - pb.minX) * mapWidth,
             (pb.maxY - pb.minY) * mapHeight
         ) * currentScale
-        if (pbRenderedPx > SMALL_COUNTRY_THRESHOLD_PX) continue
+        if (pbRenderedPx > islandTapThresholdPx) continue
         val dx = normalizedX - (pb.minX + pb.maxX) / 2f
         val dy = normalizedY - (pb.minY + pb.maxY) / 2f
         val d = dx * dx + dy * dy
@@ -810,6 +816,9 @@ internal data class PolygonBounds(
 internal data class CountryBounds(
     val centroidNormX: Float,
     val centroidNormY: Float,
+    /** Centroid of the largest polygon by bounding-box area; used for label placement. */
+    val labelCentroidNormX: Float,
+    val labelCentroidNormY: Float,
     val minX: Float,
     val maxX: Float,
     val minY: Float,
@@ -818,6 +827,25 @@ internal data class CountryBounds(
 ) {
     val widthNorm: Float get() = maxX - minX
     val heightNorm: Float get() = maxY - minY
+
+    /**
+     * Convenience constructor for single-landmass cases (tests, degenerate geometries)
+     * where the label centroid equals the overall centroid.
+     */
+    constructor(
+        centroidNormX: Float,
+        centroidNormY: Float,
+        minX: Float,
+        maxX: Float,
+        minY: Float,
+        maxY: Float,
+        polygonBounds: List<PolygonBounds> = emptyList()
+    ) : this(
+        centroidNormX, centroidNormY,
+        centroidNormX, centroidNormY,
+        minX, maxX, minY, maxY,
+        polygonBounds
+    )
 }
 
 /**
@@ -901,16 +929,33 @@ internal fun computePolygonBounds(polygon: List<LatLng>): PolygonBounds {
 internal fun computeGeometryBounds(geometry: CountryGeometry): CountryBounds {
     val polygonBoundsList = mutableListOf<PolygonBounds>()
     val global = BoundsAccumulator()
-    for (polygon in geometry.polygons) {
-        polygonBoundsList.add(computePolygonBounds(polygon))
+    var largestArea = -1f
+    var largestPolygonIndex = 0
+    for ((index, polygon) in geometry.polygons.withIndex()) {
+        val pb = computePolygonBounds(polygon)
+        polygonBoundsList.add(pb)
+        val area = (pb.maxX - pb.minX) * (pb.maxY - pb.minY)
+        if (area > largestArea) {
+            largestArea = area
+            largestPolygonIndex = index
+        }
         for (point in polygon) {
             global.addPoint(MercatorProjection.longitudeToX(point.lng), MercatorProjection.latitudeToY(point.lat))
         }
     }
     return if (global.isValid) {
+        // Compute label centroid from the largest polygon so multi-part countries
+        // (e.g. USA, France, NZL) place their label on the main landmass rather
+        // than at the vertex-weighted mean of all territories combined.
+        val labelAcc = BoundsAccumulator()
+        for (point in geometry.polygons[largestPolygonIndex]) {
+            labelAcc.addPoint(MercatorProjection.longitudeToX(point.lng), MercatorProjection.latitudeToY(point.lat))
+        }
         CountryBounds(
             centroidNormX = global.sumX / global.count,
             centroidNormY = global.sumY / global.count,
+            labelCentroidNormX = labelAcc.sumX / labelAcc.count,
+            labelCentroidNormY = labelAcc.sumY / labelAcc.count,
             minX = global.minX, maxX = global.maxX,
             minY = global.minY, maxY = global.maxY,
             polygonBounds = polygonBoundsList
@@ -1159,7 +1204,7 @@ internal fun computeVisibleLabelSpecs(
             if (finalAlpha < 0.01f) continue
 
             val (centNormX, centNormY) = LABEL_CENTROID_OVERRIDES[geometry.countryId]
-                ?: (bounds.centroidNormX to bounds.centroidNormY)
+                ?: (bounds.labelCentroidNormX to bounds.labelCentroidNormY)
 
             // Map the centroid from path space to screen space via the captured forward matrix.
             // Adding wrapOffset to centNormX shifts the point one full map width in X,

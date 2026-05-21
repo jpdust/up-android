@@ -1821,6 +1821,49 @@ class ComputeGeometryBoundsTest {
         assertEquals(MercatorProjection.longitudeToX(-10f), bounds.minX, 0.0001f)
         assertEquals(MercatorProjection.longitudeToX(10f),  bounds.maxX, 0.0001f)
     }
+
+    @Test
+    fun `single polygon label centroid equals overall centroid`() {
+        val geometry = com.unstampedpages.app.data.model.CountryGeometry("sq", listOf(squarePolygon))
+        val bounds = computeGeometryBounds(geometry)
+        assertEquals(bounds.centroidNormX, bounds.labelCentroidNormX, 0.0001f)
+        assertEquals(bounds.centroidNormY, bounds.labelCentroidNormY, 0.0001f)
+    }
+
+    @Test
+    fun `multipolygon label centroid comes from the largest polygon not the overall centroid`() {
+        // Large polygon centred near (0, 0); small outlier polygon far to the east.
+        // The overall centroid is pulled east; the label centroid should stay near (0, 0).
+        val smallEastPolygon = listOf(
+            latLng(1f, 170f), latLng(1f, 175f),
+            latLng(-1f, 175f), latLng(-1f, 170f)
+        )
+        val geometry = com.unstampedpages.app.data.model.CountryGeometry(
+            "usa-like", listOf(squarePolygon, smallEastPolygon)
+        )
+        val bounds = computeGeometryBounds(geometry)
+        // squarePolygon is the larger bounding box → label centroid is its centroid
+        val mainCx = MercatorProjection.longitudeToX(0f)
+        assertEquals(mainCx, bounds.labelCentroidNormX, 0.01f)
+        // Overall centroid is pulled toward the east outlier and differs from label centroid
+        assertTrue(bounds.centroidNormX > bounds.labelCentroidNormX)
+    }
+
+    @Test
+    fun `label centroid is from the largest polygon even when it is not the first`() {
+        // Put a tiny polygon first, then the large square second.
+        val tinyPolygon = listOf(
+            latLng(1f, 170f), latLng(1f, 171f),
+            latLng(0f, 171f), latLng(0f, 170f)
+        )
+        val geometry = com.unstampedpages.app.data.model.CountryGeometry(
+            "reversed", listOf(tinyPolygon, squarePolygon)
+        )
+        val bounds = computeGeometryBounds(geometry)
+        // squarePolygon is still largest → label centroid matches its centroid
+        val mainCx = MercatorProjection.longitudeToX(0f)
+        assertEquals(mainCx, bounds.labelCentroidNormX, 0.01f)
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -2690,13 +2733,29 @@ class ProximityFallbackHitTestTest {
 
     @Test
     fun `archipelago tap on large polygon does not trigger fallback because ray-cast handles it`() {
-        // Polygon large enough that renderedPx > SMALL_COUNTRY_THRESHOLD_PX — should be skipped
-        val bigHalfNorm = (SMALL_COUNTRY_THRESHOLD_PX * 2f) / mapWidth
+        // Polygon large enough that renderedPx > TAP_PROXIMITY_PX * 2 — should be skipped.
+        // Half-width produces a full rendered dim of TAP_PROXIMITY_PX * 3 = 60px > 40px threshold.
+        val bigHalfNorm = (TAP_PROXIMITY_PX * 1.5f) / mapWidth  // half of 60px
         val bigPoly = PolygonBounds(0.4f - bigHalfNorm, 0.4f + bigHalfNorm, 0.4f - bigHalfNorm, 0.4f + bigHalfNorm)
         val bounds = archipelagoBounds(smallIslands = listOf(bigPoly))
         // Tap exactly on the big polygon centre — fallback skips it, so returns null
         val result = proximityFallbackHitTest(0.4f, 0.4f, mapOf("SYC" to bounds), mapWidth, mapHeight, 1f)
         assertNull(result)
+    }
+
+    @Test
+    fun `isolated territory between old and new threshold is now tappable via proximity`() {
+        // Simulates Easter Island: a tiny polygon of a large country that rendered at ~20px
+        // (above old SMALL_COUNTRY_THRESHOLD_PX=8px but below new TAP_PROXIMITY_PX*2=40px).
+        val islandHalfNorm = (TAP_PROXIMITY_PX * 0.9f) / mapWidth  // half of 18px → full dim = 36px < 40px
+        val islandPoly = PolygonBounds(
+            0.2f - islandHalfNorm, 0.2f + islandHalfNorm,
+            0.5f - islandHalfNorm, 0.5f + islandHalfNorm
+        )
+        val bounds = archipelagoBounds(smallIslands = listOf(islandPoly))
+        // Tap exactly on the island bbox centre
+        val result = proximityFallbackHitTest(0.2f, 0.5f, mapOf("CHL" to bounds), mapWidth, mapHeight, 1f)
+        assertEquals("CHL", result)
     }
 
     @Test
@@ -2712,6 +2771,8 @@ class ProximityFallbackHitTestTest {
 
     @Test
     fun `archipelago with mixed large and tiny polygons — only tiny triggers fallback`() {
+        // bigHalfNorm produces full dim = TAP_PROXIMITY_PX * 3 * 2 / mapWidth * mapWidth
+        //   = SMALL_COUNTRY_THRESHOLD_PX * 6 = 48px > TAP_PROXIMITY_PX * 2 (40px) → excluded
         val bigHalfNorm  = (SMALL_COUNTRY_THRESHOLD_PX * 3f) / mapWidth
         val bigPoly  = PolygonBounds(0.7f - bigHalfNorm, 0.7f + bigHalfNorm, 0.5f - bigHalfNorm, 0.5f + bigHalfNorm)
         val tinyIsland = tinyPoly(0.2f, 0.5f)
@@ -2719,7 +2780,7 @@ class ProximityFallbackHitTestTest {
         // Tap on the tiny island — only it should match
         val result = proximityFallbackHitTest(0.2f, 0.5f, mapOf("SYC" to bounds), mapWidth, mapHeight, 1f)
         assertEquals("SYC", result)
-        // Tap on the big polygon area — fallback skips it, returns null
+        // Tap on the big polygon area — fallback skips it (>40px threshold), returns null
         val onBig = proximityFallbackHitTest(0.7f, 0.5f, mapOf("SYC" to bounds), mapWidth, mapHeight, 1f)
         assertNull(onBig)
     }
