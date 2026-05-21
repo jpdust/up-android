@@ -932,14 +932,29 @@ class WorldMapCanvasTest {
     }
 
     @Test
-    fun `geoJsonToRepoId has no duplicate values`() {
-        val values = geoJsonToRepoId.values.toList()
-        val uniqueValues = values.distinct()
-        assertEquals(
-            "All repo IDs should be unique",
-            values.size,
-            uniqueValues.size
-        )
+    fun `geoJsonToRepoId all values are non-blank`() {
+        // Every entry must resolve to a non-empty parent repo ID;
+        // duplicates are expected now that territories map to sovereign parents.
+        geoJsonToRepoId.forEach { (key, value) ->
+            assertTrue("Entry $key must have a non-blank repo ID", value.isNotBlank())
+        }
+    }
+
+    @Test
+    fun `geoJsonToRepoId territory entries map to parent sovereign countries`() {
+        // UK overseas territories
+        assertEquals("gb", geoJsonToRepoId["CYM"]) // Cayman Islands
+        assertEquals("gb", geoJsonToRepoId["BMU"]) // Bermuda
+        assertEquals("gb", geoJsonToRepoId["FLK"]) // Falkland Islands
+        // US territories
+        assertEquals("us", geoJsonToRepoId["PRI"]) // Puerto Rico
+        assertEquals("us", geoJsonToRepoId["GUM"]) // Guam
+        // French territories
+        assertEquals("fr", geoJsonToRepoId["PYF"]) // French Polynesia
+        // Netherlands territories
+        assertEquals("nl", geoJsonToRepoId["CUW"]) // Curaçao
+        // New Zealand territories
+        assertEquals("nz", geoJsonToRepoId["COK"]) // Cook Islands
     }
 
     // ==================== Additional getLegendItems Color Tests ====================

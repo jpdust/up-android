@@ -25,7 +25,7 @@ class WorldMapCanvasTest {
             UnstampedPagesTheme {
                 WorldMapCanvas(
                     selectedCountryId = null,
-                    onCountryTapped = {},
+                    onCountryTapped = { _, _ -> },
                     colorMode = MapColorMode.SECURITY_RISK,
                     legendConfig = MapLegendConfig(showLegend = false),
                     modifier = Modifier.fillMaxSize()
@@ -42,7 +42,7 @@ class WorldMapCanvasTest {
             UnstampedPagesTheme {
                 WorldMapCanvas(
                     selectedCountryId = null,
-                    onCountryTapped = {},
+                    onCountryTapped = { _, _ -> },
                     colorMode = MapColorMode.SECURITY_RISK,
                     legendConfig = MapLegendConfig(showLegend = true),
                     modifier = Modifier.fillMaxSize()
@@ -59,7 +59,7 @@ class WorldMapCanvasTest {
             UnstampedPagesTheme {
                 WorldMapCanvas(
                     selectedCountryId = null,
-                    onCountryTapped = {},
+                    onCountryTapped = { _, _ -> },
                     colorMode = MapColorMode.DEFAULT,
                     legendConfig = MapLegendConfig(showLegend = true),
                     modifier = Modifier.fillMaxSize()
@@ -78,7 +78,7 @@ class WorldMapCanvasTest {
             UnstampedPagesTheme {
                 WorldMapCanvas(
                     selectedCountryId = null,
-                    onCountryTapped = {},
+                    onCountryTapped = { _, _ -> },
                     colorMode = MapColorMode.SECURITY_RISK,
                     legendConfig = MapLegendConfig(showLegend = true),
                     modifier = Modifier.fillMaxSize()
@@ -96,7 +96,7 @@ class WorldMapCanvasTest {
             UnstampedPagesTheme {
                 WorldMapCanvas(
                     selectedCountryId = null,
-                    onCountryTapped = {},
+                    onCountryTapped = { _, _ -> },
                     colorMode = MapColorMode.SECURITY_RISK,
                     legendConfig = MapLegendConfig(showLegend = true),
                     modifier = Modifier.fillMaxSize()
@@ -114,7 +114,7 @@ class WorldMapCanvasTest {
             UnstampedPagesTheme {
                 WorldMapCanvas(
                     selectedCountryId = null,
-                    onCountryTapped = {},
+                    onCountryTapped = { _, _ -> },
                     colorMode = MapColorMode.SECURITY_RISK,
                     legendConfig = MapLegendConfig(showLegend = true),
                     modifier = Modifier.fillMaxSize()
@@ -132,7 +132,7 @@ class WorldMapCanvasTest {
             UnstampedPagesTheme {
                 WorldMapCanvas(
                     selectedCountryId = null,
-                    onCountryTapped = {},
+                    onCountryTapped = { _, _ -> },
                     colorMode = MapColorMode.SECURITY_RISK,
                     legendConfig = MapLegendConfig(showLegend = true),
                     modifier = Modifier.fillMaxSize()
@@ -150,7 +150,7 @@ class WorldMapCanvasTest {
             UnstampedPagesTheme {
                 WorldMapCanvas(
                     selectedCountryId = null,
-                    onCountryTapped = {},
+                    onCountryTapped = { _, _ -> },
                     colorMode = MapColorMode.SECURITY_RISK,
                     legendConfig = MapLegendConfig(showLegend = true),
                     modifier = Modifier.fillMaxSize()
@@ -172,7 +172,7 @@ class WorldMapCanvasTest {
             UnstampedPagesTheme {
                 WorldMapCanvas(
                     selectedCountryId = null,
-                    onCountryTapped = {},
+                    onCountryTapped = { _, _ -> },
                     colorMode = MapColorMode.VISA_REQUIREMENTS,
                     legendConfig = MapLegendConfig(showLegend = true),
                     modifier = Modifier.fillMaxSize()
@@ -190,7 +190,7 @@ class WorldMapCanvasTest {
             UnstampedPagesTheme {
                 WorldMapCanvas(
                     selectedCountryId = null,
-                    onCountryTapped = {},
+                    onCountryTapped = { _, _ -> },
                     colorMode = MapColorMode.VISA_REQUIREMENTS,
                     legendConfig = MapLegendConfig(showLegend = true),
                     modifier = Modifier.fillMaxSize()
@@ -208,7 +208,7 @@ class WorldMapCanvasTest {
             UnstampedPagesTheme {
                 WorldMapCanvas(
                     selectedCountryId = null,
-                    onCountryTapped = {},
+                    onCountryTapped = { _, _ -> },
                     colorMode = MapColorMode.VISA_REQUIREMENTS,
                     legendConfig = MapLegendConfig(showLegend = true),
                     modifier = Modifier.fillMaxSize()
@@ -226,7 +226,7 @@ class WorldMapCanvasTest {
             UnstampedPagesTheme {
                 WorldMapCanvas(
                     selectedCountryId = null,
-                    onCountryTapped = {},
+                    onCountryTapped = { _, _ -> },
                     colorMode = MapColorMode.VISA_REQUIREMENTS,
                     legendConfig = MapLegendConfig(showLegend = true),
                     modifier = Modifier.fillMaxSize()
@@ -244,7 +244,7 @@ class WorldMapCanvasTest {
             UnstampedPagesTheme {
                 WorldMapCanvas(
                     selectedCountryId = null,
-                    onCountryTapped = {},
+                    onCountryTapped = { _, _ -> },
                     colorMode = MapColorMode.VISA_REQUIREMENTS,
                     legendConfig = MapLegendConfig(showLegend = true),
                     modifier = Modifier.fillMaxSize()
@@ -262,7 +262,7 @@ class WorldMapCanvasTest {
             UnstampedPagesTheme {
                 WorldMapCanvas(
                     selectedCountryId = null,
-                    onCountryTapped = {},
+                    onCountryTapped = { _, _ -> },
                     colorMode = MapColorMode.VISA_REQUIREMENTS,
                     legendConfig = MapLegendConfig(showLegend = true),
                     modifier = Modifier.fillMaxSize()
@@ -285,7 +285,7 @@ class WorldMapCanvasTest {
             UnstampedPagesTheme {
                 WorldMapCanvas(
                     selectedCountryId = null,
-                    onCountryTapped = {},
+                    onCountryTapped = { _, _ -> },
                     colorMode = MapColorMode.PASSPORT_VALIDITY,
                     legendConfig = MapLegendConfig(showLegend = true),
                     modifier = Modifier.fillMaxSize()
@@ -303,7 +303,7 @@ class WorldMapCanvasTest {
             UnstampedPagesTheme {
                 WorldMapCanvas(
                     selectedCountryId = null,
-                    onCountryTapped = {},
+                    onCountryTapped = { _, _ -> },
                     colorMode = MapColorMode.PASSPORT_VALIDITY,
                     legendConfig = MapLegendConfig(showLegend = true),
                     modifier = Modifier.fillMaxSize()
@@ -321,7 +321,7 @@ class WorldMapCanvasTest {
             UnstampedPagesTheme {
                 WorldMapCanvas(
                     selectedCountryId = null,
-                    onCountryTapped = {},
+                    onCountryTapped = { _, _ -> },
                     colorMode = MapColorMode.PASSPORT_VALIDITY,
                     legendConfig = MapLegendConfig(showLegend = true),
                     modifier = Modifier.fillMaxSize()
@@ -339,7 +339,7 @@ class WorldMapCanvasTest {
             UnstampedPagesTheme {
                 WorldMapCanvas(
                     selectedCountryId = null,
-                    onCountryTapped = {},
+                    onCountryTapped = { _, _ -> },
                     colorMode = MapColorMode.PASSPORT_VALIDITY,
                     legendConfig = MapLegendConfig(showLegend = true),
                     modifier = Modifier.fillMaxSize()
@@ -357,7 +357,7 @@ class WorldMapCanvasTest {
             UnstampedPagesTheme {
                 WorldMapCanvas(
                     selectedCountryId = null,
-                    onCountryTapped = {},
+                    onCountryTapped = { _, _ -> },
                     colorMode = MapColorMode.PASSPORT_VALIDITY,
                     legendConfig = MapLegendConfig(showLegend = true),
                     modifier = Modifier.fillMaxSize()
@@ -379,7 +379,7 @@ class WorldMapCanvasTest {
             UnstampedPagesTheme {
                 WorldMapCanvas(
                     selectedCountryId = null,
-                    onCountryTapped = {},
+                    onCountryTapped = { _, _ -> },
                     colorMode = MapColorMode.SECURITY_RISK,
                     legendConfig = MapLegendConfig(showLegend = true),
                     modifier = Modifier.fillMaxSize()
@@ -396,7 +396,7 @@ class WorldMapCanvasTest {
             UnstampedPagesTheme {
                 WorldMapCanvas(
                     selectedCountryId = null,
-                    onCountryTapped = {},
+                    onCountryTapped = { _, _ -> },
                     colorMode = MapColorMode.SECURITY_RISK,
                     legendConfig = MapLegendConfig(showLegend = true),
                     modifier = Modifier.fillMaxSize()
@@ -415,7 +415,7 @@ class WorldMapCanvasTest {
             UnstampedPagesTheme {
                 WorldMapCanvas(
                     selectedCountryId = null,
-                    onCountryTapped = {},
+                    onCountryTapped = { _, _ -> },
                     colorMode = MapColorMode.SECURITY_RISK,
                     legendConfig = MapLegendConfig(
                         showLegend = true,
@@ -439,7 +439,7 @@ class WorldMapCanvasTest {
             UnstampedPagesTheme {
                 WorldMapCanvas(
                     selectedCountryId = null,
-                    onCountryTapped = {},
+                    onCountryTapped = { _, _ -> },
                     colorMode = MapColorMode.SECURITY_RISK,
                     legendConfig = MapLegendConfig(showLegend = true),
                     modifier = Modifier.fillMaxSize()
@@ -461,7 +461,7 @@ class WorldMapCanvasTest {
             UnstampedPagesTheme {
                 WorldMapCanvas(
                     selectedCountryId = null,
-                    onCountryTapped = {},
+                    onCountryTapped = { _, _ -> },
                     colorMode = MapColorMode.VISA_REQUIREMENTS,
                     legendConfig = MapLegendConfig(showLegend = true),
                     modifier = Modifier.fillMaxSize()
@@ -483,7 +483,7 @@ class WorldMapCanvasTest {
             UnstampedPagesTheme {
                 WorldMapCanvas(
                     selectedCountryId = null,
-                    onCountryTapped = {},
+                    onCountryTapped = { _, _ -> },
                     colorMode = MapColorMode.PASSPORT_VALIDITY,
                     legendConfig = MapLegendConfig(showLegend = true),
                     modifier = Modifier.fillMaxSize()
@@ -507,7 +507,7 @@ class WorldMapCanvasTest {
             UnstampedPagesTheme {
                 WorldMapCanvas(
                     selectedCountryId = null,
-                    onCountryTapped = {},
+                    onCountryTapped = { _, _ -> },
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -523,7 +523,7 @@ class WorldMapCanvasTest {
             UnstampedPagesTheme {
                 WorldMapCanvas(
                     selectedCountryId = null,
-                    onCountryTapped = {},
+                    onCountryTapped = { _, _ -> },
                     colorMode = MapColorMode.DEFAULT,
                     legendConfig = MapLegendConfig(showLegend = true),
                     modifier = Modifier.fillMaxSize()

@@ -346,7 +346,9 @@ internal fun proximityFallbackHitTest(
  * The matrix is supplied as a pre-read 9-float array and reconstructed here to avoid
  * sharing the live [android.graphics.Matrix] object across threads.
  *
- * Returns the repo country ID (e.g. "fr") or null if no country was hit.
+ * Returns the repo country ID (e.g. "fr") and an optional territory display name
+ * (e.g. "Cayman Islands") if the tapped feature is a known standalone territory.
+ * Both values are null when no country was hit.
  */
 private fun hitTestCountry(
     position: Offset,
@@ -356,9 +358,22 @@ private fun hitTestCountry(
     geometries: List<CountryGeometry>,
     countryBounds: Map<String, CountryBounds>,
     currentScale: Float
-): String? = floatArrayOf(position.x, position.y)
-    .also { android.graphics.Matrix().apply { setValues(matrixValues) }.mapPoints(it) }
-    .let { hitTestNormalizedPoint(normalizeNormalizedX(it[0] / mapWidth), it[1] / mapHeight, geometries, countryBounds, mapWidth, mapHeight, currentScale) }
+): Pair<String?, String?> {
+    val pts = floatArrayOf(position.x, position.y)
+    android.graphics.Matrix().apply { setValues(matrixValues) }.mapPoints(pts)
+    val normX = normalizeNormalizedX(pts[0] / mapWidth)
+    val normY = pts[1] / mapHeight
+
+    // Primary: exact polygon ray-cast — captures geoJsonId for territory name lookup.
+    val geoJsonId = findCountryAtNormalizedPoint(normX, normY, geometries, countryBounds)
+    if (geoJsonId != null) {
+        return geoJsonToRepoId[geoJsonId] to GEO_ID_TO_TERRITORY_NAME[geoJsonId]
+    }
+
+    // Fallback: proximity to small dot-marker countries and tiny island polygons.
+    val fallbackId = proximityFallbackHitTest(normX, normY, countryBounds, mapWidth, mapHeight, currentScale)
+    return (fallbackId?.let { geoJsonToRepoId[it] }) to (fallbackId?.let { GEO_ID_TO_TERRITORY_NAME[it] })
+}
 
 /**
  * Pure coordinate-space hit test — no Android matrix code, safe to call on any thread
@@ -520,7 +535,7 @@ private fun Modifier.mapGestures(
     gestureState: MapGestureState,
     currentTransform: () -> TransformState,
     onTransformChange: (TransformState) -> Unit,
-    onCountryTapped: (String?) -> Unit,
+    onCountryTapped: (String?, String?) -> Unit,
     tapConfig: TapConfig
 ): Modifier = this.pointerInput(Unit) {
     var tapJob: Job? = null
@@ -572,7 +587,7 @@ private fun Modifier.mapGestures(
                 // are never blocked by O(n·m) ray-casting.
                 tapJob?.cancel()
                 tapJob = tapConfig.scope.launch(tapConfig.computeDispatcher) {
-                    val result = hitTestCountry(
+                    val (repoId, territoryName) = hitTestCountry(
                         position = downPosition,
                         matrixValues = matrixValues,
                         mapWidth = mapWidth,
@@ -582,11 +597,11 @@ private fun Modifier.mapGestures(
                         currentScale = currentScale
                     )
                     withContext(tapConfig.mainDispatcher) {
-                        onCountryTapped(result)
+                        onCountryTapped(repoId, territoryName)
                     }
                 }
             } else {
-                onCountryTapped(null)
+                onCountryTapped(null, null)
             }
         }
     }
@@ -759,7 +774,9 @@ internal fun buildCountryNames(
     idMap: Map<String, String> = geoJsonToRepoId
 ): Map<String, String> = buildMap {
     idMap.forEach { (geoId, repoId) ->
-        val name = countries[repoId]?.name
+        // Territories get their own name; sovereign countries use the repo/CountryList name.
+        val name = GEO_ID_TO_TERRITORY_NAME[geoId]
+            ?: countries[repoId]?.name
             ?: CountryList.countries.find { it.code.equals(repoId, ignoreCase = true) }?.englishName
         if (name != null) put(geoId, name)
     }
@@ -1315,7 +1332,35 @@ internal val geoJsonToRepoId = mapOf(
     "VUT" to "vu", "NCL" to "nc", "KIR" to "ki", "MHL" to "mh", "FSM" to "fm",
     "NRU" to "nr", "PLW" to "pw", "WSM" to "ws", "TON" to "to", "TUV" to "tv",
     // Antarctica
-    "ATA" to "aa"
+    "ATA" to "aa",
+    // Territories & Dependencies — separate GeoJSON features not mapped above.
+    // Each resolves to the administering sovereign country so map taps open
+    // that country's bottom sheet.
+    // UK overseas territories
+    "AIA" to "gb", "BMU" to "gb", "CYM" to "gb", "FLK" to "gb", "GGY" to "gb",
+    "GIB" to "gb", "IMN" to "gb", "IOT" to "gb", "JEY" to "gb", "MSR" to "gb",
+    "PCN" to "gb", "SGS" to "gb", "SHN" to "gb", "TCA" to "gb", "VGB" to "gb",
+    // US territories
+    "ASM" to "us", "GUM" to "us", "MNP" to "us", "PRI" to "us", "VIR" to "us",
+    "UMI" to "us",
+    // French territories (NCL already mapped above)
+    "ATF" to "fr", "BLM" to "fr", "MAF" to "fr", "PYF" to "fr", "SPM" to "fr",
+    "WLF" to "fr",
+    // Netherlands territories (ABW already mapped above as Aruba)
+    "CUW" to "nl", "SXM" to "nl",
+    // Danish territories (GRL already mapped above)
+    "FRO" to "dk",
+    // Australian territories
+    "HMD" to "au", "NFK" to "au",
+    // New Zealand territories
+    "COK" to "nz", "NIU" to "nz",
+    // Finnish territories
+    "ALD" to "fi",
+    // Chinese territories (HKG already mapped above)
+    "MAC" to "cn",
+    // Other
+    "SAH" to "ma",  // Western Sahara — administered by Morocco (disputed)
+    "KOS" to "rs"   // Kosovo — administered by Serbia (disputed)
 )
 
 /**
@@ -1397,7 +1442,7 @@ internal fun normalizeOffsetX(offset: Float): Float {
 @Composable
 fun WorldMapCanvas(
     selectedCountryId: String?,
-    onCountryTapped: (countryId: String?) -> Unit,
+    onCountryTapped: (countryId: String?, displayName: String?) -> Unit,
     modifier: Modifier = Modifier,
     colorMode: MapColorMode = MapColorMode.DEFAULT,
     countries: Map<String, Country> = emptyMap(),
