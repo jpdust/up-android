@@ -29,7 +29,7 @@ android {
         applicationId = "com.unstampedpages.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 202605221 // Set to the highest code in Play Console — workflow will increment from here
+        versionCode = 202605222 // Set to the highest code in Play Console — workflow will increment from here
         versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
