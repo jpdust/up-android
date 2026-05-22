@@ -2,6 +2,132 @@ package com.unstampedpages.app.ui.screens.countryinfo
 
 import java.util.Locale
 
+// ── GeoJSON alpha-3 ID constants ──────────────────────────────────────────────
+// Each ID appears in GEO_ID_TO_ISO_ALPHA2, GEO_ID_ENGLISH_FALLBACK, and
+// GEO_ID_TO_TERRITORY_NAME. Centralising them here eliminates the duplicate-
+// literal Sonar violations across all three maps.
+
+private object GeoId {
+    // UK overseas territories
+    const val AIA = "AIA"
+    const val BMU = "BMU"
+    const val CYM = "CYM"
+    const val FLK = "FLK"
+    const val GGY = "GGY"
+    const val GIB = "GIB"
+    const val IMN = "IMN"
+    const val IOT = "IOT"
+    const val JEY = "JEY"
+    const val MSR = "MSR"
+    const val PCN = "PCN"
+    const val SGS = "SGS"
+    const val SHN = "SHN"
+    const val TCA = "TCA"
+    const val VGB = "VGB"
+    // US territories
+    const val ASM = "ASM"
+    const val GUM = "GUM"
+    const val MNP = "MNP"
+    const val PRI = "PRI"
+    const val VIR = "VIR"
+    const val UMI = "UMI"
+    // French territories
+    const val ATF = "ATF"
+    const val BLM = "BLM"
+    const val MAF = "MAF"
+    const val NCL = "NCL"
+    const val PYF = "PYF"
+    const val SPM = "SPM"
+    const val WLF = "WLF"
+    // Dutch territories
+    const val ABW = "ABW"
+    const val CUW = "CUW"
+    const val SXM = "SXM"
+    // Danish territories
+    const val FRO = "FRO"
+    const val GRL = "GRL"
+    // Australian territories
+    const val CXR = "CXR"
+    const val CCK = "CCK"
+    const val HMD = "HMD"
+    const val NFK = "NFK"
+    // New Zealand territories
+    const val COK = "COK"
+    const val NIU = "NIU"
+    const val TKL = "TKL"
+    // Finnish territories
+    const val ALD = "ALD"
+    // Chinese territories
+    const val HKG = "HKG"
+    const val MAC = "MAC"
+    // Other
+    const val SAH = "SAH"
+    const val KOS = "KOS"
+}
+
+// ── Territory display name constants ──────────────────────────────────────────
+// Names that appear in GEO_ID_ENGLISH_FALLBACK, GEO_ID_TO_TERRITORY_NAME, and
+// (for most) TERRITORY_ALIASES. Centralising them eliminates the duplicate-
+// literal Sonar violations across those three collections.
+
+private object TerritoryName {
+    // UK overseas territories
+    const val ANGUILLA = "Anguilla"
+    const val BERMUDA = "Bermuda"
+    const val CAYMAN_ISLANDS = "Cayman Islands"
+    const val FALKLAND_ISLANDS = "Falkland Islands"
+    const val GUERNSEY = "Guernsey"
+    const val GIBRALTAR = "Gibraltar"
+    const val ISLE_OF_MAN = "Isle of Man"
+    const val BRITISH_INDIAN_OCEAN_TERRITORY = "British Indian Ocean Territory"
+    const val JERSEY = "Jersey"
+    const val MONTSERRAT = "Montserrat"
+    const val PITCAIRN_ISLANDS = "Pitcairn Islands"
+    const val SOUTH_GEORGIA_AND_SOUTH_SANDWICH_ISLANDS = "South Georgia and the South Sandwich Islands"
+    const val SAINT_HELENA = "Saint Helena"
+    const val TURKS_AND_CAICOS_ISLANDS = "Turks and Caicos Islands"
+    const val BRITISH_VIRGIN_ISLANDS = "British Virgin Islands"
+    // US territories
+    const val AMERICAN_SAMOA = "American Samoa"
+    const val GUAM = "Guam"
+    const val NORTHERN_MARIANA_ISLANDS = "Northern Mariana Islands"
+    const val PUERTO_RICO = "Puerto Rico"
+    const val US_VIRGIN_ISLANDS = "US Virgin Islands"
+    const val UNITED_STATES_MINOR_OUTLYING_ISLANDS = "United States Minor Outlying Islands"
+    // French territories
+    const val FRENCH_SOUTHERN_TERRITORIES = "French Southern Territories"
+    const val SAINT_BARTHELEMY = "Saint Barthélemy"
+    const val SAINT_MARTIN = "Saint Martin"
+    const val NEW_CALEDONIA = "New Caledonia"
+    const val FRENCH_POLYNESIA = "French Polynesia"
+    const val SAINT_PIERRE_AND_MIQUELON = "Saint Pierre and Miquelon"
+    const val WALLIS_AND_FUTUNA = "Wallis and Futuna"
+    // Dutch territories
+    const val ARUBA = "Aruba"
+    const val CURACAO = "Curaçao"
+    const val SINT_MAARTEN = "Sint Maarten"
+    // Danish territories
+    const val FAROE_ISLANDS = "Faroe Islands"
+    const val GREENLAND = "Greenland"
+    // Australian territories
+    const val CHRISTMAS_ISLAND = "Christmas Island"
+    const val COCOS_KEELING_ISLANDS = "Cocos (Keeling) Islands"
+    const val HEARD_ISLAND_AND_MCDONALD_ISLANDS = "Heard Island and McDonald Islands"
+    const val NORFOLK_ISLAND = "Norfolk Island"
+    // New Zealand territories
+    const val COOK_ISLANDS = "Cook Islands"
+    const val NIUE = "Niue"
+    const val TOKELAU = "Tokelau"
+    // Finnish territories
+    const val ALAND_ISLANDS = "Åland Islands"
+    // Chinese territories
+    const val HONG_KONG = "Hong Kong"
+    const val MACAU = "Macau"
+    // Other
+    const val WESTERN_SAHARA = "Western Sahara"
+    const val KOSOVO = "Kosovo"
+}
+
 /**
  * Maps GeoJSON 3-letter alpha-3 codes for standalone territory features to their
  * ISO 3166-1 alpha-2 codes. Android's [Locale] can resolve alpha-2 codes to localized
@@ -9,30 +135,30 @@ import java.util.Locale
  */
 private val GEO_ID_TO_ISO_ALPHA2: Map<String, String> = mapOf(
     // UK overseas territories
-    "AIA" to "AI", "BMU" to "BM", "CYM" to "KY", "FLK" to "FK",
-    "GGY" to "GG", "GIB" to "GI", "IMN" to "IM", "IOT" to "IO",
-    "JEY" to "JE", "MSR" to "MS", "PCN" to "PN", "SGS" to "GS",
-    "SHN" to "SH", "TCA" to "TC", "VGB" to "VG",
+    GeoId.AIA to "AI", GeoId.BMU to "BM", GeoId.CYM to "KY", GeoId.FLK to "FK",
+    GeoId.GGY to "GG", GeoId.GIB to "GI", GeoId.IMN to "IM", GeoId.IOT to "IO",
+    GeoId.JEY to "JE", GeoId.MSR to "MS", GeoId.PCN to "PN", GeoId.SGS to "GS",
+    GeoId.SHN to "SH", GeoId.TCA to "TC", GeoId.VGB to "VG",
     // US territories
-    "ASM" to "AS", "GUM" to "GU", "MNP" to "MP", "PRI" to "PR",
-    "VIR" to "VI", "UMI" to "UM",
+    GeoId.ASM to "AS", GeoId.GUM to "GU", GeoId.MNP to "MP", GeoId.PRI to "PR",
+    GeoId.VIR to "VI", GeoId.UMI to "UM",
     // French territories
-    "ATF" to "TF", "BLM" to "BL", "MAF" to "MF", "NCL" to "NC",
-    "PYF" to "PF", "SPM" to "PM", "WLF" to "WF",
+    GeoId.ATF to "TF", GeoId.BLM to "BL", GeoId.MAF to "MF", GeoId.NCL to "NC",
+    GeoId.PYF to "PF", GeoId.SPM to "PM", GeoId.WLF to "WF",
     // Dutch territories
-    "ABW" to "AW", "CUW" to "CW", "SXM" to "SX",
+    GeoId.ABW to "AW", GeoId.CUW to "CW", GeoId.SXM to "SX",
     // Danish territories
-    "FRO" to "FO", "GRL" to "GL",
+    GeoId.FRO to "FO", GeoId.GRL to "GL",
     // Australian territories
-    "CXR" to "CX", "CCK" to "CC", "HMD" to "HM", "NFK" to "NF",
+    GeoId.CXR to "CX", GeoId.CCK to "CC", GeoId.HMD to "HM", GeoId.NFK to "NF",
     // New Zealand territories
-    "COK" to "CK", "NIU" to "NU", "TKL" to "TK",
+    GeoId.COK to "CK", GeoId.NIU to "NU", GeoId.TKL to "TK",
     // Finnish territories
-    "ALD" to "AX",
+    GeoId.ALD to "AX",
     // Chinese territories
-    "HKG" to "HK", "MAC" to "MO",
+    GeoId.HKG to "HK", GeoId.MAC to "MO",
     // Other
-    "SAH" to "EH",
+    GeoId.SAH to "EH",
 )
 
 /**
@@ -41,51 +167,51 @@ private val GEO_ID_TO_ISO_ALPHA2: Map<String, String> = mapOf(
  * official ISO 3166-1 entry.
  */
 private val GEO_ID_ENGLISH_FALLBACK: Map<String, String> = mapOf(
-    "AIA" to "Anguilla",
-    "BMU" to "Bermuda",
-    "CYM" to "Cayman Islands",
-    "FLK" to "Falkland Islands",
-    "GGY" to "Guernsey",
-    "GIB" to "Gibraltar",
-    "IMN" to "Isle of Man",
-    "IOT" to "British Indian Ocean Territory",
-    "JEY" to "Jersey",
-    "MSR" to "Montserrat",
-    "PCN" to "Pitcairn Islands",
-    "SGS" to "South Georgia and the South Sandwich Islands",
-    "SHN" to "Saint Helena",
-    "TCA" to "Turks and Caicos Islands",
-    "VGB" to "British Virgin Islands",
-    "ASM" to "American Samoa",
-    "GUM" to "Guam",
-    "MNP" to "Northern Mariana Islands",
-    "PRI" to "Puerto Rico",
-    "VIR" to "US Virgin Islands",
-    "UMI" to "United States Minor Outlying Islands",
-    "ATF" to "French Southern Territories",
-    "BLM" to "Saint Barthélemy",
-    "MAF" to "Saint Martin",
-    "NCL" to "New Caledonia",
-    "PYF" to "French Polynesia",
-    "SPM" to "Saint Pierre and Miquelon",
-    "WLF" to "Wallis and Futuna",
-    "ABW" to "Aruba",
-    "CUW" to "Curaçao",
-    "SXM" to "Sint Maarten",
-    "FRO" to "Faroe Islands",
-    "GRL" to "Greenland",
-    "CXR" to "Christmas Island",
-    "CCK" to "Cocos (Keeling) Islands",
-    "HMD" to "Heard Island and McDonald Islands",
-    "NFK" to "Norfolk Island",
-    "COK" to "Cook Islands",
-    "NIU" to "Niue",
-    "TKL" to "Tokelau",
-    "ALD" to "Åland Islands",
-    "HKG" to "Hong Kong",
-    "MAC" to "Macau",
-    "SAH" to "Western Sahara",
-    "KOS" to "Kosovo",
+    GeoId.AIA to TerritoryName.ANGUILLA,
+    GeoId.BMU to TerritoryName.BERMUDA,
+    GeoId.CYM to TerritoryName.CAYMAN_ISLANDS,
+    GeoId.FLK to TerritoryName.FALKLAND_ISLANDS,
+    GeoId.GGY to TerritoryName.GUERNSEY,
+    GeoId.GIB to TerritoryName.GIBRALTAR,
+    GeoId.IMN to TerritoryName.ISLE_OF_MAN,
+    GeoId.IOT to TerritoryName.BRITISH_INDIAN_OCEAN_TERRITORY,
+    GeoId.JEY to TerritoryName.JERSEY,
+    GeoId.MSR to TerritoryName.MONTSERRAT,
+    GeoId.PCN to TerritoryName.PITCAIRN_ISLANDS,
+    GeoId.SGS to TerritoryName.SOUTH_GEORGIA_AND_SOUTH_SANDWICH_ISLANDS,
+    GeoId.SHN to TerritoryName.SAINT_HELENA,
+    GeoId.TCA to TerritoryName.TURKS_AND_CAICOS_ISLANDS,
+    GeoId.VGB to TerritoryName.BRITISH_VIRGIN_ISLANDS,
+    GeoId.ASM to TerritoryName.AMERICAN_SAMOA,
+    GeoId.GUM to TerritoryName.GUAM,
+    GeoId.MNP to TerritoryName.NORTHERN_MARIANA_ISLANDS,
+    GeoId.PRI to TerritoryName.PUERTO_RICO,
+    GeoId.VIR to TerritoryName.US_VIRGIN_ISLANDS,
+    GeoId.UMI to TerritoryName.UNITED_STATES_MINOR_OUTLYING_ISLANDS,
+    GeoId.ATF to TerritoryName.FRENCH_SOUTHERN_TERRITORIES,
+    GeoId.BLM to TerritoryName.SAINT_BARTHELEMY,
+    GeoId.MAF to TerritoryName.SAINT_MARTIN,
+    GeoId.NCL to TerritoryName.NEW_CALEDONIA,
+    GeoId.PYF to TerritoryName.FRENCH_POLYNESIA,
+    GeoId.SPM to TerritoryName.SAINT_PIERRE_AND_MIQUELON,
+    GeoId.WLF to TerritoryName.WALLIS_AND_FUTUNA,
+    GeoId.ABW to TerritoryName.ARUBA,
+    GeoId.CUW to TerritoryName.CURACAO,
+    GeoId.SXM to TerritoryName.SINT_MAARTEN,
+    GeoId.FRO to TerritoryName.FAROE_ISLANDS,
+    GeoId.GRL to TerritoryName.GREENLAND,
+    GeoId.CXR to TerritoryName.CHRISTMAS_ISLAND,
+    GeoId.CCK to TerritoryName.COCOS_KEELING_ISLANDS,
+    GeoId.HMD to TerritoryName.HEARD_ISLAND_AND_MCDONALD_ISLANDS,
+    GeoId.NFK to TerritoryName.NORFOLK_ISLAND,
+    GeoId.COK to TerritoryName.COOK_ISLANDS,
+    GeoId.NIU to TerritoryName.NIUE,
+    GeoId.TKL to TerritoryName.TOKELAU,
+    GeoId.ALD to TerritoryName.ALAND_ISLANDS,
+    GeoId.HKG to TerritoryName.HONG_KONG,
+    GeoId.MAC to TerritoryName.MACAU,
+    GeoId.SAH to TerritoryName.WESTERN_SAHARA,
+    GeoId.KOS to TerritoryName.KOSOVO,
 )
 
 /**
@@ -116,63 +242,7 @@ internal fun getLocalizedTerritoryName(
  *
  * @deprecated Use [getLocalizedTerritoryName] for locale-aware resolution.
  */
-internal val GEO_ID_TO_TERRITORY_NAME: Map<String, String> = mapOf(
-    // UK overseas territories
-    "AIA" to "Anguilla",
-    "BMU" to "Bermuda",
-    "CYM" to "Cayman Islands",
-    "FLK" to "Falkland Islands",
-    "GGY" to "Guernsey",
-    "GIB" to "Gibraltar",
-    "IMN" to "Isle of Man",
-    "IOT" to "British Indian Ocean Territory",
-    "JEY" to "Jersey",
-    "MSR" to "Montserrat",
-    "PCN" to "Pitcairn Islands",
-    "SGS" to "South Georgia and the South Sandwich Islands",
-    "SHN" to "Saint Helena",
-    "TCA" to "Turks and Caicos Islands",
-    "VGB" to "British Virgin Islands",
-    // US territories
-    "ASM" to "American Samoa",
-    "GUM" to "Guam",
-    "MNP" to "Northern Mariana Islands",
-    "PRI" to "Puerto Rico",
-    "VIR" to "US Virgin Islands",
-    "UMI" to "United States Minor Outlying Islands",
-    // French territories
-    "ATF" to "French Southern Territories",
-    "BLM" to "Saint Barthélemy",
-    "MAF" to "Saint Martin",
-    "NCL" to "New Caledonia",
-    "PYF" to "French Polynesia",
-    "SPM" to "Saint Pierre and Miquelon",
-    "WLF" to "Wallis and Futuna",
-    // Dutch territories
-    "ABW" to "Aruba",
-    "CUW" to "Curaçao",
-    "SXM" to "Sint Maarten",
-    // Danish territories
-    "FRO" to "Faroe Islands",
-    "GRL" to "Greenland",
-    // Australian territories
-    "CXR" to "Christmas Island",
-    "CCK" to "Cocos (Keeling) Islands",
-    "HMD" to "Heard Island and McDonald Islands",
-    "NFK" to "Norfolk Island",
-    // New Zealand territories
-    "COK" to "Cook Islands",
-    "NIU" to "Niue",
-    "TKL" to "Tokelau",
-    // Finnish territories
-    "ALD" to "Åland Islands",
-    // Chinese territories
-    "HKG" to "Hong Kong",
-    "MAC" to "Macau",
-    // Other
-    "SAH" to "Western Sahara",
-    "KOS" to "Kosovo",
-)
+internal val GEO_ID_TO_TERRITORY_NAME: Map<String, String> = GEO_ID_ENGLISH_FALLBACK
 
 /**
  * Maps territory / dependency display names to their parent sovereign country's repo ID.
@@ -185,88 +255,88 @@ internal val GEO_ID_TO_TERRITORY_NAME: Map<String, String> = mapOf(
 internal val TERRITORY_ALIASES: List<Pair<String, String>> = listOf(
 
     // ── UK overseas territories ───────────────────────────────────────────────
-    "Anguilla" to "gb",
-    "Bermuda" to "gb",
-    "British Indian Ocean Territory" to "gb",
-    "British Virgin Islands" to "gb",
-    "Cayman Islands" to "gb",
-    "Falkland Islands" to "gb",
+    TerritoryName.ANGUILLA to "gb",
+    TerritoryName.BERMUDA to "gb",
+    TerritoryName.BRITISH_INDIAN_OCEAN_TERRITORY to "gb",
+    TerritoryName.BRITISH_VIRGIN_ISLANDS to "gb",
+    TerritoryName.CAYMAN_ISLANDS to "gb",
+    TerritoryName.FALKLAND_ISLANDS to "gb",
     "Malvinas" to "gb",
-    "Gibraltar" to "gb",
-    "Guernsey" to "gb",
-    "Isle of Man" to "gb",
-    "Jersey" to "gb",
-    "Montserrat" to "gb",
-    "Pitcairn Islands" to "gb",
-    "Saint Helena" to "gb",
+    TerritoryName.GIBRALTAR to "gb",
+    TerritoryName.GUERNSEY to "gb",
+    TerritoryName.ISLE_OF_MAN to "gb",
+    TerritoryName.JERSEY to "gb",
+    TerritoryName.MONTSERRAT to "gb",
+    TerritoryName.PITCAIRN_ISLANDS to "gb",
+    TerritoryName.SAINT_HELENA to "gb",
     "Ascension Island" to "gb",
     "Tristan da Cunha" to "gb",
     "South Georgia" to "gb",
     "South Sandwich Islands" to "gb",
-    "Turks and Caicos Islands" to "gb",
+    TerritoryName.TURKS_AND_CAICOS_ISLANDS to "gb",
 
     // ── US territories & states often searched separately ────────────────────
-    "American Samoa" to "us",
-    "Guam" to "us",
-    "Northern Mariana Islands" to "us",
-    "Puerto Rico" to "us",
-    "US Virgin Islands" to "us",
+    TerritoryName.AMERICAN_SAMOA to "us",
+    TerritoryName.GUAM to "us",
+    TerritoryName.NORTHERN_MARIANA_ISLANDS to "us",
+    TerritoryName.PUERTO_RICO to "us",
+    TerritoryName.US_VIRGIN_ISLANDS to "us",
     "United States Virgin Islands" to "us",
     "Hawaii" to "us",
     "Alaska" to "us",
 
     // ── French overseas territories & regions ────────────────────────────────
-    "French Polynesia" to "fr",
+    TerritoryName.FRENCH_POLYNESIA to "fr",
     "Tahiti" to "fr",
     "Bora Bora" to "fr",
-    "French Southern Territories" to "fr",
+    TerritoryName.FRENCH_SOUTHERN_TERRITORIES to "fr",
     "French Guiana" to "fr",
     "Guadeloupe" to "fr",
     "Martinique" to "fr",
     "Mayotte" to "fr",
-    "New Caledonia" to "fr",
+    TerritoryName.NEW_CALEDONIA to "fr",
     "Réunion" to "fr",
     "Reunion" to "fr",
-    "Saint Barthélemy" to "fr",
+    TerritoryName.SAINT_BARTHELEMY to "fr",
     "Saint Barthelemy" to "fr",
-    "Saint Martin" to "fr",
-    "Saint Pierre and Miquelon" to "fr",
-    "Wallis and Futuna" to "fr",
+    TerritoryName.SAINT_MARTIN to "fr",
+    TerritoryName.SAINT_PIERRE_AND_MIQUELON to "fr",
+    TerritoryName.WALLIS_AND_FUTUNA to "fr",
     "Corsica" to "fr",
 
     // ── Dutch territories ────────────────────────────────────────────────────
-    "Aruba" to "nl",
+    TerritoryName.ARUBA to "nl",
     "Bonaire" to "nl",
-    "Curaçao" to "nl",
+    TerritoryName.CURACAO to "nl",
     "Curacao" to "nl",
-    "Sint Maarten" to "nl",
+    TerritoryName.SINT_MAARTEN to "nl",
     "Sint Eustatius" to "nl",
     "Saba" to "nl",
 
     // ── Danish territories ───────────────────────────────────────────────────
-    "Faroe Islands" to "dk",
-    "Greenland" to "dk",
+    TerritoryName.FAROE_ISLANDS to "dk",
+    TerritoryName.GREENLAND to "dk",
 
     // ── Australian territories ───────────────────────────────────────────────
-    "Christmas Island" to "au",
+    TerritoryName.CHRISTMAS_ISLAND to "au",
     "Cocos Islands" to "au",
     "Keeling Islands" to "au",
     "Heard Island" to "au",
     "McDonald Islands" to "au",
-    "Norfolk Island" to "au",
+    TerritoryName.NORFOLK_ISLAND to "au",
 
     // ── New Zealand territories ──────────────────────────────────────────────
-    "Cook Islands" to "nz",
-    "Niue" to "nz",
-    "Tokelau" to "nz",
+    TerritoryName.COOK_ISLANDS to "nz",
+    TerritoryName.NIUE to "nz",
+    TerritoryName.TOKELAU to "nz",
 
     // ── Finnish territories ──────────────────────────────────────────────────
-    "Åland Islands" to "fi",
+    TerritoryName.ALAND_ISLANDS to "fi",
     "Aland Islands" to "fi",
 
     // ── Chinese territories ──────────────────────────────────────────────────
-    "Hong Kong" to "cn",
-    "Macau" to "cn",
+    TerritoryName.HONG_KONG to "cn",
+    TerritoryName.MACAU to "cn",
     "Macao" to "cn",
 
     // ── Chilean territories ──────────────────────────────────────────────────
@@ -300,8 +370,8 @@ internal val TERRITORY_ALIASES: List<Pair<String, String>> = listOf(
     "Jan Mayen" to "no",
 
     // ── Other territories / administered regions ─────────────────────────────
-    "Western Sahara" to "ma",
-    "Kosovo" to "rs",
+    TerritoryName.WESTERN_SAHARA to "ma",
+    TerritoryName.KOSOVO to "rs",
     "Kaliningrad" to "ru",
     "Sakhalin" to "ru",
     "Andaman Islands" to "in",
