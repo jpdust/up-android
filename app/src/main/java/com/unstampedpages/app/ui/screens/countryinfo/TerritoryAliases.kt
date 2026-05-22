@@ -242,63 +242,7 @@ internal fun getLocalizedTerritoryName(
  *
  * @deprecated Use [getLocalizedTerritoryName] for locale-aware resolution.
  */
-internal val GEO_ID_TO_TERRITORY_NAME: Map<String, String> = mapOf(
-    // UK overseas territories
-    GeoId.AIA to TerritoryName.ANGUILLA,
-    GeoId.BMU to TerritoryName.BERMUDA,
-    GeoId.CYM to TerritoryName.CAYMAN_ISLANDS,
-    GeoId.FLK to TerritoryName.FALKLAND_ISLANDS,
-    GeoId.GGY to TerritoryName.GUERNSEY,
-    GeoId.GIB to TerritoryName.GIBRALTAR,
-    GeoId.IMN to TerritoryName.ISLE_OF_MAN,
-    GeoId.IOT to TerritoryName.BRITISH_INDIAN_OCEAN_TERRITORY,
-    GeoId.JEY to TerritoryName.JERSEY,
-    GeoId.MSR to TerritoryName.MONTSERRAT,
-    GeoId.PCN to TerritoryName.PITCAIRN_ISLANDS,
-    GeoId.SGS to TerritoryName.SOUTH_GEORGIA_AND_SOUTH_SANDWICH_ISLANDS,
-    GeoId.SHN to TerritoryName.SAINT_HELENA,
-    GeoId.TCA to TerritoryName.TURKS_AND_CAICOS_ISLANDS,
-    GeoId.VGB to TerritoryName.BRITISH_VIRGIN_ISLANDS,
-    // US territories
-    GeoId.ASM to TerritoryName.AMERICAN_SAMOA,
-    GeoId.GUM to TerritoryName.GUAM,
-    GeoId.MNP to TerritoryName.NORTHERN_MARIANA_ISLANDS,
-    GeoId.PRI to TerritoryName.PUERTO_RICO,
-    GeoId.VIR to TerritoryName.US_VIRGIN_ISLANDS,
-    GeoId.UMI to TerritoryName.UNITED_STATES_MINOR_OUTLYING_ISLANDS,
-    // French territories
-    GeoId.ATF to TerritoryName.FRENCH_SOUTHERN_TERRITORIES,
-    GeoId.BLM to TerritoryName.SAINT_BARTHELEMY,
-    GeoId.MAF to TerritoryName.SAINT_MARTIN,
-    GeoId.NCL to TerritoryName.NEW_CALEDONIA,
-    GeoId.PYF to TerritoryName.FRENCH_POLYNESIA,
-    GeoId.SPM to TerritoryName.SAINT_PIERRE_AND_MIQUELON,
-    GeoId.WLF to TerritoryName.WALLIS_AND_FUTUNA,
-    // Dutch territories
-    GeoId.ABW to TerritoryName.ARUBA,
-    GeoId.CUW to TerritoryName.CURACAO,
-    GeoId.SXM to TerritoryName.SINT_MAARTEN,
-    // Danish territories
-    GeoId.FRO to TerritoryName.FAROE_ISLANDS,
-    GeoId.GRL to TerritoryName.GREENLAND,
-    // Australian territories
-    GeoId.CXR to TerritoryName.CHRISTMAS_ISLAND,
-    GeoId.CCK to TerritoryName.COCOS_KEELING_ISLANDS,
-    GeoId.HMD to TerritoryName.HEARD_ISLAND_AND_MCDONALD_ISLANDS,
-    GeoId.NFK to TerritoryName.NORFOLK_ISLAND,
-    // New Zealand territories
-    GeoId.COK to TerritoryName.COOK_ISLANDS,
-    GeoId.NIU to TerritoryName.NIUE,
-    GeoId.TKL to TerritoryName.TOKELAU,
-    // Finnish territories
-    GeoId.ALD to TerritoryName.ALAND_ISLANDS,
-    // Chinese territories
-    GeoId.HKG to TerritoryName.HONG_KONG,
-    GeoId.MAC to TerritoryName.MACAU,
-    // Other
-    GeoId.SAH to TerritoryName.WESTERN_SAHARA,
-    GeoId.KOS to TerritoryName.KOSOVO,
-)
+internal val GEO_ID_TO_TERRITORY_NAME: Map<String, String> = GEO_ID_ENGLISH_FALLBACK
 
 /**
  * Maps territory / dependency display names to their parent sovereign country's repo ID.
