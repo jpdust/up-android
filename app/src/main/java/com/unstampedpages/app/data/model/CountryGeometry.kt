@@ -6,7 +6,8 @@ package com.unstampedpages.app.data.model
  */
 data class CountryGeometry(
     val countryId: String,
-    val polygons: List<List<LatLng>>
+    val polygons: List<List<LatLng>>,
+    val holes: List<List<LatLng>> = emptyList()
 )
 
 /**

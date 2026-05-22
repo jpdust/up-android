@@ -595,12 +595,13 @@ class CountryInfoViewModelTest {
     }
 
     @Test
-    fun `searching Cayman Islands returns United Kingdom`() {
+    fun `searching Cayman Islands returns Cayman Islands own entry`() {
         viewModel.updateSearchQuery("Cayman")
 
         val results = viewModel.uiState.value.searchResults
         assertTrue(results.isNotEmpty())
-        assertTrue(results.any { it.displayName == "Cayman Islands" && it.country.id == "gb" })
+        // Cayman Islands now has its own repository entry (KYD currency)
+        assertTrue(results.any { it.displayName == "Cayman Islands" && it.country.id == "ky" })
     }
 
     @Test
@@ -634,11 +635,23 @@ class CountryInfoViewModelTest {
     }
 
     @Test
-    fun `territory suggestion id delegates to parent country id`() {
+    fun `territory suggestion id points to territory own repo entry`() {
+        // Bermuda has its own repository entry (BMD currency) — suggestion.id is "bm"
         viewModel.updateSearchQuery("Bermuda")
 
         val results = viewModel.uiState.value.searchResults
         val suggestion = results.find { it.displayName == "Bermuda" }
+        assertNotNull(suggestion)
+        assertEquals("bm", suggestion!!.id)
+    }
+
+    @Test
+    fun `territory suggestion still delegates to sovereign when no own entry exists`() {
+        // Anguilla has no own repository entry — delegates to United Kingdom
+        viewModel.updateSearchQuery("Anguilla")
+
+        val results = viewModel.uiState.value.searchResults
+        val suggestion = results.find { it.displayName == "Anguilla" }
         assertNotNull(suggestion)
         assertEquals("gb", suggestion!!.id)
     }

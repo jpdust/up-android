@@ -941,16 +941,21 @@ class WorldMapCanvasTest {
     }
 
     @Test
-    fun `geoJsonToRepoId territory entries map to parent sovereign countries`() {
-        // UK overseas territories
-        assertEquals("gb", geoJsonToRepoId["CYM"]) // Cayman Islands
-        assertEquals("gb", geoJsonToRepoId["BMU"]) // Bermuda
-        assertEquals("gb", geoJsonToRepoId["FLK"]) // Falkland Islands
+    fun `geoJsonToRepoId territory entries map to correct repo ids`() {
+        // Territories with own repository entries (own currency / continent)
+        assertEquals("ky", geoJsonToRepoId["CYM"]) // Cayman Islands (KYD)
+        assertEquals("bm", geoJsonToRepoId["BMU"]) // Bermuda (BMD)
+        assertEquals("fk", geoJsonToRepoId["FLK"]) // Falkland Islands (FKP)
+        assertEquals("gi", geoJsonToRepoId["GIB"]) // Gibraltar (GIP)
+        assertEquals("fo", geoJsonToRepoId["FRO"]) // Faroe Islands (DKK)
+        assertEquals("sh", geoJsonToRepoId["SHN"]) // Saint Helena (SHP)
+        assertEquals("mq", geoJsonToRepoId["MTQ"]) // Martinique (EUR, North America)
+        // French territories that still delegate to France
+        assertEquals("fr", geoJsonToRepoId["GUF"]) // French Guiana
+        assertEquals("fr", geoJsonToRepoId["PYF"]) // French Polynesia
         // US territories
         assertEquals("us", geoJsonToRepoId["PRI"]) // Puerto Rico
         assertEquals("us", geoJsonToRepoId["GUM"]) // Guam
-        // French territories
-        assertEquals("fr", geoJsonToRepoId["PYF"]) // French Polynesia
         // Netherlands territories
         assertEquals("nl", geoJsonToRepoId["CUW"]) // Curaçao
         // New Zealand territories

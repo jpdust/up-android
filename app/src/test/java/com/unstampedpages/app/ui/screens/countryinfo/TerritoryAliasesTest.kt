@@ -30,7 +30,7 @@ class TerritoryAliasesTest {
             "AIA", "BMU", "CYM", "FLK", "GGY", "GIB", "IMN", "IOT", "JEY",
             "MSR", "PCN", "SGS", "SHN", "TCA", "VGB",
             "ASM", "GUM", "MNP", "PRI", "VIR", "UMI",
-            "ATF", "BLM", "MAF", "NCL", "PYF", "SPM", "WLF",
+            "GUF", "MTQ", "ATF", "BLM", "MAF", "NCL", "PYF", "SPM", "WLF",
             "ABW", "CUW", "SXM",
             "FRO", "GRL",
             "CXR", "CCK", "HMD", "NFK",
@@ -73,6 +73,20 @@ class TerritoryAliasesTest {
         val name = getLocalizedTerritoryName("HKG", Locale.ENGLISH)
         assertNotNull(name)
         assertTrue("Expected 'Hong Kong' in name, got: $name", name!!.contains("Hong Kong", ignoreCase = true))
+    }
+
+    @Test
+    fun `returns English fallback for GUF (French Guiana)`() {
+        val name = getLocalizedTerritoryName("GUF", Locale.ENGLISH)
+        assertNotNull(name)
+        assertTrue("Expected 'French Guiana' in name, got: $name", name!!.contains("French Guiana", ignoreCase = true))
+    }
+
+    @Test
+    fun `returns English fallback for MTQ (Martinique)`() {
+        val name = getLocalizedTerritoryName("MTQ", Locale.ENGLISH)
+        assertNotNull(name)
+        assertTrue("Expected 'Martinique' in name, got: $name", name!!.contains("Martinique", ignoreCase = true))
     }
 
     @Test
@@ -176,11 +190,11 @@ class TerritoryAliasesTest {
     }
 
     @Test
-    fun `Cayman Islands maps to gb in combined aliases`() {
+    fun `Cayman Islands maps to ky in combined aliases`() {
         val combined = getCombinedTerritoryAliases(Locale.ENGLISH)
         val entry = combined.find { it.first == "Cayman Islands" }
         assertNotNull("'Cayman Islands' not found in combined aliases", entry)
-        assertEquals("gb", entry!!.second)
+        assertEquals("ky", entry!!.second)
     }
 
     @Test
@@ -221,5 +235,45 @@ class TerritoryAliasesTest {
         val entry = combined.find { it.first == "Easter Island" }
         assertNotNull("'Easter Island' not found in combined aliases", entry)
         assertEquals("cl", entry!!.second)
+    }
+
+    @Test
+    fun `Martinique maps to mq in combined aliases`() {
+        val combined = getCombinedTerritoryAliases(Locale.ENGLISH)
+        val entry = combined.find { it.first == "Martinique" }
+        assertNotNull("'Martinique' not found in combined aliases", entry)
+        assertEquals("mq", entry!!.second)
+    }
+
+    @Test
+    fun `French Guiana maps to fr in combined aliases`() {
+        val combined = getCombinedTerritoryAliases(Locale.ENGLISH)
+        val entry = combined.find { it.first == "French Guiana" }
+        assertNotNull("'French Guiana' not found in combined aliases", entry)
+        assertEquals("fr", entry!!.second)
+    }
+
+    @Test
+    fun `Faroe Islands maps to fo in combined aliases`() {
+        val combined = getCombinedTerritoryAliases(Locale.ENGLISH)
+        val entry = combined.find { it.first == "Faroe Islands" }
+        assertNotNull("'Faroe Islands' not found in combined aliases", entry)
+        assertEquals("fo", entry!!.second)
+    }
+
+    @Test
+    fun `Falkland Islands maps to fk in combined aliases`() {
+        val combined = getCombinedTerritoryAliases(Locale.ENGLISH)
+        val entry = combined.find { it.first == "Falkland Islands" }
+        assertNotNull("'Falkland Islands' not found in combined aliases", entry)
+        assertEquals("fk", entry!!.second)
+    }
+
+    @Test
+    fun `Gibraltar maps to gi in combined aliases`() {
+        val combined = getCombinedTerritoryAliases(Locale.ENGLISH)
+        val entry = combined.find { it.first == "Gibraltar" }
+        assertNotNull("'Gibraltar' not found in combined aliases", entry)
+        assertEquals("gi", entry!!.second)
     }
 }

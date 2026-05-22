@@ -248,6 +248,145 @@ class WorldMapTapTest {
 }
 
 // ---------------------------------------------------------------------------
+// Hole-exclusion filter (Lesotho / enclosed-country scenario)
+// ---------------------------------------------------------------------------
+
+/**
+ * Tests for the hole-exclusion logic in [findCountryAtNormalizedPoint].
+ *
+ * When a tap lands inside a matched polygon but also inside one of that geometry's
+ * hole rings, the geometry is skipped (`continue@geometryLoop`) so that an enclosed
+ * country whose polygon covers the same area can be found instead.
+ *
+ * The canonical real-world case is Lesotho (LSO) enclosed by South Africa (ZAF):
+ *   - ZAF is listed first; its polygon covers the whole area including Lesotho's land.
+ *   - ZAF's holes list includes Lesotho's boundary ring.
+ *   - LSO is listed second with a polygon matching that boundary.
+ *   - A tap inside Lesotho must return "LSO", not "ZAF".
+ */
+class HoleExclusionTest {
+
+    // Outer polygon: square lat ∈ [-10, 10], lng ∈ [-10, 10]
+    private val outerSquare = listOf(
+        LatLng(lat = 10f, lng = -10f),
+        LatLng(lat = 10f, lng = 10f),
+        LatLng(lat = -10f, lng = 10f),
+        LatLng(lat = -10f, lng = -10f),
+        LatLng(lat = 10f, lng = -10f)
+    )
+
+    // Inner hole (and LSO polygon): square lat ∈ [-5, 5], lng ∈ [-5, 5]
+    private val innerSquare = listOf(
+        LatLng(lat = 5f, lng = -5f),
+        LatLng(lat = 5f, lng = 5f),
+        LatLng(lat = -5f, lng = 5f),
+        LatLng(lat = -5f, lng = -5f),
+        LatLng(lat = 5f, lng = -5f)
+    )
+
+    // Tap at origin — inside both outerSquare and innerSquare
+    private val tapInsideHoleX = MercatorProjection.longitudeToX(0f)
+    private val tapInsideHoleY = MercatorProjection.latitudeToY(0f)
+
+    // Tap at lat=8, lng=0 — inside outerSquare but outside innerSquare
+    private val tapOutsideHoleX = MercatorProjection.longitudeToX(0f)
+    private val tapOutsideHoleY = MercatorProjection.latitudeToY(8f)
+
+    @Test
+    fun `point inside polygon hole causes geometry to be skipped — returns null`() {
+        val geometry = CountryGeometry("ZAF", listOf(outerSquare), listOf(innerSquare))
+        val result = findCountryAtNormalizedPoint(tapInsideHoleX, tapInsideHoleY, listOf(geometry))
+        assertNull("Point inside hole should cause geometry to be skipped", result)
+    }
+
+    @Test
+    fun `point inside polygon but outside hole returns the geometry`() {
+        val geometry = CountryGeometry("ZAF", listOf(outerSquare), listOf(innerSquare))
+        val result = findCountryAtNormalizedPoint(tapOutsideHoleX, tapOutsideHoleY, listOf(geometry))
+        assertEquals("ZAF", result)
+    }
+
+    @Test
+    fun `geometry with empty holes list is unaffected — point inside polygon found normally`() {
+        val geometry = CountryGeometry("test", listOf(outerSquare))   // no holes
+        val result = findCountryAtNormalizedPoint(tapInsideHoleX, tapInsideHoleY, listOf(geometry))
+        assertEquals("test", result)
+    }
+
+    /**
+     * CRITICAL — the Lesotho scenario.
+     *
+     * ZAF (listed first) has a hole at Lesotho's boundary.  LSO (listed second) covers
+     * that same area.  A tap at the origin must return "LSO", not "ZAF".
+     */
+    @Test
+    fun `ZAF with Lesotho hole causes fallthrough — tap returns LSO`() {
+        val zaf = CountryGeometry("ZAF", listOf(outerSquare), listOf(innerSquare))
+        val lso = CountryGeometry("LSO", listOf(innerSquare))   // no holes
+
+        val result = findCountryAtNormalizedPoint(tapInsideHoleX, tapInsideHoleY, listOf(zaf, lso))
+        assertEquals("Tap inside Lesotho hole should return LSO, not ZAF", "LSO", result)
+    }
+
+    @Test
+    fun `tap outside hole returns ZAF even when LSO is present`() {
+        val zaf = CountryGeometry("ZAF", listOf(outerSquare), listOf(innerSquare))
+        val lso = CountryGeometry("LSO", listOf(innerSquare))
+
+        val result = findCountryAtNormalizedPoint(tapOutsideHoleX, tapOutsideHoleY, listOf(zaf, lso))
+        assertEquals("Tap outside Lesotho hole should return ZAF", "ZAF", result)
+    }
+
+    @Test
+    fun `multiple holes — point inside any hole causes geometry to be skipped`() {
+        val hole1 = listOf(
+            LatLng(lat = 5f, lng = -5f), LatLng(lat = 5f, lng = -1f),
+            LatLng(lat = 1f, lng = -1f), LatLng(lat = 1f, lng = -5f),
+            LatLng(lat = 5f, lng = -5f)
+        )
+        val hole2 = listOf(
+            LatLng(lat = 5f, lng = 1f), LatLng(lat = 5f, lng = 5f),
+            LatLng(lat = 1f, lng = 5f), LatLng(lat = 1f, lng = 1f),
+            LatLng(lat = 5f, lng = 1f)
+        )
+        // Tap at (lat=3, lng=3) — inside hole2 (lat [1,5], lng [1,5])
+        val tapInHole2X = MercatorProjection.longitudeToX(3f)
+        val tapInHole2Y = MercatorProjection.latitudeToY(3f)
+
+        val geometry = CountryGeometry("outer", listOf(outerSquare), listOf(hole1, hole2))
+        val result = findCountryAtNormalizedPoint(tapInHole2X, tapInHole2Y, listOf(geometry))
+        assertNull("Point inside any hole should skip the geometry", result)
+    }
+
+    @Test
+    fun `hole in first geometry causes fallthrough to second geometry which has no holes`() {
+        val parent = CountryGeometry("parent", listOf(outerSquare), listOf(innerSquare))
+        val child = CountryGeometry("child", listOf(innerSquare))
+
+        val result = findCountryAtNormalizedPoint(tapInsideHoleX, tapInsideHoleY, listOf(parent, child))
+        assertEquals("child", result)
+    }
+
+    @Test
+    fun `hole exclusion still respects bbox pre-filter`() {
+        // Geometry with a hole, but overall bbox excludes the tap point entirely.
+        // The bbox filter must short-circuit before the hole check is even reached.
+        val excludingBounds = CountryBounds(
+            centroidNormX = 0.9f, centroidNormY = 0.1f,
+            minX = 0.85f, maxX = 0.95f, minY = 0.05f, maxY = 0.15f
+        )
+        val geometry = CountryGeometry("ZAF", listOf(outerSquare), listOf(innerSquare))
+
+        val result = findCountryAtNormalizedPoint(
+            tapInsideHoleX, tapInsideHoleY,
+            listOf(geometry),
+            countryBounds = mapOf("ZAF" to excludingBounds)
+        )
+        assertNull("Bbox pre-filter should reject geometry before hole check runs", result)
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Per-polygon bounding-box filter
 // ---------------------------------------------------------------------------
 
