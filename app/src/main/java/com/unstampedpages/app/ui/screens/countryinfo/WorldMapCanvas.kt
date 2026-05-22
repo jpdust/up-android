@@ -1359,19 +1359,19 @@ internal val geoJsonToRepoId = mapOf(
     // Each resolves to the administering sovereign country so map taps open
     // that country's bottom sheet.
     // UK overseas territories
-    "AIA" to "gb", "BMU" to "gb", "CYM" to "gb", "FLK" to "gb", "GGY" to "gb",
-    "GIB" to "gb", "IMN" to "gb", "IOT" to "gb", "JEY" to "gb", "MSR" to "gb",
-    "PCN" to "gb", "SGS" to "gb", "SHN" to "gb", "TCA" to "gb", "VGB" to "gb",
+    "AIA" to "gb", "BMU" to "bm", "CYM" to "ky", "FLK" to "fk", "GGY" to "gb",
+    "GIB" to "gi", "IMN" to "gb", "IOT" to "gb", "JEY" to "gb", "MSR" to "gb",
+    "PCN" to "gb", "SGS" to "gb", "SHN" to "sh", "TCA" to "gb", "VGB" to "gb",
     // US territories
     "ASM" to "us", "GUM" to "us", "MNP" to "us", "PRI" to "us", "VIR" to "us",
     "UMI" to "us",
     // French territories (NCL already mapped above)
-    "ATF" to "fr", "BLM" to "fr", "MAF" to "fr", "PYF" to "fr", "SPM" to "fr",
-    "WLF" to "fr",
+    "GUF" to "fr", "MTQ" to "mq", "ATF" to "fr", "BLM" to "fr", "MAF" to "fr",
+    "PYF" to "fr", "SPM" to "fr", "WLF" to "fr",
     // Netherlands territories (ABW already mapped above as Aruba)
     "CUW" to "nl", "SXM" to "nl",
     // Danish territories (GRL already mapped above)
-    "FRO" to "dk",
+    "FRO" to "fo",
     // Australian territories
     "HMD" to "au", "NFK" to "au",
     // New Zealand territories
@@ -1700,7 +1700,7 @@ internal fun findCountryAtNormalizedPoint(
     val lng = MercatorProjection.xToLongitude(normalizedX)
     val lat = MercatorProjection.yToLatitude(normalizedY)
 
-    for (geometry in geometries) {
+    geometryLoop@ for (geometry in geometries) {
         val bounds = countryBounds[geometry.countryId]
 
         // Level 1: skip entire geometry if overall bbox misses
@@ -1720,6 +1720,11 @@ internal fun findCountryAtNormalizedPoint(
                 continue
             }
             if (isPointInLatLngPolygon(lat, lng, polygon)) {
+                // Point is inside this polygon — check if it falls in a hole.
+                // If so, this geometry does not own the tap; move to the next.
+                if (geometry.holes.any { isPointInLatLngPolygon(lat, lng, it) }) {
+                    continue@geometryLoop
+                }
                 return geometry.countryId
             }
         }

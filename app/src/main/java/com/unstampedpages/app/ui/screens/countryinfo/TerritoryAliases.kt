@@ -32,6 +32,8 @@ private object GeoId {
     const val VIR = "VIR"
     const val UMI = "UMI"
     // French territories
+    const val GUF = "GUF"
+    const val MTQ = "MTQ"
     const val ATF = "ATF"
     const val BLM = "BLM"
     const val MAF = "MAF"
@@ -95,6 +97,8 @@ private object TerritoryName {
     const val US_VIRGIN_ISLANDS = "US Virgin Islands"
     const val UNITED_STATES_MINOR_OUTLYING_ISLANDS = "United States Minor Outlying Islands"
     // French territories
+    const val FRENCH_GUIANA = "French Guiana"
+    const val MARTINIQUE = "Martinique"
     const val FRENCH_SOUTHERN_TERRITORIES = "French Southern Territories"
     const val SAINT_BARTHELEMY = "Saint Barthélemy"
     const val SAINT_MARTIN = "Saint Martin"
@@ -135,16 +139,22 @@ private object TerritoryName {
  */
 private val GEO_ID_TO_ISO_ALPHA2: Map<String, String> = mapOf(
     // UK overseas territories
-    GeoId.AIA to "AI", GeoId.BMU to "BM", GeoId.CYM to "KY", GeoId.FLK to "FK",
+    // FLK and SHN are intentionally excluded: Android's locale API returns
+    // "Falkland Islands (Islas Malvinas)" for FK and "St. Helena" for SH, both
+    // different from the repository country name, which would produce duplicate
+    // search results. getLocalizedTerritoryName falls back to GEO_ID_ENGLISH_FALLBACK.
+    GeoId.AIA to "AI", GeoId.BMU to "BM", GeoId.CYM to "KY",
     GeoId.GGY to "GG", GeoId.GIB to "GI", GeoId.IMN to "IM", GeoId.IOT to "IO",
     GeoId.JEY to "JE", GeoId.MSR to "MS", GeoId.PCN to "PN", GeoId.SGS to "GS",
-    GeoId.SHN to "SH", GeoId.TCA to "TC", GeoId.VGB to "VG",
+    GeoId.TCA to "TC", GeoId.VGB to "VG",
     // US territories
     GeoId.ASM to "AS", GeoId.GUM to "GU", GeoId.MNP to "MP", GeoId.PRI to "PR",
     GeoId.VIR to "VI", GeoId.UMI to "UM",
     // French territories
-    GeoId.ATF to "TF", GeoId.BLM to "BL", GeoId.MAF to "MF", GeoId.NCL to "NC",
-    GeoId.PYF to "PF", GeoId.SPM to "PM", GeoId.WLF to "WF",
+    // MAF excluded: locale API returns "St. Martin" for region MF, conflicting with the
+    // "Saint Martin" alias in TERRITORY_ALIASES and producing a duplicate search result.
+    GeoId.GUF to "GF", GeoId.MTQ to "MQ", GeoId.ATF to "TF", GeoId.BLM to "BL",
+    GeoId.NCL to "NC", GeoId.PYF to "PF", GeoId.SPM to "PM", GeoId.WLF to "WF",
     // Dutch territories
     GeoId.ABW to "AW", GeoId.CUW to "CW", GeoId.SXM to "SX",
     // Danish territories
@@ -188,6 +198,8 @@ private val GEO_ID_ENGLISH_FALLBACK: Map<String, String> = mapOf(
     GeoId.PRI to TerritoryName.PUERTO_RICO,
     GeoId.VIR to TerritoryName.US_VIRGIN_ISLANDS,
     GeoId.UMI to TerritoryName.UNITED_STATES_MINOR_OUTLYING_ISLANDS,
+    GeoId.GUF to TerritoryName.FRENCH_GUIANA,
+    GeoId.MTQ to TerritoryName.MARTINIQUE,
     GeoId.ATF to TerritoryName.FRENCH_SOUTHERN_TERRITORIES,
     GeoId.BLM to TerritoryName.SAINT_BARTHELEMY,
     GeoId.MAF to TerritoryName.SAINT_MARTIN,
@@ -256,21 +268,20 @@ internal val TERRITORY_ALIASES: List<Pair<String, String>> = listOf(
 
     // ── UK overseas territories ───────────────────────────────────────────────
     TerritoryName.ANGUILLA to "gb",
-    TerritoryName.BERMUDA to "gb",
+    TerritoryName.BERMUDA to "bm",
     TerritoryName.BRITISH_INDIAN_OCEAN_TERRITORY to "gb",
     TerritoryName.BRITISH_VIRGIN_ISLANDS to "gb",
-    TerritoryName.CAYMAN_ISLANDS to "gb",
-    TerritoryName.FALKLAND_ISLANDS to "gb",
-    "Malvinas" to "gb",
-    TerritoryName.GIBRALTAR to "gb",
+    TerritoryName.CAYMAN_ISLANDS to "ky",
+    TerritoryName.FALKLAND_ISLANDS to "fk",
+    "Malvinas" to "fk",
+    TerritoryName.GIBRALTAR to "gi",
     TerritoryName.GUERNSEY to "gb",
     TerritoryName.ISLE_OF_MAN to "gb",
     TerritoryName.JERSEY to "gb",
     TerritoryName.MONTSERRAT to "gb",
     TerritoryName.PITCAIRN_ISLANDS to "gb",
-    TerritoryName.SAINT_HELENA to "gb",
-    "Ascension Island" to "gb",
-    "Tristan da Cunha" to "gb",
+    "Ascension Island" to "sh",
+    "Tristan da Cunha" to "sh",
     "South Georgia" to "gb",
     "South Sandwich Islands" to "gb",
     TerritoryName.TURKS_AND_CAICOS_ISLANDS to "gb",
@@ -292,7 +303,7 @@ internal val TERRITORY_ALIASES: List<Pair<String, String>> = listOf(
     TerritoryName.FRENCH_SOUTHERN_TERRITORIES to "fr",
     "French Guiana" to "fr",
     "Guadeloupe" to "fr",
-    "Martinique" to "fr",
+    TerritoryName.MARTINIQUE to "mq",
     "Mayotte" to "fr",
     TerritoryName.NEW_CALEDONIA to "fr",
     "Réunion" to "fr",
@@ -314,7 +325,7 @@ internal val TERRITORY_ALIASES: List<Pair<String, String>> = listOf(
     "Saba" to "nl",
 
     // ── Danish territories ───────────────────────────────────────────────────
-    TerritoryName.FAROE_ISLANDS to "dk",
+    TerritoryName.FAROE_ISLANDS to "fo",
     TerritoryName.GREENLAND to "dk",
 
     // ── Australian territories ───────────────────────────────────────────────

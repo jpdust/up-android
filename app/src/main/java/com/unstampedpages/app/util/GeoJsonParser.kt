@@ -51,38 +51,47 @@ object GeoJsonParser {
 
     private fun parseFeature(jr: JsonReader): CountryGeometry? {
         var id: String? = null
-        var polygons: List<List<LatLng>>? = null
+        var geometryResult: Pair<List<List<LatLng>>, List<List<LatLng>>>? = null
 
         jr.beginObject()
         while (jr.hasNext()) {
             when (jr.nextName()) {
                 "id" -> id = jr.nextString()
-                "geometry" -> polygons = parseGeometry(jr)
+                "geometry" -> geometryResult = parseGeometry(jr)
                 else -> jr.skipValue()
             }
         }
         jr.endObject()
 
         val finalId = id ?: return null
-        val finalPolygons = polygons?.filter { it.size >= 3 } ?: return null
+        val (polygons, holes) = geometryResult ?: return null
+        val finalPolygons = polygons.filter { it.size >= 3 }
         if (finalPolygons.isEmpty()) return null
-        return CountryGeometry(finalId, finalPolygons)
+        return CountryGeometry(finalId, finalPolygons, holes.filter { it.size >= 3 })
     }
 
-    private fun parseGeometry(jr: JsonReader): List<List<LatLng>>? {
+    /**
+     * Returns (outerRings, holeRings) for the geometry object currently being read.
+     */
+    private fun parseGeometry(
+        jr: JsonReader
+    ): Pair<List<List<LatLng>>, List<List<LatLng>>>? {
         if (jr.peek() == JsonToken.NULL) { jr.nextNull(); return null }
 
         var type: String? = null
-        var polygons: List<List<LatLng>>? = null
+        var result: Pair<List<List<LatLng>>, List<List<LatLng>>>? = null
 
         jr.beginObject()
         while (jr.hasNext()) {
             when (jr.nextName()) {
                 "type" -> type = jr.nextString()
                 "coordinates" -> {
-                    polygons = when (type) {
-                        "Polygon" -> listOf(readPolygonCoords(jr))
-                        "MultiPolygon" -> readMultiPolygonCoords(jr)
+                    result = when (type) {
+                        "Polygon" -> {
+                            val (outer, holes) = readPolygon(jr)
+                            listOf(outer) to holes
+                        }
+                        "MultiPolygon" -> readMultiPolygon(jr)
                         else -> { jr.skipValue(); null }
                     }
                 }
@@ -90,33 +99,42 @@ object GeoJsonParser {
             }
         }
         jr.endObject()
-        return polygons
+        return result
     }
 
-    /** Reads a Polygon coordinates array: [[lng,lat],...] (outer ring only). */
-    private fun readPolygonCoords(jr: JsonReader): List<LatLng> {
+    /**
+     * Reads one Polygon: `[[outerRing], [hole], ...]`.
+     * Returns the outer ring and all hole rings.
+     */
+    private fun readPolygon(jr: JsonReader): Pair<List<LatLng>, List<List<LatLng>>> {
         var outerRing = emptyList<LatLng>()
+        val holes = mutableListOf<List<LatLng>>()
         var ringIndex = 0
         jr.beginArray()
         while (jr.hasNext()) {
             val ring = readRing(jr)
-            if (ringIndex == 0) outerRing = ring   // only outer ring
-            else { /* skip holes */ }
+            if (ringIndex == 0) outerRing = ring else holes.add(ring)
             ringIndex++
         }
         jr.endArray()
-        return outerRing
+        return outerRing to holes
     }
 
-    /** Reads a MultiPolygon coordinates array: [[[lng,lat],...], ...] */
-    private fun readMultiPolygonCoords(jr: JsonReader): List<List<LatLng>> {
-        val polygons = mutableListOf<List<LatLng>>()
+    /**
+     * Reads a MultiPolygon: `[Polygon, Polygon, ...]`.
+     * Returns all outer rings and all hole rings (flattened across polygons).
+     */
+    private fun readMultiPolygon(jr: JsonReader): Pair<List<List<LatLng>>, List<List<LatLng>>> {
+        val outerRings = mutableListOf<List<LatLng>>()
+        val allHoles = mutableListOf<List<LatLng>>()
         jr.beginArray()
         while (jr.hasNext()) {
-            polygons.add(readPolygonCoords(jr))
+            val (outer, holes) = readPolygon(jr)
+            outerRings.add(outer)
+            allHoles.addAll(holes)
         }
         jr.endArray()
-        return polygons
+        return outerRings to allHoles
     }
 
     /** Reads one ring: [[lng,lat], [lng,lat], ...] */

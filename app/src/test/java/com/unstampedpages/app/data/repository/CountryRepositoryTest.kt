@@ -22,7 +22,7 @@ class CountryRepositoryTest {
         val countries = repository.getAllCountries()
 
         assertTrue(countries.isNotEmpty())
-        assertEquals(countries.size, 202)
+        assertEquals(countries.size, 209)
     }
 
     @Test
@@ -502,6 +502,83 @@ class CountryRepositoryTest {
                 country.safetyLevel == com.unstampedpages.app.data.model.SafetyLevel.RECONSIDER_TRAVEL ||
                 country.safetyLevel == com.unstampedpages.app.data.model.SafetyLevel.DO_NOT_TRAVEL
             )
+        }
+    }
+
+    // ==================== Territory Currency Tests ====================
+
+    @Test
+    fun `Cayman Islands has KYD currency and is in North America`() {
+        val country = repository.getCountryById("ky")
+        assertNotNull("Cayman Islands (ky) should exist", country)
+        assertEquals("KYD", country!!.currencyCode)
+        assertEquals(Continent.NORTH_AMERICA, country.continent)
+    }
+
+    @Test
+    fun `Bermuda has BMD currency and is in North America`() {
+        val country = repository.getCountryById("bm")
+        assertNotNull("Bermuda (bm) should exist", country)
+        assertEquals("BMD", country!!.currencyCode)
+        assertEquals(Continent.NORTH_AMERICA, country.continent)
+    }
+
+    @Test
+    fun `Falkland Islands has FKP currency and is in South America`() {
+        val country = repository.getCountryById("fk")
+        assertNotNull("Falkland Islands (fk) should exist", country)
+        assertEquals("FKP", country!!.currencyCode)
+        assertEquals(Continent.SOUTH_AMERICA, country.continent)
+    }
+
+    @Test
+    fun `Gibraltar has GIP currency and is in Europe`() {
+        val country = repository.getCountryById("gi")
+        assertNotNull("Gibraltar (gi) should exist", country)
+        assertEquals("GIP", country!!.currencyCode)
+        assertEquals(Continent.EUROPE, country.continent)
+    }
+
+    @Test
+    fun `Faroe Islands has DKK currency and is in Europe`() {
+        val country = repository.getCountryById("fo")
+        assertNotNull("Faroe Islands (fo) should exist", country)
+        assertEquals("DKK", country!!.currencyCode)
+        assertEquals(Continent.EUROPE, country.continent)
+    }
+
+    @Test
+    fun `Saint Helena has SHP currency and is in Africa`() {
+        val country = repository.getCountryById("sh")
+        assertNotNull("Saint Helena (sh) should exist", country)
+        assertEquals("SHP", country!!.currencyCode)
+        assertEquals(Continent.AFRICA, country.continent)
+    }
+
+    @Test
+    fun `Martinique has EUR currency and is in North America`() {
+        val country = repository.getCountryById("mq")
+        assertNotNull("Martinique (mq) should exist", country)
+        assertEquals("EUR", country!!.currencyCode)
+        assertEquals(Continent.NORTH_AMERICA, country.continent)
+    }
+
+    @Test
+    fun `all seven new territories are present in the repository`() {
+        val ids = listOf("ky", "bm", "fk", "gi", "fo", "sh", "mq")
+        ids.forEach { id ->
+            assertNotNull("Territory '$id' should exist in repository", repository.getCountryById(id))
+        }
+    }
+
+    @Test
+    fun `new territories have valid currency and exchange rate data`() {
+        val ids = listOf("ky", "bm", "fk", "gi", "fo", "sh", "mq")
+        ids.forEach { id ->
+            val country = repository.getCountryById(id)!!
+            assertTrue("$id currency should be non-blank", country.currency.isNotBlank())
+            assertTrue("$id currencyCode should be 3 chars", country.currencyCode.length == 3)
+            assertTrue("$id exchange rate should be positive", country.exchangeRateToUSD > 0)
         }
     }
 

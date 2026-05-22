@@ -418,7 +418,7 @@ class GeoJsonParserTest {
     }
 
     @Test
-    fun `parseGeoJson with Polygon ignores holes and uses only outer ring`() {
+    fun `parseGeoJson with Polygon with hole captures outer ring in polygons and hole in holes`() {
         val json = """
             {
                 "type": "FeatureCollection",
@@ -453,11 +453,137 @@ class GeoJsonParserTest {
         val result = GeoJsonParser.parseGeoJson(json)
 
         assertEquals(1, result.size)
+        // Outer ring ends up in polygons only
         assertEquals(1, result[0].polygons.size)
-        // Should only have 5 points from outer ring, not 10 from both rings
         assertEquals(5, result[0].polygons[0].size)
-        // First point should be from outer ring
         assertEquals(LatLng(0.0f, 0.0f), result[0].polygons[0][0])
+        // Hole ring ends up in holes (GeoJSON [lng, lat] → LatLng(lat, lng))
+        assertEquals(1, result[0].holes.size)
+        assertEquals(5, result[0].holes[0].size)
+        assertEquals(LatLng(lat = 2.0f, lng = 2.0f), result[0].holes[0][0])
+    }
+
+    @Test
+    fun `parseGeoJson with Polygon without holes has empty holes list`() {
+        val json = """
+            {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "id": "no_hole",
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Polygon",
+                            "coordinates": [
+                                [
+                                    [0.0, 0.0],
+                                    [10.0, 0.0],
+                                    [10.0, 10.0],
+                                    [0.0, 0.0]
+                                ]
+                            ]
+                        }
+                    }
+                ]
+            }
+        """.trimIndent()
+
+        val result = GeoJsonParser.parseGeoJson(json)
+
+        assertEquals(1, result.size)
+        assertTrue("holes should be empty when polygon has no hole rings", result[0].holes.isEmpty())
+    }
+
+    @Test
+    fun `parseGeoJson with Polygon with multiple holes captures each hole`() {
+        val json = """
+            {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "id": "multi_hole",
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Polygon",
+                            "coordinates": [
+                                [[0.0,0.0],[20.0,0.0],[20.0,20.0],[0.0,20.0],[0.0,0.0]],
+                                [[1.0,1.0],[4.0,1.0],[4.0,4.0],[1.0,4.0],[1.0,1.0]],
+                                [[6.0,6.0],[9.0,6.0],[9.0,9.0],[6.0,9.0],[6.0,6.0]]
+                            ]
+                        }
+                    }
+                ]
+            }
+        """.trimIndent()
+
+        val result = GeoJsonParser.parseGeoJson(json)
+
+        assertEquals(1, result.size)
+        assertEquals(1, result[0].polygons.size)
+        assertEquals(2, result[0].holes.size)
+    }
+
+    @Test
+    fun `parseGeoJson with MultiPolygon where sub-polygons have holes collects all holes`() {
+        // MultiPolygon: two sub-polygons, each with one hole ring.
+        // South Africa (ZAF) with Lesotho is an example: outer SA ring + Lesotho hole.
+        val json = """
+            {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "id": "ZAF",
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "MultiPolygon",
+                            "coordinates": [
+                                [
+                                    [[0.0,0.0],[10.0,0.0],[10.0,10.0],[0.0,10.0],[0.0,0.0]],
+                                    [[3.0,3.0],[7.0,3.0],[7.0,7.0],[3.0,7.0],[3.0,3.0]]
+                                ],
+                                [
+                                    [[20.0,20.0],[30.0,20.0],[30.0,30.0],[20.0,30.0],[20.0,20.0]],
+                                    [[22.0,22.0],[28.0,22.0],[28.0,28.0],[22.0,28.0],[22.0,22.0]]
+                                ]
+                            ]
+                        }
+                    }
+                ]
+            }
+        """.trimIndent()
+
+        val result = GeoJsonParser.parseGeoJson(json)
+
+        assertEquals(1, result.size)
+        assertEquals(2, result[0].polygons.size)   // two outer rings
+        assertEquals(2, result[0].holes.size)       // one hole per sub-polygon, flattened
+    }
+
+    @Test
+    fun `parseGeoJson hole rings with fewer than 3 points are filtered out`() {
+        val json = """
+            {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "id": "tiny_hole",
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Polygon",
+                            "coordinates": [
+                                [[0.0,0.0],[10.0,0.0],[10.0,10.0],[0.0,10.0],[0.0,0.0]],
+                                [[1.0,1.0],[2.0,1.0]]
+                            ]
+                        }
+                    }
+                ]
+            }
+        """.trimIndent()
+
+        val result = GeoJsonParser.parseGeoJson(json)
+
+        assertEquals(1, result.size)
+        assertTrue("Hole ring with < 3 points should be filtered out", result[0].holes.isEmpty())
     }
 
     @Test

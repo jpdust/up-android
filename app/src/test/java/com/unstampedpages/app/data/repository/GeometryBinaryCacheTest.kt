@@ -25,6 +25,12 @@ class GeometryBinaryCacheTest {
         vararg polygons: List<LatLng>
     ) = CountryGeometry(id, polygons.toList())
 
+    private fun makeGeometryWithHoles(
+        id: String,
+        polygons: List<List<LatLng>>,
+        holes: List<List<LatLng>>
+    ) = CountryGeometry(id, polygons, holes)
+
     private fun triangle(offsetLat: Float = 0f, offsetLng: Float = 0f) = listOf(
         LatLng(lat = 10f + offsetLat, lng = -10f + offsetLng),
         LatLng(lat = -10f + offsetLat, lng = 0f + offsetLng),
@@ -316,6 +322,109 @@ class GeometryBinaryCacheTest {
         } finally {
             subdir.setWritable(true)
         }
+    }
+
+    // --- round-trip: holes -----------------------------------------------------
+
+    @Test
+    fun `country with one hole round-trips correctly`() {
+        val hole = listOf(
+            LatLng(lat = 3f, lng = -3f),
+            LatLng(lat = -3f, lng = 0f),
+            LatLng(lat = 3f, lng = 3f)
+        )
+        val geometry = makeGeometryWithHoles("za", listOf(triangle()), listOf(hole))
+        val file = cacheFile()
+
+        GeometryBinaryCache.writeToFile(file, listOf(geometry))
+        val result = GeometryBinaryCache.readFromFile(file)!!
+
+        assertEquals(1, result.size)
+        assertEquals(1, result[0].holes.size)
+        assertEquals(3, result[0].holes[0].size)
+        assertEquals(3f, result[0].holes[0][0].lat, 0.0001f)
+        assertEquals(-3f, result[0].holes[0][0].lng, 0.0001f)
+    }
+
+    @Test
+    fun `country without holes has empty holes list after round-trip`() {
+        val geometry = makeGeometry("au", triangle())
+        val file = cacheFile()
+
+        GeometryBinaryCache.writeToFile(file, listOf(geometry))
+        val result = GeometryBinaryCache.readFromFile(file)!!
+
+        assertTrue("holes should be empty when none were written", result[0].holes.isEmpty())
+    }
+
+    @Test
+    fun `country with multiple holes round-trips correctly`() {
+        val hole1 = listOf(
+            LatLng(lat = 5f, lng = -5f),
+            LatLng(lat = 5f, lng = -1f),
+            LatLng(lat = 1f, lng = -1f),
+            LatLng(lat = 1f, lng = -5f),
+            LatLng(lat = 5f, lng = -5f)
+        )
+        val hole2 = listOf(
+            LatLng(lat = 5f, lng = 1f),
+            LatLng(lat = 5f, lng = 5f),
+            LatLng(lat = 1f, lng = 5f),
+            LatLng(lat = 1f, lng = 1f),
+            LatLng(lat = 5f, lng = 1f)
+        )
+        val geometry = makeGeometryWithHoles("outer", listOf(triangle()), listOf(hole1, hole2))
+        val file = cacheFile()
+
+        GeometryBinaryCache.writeToFile(file, listOf(geometry))
+        val result = GeometryBinaryCache.readFromFile(file)!!
+
+        assertEquals(2, result[0].holes.size)
+        assertEquals(5, result[0].holes[0].size)
+        assertEquals(5, result[0].holes[1].size)
+        // Verify first point of each hole
+        assertEquals(5f, result[0].holes[0][0].lat, 0.0001f)
+        assertEquals(-5f, result[0].holes[0][0].lng, 0.0001f)
+        assertEquals(5f, result[0].holes[1][0].lat, 0.0001f)
+        assertEquals(1f, result[0].holes[1][0].lng, 0.0001f)
+    }
+
+    @Test
+    fun `mixed countries — some with holes some without — round-trip correctly`() {
+        val hole = listOf(
+            LatLng(lat = -28f, lng = 28f),
+            LatLng(lat = -30f, lng = 28f),
+            LatLng(lat = -29f, lng = 30f)
+        )
+        // ZAF has a hole (Lesotho); LSO has no holes
+        val zaf = makeGeometryWithHoles("za", listOf(triangle()), listOf(hole))
+        val lso = makeGeometry("ls", triangle(5f, 5f))
+        val file = cacheFile()
+
+        GeometryBinaryCache.writeToFile(file, listOf(zaf, lso))
+        val result = GeometryBinaryCache.readFromFile(file)!!
+
+        assertEquals(2, result.size)
+        assertEquals("za", result[0].countryId)
+        assertEquals(1, result[0].holes.size)
+        assertEquals("ls", result[1].countryId)
+        assertTrue(result[1].holes.isEmpty())
+    }
+
+    @Test
+    fun `hole float coordinates preserved with full precision`() {
+        val lat = -29.3167f
+        val lng = 27.5833f
+        val hole = listOf(LatLng(lat, lng), LatLng(-29.5f, 28.0f), LatLng(-29.0f, 28.0f))
+        val geometry = makeGeometryWithHoles("ls", listOf(triangle()), listOf(hole))
+        val file = cacheFile()
+
+        GeometryBinaryCache.writeToFile(file, listOf(geometry))
+        val result = GeometryBinaryCache.readFromFile(file)!!
+
+        val storedPoint = result[0].holes[0][0]
+        assertEquals(lat, storedPoint.lat, 0.00001f)
+        assertEquals(lng, storedPoint.lng, 0.00001f)
     }
 
     // --- large polygon ---------------------------------------------------------

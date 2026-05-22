@@ -42,7 +42,7 @@ import java.io.FileOutputStream
 internal object GeometryBinaryCache {
 
     private const val MAGIC = 0x47454F4D
-    internal const val CACHE_VERSION = 1
+    internal const val CACHE_VERSION = 5
     private const val CACHE_FILE         = "geometry_cache.bin"
     private const val CACHE_FILE_LOW_RES = "geometry_cache_110m.bin"
 
@@ -93,7 +93,14 @@ internal object GeometryBinaryCache {
                             LatLng(lat = dis.readFloat(), lng = dis.readFloat())
                         }
                     }
-                    CountryGeometry(countryId, polygons)
+                    val holeCount = dis.readInt()
+                    val holes = List(holeCount) {
+                        val pointCount = dis.readInt()
+                        List(pointCount) {
+                            LatLng(lat = dis.readFloat(), lng = dis.readFloat())
+                        }
+                    }
+                    CountryGeometry(countryId, polygons, holes)
                 }
             }
         } catch (_: Exception) {
@@ -140,6 +147,14 @@ internal object GeometryBinaryCache {
             for (polygon in country.polygons) {
                 dos.writeInt(polygon.size)
                 for (point in polygon) {
+                    dos.writeFloat(point.lat)
+                    dos.writeFloat(point.lng)
+                }
+            }
+            dos.writeInt(country.holes.size)
+            for (hole in country.holes) {
+                dos.writeInt(hole.size)
+                for (point in hole) {
                     dos.writeFloat(point.lat)
                     dos.writeFloat(point.lng)
                 }
