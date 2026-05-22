@@ -126,6 +126,10 @@ jobs:
           path: app/build/reports/jacoco/debug/
           retention-days: 14
 
+      # ── Android Lint ─────────────────────────────────────────────────────────
+      - name: Run Android Lint
+        run: ./gradlew lintDebug
+
       # ── SonarCloud Analysis ──────────────────────────────────────────────────
       # sonar.qualitygate.wait=true blocks the step until SonarCloud returns a
       # gate result and fails the job if the gate is not green, preventing a
