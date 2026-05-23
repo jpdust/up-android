@@ -52,7 +52,6 @@
     <string name="country_power_outlet">电源插座</string>
     <string name="country_usd">美元</string>
     <string name="country_equals">=</string>
-    <string name="country_not_specified">未指定</string>
 
     <!-- Map Color Modes -->
     <string name="map_mode_default">默认</string>
@@ -107,7 +106,6 @@
         <item quantity="other">已选择%d项</item>
     </plurals>
     <string name="checklist_delete">删除</string>
-    <string name="checklist_item_count">%1$d/%2$d</string>
 
     <!-- Checklist Categories -->
     <string name="category_electronics">电子产品</string>
@@ -129,60 +127,6 @@
     <string name="template_business_trip">商务旅行</string>
     <string name="template_beach_vacation">海滩度假</string>
     <string name="template_hiking">徒步冒险</string>
-
-    <!-- Template Items - Common -->
-    <string name="item_phone_charger">手机充电器</string>
-    <string name="item_portable_battery">移动电源</string>
-    <string name="item_passport">护照</string>
-    <string name="item_sunscreen">防晒霜</string>
-    <string name="item_sunglasses">太阳镜</string>
-    <string name="item_toothbrush">牙刷</string>
-    <string name="item_toothpaste">牙膏</string>
-    <string name="item_deodorant">除臭剂</string>
-    <string name="item_pain_relievers">止痛药</string>
-
-    <!-- Template Items - Business Trip -->
-    <string name="item_laptop">笔记本电脑</string>
-    <string name="item_laptop_charger">笔记本充电器</string>
-    <string name="item_business_cards">名片</string>
-    <string name="item_travel_itinerary">行程表</string>
-    <string name="item_suit_blazer">西装/外套</string>
-    <string name="item_dress_shirts">正装衬衫</string>
-    <string name="item_dress_pants">正装裤</string>
-    <string name="item_dress_shoes">正装鞋</string>
-    <string name="item_belt">腰带</string>
-    <string name="item_watch">手表</string>
-
-    <!-- Template Items - Beach Vacation -->
-    <string name="item_swimsuit">泳衣</string>
-    <string name="item_sun_hat">太阳帽</string>
-    <string name="item_flip_flops">人字拖</string>
-    <string name="item_beach_towel">沙滩浴巾</string>
-    <string name="item_aloe_vera_gel">芦荟凝胶</string>
-    <string name="item_camera">相机</string>
-    <string name="item_waterproof_phone_case">防水手机壳</string>
-    <string name="item_shorts">短裤</string>
-    <string name="item_t_shirts">T恤</string>
-    <string name="item_sandals">凉鞋</string>
-    <string name="item_snacks">零食</string>
-    <string name="item_motion_sickness_pills">晕车药</string>
-
-    <!-- Template Items - Hiking -->
-    <string name="item_backpack">背包</string>
-    <string name="item_hiking_boots">登山靴</string>
-    <string name="item_hiking_socks">登山袜</string>
-    <string name="item_water_bottle">水壶</string>
-    <string name="item_trail_map">步道地图</string>
-    <string name="item_first_aid_kit">急救包</string>
-    <string name="item_bug_spray">驱虫喷雾</string>
-    <string name="item_rain_jacket">雨衣</string>
-    <string name="item_flashlight">手电筒</string>
-    <string name="item_energy_bars">能量棒</string>
-    <string name="item_trail_mix">坚果混合</string>
-    <string name="item_hat">帽子</string>
-    <string name="item_quick_dry_pants">速干裤</string>
-    <string name="item_moisture_wicking_shirts">速干衬衫</string>
-    <string name="item_blister_bandages">水泡贴</string>
 
     <!-- Date Display -->
     <string name="date_today">今天</string>
@@ -229,19 +173,9 @@
     <string name="cd_remove_stamp">移除印章</string>
     <string name="cd_add_stamp">添加印章</string>
     <string name="cd_pinned">已固定</string>
-    <string name="cd_collapse">折叠</string>
-    <string name="cd_expand">展开</string>
 
     <!-- Common Actions -->
     <string name="action_ok">确定</string>
-    <string name="action_cancel">取消</string>
-    <string name="action_save">保存</string>
-    <string name="action_delete">删除</string>
-    <string name="action_add">添加</string>
-    <string name="action_close">关闭</string>
-
-    <!-- Quantity Display -->
-    <string name="quantity_display">x%d</string>
 
     <!-- Safety Levels -->
     <string name="safety_low_risk">采取正常安全预防措施</string>

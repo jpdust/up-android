@@ -1,8 +1,9 @@
 package com.unstampedpages.app.ui.screens.countryinfo
 
 import android.content.Context
-import android.net.Uri
+import androidx.core.net.toUri
 import androidx.browser.customtabs.CustomTabColorSchemeParams
+import androidx.core.graphics.toColorInt
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -382,7 +383,7 @@ private fun TravelAdvisoryChip(
 }
 
 private fun openInCustomTab(context: Context, url: String) {
-    val toolbarColor = android.graphics.Color.parseColor("#6B4423")
+    val toolbarColor = "#6B4423".toColorInt()
     val colorSchemeParams = CustomTabColorSchemeParams.Builder()
         .setToolbarColor(toolbarColor)
         .build()
@@ -392,7 +393,7 @@ private fun openInCustomTab(context: Context, url: String) {
         .setShareState(CustomTabsIntent.SHARE_STATE_OFF)
         .setUrlBarHidingEnabled(false)
         .build()
-    customTabsIntent.launchUrl(context, Uri.parse(url))
+    customTabsIntent.launchUrl(context, url.toUri())
 }
 
 @Composable

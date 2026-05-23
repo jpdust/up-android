@@ -52,7 +52,6 @@
     <string name="country_power_outlet">Enchufe Eléctrico</string>
     <string name="country_usd">USD</string>
     <string name="country_equals">=</string>
-    <string name="country_not_specified">No especificado</string>
 
     <!-- Map Color Modes -->
     <string name="map_mode_default">Predeterminado</string>
@@ -109,7 +108,6 @@
         <item quantity="other">%d artículos seleccionados</item>
     </plurals>
     <string name="checklist_delete">Eliminar</string>
-    <string name="checklist_item_count">%1$d/%2$d</string>
 
     <!-- Checklist Categories -->
     <string name="category_electronics">Electrónicos</string>
@@ -132,60 +130,6 @@
     <string name="template_business_trip">Viaje de Negocios</string>
     <string name="template_beach_vacation">Vacaciones en la Playa</string>
     <string name="template_hiking">Aventura de Senderismo</string>
-
-    <!-- Template Items - Common -->
-    <string name="item_phone_charger">Cargador de teléfono</string>
-    <string name="item_portable_battery">Batería portátil</string>
-    <string name="item_passport">Pasaporte</string>
-    <string name="item_sunscreen">Protector solar</string>
-    <string name="item_sunglasses">Gafas de sol</string>
-    <string name="item_toothbrush">Cepillo de dientes</string>
-    <string name="item_toothpaste">Pasta de dientes</string>
-    <string name="item_deodorant">Desodorante</string>
-    <string name="item_pain_relievers">Analgésicos</string>
-
-    <!-- Template Items - Business Trip -->
-    <string name="item_laptop">Portátil</string>
-    <string name="item_laptop_charger">Cargador de portátil</string>
-    <string name="item_business_cards">Tarjetas de presentación</string>
-    <string name="item_travel_itinerary">Itinerario de viaje</string>
-    <string name="item_suit_blazer">Traje/Blazer</string>
-    <string name="item_dress_shirts">Camisas de vestir</string>
-    <string name="item_dress_pants">Pantalones de vestir</string>
-    <string name="item_dress_shoes">Zapatos de vestir</string>
-    <string name="item_belt">Cinturón</string>
-    <string name="item_watch">Reloj</string>
-
-    <!-- Template Items - Beach Vacation -->
-    <string name="item_swimsuit">Traje de baño</string>
-    <string name="item_sun_hat">Sombrero para el sol</string>
-    <string name="item_flip_flops">Chancletas</string>
-    <string name="item_beach_towel">Toalla de playa</string>
-    <string name="item_aloe_vera_gel">Gel de aloe vera</string>
-    <string name="item_camera">Cámara</string>
-    <string name="item_waterproof_phone_case">Funda impermeable para teléfono</string>
-    <string name="item_shorts">Pantalones cortos</string>
-    <string name="item_t_shirts">Camisetas</string>
-    <string name="item_sandals">Sandalias</string>
-    <string name="item_snacks">Bocadillos</string>
-    <string name="item_motion_sickness_pills">Pastillas para el mareo</string>
-
-    <!-- Template Items - Hiking -->
-    <string name="item_backpack">Mochila</string>
-    <string name="item_hiking_boots">Botas de senderismo</string>
-    <string name="item_hiking_socks">Calcetines de senderismo</string>
-    <string name="item_water_bottle">Botella de agua</string>
-    <string name="item_trail_map">Mapa del sendero</string>
-    <string name="item_first_aid_kit">Botiquín de primeros auxilios</string>
-    <string name="item_bug_spray">Repelente de insectos</string>
-    <string name="item_rain_jacket">Chaqueta impermeable</string>
-    <string name="item_flashlight">Linterna</string>
-    <string name="item_energy_bars">Barras energéticas</string>
-    <string name="item_trail_mix">Mezcla de frutos secos</string>
-    <string name="item_hat">Gorra</string>
-    <string name="item_quick_dry_pants">Pantalones de secado rápido</string>
-    <string name="item_moisture_wicking_shirts">Camisas transpirables</string>
-    <string name="item_blister_bandages">Vendajes para ampollas</string>
 
     <!-- Date Display -->
     <string name="date_today">Hoy</string>
@@ -232,19 +176,9 @@
     <string name="cd_remove_stamp">Eliminar sello</string>
     <string name="cd_add_stamp">Agregar sello</string>
     <string name="cd_pinned">Fijado</string>
-    <string name="cd_collapse">Contraer</string>
-    <string name="cd_expand">Expandir</string>
 
     <!-- Common Actions -->
     <string name="action_ok">Aceptar</string>
-    <string name="action_cancel">Cancelar</string>
-    <string name="action_save">Guardar</string>
-    <string name="action_delete">Eliminar</string>
-    <string name="action_add">Agregar</string>
-    <string name="action_close">Cerrar</string>
-
-    <!-- Quantity Display -->
-    <string name="quantity_display">x%d</string>
 
     <!-- Safety Levels -->
     <string name="safety_low_risk">Precauciones normales de seguridad</string>

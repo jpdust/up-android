@@ -1679,6 +1679,39 @@ fun WorldMapCanvas(
 }
 
 /**
+ * Level-2 polygon check for a single geometry: returns true if ([lat], [lng]) falls inside
+ * one of [geometry]'s polygons and not inside a hole; false if no polygon matched or the
+ * match was inside a hole.
+ *
+ * Extracted from [findCountryAtNormalizedPoint] to keep that function's cognitive complexity
+ * within the allowed limit.
+ */
+private fun checkGeometryPolygons(
+    lat: Float,
+    lng: Float,
+    normalizedX: Float,
+    normalizedY: Float,
+    geometry: CountryGeometry,
+    polyBoundsList: List<PolygonBounds>?
+): Boolean {
+    for ((idx, polygon) in geometry.polygons.withIndex()) {
+        // Level 2: skip individual polygon if its own bbox misses
+        val pb = polyBoundsList?.getOrNull(idx)
+        if (pb != null &&
+            (normalizedX < pb.minX || normalizedX > pb.maxX ||
+             normalizedY < pb.minY || normalizedY > pb.maxY)) {
+            continue
+        }
+        if (isPointInLatLngPolygon(lat, lng, polygon)) {
+            // Point is inside this polygon — check if it falls in a hole.
+            // If so, this geometry does not own the tap; move to the next.
+            return !geometry.holes.any { isPointInLatLngPolygon(lat, lng, it) }
+        }
+    }
+    return false
+}
+
+/**
  * Find which country contains the given normalized point.
  *
  * Two-level bounding-box pre-filter eliminates ray-casting for the vast majority
@@ -1700,7 +1733,7 @@ internal fun findCountryAtNormalizedPoint(
     val lng = MercatorProjection.xToLongitude(normalizedX)
     val lat = MercatorProjection.yToLatitude(normalizedY)
 
-    geometryLoop@ for (geometry in geometries) {
+    for (geometry in geometries) {
         val bounds = countryBounds[geometry.countryId]
 
         // Level 1: skip entire geometry if overall bbox misses
@@ -1710,23 +1743,8 @@ internal fun findCountryAtNormalizedPoint(
             continue
         }
 
-        val polyBoundsList = bounds?.polygonBounds
-        for ((idx, polygon) in geometry.polygons.withIndex()) {
-            // Level 2: skip individual polygon if its own bbox misses
-            val pb = polyBoundsList?.getOrNull(idx)
-            if (pb != null &&
-                (normalizedX < pb.minX || normalizedX > pb.maxX ||
-                 normalizedY < pb.minY || normalizedY > pb.maxY)) {
-                continue
-            }
-            if (isPointInLatLngPolygon(lat, lng, polygon)) {
-                // Point is inside this polygon — check if it falls in a hole.
-                // If so, this geometry does not own the tap; move to the next.
-                if (geometry.holes.any { isPointInLatLngPolygon(lat, lng, it) }) {
-                    continue@geometryLoop
-                }
-                return geometry.countryId
-            }
+        if (checkGeometryPolygons(lat, lng, normalizedX, normalizedY, geometry, bounds?.polygonBounds)) {
+            return geometry.countryId
         }
     }
     return null

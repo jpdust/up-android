@@ -53,7 +53,6 @@
     <string name="country_power_outlet">مقبس الكهرباء</string>
     <string name="country_usd">دولار</string>
     <string name="country_equals">=</string>
-    <string name="country_not_specified">غير محدد</string>
 
     <!-- Map Color Modes -->
     <string name="map_mode_default">افتراضي</string>
@@ -116,7 +115,6 @@
         <item quantity="other">%d عنصر محدد</item>
     </plurals>
     <string name="checklist_delete">حذف</string>
-    <string name="checklist_item_count">%1$d/%2$d</string>
 
     <!-- Checklist Categories -->
     <string name="category_electronics">إلكترونيات</string>
@@ -142,60 +140,6 @@
     <string name="template_business_trip">رحلة عمل</string>
     <string name="template_beach_vacation">عطلة على الشاطئ</string>
     <string name="template_hiking">مغامرة تسلق</string>
-
-    <!-- Template Items - Common -->
-    <string name="item_phone_charger">شاحن الهاتف</string>
-    <string name="item_portable_battery">بطارية محمولة</string>
-    <string name="item_passport">جواز السفر</string>
-    <string name="item_sunscreen">واقي الشمس</string>
-    <string name="item_sunglasses">نظارات شمسية</string>
-    <string name="item_toothbrush">فرشاة أسنان</string>
-    <string name="item_toothpaste">معجون أسنان</string>
-    <string name="item_deodorant">مزيل العرق</string>
-    <string name="item_pain_relievers">مسكنات الألم</string>
-
-    <!-- Template Items - Business Trip -->
-    <string name="item_laptop">حاسوب محمول</string>
-    <string name="item_laptop_charger">شاحن الحاسوب</string>
-    <string name="item_business_cards">بطاقات العمل</string>
-    <string name="item_travel_itinerary">جدول الرحلة</string>
-    <string name="item_suit_blazer">بدلة/جاكيت</string>
-    <string name="item_dress_shirts">قمصان رسمية</string>
-    <string name="item_dress_pants">بناطيل رسمية</string>
-    <string name="item_dress_shoes">أحذية رسمية</string>
-    <string name="item_belt">حزام</string>
-    <string name="item_watch">ساعة</string>
-
-    <!-- Template Items - Beach Vacation -->
-    <string name="item_swimsuit">ملابس سباحة</string>
-    <string name="item_sun_hat">قبعة شمسية</string>
-    <string name="item_flip_flops">شبشب</string>
-    <string name="item_beach_towel">منشفة شاطئ</string>
-    <string name="item_aloe_vera_gel">جل الصبار</string>
-    <string name="item_camera">كاميرا</string>
-    <string name="item_waterproof_phone_case">غطاء هاتف مقاوم للماء</string>
-    <string name="item_shorts">شورت</string>
-    <string name="item_t_shirts">تي شيرت</string>
-    <string name="item_sandals">صنادل</string>
-    <string name="item_snacks">وجبات خفيفة</string>
-    <string name="item_motion_sickness_pills">حبوب دوار الحركة</string>
-
-    <!-- Template Items - Hiking -->
-    <string name="item_backpack">حقيبة ظهر</string>
-    <string name="item_hiking_boots">أحذية تسلق</string>
-    <string name="item_hiking_socks">جوارب تسلق</string>
-    <string name="item_water_bottle">زجاجة ماء</string>
-    <string name="item_trail_map">خريطة المسار</string>
-    <string name="item_first_aid_kit">حقيبة إسعافات أولية</string>
-    <string name="item_bug_spray">رذاذ طارد الحشرات</string>
-    <string name="item_rain_jacket">سترة مطر</string>
-    <string name="item_flashlight">مصباح يدوي</string>
-    <string name="item_energy_bars">ألواح طاقة</string>
-    <string name="item_trail_mix">خليط المكسرات</string>
-    <string name="item_hat">قبعة</string>
-    <string name="item_quick_dry_pants">بناطيل سريعة الجفاف</string>
-    <string name="item_moisture_wicking_shirts">قمصان ماصة للرطوبة</string>
-    <string name="item_blister_bandages">ضمادات الفقاعات</string>
 
     <!-- Date Display -->
     <string name="date_today">اليوم</string>
@@ -242,19 +186,9 @@
     <string name="cd_remove_stamp">إزالة الطابع</string>
     <string name="cd_add_stamp">إضافة طابع</string>
     <string name="cd_pinned">مثبت</string>
-    <string name="cd_collapse">طي</string>
-    <string name="cd_expand">توسيع</string>
 
     <!-- Common Actions -->
     <string name="action_ok">موافق</string>
-    <string name="action_cancel">إلغاء</string>
-    <string name="action_save">حفظ</string>
-    <string name="action_delete">حذف</string>
-    <string name="action_add">إضافة</string>
-    <string name="action_close">إغلاق</string>
-
-    <!-- Quantity Display -->
-    <string name="quantity_display">x%d</string>
 
     <!-- Safety Levels -->
     <string name="safety_low_risk">احتياطات أمنية عادية</string>
