@@ -9,14 +9,15 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.unstampedpages.app.ui.screens.checklist.components.QuantityPicker
 import com.unstampedpages.app.ui.theme.UnstampedPagesTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -230,14 +231,16 @@ class QuantityPickerTest {
     fun quantityPicker_disabled_decreaseButtonDoesNotExist() {
         launch(quantity = 5, enabled = false)
 
-        composeTestRule.onNodeWithTag("quantity_decrease").assertDoesNotExist()
+        val nodes = composeTestRule.onAllNodesWithTag("quantity_decrease").fetchSemanticsNodes()
+        assertTrue("Decrease button should not exist when disabled", nodes.isEmpty())
     }
 
     @Test
     fun quantityPicker_disabled_increaseButtonDoesNotExist() {
         launch(quantity = 5, enabled = false)
 
-        composeTestRule.onNodeWithTag("quantity_increase").assertDoesNotExist()
+        val nodes = composeTestRule.onAllNodesWithTag("quantity_increase").fetchSemanticsNodes()
+        assertTrue("Increase button should not exist when disabled", nodes.isEmpty())
     }
 
     @Test
