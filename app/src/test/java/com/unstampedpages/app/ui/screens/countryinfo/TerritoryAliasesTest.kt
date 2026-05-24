@@ -108,21 +108,21 @@ class TerritoryAliasesTest {
     fun `Spanish locale produces a non-null name for CYM`() {
         // Whether the JVM produces a Spanish translation or falls back to English,
         // the result must always be non-null and non-blank.
-        val name = getLocalizedTerritoryName("CYM", Locale("es"))
+        val name = getLocalizedTerritoryName("CYM", Locale.forLanguageTag("es"))
         assertNotNull(name)
         assertTrue(name!!.isNotBlank())
     }
 
     @Test
     fun `Spanish locale produces a non-null name for GRL`() {
-        val name = getLocalizedTerritoryName("GRL", Locale("es"))
+        val name = getLocalizedTerritoryName("GRL", Locale.forLanguageTag("es"))
         assertNotNull(name)
         assertTrue(name!!.isNotBlank())
     }
 
     @Test
     fun `French locale produces a non-null name for PRI`() {
-        val name = getLocalizedTerritoryName("PRI", Locale("fr"))
+        val name = getLocalizedTerritoryName("PRI", Locale.forLanguageTag("fr"))
         assertNotNull(name)
         assertTrue(name!!.isNotBlank())
     }
@@ -183,7 +183,7 @@ class TerritoryAliasesTest {
     @Test
     fun `combined aliases with Spanish locale includes at least as many entries as English`() {
         val english = getCombinedTerritoryAliases(Locale.ENGLISH)
-        val spanish = getCombinedTerritoryAliases(Locale("es"))
+        val spanish = getCombinedTerritoryAliases(Locale.forLanguageTag("es"))
         // Spanish JVM ICU data resolves many territory alpha-2 codes, so Spanish list should
         // be at least as large (often larger with extra localized aliases).
         assertTrue(spanish.size >= english.size)

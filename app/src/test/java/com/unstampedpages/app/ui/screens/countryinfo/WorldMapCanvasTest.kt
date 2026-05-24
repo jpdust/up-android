@@ -2620,8 +2620,8 @@ class BuildCountryNamesTest {
     @Test
     fun `Spanish locale produces non-blank names for territory geoIds`() {
         val repo = CountryRepository()
-        val countries = repo.getAllCountries(java.util.Locale("es")).associateBy { it.id }
-        val names = buildCountryNames(countries, locale = java.util.Locale("es"))
+        val countries = repo.getAllCountries(java.util.Locale.forLanguageTag("es")).associateBy { it.id }
+        val names = buildCountryNames(countries, locale = java.util.Locale.forLanguageTag("es"))
         // All resolved names must be non-blank regardless of locale.
         names.values.forEach { name ->
             assertTrue("Territory name should be non-blank in Spanish, got: '$name'", name.isNotBlank())
@@ -2631,12 +2631,12 @@ class BuildCountryNamesTest {
     @Test
     fun `Spanish locale still prioritizes territory name over parent country name for CYM`() {
         val repo = CountryRepository()
-        val countries = repo.getAllCountries(java.util.Locale("es")).associateBy { it.id }
-        val names = buildCountryNames(countries, locale = java.util.Locale("es"))
+        val countries = repo.getAllCountries(java.util.Locale.forLanguageTag("es")).associateBy { it.id }
+        val names = buildCountryNames(countries, locale = java.util.Locale.forLanguageTag("es"))
         val caymanName = names["CYM"]
         assertNotNull("CYM should resolve to a name in Spanish", caymanName)
         // Whatever the Spanish JVM returns, it must not be the Spanish name for United Kingdom.
-        val ukSpanish = repo.getCountryById("gb", java.util.Locale("es"))!!.name
+        val ukSpanish = repo.getCountryById("gb", java.util.Locale.forLanguageTag("es"))!!.name
         assertFalse(
             "CYM should not resolve to parent country name '$ukSpanish' in Spanish, got: $caymanName",
             caymanName!!.equals(ukSpanish, ignoreCase = true)
@@ -2646,7 +2646,7 @@ class BuildCountryNamesTest {
     @Test
     fun `locale parameter does not reduce overall map size vs default locale`() {
         val defaultNames = buildCountryNames(emptyMap())
-        val spanishNames = buildCountryNames(emptyMap(), locale = java.util.Locale("es"))
+        val spanishNames = buildCountryNames(emptyMap(), locale = java.util.Locale.forLanguageTag("es"))
         // Changing locale should not reduce coverage — every entry that resolved in English
         // must also resolve in Spanish (territory fallback covers any gaps).
         assertTrue(spanishNames.size >= defaultNames.size)
