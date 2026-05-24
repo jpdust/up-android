@@ -487,7 +487,7 @@ class CountryInfoViewModelTest {
     fun `updateLocale with a different locale refreshes the countries list`() {
         val before = viewModel.uiState.value.countries
         val newLocale = if (java.util.Locale.getDefault() == java.util.Locale.ENGLISH)
-            java.util.Locale("es") else java.util.Locale.ENGLISH
+            java.util.Locale.forLanguageTag("es") else java.util.Locale.ENGLISH
         viewModel.updateLocale(newLocale)
         // The list should still be non-empty and the same size — only names may differ.
         val after = viewModel.uiState.value.countries
@@ -497,14 +497,14 @@ class CountryInfoViewModelTest {
 
     @Test
     fun `updateLocale keeps isLoading false`() {
-        viewModel.updateLocale(java.util.Locale("es"))
+        viewModel.updateLocale(java.util.Locale.forLanguageTag("es"))
         assertFalse(viewModel.uiState.value.isLoading)
     }
 
     @Test
     fun `updateLocale preserves country ids`() {
         val idsBefore = viewModel.uiState.value.countries.map { it.id }.toSet()
-        viewModel.updateLocale(java.util.Locale("fr"))
+        viewModel.updateLocale(java.util.Locale.forLanguageTag("fr"))
         val idsAfter = viewModel.uiState.value.countries.map { it.id }.toSet()
         assertEquals(idsBefore, idsAfter)
     }
@@ -514,7 +514,7 @@ class CountryInfoViewModelTest {
         // updateLocale reloads via loadCountries, which resets the full state.
         viewModel.updateSearchQuery("Japan")
         assertTrue(viewModel.uiState.value.searchResults.isNotEmpty())
-        viewModel.updateLocale(java.util.Locale("es"))
+        viewModel.updateLocale(java.util.Locale.forLanguageTag("es"))
         // After locale change the state is reset — search results are cleared.
         assertEquals("", viewModel.uiState.value.searchQuery)
         assertTrue(viewModel.uiState.value.searchResults.isEmpty())
@@ -522,7 +522,7 @@ class CountryInfoViewModelTest {
 
     @Test
     fun `calling updateLocale twice with the same new locale only reloads once`() {
-        val newLocale = java.util.Locale("es")
+        val newLocale = java.util.Locale.forLanguageTag("es")
         viewModel.updateLocale(newLocale)
         val stateAfterFirst = viewModel.uiState.value
         // Second call with the same locale should be a no-op (guard clause).
