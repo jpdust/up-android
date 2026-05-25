@@ -37,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -151,7 +152,7 @@ fun JournalEntryEditor(
                 onValueChange = callbacks.onTitleChange,
                 label = { Text(stringResource(R.string.trip_log_title_label)) },
                 placeholder = { Text(stringResource(R.string.trip_log_title_placeholder)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag("journal_title_field"),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.Words,
@@ -168,7 +169,7 @@ fun JournalEntryEditor(
                 onValueChange = callbacks.onLocationChange,
                 label = { Text(stringResource(R.string.trip_log_location_label)) },
                 placeholder = { Text(stringResource(R.string.trip_log_location_placeholder)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag("journal_location_field"),
                 singleLine = true,
                 leadingIcon = {
                     Icon(

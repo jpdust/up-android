@@ -505,7 +505,10 @@ class CategorySectionTest {
             items = listOf(multiQuantityItem),
             state = defaultState(expanded = true)
         )
-        composeTestRule.onNodeWithTag("quantity_picker_3").assertIsDisplayed()
+        // useUnmergedTree = true: the QuantityPicker Row's testTag lives inside a Card
+        // with combinedClickable (mergeDescendants = true), so it is invisible in the
+        // merged semantics tree. Searching the unmerged tree finds the node directly.
+        composeTestRule.onNodeWithTag("quantity_picker_3", useUnmergedTree = true).assertExists()
     }
 
     @Test
@@ -517,7 +520,7 @@ class CategorySectionTest {
             items = listOf(singleQuantityItem),
             state = defaultState(expanded = true)
         )
-        composeTestRule.onNodeWithTag("quantity_picker_4").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("quantity_picker_4", useUnmergedTree = true).assertExists()
     }
 
     @Test

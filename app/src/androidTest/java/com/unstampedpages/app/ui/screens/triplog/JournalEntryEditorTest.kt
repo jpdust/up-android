@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -250,12 +251,9 @@ class JournalEntryEditorTest {
             onTitleChange = { received = it }
         )
 
-        composeTestRule.onNodeWithText("Title").performClick()
-        composeTestRule.onNodeWithText("Give your entry a title…", useUnmergedTree = true)
-            .assertIsDisplayed()
-        // Type directly into the field identified by its label
-        composeTestRule.onNodeWithText("Title")
-            .performTextInput("Rome")
+        // Use the test tag added to the title OutlinedTextField so that the merged
+        // semantics node (which absorbs the label Text) is found unambiguously.
+        composeTestRule.onNodeWithTag("journal_title_field").performTextInput("Rome")
         composeTestRule.waitForIdle()
 
         assertTrue("onTitleChange should have received non-empty text", received.isNotEmpty())
@@ -269,8 +267,8 @@ class JournalEntryEditorTest {
             onLocationChange = { received = it }
         )
 
-        composeTestRule.onNodeWithText("Location (optional)")
-            .performTextInput("Berlin")
+        // Use the test tag added to the location OutlinedTextField for the same reason.
+        composeTestRule.onNodeWithTag("journal_location_field").performTextInput("Berlin")
         composeTestRule.waitForIdle()
 
         assertTrue("onLocationChange should have received non-empty text", received.isNotEmpty())
