@@ -3,7 +3,12 @@ package com.unstampedpages.app.ui.screens.triplog
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.unstampedpages.app.data.local.AppDatabase
 import com.unstampedpages.app.data.local.entity.TripLogEntry
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
+import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -18,7 +23,13 @@ class TripLogViewModelTest {
     @Before
     fun setUp() {
         application = ApplicationProvider.getApplicationContext()
+        runBlocking { AppDatabase.getDatabase(application).tripLogDao().deleteAllEntries() }
         viewModel = TripLogViewModel(application)
+    }
+
+    @After
+    fun tearDown() {
+        runBlocking { AppDatabase.getDatabase(application).tripLogDao().deleteAllEntries() }
     }
 
     @Test
@@ -190,6 +201,168 @@ class TripLogViewModelTest {
 
         assertEquals("  Paris, France  ", viewModel.uiState.value.editingLocation)
     }
+
+    // ---------------------------------------------------------------------------
+    // editEntry — synchronous state mutations
+    // ---------------------------------------------------------------------------
+
+    @Test
+    fun editEntry_setsIsEditingTrue() {
+        val entry = TripLogEntry(id = 1L, title = "My Trip", content = "Content")
+
+        viewModel.editEntry(entry)
+
+        assertTrue(viewModel.uiState.value.isEditing)
+    }
+
+    @Test
+    fun editEntry_setsSelectedEntry() {
+        val entry = TripLogEntry(id = 1L, title = "My Trip", content = "Content")
+
+        viewModel.editEntry(entry)
+
+        assertEquals(entry, viewModel.uiState.value.selectedEntry)
+    }
+
+    @Test
+    fun editEntry_copiesEntryTitle() {
+        val entry = TripLogEntry(id = 1L, title = "Roman Holiday", content = "Content")
+
+        viewModel.editEntry(entry)
+
+        assertEquals("Roman Holiday", viewModel.uiState.value.editingTitle)
+    }
+
+    @Test
+    fun editEntry_copiesEntryContent() {
+        val entry = TripLogEntry(id = 1L, title = "Trip", content = "Great journey!")
+
+        viewModel.editEntry(entry)
+
+        assertEquals("Great journey!", viewModel.uiState.value.editingContent)
+    }
+
+    @Test
+    fun editEntry_copiesEntryLocation_whenPresent() {
+        val entry = TripLogEntry(id = 1L, title = "Trip", content = "Content", location = "Rome")
+
+        viewModel.editEntry(entry)
+
+        assertEquals("Rome", viewModel.uiState.value.editingLocation)
+    }
+
+    @Test
+    fun editEntry_setsEmptyLocation_whenNull() {
+        val entry = TripLogEntry(id = 1L, title = "Trip", content = "Content", location = null)
+
+        viewModel.editEntry(entry)
+
+        assertEquals("", viewModel.uiState.value.editingLocation)
+    }
+
+    @Test
+    fun editEntry_copiesEntryDate() {
+        val date = 1_700_000_000_000L
+        val entry = TripLogEntry(id = 1L, title = "Trip", content = "Content", date = date)
+
+        viewModel.editEntry(entry)
+
+        assertEquals(date, viewModel.uiState.value.editingDate)
+    }
+
+    // ---------------------------------------------------------------------------
+    // saveEntry — async paths
+    // ---------------------------------------------------------------------------
+
+    @Test
+    fun saveEntry_withValidTitleAndContent_cancelsEditing() {
+        viewModel.startNewEntry()
+        viewModel.updateEditingTitle("My Journey")
+        viewModel.updateEditingContent("A wonderful trip")
+
+        viewModel.saveEntry()
+
+        val finalState = awaitState { !it.isEditing }
+        assertFalse(finalState.isEditing)
+        assertNull(finalState.selectedEntry)
+    }
+
+    @Test
+    fun saveEntry_withBlankTitle_andValidContent_usesUntitledEntryTitle() {
+        viewModel.startNewEntry()
+        viewModel.updateEditingTitle("   ")
+        viewModel.updateEditingContent("Content without a title")
+
+        viewModel.saveEntry()
+
+        val finalState = awaitState { it.entries.isNotEmpty() }
+        assertTrue(finalState.entries.any { it.title == "Untitled Entry" })
+    }
+
+    @Test
+    fun saveEntry_withBlankLocation_storesNullLocation() {
+        viewModel.startNewEntry()
+        viewModel.updateEditingTitle("No Location")
+        viewModel.updateEditingContent("Content")
+        viewModel.updateEditingLocation("   ")
+
+        viewModel.saveEntry()
+
+        val finalState = awaitState { it.entries.isNotEmpty() }
+        val saved = finalState.entries.first { it.title == "No Location" }
+        assertNull(saved.location)
+    }
+
+    @Test
+    fun saveEntry_forExistingEntry_updatesRatherThanInserts() {
+        // Insert via repository then re-use the entry reference for editing
+        viewModel.startNewEntry()
+        viewModel.updateEditingTitle("Original Title")
+        viewModel.updateEditingContent("Original content")
+        viewModel.saveEntry()
+        val stateWithEntry = awaitState { it.entries.isNotEmpty() && !it.isEditing }
+        val originalEntry = stateWithEntry.entries.first()
+
+        viewModel.editEntry(originalEntry)
+        viewModel.updateEditingTitle("Updated Title")
+        viewModel.saveEntry()
+
+        val finalState = awaitState { it.entries.any { e -> e.title == "Updated Title" } }
+        assertEquals(1, finalState.entries.size) // still one entry, not two
+        assertEquals("Updated Title", finalState.entries.first().title)
+    }
+
+    // ---------------------------------------------------------------------------
+    // deleteEntry — async path
+    // ---------------------------------------------------------------------------
+
+    @Test
+    fun deleteEntry_removesEntryFromState() {
+        viewModel.startNewEntry()
+        viewModel.updateEditingTitle("To Delete")
+        viewModel.updateEditingContent("Content")
+        viewModel.saveEntry()
+        val stateWithEntry = awaitState { it.entries.isNotEmpty() && !it.isEditing }
+        val entry = stateWithEntry.entries.first { it.title == "To Delete" }
+
+        viewModel.deleteEntry(entry)
+
+        val finalState = awaitState { it.entries.none { e -> e.title == "To Delete" } }
+        assertTrue(finalState.entries.none { it.title == "To Delete" })
+    }
+
+    // ---------------------------------------------------------------------------
+    // Helper
+    // ---------------------------------------------------------------------------
+
+    private fun awaitState(
+        timeoutMs: Long = 5_000L,
+        predicate: (TripLogUiState) -> Boolean
+    ): TripLogUiState = runBlocking {
+        withTimeout(timeoutMs) {
+            viewModel.uiState.first(predicate)
+        }
+    }
 }
 
 class TripLogUiStateTest {
@@ -308,5 +481,148 @@ class TripLogUiStateTest {
 
         assertEquals("Modified", modified.editingTitle)
         assertEquals("Original", original.editingTitle)
+    }
+
+    // ==================== Default values — remaining fields ====================
+
+    @Test
+    fun defaultState_editingDate_isNonZero() {
+        val state = TripLogUiState()
+
+        assertTrue("editingDate should be a valid timestamp", state.editingDate > 0L)
+    }
+
+    // ==================== Copy — remaining fields ====================
+
+    @Test
+    fun state_copy_modifiesEditingContent() {
+        val original = TripLogUiState(editingContent = "Original content")
+
+        val modified = original.copy(editingContent = "Modified content")
+
+        assertEquals("Modified content", modified.editingContent)
+        assertEquals("Original content", original.editingContent)
+    }
+
+    @Test
+    fun state_copy_modifiesEditingLocation() {
+        val original = TripLogUiState(editingLocation = "Paris")
+
+        val modified = original.copy(editingLocation = "Tokyo")
+
+        assertEquals("Tokyo", modified.editingLocation)
+        assertEquals("Paris", original.editingLocation)
+    }
+
+    @Test
+    fun state_copy_modifiesEditingDate() {
+        val original = TripLogUiState(editingDate = 1_000L)
+
+        val modified = original.copy(editingDate = 2_000L)
+
+        assertEquals(2_000L, modified.editingDate)
+        assertEquals(1_000L, original.editingDate)
+    }
+
+    @Test
+    fun state_copy_modifiesIsLoading() {
+        val original = TripLogUiState(isLoading = false)
+
+        val modified = original.copy(isLoading = true)
+
+        assertTrue(modified.isLoading)
+        assertFalse(original.isLoading)
+    }
+
+    @Test
+    fun state_copy_modifiesSelectedEntry() {
+        val entry = TripLogEntry(id = 1L, title = "Entry", content = "Content")
+        val original = TripLogUiState(selectedEntry = null)
+
+        val modified = original.copy(selectedEntry = entry)
+
+        assertNotNull(modified.selectedEntry)
+        assertNull(original.selectedEntry)
+    }
+
+    @Test
+    fun state_copy_modifiesEntries() {
+        val original = TripLogUiState(entries = emptyList())
+        val entry = TripLogEntry(id = 1L, title = "Trip", content = "Notes")
+
+        val modified = original.copy(entries = listOf(entry))
+
+        assertEquals(1, modified.entries.size)
+        assertTrue(original.entries.isEmpty())
+    }
+
+    // ==================== Equality ====================
+
+    @Test
+    fun state_equals_sameValues() {
+        val entry = TripLogEntry(id = 1L, title = "Trip", content = "Notes")
+        val state1 = TripLogUiState(
+            entries = listOf(entry),
+            isEditing = true,
+            editingTitle = "Title",
+            editingDate = 1_000L
+        )
+        val state2 = TripLogUiState(
+            entries = listOf(entry),
+            isEditing = true,
+            editingTitle = "Title",
+            editingDate = 1_000L
+        )
+
+        assertEquals(state1, state2)
+    }
+
+    @Test
+    fun state_notEquals_differentIsEditing() {
+        val state1 = TripLogUiState(isEditing = false)
+        val state2 = TripLogUiState(isEditing = true)
+
+        assertNotEquals(state1, state2)
+    }
+
+    @Test
+    fun state_notEquals_differentIsLoading() {
+        val state1 = TripLogUiState(isLoading = false)
+        val state2 = TripLogUiState(isLoading = true)
+
+        assertNotEquals(state1, state2)
+    }
+
+    @Test
+    fun state_notEquals_differentEditingContent() {
+        val state1 = TripLogUiState(editingContent = "A")
+        val state2 = TripLogUiState(editingContent = "B")
+
+        assertNotEquals(state1, state2)
+    }
+
+    @Test
+    fun state_notEquals_differentEditingLocation() {
+        val state1 = TripLogUiState(editingLocation = "Paris")
+        val state2 = TripLogUiState(editingLocation = "Tokyo")
+
+        assertNotEquals(state1, state2)
+    }
+
+    @Test
+    fun state_notEquals_differentEditingDate() {
+        val state1 = TripLogUiState(editingDate = 1_000L)
+        val state2 = TripLogUiState(editingDate = 2_000L)
+
+        assertNotEquals(state1, state2)
+    }
+
+    @Test
+    fun state_notEquals_differentSelectedEntry() {
+        val entry = TripLogEntry(id = 1L, title = "Trip", content = "Notes")
+        val state1 = TripLogUiState(selectedEntry = null)
+        val state2 = TripLogUiState(selectedEntry = entry)
+
+        assertNotEquals(state1, state2)
     }
 }
