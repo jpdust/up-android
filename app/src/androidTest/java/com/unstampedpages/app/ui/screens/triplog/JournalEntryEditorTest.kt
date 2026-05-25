@@ -1,13 +1,13 @@
 package com.unstampedpages.app.ui.screens.triplog
 
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.text.AnnotatedString
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.unstampedpages.app.ui.theme.UnstampedPagesTheme
 import com.unstampedpages.app.util.DateUtils
@@ -251,9 +251,13 @@ class JournalEntryEditorTest {
             onTitleChange = { received = it }
         )
 
-        // Use the test tag added to the title OutlinedTextField so that the merged
-        // semantics node (which absorbs the label Text) is found unambiguously.
-        composeTestRule.onNodeWithTag("journal_title_field").performTextInput("Rome")
+        // In Compose 1.11 performTextInput routes through InsertTextAtCursor + a focus
+        // step that can break the onValueChange chain for controlled text fields.
+        // Calling SetText directly on the merged BasicTextField node (found by its label
+        // text which is merged into the node's semantics) invokes the action handler
+        // that wires straight to onValueChange — no IME or focus involvement.
+        composeTestRule.onNodeWithText("Title")
+            .performSemanticsAction(SemanticsActions.SetText) { it(AnnotatedString("Rome")) }
         composeTestRule.waitForIdle()
 
         assertTrue("onTitleChange should have received non-empty text", received.isNotEmpty())
@@ -267,8 +271,8 @@ class JournalEntryEditorTest {
             onLocationChange = { received = it }
         )
 
-        // Use the test tag added to the location OutlinedTextField for the same reason.
-        composeTestRule.onNodeWithTag("journal_location_field").performTextInput("Berlin")
+        composeTestRule.onNodeWithText("Location (optional)")
+            .performSemanticsAction(SemanticsActions.SetText) { it(AnnotatedString("Berlin")) }
         composeTestRule.waitForIdle()
 
         assertTrue("onLocationChange should have received non-empty text", received.isNotEmpty())
@@ -283,7 +287,7 @@ class JournalEntryEditorTest {
         )
 
         composeTestRule.onNodeWithText("Your story")
-            .performTextInput("Today was incredible.")
+            .performSemanticsAction(SemanticsActions.SetText) { it(AnnotatedString("Today was incredible.")) }
         composeTestRule.waitForIdle()
 
         assertTrue("onContentChange should have received non-empty text", received.isNotEmpty())
