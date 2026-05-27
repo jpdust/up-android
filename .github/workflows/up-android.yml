@@ -42,6 +42,8 @@ jobs:
 
       # ── Unit Tests ───────────────────────────────────────────────────────────
       - name: Run unit tests
+        env:
+          NEW_RELIC_TOKEN: ${{ secrets.NEW_RELIC_TOKEN }}
         run: ./gradlew testDebugUnitTest
 
       - name: Upload unit test report on failure
@@ -91,6 +93,8 @@ jobs:
       # ── Instrumented Tests ───────────────────────────────────────────────────
       - name: Run instrumented tests
         uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a # v2
+        env:
+          NEW_RELIC_TOKEN: ${{ secrets.NEW_RELIC_TOKEN }}
         with:
           api-level: 34
           target: aosp_atd
@@ -233,6 +237,7 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          NEW_RELIC_TOKEN: ${{ secrets.NEW_RELIC_TOKEN }}
         run: ./gradlew bundleRelease
 
       # ── Upload to Google Play ────────────────────────────────────────────────

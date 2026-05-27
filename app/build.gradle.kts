@@ -1,8 +1,17 @@
+import java.util.Properties
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     id("jacoco")
+    id("newrelic")
 }
 
 dependencyLocking {
@@ -31,6 +40,11 @@ android {
         targetSdk = 36
         versionCode = 202605252 // Set to the highest code in Play Console — workflow will increment from here
         versionName = "1.0.1"
+
+        val newRelicToken = System.getenv("NEW_RELIC_TOKEN")
+            ?: localProperties.getProperty("newrelic.token")
+            ?: ""
+        buildConfigField("String", "NEW_RELIC_TOKEN", "\"$newRelicToken\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -76,6 +90,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {
@@ -122,6 +137,9 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
+
+    // New Relic
+    implementation("com.newrelic.agent.android:android-agent:7.7.5")
 
     // Browser support
     implementation(libs.androidx.browser)
