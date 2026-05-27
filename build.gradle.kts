@@ -5,6 +5,16 @@ buildscript {
         mavenCentral()
     }
 
+    // Pin commons-io in the plugin/buildscript classpath so the SonarQube plugin
+    // always gets a version with the builder() API (added in 2.7). Without this,
+    // Gradle would fall back to whatever Android tools request (2.16.1) if
+    // commons-compress ever stops pulling in the newer version.
+    configurations.all {
+        resolutionStrategy {
+            force("commons-io:commons-io:2.20.0")
+        }
+    }
+
     dependencies {
         classpath("com.newrelic.agent.android:agent-gradle-plugin:7.7.5")
     }
@@ -18,6 +28,21 @@ plugins {
     alias(libs.plugins.sonarqube)
 }
 
+
+// Ensure commons-io is never resolved below 2.20.0 in any subproject.
+// The SonarQube plugin uses the builder() API (commons-io 2.7+). Android tools
+// only request 2.16.1; this guard prevents a future transitive change from
+// silently downgrading the resolved version.
+allprojects {
+    configurations.all {
+        resolutionStrategy.eachDependency {
+            if (requested.group == "commons-io" && requested.name == "commons-io") {
+                useVersion("2.20.0")
+                because("Pin commons-io >= 2.7 (builder() API) required by SonarQube; Android tools only request 2.16.1")
+            }
+        }
+    }
+}
 
 // ---------------------------------------------------------------------------
 // SonarQube analysis configuration
