@@ -1,4 +1,5 @@
 package com.unstampedpages.app
+
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
@@ -9,6 +10,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+
+private const val WELCOME_TEXT = "Welcome, Explorer"
+private const val TRIP_LOG_TAB = "Trip Log"
+private const val MY_STAMPS_TAB = "My Stamps"
 
 /**
  * Instrumented integration tests for [MainActivity].
@@ -39,20 +44,20 @@ class MainActivityTest {
      * fails before reaching the assertion.
      */
     @Test
-    fun mainActivity_launches_withoutCrashing() {
+    fun mainActivityLaunchesWithoutCrashing() {
         composeTestRule.waitForIdle()
         // Reaching this line means onCreate completed without exception.
     }
 
     @Test
-    fun mainActivity_homeScreen_isDisplayedOnLaunch() {
+    fun mainActivityHomeScreenIsDisplayedOnLaunch() {
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Welcome, Explorer").assertIsDisplayed()
+        composeTestRule.onNodeWithText(WELCOME_TEXT).assertIsDisplayed()
     }
 
     @Test
-    fun mainActivity_appTitle_isDisplayedOnLaunch() {
+    fun mainActivityAppTitleIsDisplayedOnLaunch() {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("UNSTAMPED PAGES").assertIsDisplayed()
@@ -63,55 +68,55 @@ class MainActivityTest {
     // -------------------------------------------------------------------------
 
     @Test
-    fun mainActivity_bottomNavBar_showsHomeTab() {
+    fun mainActivityBottomNavBarShowsHomeTab() {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Home").assertIsDisplayed()
     }
 
     @Test
-    fun mainActivity_bottomNavBar_showsCountriesTab() {
+    fun mainActivityBottomNavBarShowsCountriesTab() {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Countries").assertIsDisplayed()
     }
 
     @Test
-    fun mainActivity_bottomNavBar_showsChecklistTab() {
+    fun mainActivityBottomNavBarShowsChecklistTab() {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Checklist").assertIsDisplayed()
     }
 
     @Test
-    fun mainActivity_bottomNavBar_showsTripLogTab() {
+    fun mainActivityBottomNavBarShowsTripLogTab() {
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Trip Log").assertIsDisplayed()
+        composeTestRule.onNodeWithText(TRIP_LOG_TAB).assertIsDisplayed()
     }
 
     @Test
-    fun mainActivity_bottomNavBar_showsMyStampsTab() {
+    fun mainActivityBottomNavBarShowsMyStampsTab() {
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("My Stamps").assertIsDisplayed()
+        composeTestRule.onNodeWithText(MY_STAMPS_TAB).assertIsDisplayed()
     }
 
     @Test
-    fun mainActivity_homeTab_isSelectedByDefault() {
+    fun mainActivityHomeTabIsSelectedByDefault() {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Home").assertIsSelected()
     }
 
     @Test
-    fun mainActivity_nonHomeTabs_areNotSelectedByDefault() {
+    fun mainActivityNonHomeTabsAreNotSelectedByDefault() {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Countries").assertIsNotSelected()
         composeTestRule.onNodeWithText("Checklist").assertIsNotSelected()
-        composeTestRule.onNodeWithText("Trip Log").assertIsNotSelected()
-        composeTestRule.onNodeWithText("My Stamps").assertIsNotSelected()
+        composeTestRule.onNodeWithText(TRIP_LOG_TAB).assertIsNotSelected()
+        composeTestRule.onNodeWithText(MY_STAMPS_TAB).assertIsNotSelected()
     }
 
     // -------------------------------------------------------------------------
@@ -119,7 +124,7 @@ class MainActivityTest {
     // -------------------------------------------------------------------------
 
     @Test
-    fun mainActivity_clickingCountriesTab_showsCountriesScreen() {
+    fun mainActivityClickingCountriesTabShowsCountriesScreen() {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Countries").performClick()
@@ -129,7 +134,7 @@ class MainActivityTest {
     }
 
     @Test
-    fun mainActivity_clickingCountriesTab_selectsCountriesTab() {
+    fun mainActivityClickingCountriesTabSelectsCountriesTab() {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Countries").performClick()
@@ -139,7 +144,7 @@ class MainActivityTest {
     }
 
     @Test
-    fun mainActivity_clickingChecklistTab_showsChecklistScreen() {
+    fun mainActivityClickingChecklistTabShowsChecklistScreen() {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Checklist").performClick()
@@ -149,7 +154,7 @@ class MainActivityTest {
     }
 
     @Test
-    fun mainActivity_clickingChecklistTab_selectsChecklistTab() {
+    fun mainActivityClickingChecklistTabSelectsChecklistTab() {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Checklist").performClick()
@@ -159,47 +164,47 @@ class MainActivityTest {
     }
 
     @Test
-    fun mainActivity_clickingTripLogTab_showsTripLogScreen() {
+    fun mainActivityClickingTripLogTabShowsTripLogScreen() {
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Trip Log").performClick()
+        composeTestRule.onNodeWithText(TRIP_LOG_TAB).performClick()
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("TRIP LOG").assertExists()
     }
 
     @Test
-    fun mainActivity_clickingTripLogTab_selectsTripLogTab() {
+    fun mainActivityClickingTripLogTabSelectsTripLogTab() {
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Trip Log").performClick()
+        composeTestRule.onNodeWithText(TRIP_LOG_TAB).performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Trip Log").assertIsSelected()
+        composeTestRule.onNodeWithText(TRIP_LOG_TAB).assertIsSelected()
     }
 
     @Test
-    fun mainActivity_clickingMyStampsTab_showsMyStampsScreen() {
+    fun mainActivityClickingMyStampsTabShowsMyStampsScreen() {
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("My Stamps").performClick()
+        composeTestRule.onNodeWithText(MY_STAMPS_TAB).performClick()
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("MY STAMPS").assertExists()
     }
 
     @Test
-    fun mainActivity_clickingMyStampsTab_selectsMyStampsTab() {
+    fun mainActivityClickingMyStampsTabSelectsMyStampsTab() {
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("My Stamps").performClick()
+        composeTestRule.onNodeWithText(MY_STAMPS_TAB).performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("My Stamps").assertIsSelected()
+        composeTestRule.onNodeWithText(MY_STAMPS_TAB).assertIsSelected()
     }
 
     @Test
-    fun mainActivity_clickingHomeTab_fromCountriesScreen_returnsToHomeScreen() {
+    fun mainActivityClickingHomeTabFromCountriesScreenReturnsToHomeScreen() {
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Countries").performClick()
         composeTestRule.waitForIdle()
@@ -207,11 +212,11 @@ class MainActivityTest {
         composeTestRule.onNodeWithText("Home").performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Welcome, Explorer").assertIsDisplayed()
+        composeTestRule.onNodeWithText(WELCOME_TEXT).assertIsDisplayed()
     }
 
     @Test
-    fun mainActivity_clickingHomeTab_fromCountriesScreen_selectsHomeTab() {
+    fun mainActivityClickingHomeTabFromCountriesScreenSelectsHomeTab() {
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Countries").performClick()
         composeTestRule.waitForIdle()
@@ -229,7 +234,7 @@ class MainActivityTest {
      * one is deselected, exercising the single-selection invariant across all five tabs.
      */
     @Test
-    fun mainActivity_cyclingThroughAllTabs_selectsCorrectTabAtEachStep() {
+    fun mainActivityCyclingThroughAllTabsSelectsCorrectTabAtEachStep() {
         composeTestRule.waitForIdle()
 
         data class Step(val label: String, val previousLabel: String)
@@ -237,9 +242,9 @@ class MainActivityTest {
         listOf(
             Step("Countries", "Home"),
             Step("Checklist", "Countries"),
-            Step("Trip Log", "Checklist"),
-            Step("My Stamps", "Trip Log"),
-            Step("Home", "My Stamps")
+            Step(TRIP_LOG_TAB, "Checklist"),
+            Step(MY_STAMPS_TAB, TRIP_LOG_TAB),
+            Step("Home", MY_STAMPS_TAB)
         ).forEach { (label, previous) ->
             composeTestRule.onNodeWithText(label).performClick()
             composeTestRule.waitForIdle()
@@ -259,17 +264,17 @@ class MainActivityTest {
      * second time including New Relic re-initialisation.
      */
     @Test
-    fun mainActivity_recreation_onHomeScreen_doesNotCrash() {
+    fun mainActivityRecreationOnHomeScreenDoesNotCrash() {
         composeTestRule.waitForIdle()
 
         composeTestRule.activityRule.scenario.recreate()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Welcome, Explorer").assertIsDisplayed()
+        composeTestRule.onNodeWithText(WELCOME_TEXT).assertIsDisplayed()
     }
 
     @Test
-    fun mainActivity_recreation_afterNavigatingToChecklist_doesNotCrash() {
+    fun mainActivityRecreationAfterNavigatingToChecklistDoesNotCrash() {
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Checklist").performClick()
         composeTestRule.waitForIdle()

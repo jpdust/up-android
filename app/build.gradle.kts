@@ -104,6 +104,12 @@ android {
             enableSplit = false
         }
     }
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 kotlin {
@@ -139,7 +145,7 @@ dependencies {
     ksp(libs.androidx.room.compiler)
 
     // New Relic
-    implementation("com.newrelic.agent.android:android-agent:7.7.5")
+    implementation(libs.newrelic.android.agent)
 
     // Browser support
     implementation(libs.androidx.browser)
@@ -151,6 +157,8 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.json)
     testImplementation(libs.mockito.core)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core.ktx)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.compose.bom))
