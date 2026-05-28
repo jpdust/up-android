@@ -1,14 +1,19 @@
+import org.sonarqube.gradle.SonarExtension
+
 buildscript {
 
-    // The following section is needed only if pluginMangement is not used in settings.gradle
     repositories {
         mavenCentral()
+        gradlePluginPortal()
     }
 
-    // Pin commons-io in the plugin/buildscript classpath so the SonarQube plugin
-    // always gets a version with the builder() API (added in 2.7). Without this,
-    // Gradle would fall back to whatever Android tools request (2.16.1) if
-    // commons-compress ever stops pulling in the newer version.
+    // Force commons-io to 2.20.0 across every dependency resolved in this
+    // buildscript classpath. This covers both the New Relic plugin and the
+    // SonarQube plugin (and all their transitive deps), ensuring the
+    // BoundedInputStream.builder() API is always available at runtime.
+    // NOTE: this force only applies to classpath deps declared HERE. Plugins
+    // applied via the plugins {} block use a separate classpath not covered by
+    // this block — which is why SonarQube is declared here instead.
     configurations.all {
         resolutionStrategy {
             force("commons-io:commons-io:2.20.0")
@@ -17,6 +22,9 @@ buildscript {
 
     dependencies {
         classpath("com.newrelic.agent.android:agent-gradle-plugin:7.7.5")
+        // Declared here (not in plugins {}) so the resolutionStrategy.force above
+        // applies to its transitive deps, including commons-io via commons-compress.
+        classpath("org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:7.3.0.8198")
     }
 }
 
@@ -25,8 +33,9 @@ plugins {
     alias(libs.plugins.android.library) apply false
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.ksp) apply false
-    alias(libs.plugins.sonarqube)
 }
+
+apply(plugin = "org.sonarqube")
 
 
 // Ensure commons-io is never resolved below 2.20.0 in any subproject.
@@ -52,7 +61,7 @@ allprojects {
 //
 // Run analysis:  ./gradlew jacocoDebugCoverageReport sonar
 // ---------------------------------------------------------------------------
-sonar {
+configure<SonarExtension> {
     properties {
         property("sonar.host.url", "https://sonarcloud.io")
         property("sonar.organization", "jpdust")
