@@ -48,7 +48,7 @@ class MainActivityUnitTest {
      * all executed successfully, including every statement inside [onCreate].
      */
     @Test
-    fun onCreate_withNullBundle_activityReachesResumedState() {
+    fun onCreateWithNullBundleActivityReachesResumedState() {
         scenario = ActivityScenario.launch(MainActivity::class.java)
 
         assertEquals(Lifecycle.State.RESUMED, scenario!!.state)
@@ -59,7 +59,7 @@ class MainActivityUnitTest {
      * [enableEdgeToEdge] and [setContent] ran against a properly initialised window.
      */
     @Test
-    fun onCreate_withNullBundle_windowIsNotNull() {
+    fun onCreateWithNullBundleWindowIsNotNull() {
         scenario = ActivityScenario.launch(MainActivity::class.java)
 
         scenario!!.onActivity { activity ->
@@ -79,7 +79,7 @@ class MainActivityUnitTest {
      * on recreation does not throw.
      */
     @Test
-    fun onCreate_afterRecreation_activityReachesResumedState() {
+    fun onCreateAfterRecreationActivityReachesResumedState() {
         scenario = ActivityScenario.launch(MainActivity::class.java)
         scenario!!.recreate()
 
@@ -87,7 +87,7 @@ class MainActivityUnitTest {
     }
 
     @Test
-    fun onCreate_afterRecreation_windowIsNotNull() {
+    fun onCreateAfterRecreationWindowIsNotNull() {
         scenario = ActivityScenario.launch(MainActivity::class.java)
         scenario!!.recreate()
 
@@ -107,7 +107,7 @@ class MainActivityUnitTest {
      * [onCreate] invocation.
      */
     @Test
-    fun onCreate_calledTwiceViaRecreation_doesNotThrow() {
+    fun onCreateCalledTwiceViaRecreationDoesNotThrow() {
         scenario = ActivityScenario.launch(MainActivity::class.java)
         assertEquals(Lifecycle.State.RESUMED, scenario!!.state)
 
