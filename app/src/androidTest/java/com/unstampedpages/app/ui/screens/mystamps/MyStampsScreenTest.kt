@@ -229,7 +229,7 @@ class MyStampsScreenTest {
             verifyScreenDisplayed()
             clickAddStampButton(country.code)
             verifyAddStampDialogDisplayed()
-            verifyDialogOptionsDisplayed()
+            verifyGalleryButtonDisplayed()
         }
     }
 
@@ -255,7 +255,7 @@ class MyStampsScreenTest {
             verifyScreenDisplayed()
             clickAddStampButton(country.code)
             verifyAddStampDialogDisplayed()
-            verifyDialogOptionsDisplayed()
+            verifyCameraButtonDisplayed()
         }
     }
 

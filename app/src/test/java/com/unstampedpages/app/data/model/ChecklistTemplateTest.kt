@@ -3,6 +3,8 @@ package com.unstampedpages.app.data.model
 import org.junit.Assert.*
 import org.junit.Test
 
+private const val TEST_ITEM = "Test Item"
+
 class ChecklistTemplateItemTest {
 
     // ==================== Constructor Tests ====================
@@ -10,18 +12,18 @@ class ChecklistTemplateItemTest {
     @Test
     fun `ChecklistTemplateItem can be created with required fields`() {
         val item = ChecklistTemplateItem(
-            name = "Test Item",
+            name = TEST_ITEM,
             category = ChecklistCategory.ELECTRONICS
         )
 
-        assertEquals("Test Item", item.name)
+        assertEquals(TEST_ITEM, item.name)
         assertEquals(ChecklistCategory.ELECTRONICS, item.category)
     }
 
     @Test
     fun `ChecklistTemplateItem has default quantity of 1`() {
         val item = ChecklistTemplateItem(
-            name = "Test Item",
+            name = TEST_ITEM,
             category = ChecklistCategory.ELECTRONICS
         )
 

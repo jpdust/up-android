@@ -20,6 +20,16 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.IOException
 
+private const val ITEM_1 = "Item 1"
+private const val ITEM_2 = "Item 2"
+private const val ITEM_3 = "Item 3"
+private const val UPDATED_CONTENT = "Updated content"
+private const val CONTENT_1 = "Content 1"
+private const val CONTENT_2 = "Content 2"
+private const val ENTRY_1 = "Entry 1"
+private const val ENTRY_2 = "Entry 2"
+private const val ENTRY_3 = "Entry 3"
+
 @RunWith(AndroidJUnit4::class)
 class AppDatabaseTest {
 
@@ -48,22 +58,22 @@ class AppDatabaseTest {
     // ==================== Database Tests ====================
 
     @Test
-    fun database_providesChecklistDao() {
+    fun databaseProvidesChecklistDao() {
         assertNotNull(database.checklistDao())
     }
 
     @Test
-    fun database_providesTripLogDao() {
+    fun databaseProvidesTripLogDao() {
         assertNotNull(database.tripLogDao())
     }
 
     @Test
-    fun database_providesStampDao() {
+    fun databaseProvidesStampDao() {
         assertNotNull(database.stampDao())
     }
 
     @Test
-    fun database_getDatabase_returnsSameInstance() {
+    fun databaseGetDatabaseReturnsSameInstance() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val instance1 = AppDatabase.getDatabase(context)
         val instance2 = AppDatabase.getDatabase(context)
@@ -85,9 +95,9 @@ class AppDatabaseTest {
 
     @Test
     fun checklistDao_getAllItems_returnsItemsInDescendingOrder() = runTest {
-        val item1 = ChecklistItem(content = "Item 1", createdAt = 1000L)
-        val item2 = ChecklistItem(content = "Item 2", createdAt = 2000L)
-        val item3 = ChecklistItem(content = "Item 3", createdAt = 3000L)
+        val item1 = ChecklistItem(content = ITEM_1, createdAt = 1000L)
+        val item2 = ChecklistItem(content = ITEM_2, createdAt = 2000L)
+        val item3 = ChecklistItem(content = ITEM_3, createdAt = 3000L)
 
         checklistDao.insertItem(item1)
         checklistDao.insertItem(item2)
@@ -95,17 +105,17 @@ class AppDatabaseTest {
 
         val items = checklistDao.getAllItems().first()
         assertEquals(3, items.size)
-        assertEquals("Item 3", items[0].content)
-        assertEquals("Item 2", items[1].content)
-        assertEquals("Item 1", items[2].content)
+        assertEquals(ITEM_3, items[0].content)
+        assertEquals(ITEM_2, items[1].content)
+        assertEquals(ITEM_1, items[2].content)
     }
 
     @Test
     fun checklistDao_insertItems_bulkInsert() = runTest {
         val items = listOf(
-            ChecklistItem(content = "Item 1"),
-            ChecklistItem(content = "Item 2"),
-            ChecklistItem(content = "Item 3")
+            ChecklistItem(content = ITEM_1),
+            ChecklistItem(content = ITEM_2),
+            ChecklistItem(content = ITEM_3)
         )
         checklistDao.insertItems(items)
 
@@ -118,11 +128,11 @@ class AppDatabaseTest {
         val item = ChecklistItem(content = "Original content")
         val id = checklistDao.insertItem(item)
 
-        val updatedItem = item.copy(id = id, content = "Updated content", isChecked = true)
+        val updatedItem = item.copy(id = id, content = UPDATED_CONTENT, isChecked = true)
         checklistDao.updateItem(updatedItem)
 
         val retrieved = checklistDao.getItemById(id)
-        assertEquals("Updated content", retrieved?.content)
+        assertEquals(UPDATED_CONTENT, retrieved?.content)
         assertTrue(retrieved?.isChecked ?: false)
     }
 
@@ -143,9 +153,9 @@ class AppDatabaseTest {
     @Test
     fun checklistDao_deleteAllItems() = runTest {
         checklistDao.insertItems(listOf(
-            ChecklistItem(content = "Item 1"),
-            ChecklistItem(content = "Item 2"),
-            ChecklistItem(content = "Item 3")
+            ChecklistItem(content = ITEM_1),
+            ChecklistItem(content = ITEM_2),
+            ChecklistItem(content = ITEM_3)
         ))
 
         var items = checklistDao.getAllItems().first()
@@ -201,9 +211,9 @@ class AppDatabaseTest {
 
     @Test
     fun tripLogDao_getAllEntries_returnsEntriesInDescendingDateOrder() = runTest {
-        val entry1 = TripLogEntry(title = "Entry 1", content = "Content 1", date = 1000L)
-        val entry2 = TripLogEntry(title = "Entry 2", content = "Content 2", date = 2000L)
-        val entry3 = TripLogEntry(title = "Entry 3", content = "Content 3", date = 3000L)
+        val entry1 = TripLogEntry(title = ENTRY_1, content = CONTENT_1, date = 1000L)
+        val entry2 = TripLogEntry(title = ENTRY_2, content = CONTENT_2, date = 2000L)
+        val entry3 = TripLogEntry(title = ENTRY_3, content = "Content 3", date = 3000L)
 
         tripLogDao.insertEntry(entry1)
         tripLogDao.insertEntry(entry2)
@@ -211,16 +221,16 @@ class AppDatabaseTest {
 
         val entries = tripLogDao.getAllEntries().first()
         assertEquals(3, entries.size)
-        assertEquals("Entry 3", entries[0].title)
-        assertEquals("Entry 2", entries[1].title)
-        assertEquals("Entry 1", entries[2].title)
+        assertEquals(ENTRY_3, entries[0].title)
+        assertEquals(ENTRY_2, entries[1].title)
+        assertEquals(ENTRY_1, entries[2].title)
     }
 
     @Test
     fun tripLogDao_getEntriesByDateRange() = runTest {
-        val entry1 = TripLogEntry(title = "Entry 1", content = "Content 1", date = 1000L)
-        val entry2 = TripLogEntry(title = "Entry 2", content = "Content 2", date = 2000L)
-        val entry3 = TripLogEntry(title = "Entry 3", content = "Content 3", date = 3000L)
+        val entry1 = TripLogEntry(title = ENTRY_1, content = CONTENT_1, date = 1000L)
+        val entry2 = TripLogEntry(title = ENTRY_2, content = CONTENT_2, date = 2000L)
+        val entry3 = TripLogEntry(title = ENTRY_3, content = "Content 3", date = 3000L)
         val entry4 = TripLogEntry(title = "Entry 4", content = "Content 4", date = 4000L)
 
         tripLogDao.insertEntry(entry1)
@@ -230,8 +240,8 @@ class AppDatabaseTest {
 
         val entriesInRange = tripLogDao.getEntriesByDateRange(1500L, 3500L).first()
         assertEquals(2, entriesInRange.size)
-        assertEquals("Entry 3", entriesInRange[0].title)
-        assertEquals("Entry 2", entriesInRange[1].title)
+        assertEquals(ENTRY_3, entriesInRange[0].title)
+        assertEquals(ENTRY_2, entriesInRange[1].title)
     }
 
     @Test
@@ -239,12 +249,12 @@ class AppDatabaseTest {
         val entry = TripLogEntry(title = "Original", content = "Original content")
         val id = tripLogDao.insertEntry(entry)
 
-        val updatedEntry = entry.copy(id = id, title = "Updated", content = "Updated content")
+        val updatedEntry = entry.copy(id = id, title = "Updated", content = UPDATED_CONTENT)
         tripLogDao.updateEntry(updatedEntry)
 
         val retrieved = tripLogDao.getEntryById(id)
         assertEquals("Updated", retrieved?.title)
-        assertEquals("Updated content", retrieved?.content)
+        assertEquals(UPDATED_CONTENT, retrieved?.content)
     }
 
     @Test
@@ -263,8 +273,8 @@ class AppDatabaseTest {
 
     @Test
     fun tripLogDao_deleteAllEntries() = runTest {
-        tripLogDao.insertEntry(TripLogEntry(title = "Entry 1", content = "Content 1"))
-        tripLogDao.insertEntry(TripLogEntry(title = "Entry 2", content = "Content 2"))
+        tripLogDao.insertEntry(TripLogEntry(title = ENTRY_1, content = CONTENT_1))
+        tripLogDao.insertEntry(TripLogEntry(title = ENTRY_2, content = CONTENT_2))
 
         var entries = tripLogDao.getAllEntries().first()
         assertEquals(2, entries.size)

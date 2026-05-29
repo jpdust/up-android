@@ -51,10 +51,7 @@ class CategorySectionTest {
         selectedItemIds = emptySet()
     )
 
-    private fun launch(
-        category: ChecklistCategory = ChecklistCategory.ELECTRONICS,
-        items: List<ChecklistItem> = listOf(uncheckedItem, checkedItem),
-        state: CategorySectionState = defaultState(),
+    private fun defaultCallbacks(
         onToggleExpanded: () -> Unit = {},
         onItemChecked: (ChecklistItem) -> Unit = {},
         onItemDeleted: (ChecklistItem) -> Unit = {},
@@ -62,16 +59,22 @@ class CategorySectionTest {
         onQuantityChanged: (ChecklistItem, Int) -> Unit = { _, _ -> },
         onItemLongPress: (Long) -> Unit = {},
         onItemSelected: (Long) -> Unit = {}
+    ) = CategorySectionCallbacks(
+        onToggleExpanded = onToggleExpanded,
+        onItemChecked = onItemChecked,
+        onItemDeleted = onItemDeleted,
+        onItemPinned = onItemPinned,
+        onQuantityChanged = onQuantityChanged,
+        onItemLongPress = onItemLongPress,
+        onItemSelected = onItemSelected
+    )
+
+    private fun launch(
+        category: ChecklistCategory = ChecklistCategory.ELECTRONICS,
+        items: List<ChecklistItem> = listOf(uncheckedItem, checkedItem),
+        state: CategorySectionState = defaultState(),
+        callbacks: CategorySectionCallbacks = defaultCallbacks()
     ) {
-        val callbacks = CategorySectionCallbacks(
-            onToggleExpanded = onToggleExpanded,
-            onItemChecked = onItemChecked,
-            onItemDeleted = onItemDeleted,
-            onItemPinned = onItemPinned,
-            onQuantityChanged = onQuantityChanged,
-            onItemLongPress = onItemLongPress,
-            onItemSelected = onItemSelected
-        )
         composeTestRule.setContent {
             UnstampedPagesTheme {
                 CategorySection(
@@ -210,7 +213,7 @@ class CategorySectionTest {
     @Test
     fun clickingHeader_invokesOnToggleExpanded() {
         var called = false
-        launch(onToggleExpanded = { called = true })
+        launch(callbacks = defaultCallbacks(onToggleExpanded = { called = true }))
 
         composeTestRule.onNodeWithTag("category_header_electronics").performClick()
         composeTestRule.waitForIdle()
@@ -221,7 +224,7 @@ class CategorySectionTest {
     @Test
     fun clickingHeader_twiceFiresCallbackTwice() {
         var count = 0
-        launch(onToggleExpanded = { count++ })
+        launch(callbacks = defaultCallbacks(onToggleExpanded = { count++ }))
 
         composeTestRule.onNodeWithTag("category_header_electronics").performClick()
         composeTestRule.onNodeWithTag("category_header_electronics").performClick()
@@ -236,8 +239,10 @@ class CategorySectionTest {
         var deletedCalled = false
 
         launch(
-            onItemChecked = { checkedCalled = true },
-            onItemDeleted = { deletedCalled = true }
+            callbacks = defaultCallbacks(
+                onItemChecked = { checkedCalled = true },
+                onItemDeleted = { deletedCalled = true }
+            )
         )
 
         composeTestRule.onNodeWithTag("category_header_electronics").performClick()

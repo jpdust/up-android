@@ -5,6 +5,8 @@ import com.unstampedpages.app.data.CountryListItem
 import org.junit.Assert.*
 import org.junit.Test
 
+private const val IMAGE_PATH = "/files/upimages/test_stamp.jpg"
+
 class MyStampsUiStateTest {
 
     @Test
@@ -193,8 +195,8 @@ class CountryStampTest {
     @Test
     fun `country stamp hashCode consistency`() {
         val country = CountryListItem(code = "MX", englishName = "Mexico")
-        val stamp1 = CountryStamp(country = country, imagePath = "/path.jpg")
-        val stamp2 = CountryStamp(country = country, imagePath = "/path.jpg")
+        val stamp1 = CountryStamp(country = country, imagePath = IMAGE_PATH)
+        val stamp2 = CountryStamp(country = country, imagePath = IMAGE_PATH)
 
         assertEquals(stamp1.hashCode(), stamp2.hashCode())
     }
@@ -202,7 +204,7 @@ class CountryStampTest {
     @Test
     fun `country stamp toString contains country info`() {
         val country = CountryListItem(code = "BR", englishName = "Brazil")
-        val stamp = CountryStamp(country = country, imagePath = "/path.jpg")
+        val stamp = CountryStamp(country = country, imagePath = IMAGE_PATH)
 
         val stringRep = stamp.toString()
 

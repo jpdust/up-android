@@ -8,6 +8,8 @@ import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 
+private const val HTTPS_PREFIX = "https://"
+
 class CountryRepositoryTest {
 
     private lateinit var repository: CountryRepository
@@ -126,10 +128,10 @@ class CountryRepositoryTest {
         countries.forEach { country ->
             val advisories = country.travelAdvisories
             assertNotNull("Expected travel advisories for ${country.name}", advisories)
-            assertTrue(advisories!!.us.startsWith("https://"))
-            assertTrue(advisories.uk.startsWith("https://"))
-            assertTrue(advisories.au.startsWith("https://"))
-            assertTrue(advisories.ca.startsWith("https://"))
+            assertTrue(advisories!!.us.startsWith(HTTPS_PREFIX))
+            assertTrue(advisories.uk.startsWith(HTTPS_PREFIX))
+            assertTrue(advisories.au.startsWith(HTTPS_PREFIX))
+            assertTrue(advisories.ca.startsWith(HTTPS_PREFIX))
         }
     }
 
@@ -435,10 +437,10 @@ class CountryRepositoryTest {
         assertNotNull(country)
         val advisories = country!!.travelAdvisories
         assertNotNull("Antarctica should have travel advisories", advisories)
-        assertTrue(advisories!!.us.startsWith("https://"))
-        assertTrue(advisories.uk.startsWith("https://"))
-        assertTrue(advisories.au.startsWith("https://"))
-        assertTrue(advisories.ca.startsWith("https://"))
+        assertTrue(advisories!!.us.startsWith(HTTPS_PREFIX))
+        assertTrue(advisories.uk.startsWith(HTTPS_PREFIX))
+        assertTrue(advisories.au.startsWith(HTTPS_PREFIX))
+        assertTrue(advisories.ca.startsWith(HTTPS_PREFIX))
     }
 
     @Test

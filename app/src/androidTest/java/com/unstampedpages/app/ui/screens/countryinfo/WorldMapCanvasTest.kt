@@ -531,7 +531,12 @@ class WorldMapCanvasTest {
             }
         }
 
-        // Legend should not be displayed in default mode
+        // Map canvas itself is still rendered in default mode
+        composeTestRule.onRoot().assertIsDisplayed()
+        // No legend container and no individual legend items from any mode
         composeTestRule.onNodeWithTag("map_legend").assertDoesNotExist()
+        composeTestRule.onNodeWithTag("legend_item_low_risk").assertDoesNotExist()
+        composeTestRule.onNodeWithTag("legend_item_visa_not_required").assertDoesNotExist()
+        composeTestRule.onNodeWithTag("legend_item_6_months").assertDoesNotExist()
     }
 }

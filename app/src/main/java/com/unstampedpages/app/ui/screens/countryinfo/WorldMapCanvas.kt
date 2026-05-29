@@ -1293,7 +1293,7 @@ private fun DrawScope.drawCountryLabels(
         screenMapper  = { pts -> gestureState.forwardMatrix.mapPoints(pts) }
     )
     for ((countryId, spec) in specs) {
-        val textLayout = params.labelTextLayouts[countryId] ?: continue
+        val textLayout = params.labelTextLayouts.getValue(countryId)
         drawText(textLayout, color = spec.shadowColor, topLeft = spec.topLeft + Offset(0f,              -spec.shadowOffset))
         drawText(textLayout, color = spec.shadowColor, topLeft = spec.topLeft + Offset(0f,              +spec.shadowOffset))
         drawText(textLayout, color = spec.shadowColor, topLeft = spec.topLeft + Offset(-spec.shadowOffset, 0f))

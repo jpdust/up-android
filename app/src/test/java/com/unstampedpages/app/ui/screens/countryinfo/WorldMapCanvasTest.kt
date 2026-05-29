@@ -2333,7 +2333,7 @@ class LabelSizeAlphaTest {
     fun `finalAlpha skip threshold — values below 0_01 would cause label skip`() {
         // Guard against accidental changes to the early-exit comparison.
         // Any finalAlpha >= 0.01f should pass; < 0.01f should be skipped.
-        assertTrue(0.01f >= 0.01f)   // boundary: exactly at threshold is kept
+        assertFalse(0.01f < 0.01f)    // boundary: exactly at threshold is kept
         assertTrue(0.009f < 0.01f)   // just below: skipped
     }
 
@@ -2366,13 +2366,13 @@ class LabelCentroidOverridesTest {
 
     @Test
     fun `NZL override X matches longitude 173 east`() {
-        val (x, _) = LABEL_CENTROID_OVERRIDES["NZL"]!!
+        val (x, _) = LABEL_CENTROID_OVERRIDES.getValue("NZL")
         assertEquals(MercatorProjection.longitudeToX(173f), x, 0.0001f)
     }
 
     @Test
     fun `NZL override Y matches latitude 41_5 south`() {
-        val (_, y) = LABEL_CENTROID_OVERRIDES["NZL"]!!
+        val (_, y) = LABEL_CENTROID_OVERRIDES.getValue("NZL")
         assertEquals(MercatorProjection.latitudeToY(-41.5f), y, 0.0001f)
     }
 
@@ -2408,20 +2408,20 @@ class LabelCentroidOverridesTest {
 
     @Test
     fun `KIR override X matches longitude 174 east (Gilbert Islands)`() {
-        val (x, _) = LABEL_CENTROID_OVERRIDES["KIR"]!!
+        val (x, _) = LABEL_CENTROID_OVERRIDES.getValue("KIR")
         assertEquals(MercatorProjection.longitudeToX(174f), x, 0.0001f)
     }
 
     @Test
     fun `KIR override Y matches latitude 1_5 south (near Tarawa)`() {
-        val (_, y) = LABEL_CENTROID_OVERRIDES["KIR"]!!
+        val (_, y) = LABEL_CENTROID_OVERRIDES.getValue("KIR")
         assertEquals(MercatorProjection.latitudeToY(-1.5f), y, 0.0001f)
     }
 
     @Test
     fun `KIR override X is in eastern Pacific (right side of map)`() {
         // Gilbert Islands are near 174°E; normalized X should be > 0.95.
-        val (x, _) = LABEL_CENTROID_OVERRIDES["KIR"]!!
+        val (x, _) = LABEL_CENTROID_OVERRIDES.getValue("KIR")
         assertTrue("KIR X $x is not in eastern Pacific (expected > 0.95)", x > 0.95f)
     }
 }
@@ -3338,7 +3338,6 @@ class SelectCountryFillColorTest {
             previousModeColors = emptyMap(),
             currentModeColors  = mapOf("zz" to blue)
         )
-        // lerp(MapLand, blue, 0.5)
         val expected = androidx.compose.ui.graphics.lerp(
             com.unstampedpages.app.ui.theme.MapLand, blue, 0.5f
         )
@@ -3761,11 +3760,14 @@ class ComputeVisibleLabelSpecsTest {
     // Identity mapper: leaves pts untouched (simulates a no-op matrix).
     private val identity: (FloatArray) -> Unit = { }
 
+    private data class RenderConfig(
+        val labelAlpha: Float = 1f,
+        val matrixValid: Boolean = true
+    )
+
     private fun defaultSpecs(
         wrapOffset: Float = 0f,
-        labelAlpha: Float = 1f,
-        matrixValid: Boolean = true,
-        scale: Float = 1f,
+        renderConfig: RenderConfig = RenderConfig(),
         geometries: List<com.unstampedpages.app.data.model.CountryGeometry> = listOf(geom("FRA")),
         countryBounds: Map<String, CountryBounds> = mapOf("FRA" to largeBounds()),
         labelTextSizes: Map<String, Pair<Float, Float>> = mapOf("FRA" to (60f to 20f)),
@@ -3773,7 +3775,7 @@ class ComputeVisibleLabelSpecsTest {
         overrideCanvasWidth: Float = canvasWidth
     ) = computeVisibleLabelSpecs(
         wrapOffset,
-        LabelRenderContext(labelAlpha, matrixValid, scale, mapWidth, mapHeight, overrideCanvasWidth, canvasHeight),
+        LabelRenderContext(renderConfig.labelAlpha, renderConfig.matrixValid, 1f, mapWidth, mapHeight, overrideCanvasWidth, canvasHeight),
         geometries, countryBounds, labelTextSizes, screenMapper
     )
 
@@ -3781,22 +3783,22 @@ class ComputeVisibleLabelSpecsTest {
 
     @Test
     fun `returns empty map when labelAlpha is below threshold`() {
-        assertTrue(defaultSpecs(labelAlpha = 0.005f).isEmpty())
+        assertTrue(defaultSpecs(renderConfig = RenderConfig(labelAlpha = 0.005f)).isEmpty())
     }
 
     @Test
     fun `returns empty map when labelAlpha is exactly 0`() {
-        assertTrue(defaultSpecs(labelAlpha = 0f).isEmpty())
+        assertTrue(defaultSpecs(renderConfig = RenderConfig(labelAlpha = 0f)).isEmpty())
     }
 
     @Test
     fun `returns empty map when matrixValid is false`() {
-        assertTrue(defaultSpecs(matrixValid = false).isEmpty())
+        assertTrue(defaultSpecs(renderConfig = RenderConfig(matrixValid = false)).isEmpty())
     }
 
     @Test
     fun `returns empty map when both alpha low and matrix invalid`() {
-        assertTrue(defaultSpecs(labelAlpha = 0f, matrixValid = false).isEmpty())
+        assertTrue(defaultSpecs(renderConfig = RenderConfig(labelAlpha = 0f, matrixValid = false)).isEmpty())
     }
 
     // ── per-geometry skip conditions ──────────────────────────────────────────
@@ -3886,27 +3888,27 @@ class ComputeVisibleLabelSpecsTest {
     @Test
     fun `topLeft centres text on centroid screenX`() {
         // centroid (0.5,0.5), identity mapper → screenX=500, tw=60 → topLeft.x=470
-        val spec = defaultSpecs()["FRA"]!!
+        val spec = defaultSpecs().getValue("FRA")
         assertEquals(470f, spec.topLeft.x, 0.01f)
     }
 
     @Test
     fun `topLeft centres text on centroid screenY`() {
         // screenY=250, th=20 → topLeft.y=240
-        val spec = defaultSpecs()["FRA"]!!
+        val spec = defaultSpecs().getValue("FRA")
         assertEquals(240f, spec.topLeft.y, 0.01f)
     }
 
     @Test
     fun `shadowOffset is 8 percent of text height`() {
-        val spec = defaultSpecs()["FRA"]!!
+        val spec = defaultSpecs().getValue("FRA")
         assertEquals(20f * 0.08f, spec.shadowOffset, 0.001f)
     }
 
     @Test
     fun `shadowColor alpha is finalAlpha times 0_67`() {
         val labelAlpha = 0.8f
-        val spec = defaultSpecs(labelAlpha = labelAlpha)["FRA"]!!
+        val spec = defaultSpecs(renderConfig = RenderConfig(labelAlpha = labelAlpha)).getValue("FRA")
         // largeBounds → sizeAlpha=1 → finalAlpha=0.8
         // Color stores alpha as 8-bit, so allow ≈1/255 ≈ 0.004 rounding error.
         assertEquals(labelAlpha * 0.67f, spec.shadowColor.alpha, 0.005f)
@@ -3918,7 +3920,7 @@ class ComputeVisibleLabelSpecsTest {
     @Test
     fun `fillColor alpha equals finalAlpha`() {
         val labelAlpha = 0.6f
-        val spec = defaultSpecs(labelAlpha = labelAlpha)["FRA"]!!
+        val spec = defaultSpecs(renderConfig = RenderConfig(labelAlpha = labelAlpha)).getValue("FRA")
         assertEquals(labelAlpha, spec.fillColor.alpha, 0.001f)
         assertEquals(1f, spec.fillColor.red,   0.001f)  // Color.White base
         assertEquals(1f, spec.fillColor.green, 0.001f)
@@ -3931,8 +3933,8 @@ class ComputeVisibleLabelSpecsTest {
     fun `wrapOffset shifts screenX proportionally`() {
         // wrapOffset=0 → pts[0] = 0.5*1000 = 500, topLeft.x = 470
         // wrapOffset=0.3 → pts[0] = 0.8*1000 = 800, topLeft.x = 770
-        val spec0  = defaultSpecs(wrapOffset = 0f)["FRA"]!!
-        val spec03 = defaultSpecs(wrapOffset = 0.3f)["FRA"]!!
+        val spec0  = defaultSpecs(wrapOffset = 0f).getValue("FRA")
+        val spec03 = defaultSpecs(wrapOffset = 0.3f).getValue("FRA")
         assertEquals(470f, spec0.topLeft.x,  0.01f)
         assertEquals(770f, spec03.topLeft.x, 0.01f)
     }
@@ -3943,7 +3945,7 @@ class ComputeVisibleLabelSpecsTest {
     fun `screenMapper translation shifts topLeft`() {
         // mapper shifts x by +50 → screenX=550 → topLeft.x = 550-30 = 520
         val shiftMapper: (FloatArray) -> Unit = { pts -> pts[0] += 50f }
-        val spec = defaultSpecs(screenMapper = shiftMapper)["FRA"]!!
+        val spec = defaultSpecs(screenMapper = shiftMapper).getValue("FRA")
         assertEquals(520f, spec.topLeft.x, 0.01f)
     }
 
@@ -3953,7 +3955,7 @@ class ComputeVisibleLabelSpecsTest {
     fun `uses LABEL_CENTROID_OVERRIDES when available`() {
         // "NZL" has an override at ~longitude 173° → normX ≈ 0.981.
         // Use a wide canvas (3000px) so the label is not culled.
-        val override = LABEL_CENTROID_OVERRIDES["NZL"]!!
+        val override = LABEL_CENTROID_OVERRIDES.getValue("NZL")
         val cx = override.first
         val cy = override.second
         val expectedScreenX = cx * mapWidth
@@ -3964,7 +3966,7 @@ class ComputeVisibleLabelSpecsTest {
             labelTextSizes = mapOf("NZL" to (60f to 20f)),
             overrideCanvasWidth = 3000f
         )
-        val spec = result["NZL"]!!
+        val spec = result.getValue("NZL")
         assertEquals(expectedScreenX - 30f, spec.topLeft.x, 0.01f)
         assertEquals(expectedScreenY - 10f, spec.topLeft.y, 0.01f)
     }
@@ -3978,7 +3980,7 @@ class ComputeVisibleLabelSpecsTest {
             countryBounds  = mapOf("DEU" to largeBounds(cx, cy)),
             labelTextSizes = mapOf("DEU" to (60f to 20f))
         )
-        val spec = result["DEU"]!!
+        val spec = result.getValue("DEU")
         assertEquals(cx * mapWidth - 30f, spec.topLeft.x, 0.01f)
         assertEquals(cy * mapHeight - 10f, spec.topLeft.y, 0.01f)
     }

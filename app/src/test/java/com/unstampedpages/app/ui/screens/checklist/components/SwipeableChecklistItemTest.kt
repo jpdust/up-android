@@ -143,20 +143,13 @@ class SwipeableChecklistItemTest {
 
     @Test
     fun `SwipeableItemCallbacks can be created with all callbacks`() {
-        var checkedChanged = false
-        var deleted = false
-        var pinned = false
-        var quantityChanged = -1
-        var longPressed = false
-        var selected = false
-
         val callbacks = SwipeableItemCallbacks(
-            onCheckedChange = { checkedChanged = true },
-            onDelete = { deleted = true },
-            onPin = { pinned = true },
-            onQuantityChange = { quantityChanged = it },
-            onLongPress = { longPressed = true },
-            onSelect = { selected = true }
+            onCheckedChange = {},
+            onDelete = {},
+            onPin = {},
+            onQuantityChange = {},
+            onLongPress = {},
+            onSelect = {}
         )
 
         assertNotNull(callbacks)

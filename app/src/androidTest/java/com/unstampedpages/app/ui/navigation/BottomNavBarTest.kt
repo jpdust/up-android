@@ -28,6 +28,8 @@ import org.junit.runner.RunWith
  * [TestNavHostController] backed by a minimal [NavHost].  This gives full control over
  * the initial route and direct access to the back stack for assertions.
  */
+private const val MY_STAMPS_TAB = MY_STAMPS_TAB
+
 @RunWith(AndroidJUnit4::class)
 class BottomNavBarTest {
 
@@ -40,7 +42,7 @@ class BottomNavBarTest {
      * English labels for all five tabs (matches values/strings.xml).
      * Used in "only one tab selected" assertions that need the full set.
      */
-    private val allTabLabels = listOf("Home", "Countries", "Checklist", "Trip Log", "My Stamps")
+    private val allTabLabels = listOf("Home", "Countries", "Checklist", "Trip Log", MY_STAMPS_TAB)
 
     /**
      * Renders [BottomNavBar] with a [TestNavHostController] and a [NavHost] whose destinations
@@ -110,7 +112,7 @@ class BottomNavBarTest {
     @Test
     fun myStampsTab_isDisplayed() {
         launchBottomNavBar()
-        composeTestRule.bottomNavBarRobot { verifyTabDisplayed("My Stamps") }
+        composeTestRule.bottomNavBarRobot { verifyTabDisplayed(MY_STAMPS_TAB) }
     }
 
     /**
@@ -168,7 +170,7 @@ class BottomNavBarTest {
     fun myStampsTab_isSelected_whenOnMyStampsRoute() {
         launchBottomNavBar(startRoute = NavRoute.MyStamps.route)
         composeTestRule.bottomNavBarRobot {
-            verifyOnlyTabIsSelected("My Stamps", allTabLabels)
+            verifyOnlyTabIsSelected(MY_STAMPS_TAB, allTabLabels)
         }
     }
 
@@ -180,7 +182,7 @@ class BottomNavBarTest {
             verifyTabIsNotSelected("Countries")
             verifyTabIsNotSelected("Checklist")
             verifyTabIsNotSelected("Trip Log")
-            verifyTabIsNotSelected("My Stamps")
+            verifyTabIsNotSelected(MY_STAMPS_TAB)
         }
     }
 
@@ -210,7 +212,7 @@ class BottomNavBarTest {
     @Test
     fun clickingMyStampsTab_navigatesTo_myStampsRoute() {
         launchBottomNavBar()
-        composeTestRule.bottomNavBarRobot { clickTab("My Stamps") }
+        composeTestRule.bottomNavBarRobot { clickTab(MY_STAMPS_TAB) }
         assertEquals(NavRoute.MyStamps.route, navController.currentDestination?.route)
     }
 
@@ -242,7 +244,7 @@ class BottomNavBarTest {
     @Test
     fun onlyOneTab_isSelected_atATime_whenCyclingThroughAll() {
         launchBottomNavBar()
-        val sequence = listOf("Countries", "Checklist", "Trip Log", "My Stamps", "Home")
+        val sequence = listOf("Countries", "Checklist", "Trip Log", MY_STAMPS_TAB, "Home")
         composeTestRule.bottomNavBarRobot {
             sequence.forEach { label ->
                 clickTab(label)
@@ -309,7 +311,7 @@ class BottomNavBarTest {
         launchBottomNavBar(startRoute = NavRoute.MyStamps.route)
         val stackSizeBefore = navController.currentBackStack.value.size
 
-        composeTestRule.bottomNavBarRobot { clickTab("My Stamps") }
+        composeTestRule.bottomNavBarRobot { clickTab(MY_STAMPS_TAB) }
 
         assertEquals(stackSizeBefore, navController.currentBackStack.value.size)
         assertEquals(NavRoute.MyStamps.route, navController.currentDestination?.route)

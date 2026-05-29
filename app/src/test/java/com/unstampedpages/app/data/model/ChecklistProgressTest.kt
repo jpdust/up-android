@@ -99,6 +99,7 @@ class ChecklistProgressTest {
     @Test
     fun `isComplete is false when checkedCount equals totalCount but totalCount is 0`() {
         val progress = ChecklistProgress(checkedCount = 0, totalCount = 0)
+        assertEquals(progress.checkedCount, progress.totalCount)
         assertFalse(progress.isComplete)
     }
 

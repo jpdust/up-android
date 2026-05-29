@@ -3,11 +3,13 @@ package com.unstampedpages.app.data.local.entity
 import org.junit.Assert.*
 import org.junit.Test
 
+private const val TEST_ITEM = "Test Item"
+
 class ChecklistItemTest {
 
     @Test
     fun `default id is zero`() {
-        val item = ChecklistItem(content = "Test item")
+        val item = ChecklistItem(content = TEST_ITEM)
 
         assertEquals(0L, item.id)
     }
@@ -21,14 +23,14 @@ class ChecklistItemTest {
 
     @Test
     fun `default isChecked is false`() {
-        val item = ChecklistItem(content = "Test item")
+        val item = ChecklistItem(content = TEST_ITEM)
 
         assertFalse(item.isChecked)
     }
 
     @Test
     fun `isChecked can be set to true`() {
-        val item = ChecklistItem(content = "Test item", isChecked = true)
+        val item = ChecklistItem(content = TEST_ITEM, isChecked = true)
 
         assertTrue(item.isChecked)
     }
@@ -36,7 +38,7 @@ class ChecklistItemTest {
     @Test
     fun `createdAt is set to current time by default`() {
         val before = System.currentTimeMillis()
-        val item = ChecklistItem(content = "Test item")
+        val item = ChecklistItem(content = TEST_ITEM)
         val after = System.currentTimeMillis()
 
         assertTrue(item.createdAt >= before)
@@ -46,7 +48,7 @@ class ChecklistItemTest {
     @Test
     fun `updatedAt is set to current time by default`() {
         val before = System.currentTimeMillis()
-        val item = ChecklistItem(content = "Test item")
+        val item = ChecklistItem(content = TEST_ITEM)
         val after = System.currentTimeMillis()
 
         assertTrue(item.updatedAt >= before)
@@ -56,7 +58,7 @@ class ChecklistItemTest {
     @Test
     fun `createdAt can be set explicitly`() {
         val timestamp = 1234567890L
-        val item = ChecklistItem(content = "Test item", createdAt = timestamp)
+        val item = ChecklistItem(content = TEST_ITEM, createdAt = timestamp)
 
         assertEquals(timestamp, item.createdAt)
     }
@@ -64,7 +66,7 @@ class ChecklistItemTest {
     @Test
     fun `updatedAt can be set explicitly`() {
         val timestamp = 1234567890L
-        val item = ChecklistItem(content = "Test item", updatedAt = timestamp)
+        val item = ChecklistItem(content = TEST_ITEM, updatedAt = timestamp)
 
         assertEquals(timestamp, item.updatedAt)
     }
