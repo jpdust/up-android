@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.newrelic.agent.android.NewRelic
 import com.unstampedpages.app.ui.theme.Secondary
 
 @Composable
@@ -36,6 +37,12 @@ fun BottomNavBar(
                 selected = selected,
                 onClick = {
                     if (currentRoute != item.route) {
+                        if (item.route == NavRoute.CountryInfo.route) {
+                            NewRelic.recordCustomEvent(
+                                "TabNavigation",
+                                mapOf("tab" to "Countries")
+                            )
+                        }
                         navController.navigate(item.route) {
                             popUpTo(navController.graph.startDestinationId) {
                                 saveState = true
