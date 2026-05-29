@@ -34,14 +34,14 @@ import org.junit.runner.RunWith
  * rather than assertIsDisplayed() (which checks on-screen visibility), and
  * performScrollTo() is called before performClick() on off-screen card nodes.
  */
-private const val CARD_EXPLORE_COUNTRIES = CARD_EXPLORE_COUNTRIES
-private const val CARD_TRAVEL_CHECKLIST = CARD_TRAVEL_CHECKLIST
-private const val CARD_TRIP_JOURNAL = CARD_TRIP_JOURNAL
-private const val CARD_MY_PASSPORT_STAMPS = CARD_MY_PASSPORT_STAMPS
-private const val MSG_CHECKLIST_NO_FIRE = MSG_CHECKLIST_NO_FIRE
-private const val MSG_TRIP_LOG_NO_FIRE = MSG_TRIP_LOG_NO_FIRE
-private const val MSG_STAMPS_NO_FIRE = MSG_STAMPS_NO_FIRE
-private const val MSG_COUNTRIES_NO_FIRE = MSG_COUNTRIES_NO_FIRE
+private const val CARD_EXPLORE_COUNTRIES = "Explore Countries"
+private const val CARD_TRAVEL_CHECKLIST = "Travel Checklist"
+private const val CARD_TRIP_JOURNAL = "Trip Journal"
+private const val CARD_MY_PASSPORT_STAMPS = "My Passport Stamps"
+private const val MSG_CHECKLIST_NO_FIRE = "Checklist callback should not have been invoked"
+private const val MSG_TRIP_LOG_NO_FIRE = "Trip log callback should not have been invoked"
+private const val MSG_STAMPS_NO_FIRE = "Stamps callback should not have been invoked"
+private const val MSG_COUNTRIES_NO_FIRE = "Countries callback should not have been invoked"
 
 @RunWith(AndroidJUnit4::class)
 class HomeScreenTest {

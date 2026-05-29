@@ -28,7 +28,7 @@ import org.junit.runner.RunWith
  * [TestNavHostController] backed by a minimal [NavHost].  This gives full control over
  * the initial route and direct access to the back stack for assertions.
  */
-private const val MY_STAMPS_TAB = MY_STAMPS_TAB
+private const val MY_STAMPS_TAB = "My Stamps"
 
 @RunWith(AndroidJUnit4::class)
 class BottomNavBarTest {

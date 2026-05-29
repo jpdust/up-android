@@ -16,19 +16,19 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-private const val TEST_COUNTRY = TEST_COUNTRY
-private const val CURRENCY_US_DOLLAR = CURRENCY_US_DOLLAR
-private const val CURRENCY_JAPANESE_YEN = CURRENCY_JAPANESE_YEN
-private const val CURRENCY_BRITISH_POUND = CURRENCY_BRITISH_POUND
-private const val CURRENCY_EURO_EUR = CURRENCY_EURO_EUR
-private const val EXCHANGE_RATE_PREFIX = EXCHANGE_RATE_PREFIX
-private const val OUTLET_TYPE_A_B = OUTLET_TYPE_A_B
-private const val OUTLET_TYPE_C_F = OUTLET_TYPE_C_F
-private const val OUTLET_TYPE_G = OUTLET_TYPE_G
-private const val LABEL_SAFETY_LEVEL = LABEL_SAFETY_LEVEL
-private const val LABEL_ENTRY_REQUIREMENT = LABEL_ENTRY_REQUIREMENT
-private const val LABEL_POWER_OUTLET = LABEL_POWER_OUTLET
-private const val FLAG_FRANCE = FLAG_FRANCE
+private const val TEST_COUNTRY = "Test Country"
+private const val CURRENCY_US_DOLLAR = "US Dollar"
+private const val CURRENCY_JAPANESE_YEN = "Japanese Yen"
+private const val CURRENCY_BRITISH_POUND = "British Pound"
+private const val CURRENCY_EURO_EUR = "Euro (EUR)"
+private const val EXCHANGE_RATE_PREFIX = "="
+private const val OUTLET_TYPE_A_B = "Type A/B"
+private const val OUTLET_TYPE_C_F = "Type C/F"
+private const val OUTLET_TYPE_G = "Type G"
+private const val LABEL_SAFETY_LEVEL = "Safety Level"
+private const val LABEL_ENTRY_REQUIREMENT = "Entry Requirement"
+private const val LABEL_POWER_OUTLET = "Power Outlet"
+private const val FLAG_FRANCE = "\uD83C\uDDEB\uD83C\uDDF7"
 
 private data class CurrencyConfig(
     val currencyCode: String = "USD",

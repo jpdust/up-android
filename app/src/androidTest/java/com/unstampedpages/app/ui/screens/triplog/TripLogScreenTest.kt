@@ -32,10 +32,10 @@ import org.junit.runner.RunWith
  * The singleton [AppDatabase] is wiped in [setUp] and [tearDown] to guarantee
  * each test starts from an empty, deterministic state.
  */
-private const val EMPTY_STATE_TITLE = EMPTY_STATE_TITLE
-private const val FAB_NEW_ENTRY = FAB_NEW_ENTRY
-private const val ENTRY_DUBLIN_DAY = ENTRY_DUBLIN_DAY
-private const val ENTRY_TO_BE_DELETED = ENTRY_TO_BE_DELETED
+private const val EMPTY_STATE_TITLE = "No journal entries yet"
+private const val FAB_NEW_ENTRY = "New entry"
+private const val ENTRY_DUBLIN_DAY = "Day in Dublin"
+private const val ENTRY_TO_BE_DELETED = "Entry to Delete"
 
 @RunWith(AndroidJUnit4::class)
 class TripLogScreenTest {

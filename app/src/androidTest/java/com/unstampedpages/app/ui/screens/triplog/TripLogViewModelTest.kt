@@ -14,10 +14,10 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
-private const val ENTRY_MY_TRIP = ENTRY_MY_TRIP
-private const val CONTENT_ORIGINAL = CONTENT_ORIGINAL
-private const val TITLE_UPDATED = TITLE_UPDATED
-private const val ENTRY_TO_DELETE = ENTRY_TO_DELETE
+private const val ENTRY_MY_TRIP = "My Trip"
+private const val CONTENT_ORIGINAL = "Original content"
+private const val TITLE_UPDATED = "Updated Title"
+private const val ENTRY_TO_DELETE = "Entry to Delete"
 
 @RunWith(AndroidJUnit4::class)
 class TripLogViewModelTest {
