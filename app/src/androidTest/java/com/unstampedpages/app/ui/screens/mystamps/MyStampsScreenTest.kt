@@ -184,6 +184,18 @@ class MyStampsScreenTest {
     }
 
     @Test
+    fun myStampsScreen_addStampDialog_galleryAndCameraButtonsExist() {
+        val country = CountryList.countries.first()
+        composeTestRule.myStampsRobot {
+            verifyScreenDisplayed()
+            clickAddStampButton(country.code)
+            verifyAddStampDialogDisplayed()
+            verifyGalleryButtonDisplayed()
+            verifyCameraButtonDisplayed()
+        }
+    }
+
+    @Test
     fun myStampsScreen_addStampDialog_showsCancelButton() {
         val country = CountryList.countries.first()
         composeTestRule.myStampsRobot {
