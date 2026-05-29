@@ -19,6 +19,7 @@
          <ignored-key id="3AD93C3C677A106E" reason="Key couldn't be downloaded from any key server"/>
          <ignored-key id="3F00DB67AE236E2E" reason="Key couldn't be downloaded from any key server"/>
          <ignored-key id="40A3C4432BD7308C" reason="Key couldn't be downloaded from any key server"/>
+         <ignored-key id="44CE7BF2825EA2CD" reason="Key couldn't be downloaded from any key server"/>
          <ignored-key id="4EB27DB2A3B88B8B" reason="Key couldn't be downloaded from any key server"/>
          <ignored-key id="571A5291E827E1C7" reason="Key couldn't be downloaded from any key server"/>
          <ignored-key id="5E1F79A7C298661E" reason="Key couldn't be downloaded from any key server"/>
@@ -147,7 +148,6 @@
             <trusting group="com.google.code.gson"/>
             <trusting group="^com[.]google[.]auto($|([.].*))" regex="true"/>
          </trusted-key>
-         <trusted-key id="CB3190CA7842439E57F3712E44CE7BF2825EA2CD" group="com.ibm.icu"/>
          <trusted-key id="D1436C0DBACEA48702AF97C363F1DD7753B8B315" group="^org[.]sonarsource($|([.].*))" regex="true"/>
          <trusted-key id="DBD744ACE7ADE6AA50DD591F66B50994442D2D40" group="com.squareup"/>
          <trusted-key id="DF3986523A6AD079C46B730BCA183FBA1E476C6E" group="com.squareup.curtains" name="curtains" version="1.2.5"/>
