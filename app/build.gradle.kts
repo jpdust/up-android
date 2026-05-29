@@ -235,8 +235,18 @@ android.buildTypes.configureEach {
             )
         ) { exclude(jacocoExclusions) }
 
-        classDirectories.setFrom(files(kotlinClasses))
-        sourceDirectories.setFrom(files("src/main/java", "src/main/kotlin"))
+        // Include compiled androidTest Kotlin classes so that test-helper files whose names
+        // don't match *Test* (e.g. Robot classes) appear in the Jacoco XML with real
+        // coverage data from the instrumented-test .ec files.  Actual test classes
+        // (matching **/*Test*.*) are filtered out by jacocoExclusions.
+        val androidTestKotlinClasses = fileTree(
+            layout.buildDirectory.dir(
+                "intermediates/built_in_kotlinc/${buildTypeName}AndroidTest/compile${capitalizedBuildType}AndroidTestKotlin/classes"
+            )
+        ) { exclude(jacocoExclusions) }
+
+        classDirectories.setFrom(files(kotlinClasses, androidTestKotlinClasses))
+        sourceDirectories.setFrom(files("src/main/java", "src/main/kotlin", "src/androidTest/java"))
 
         // Collect execution data from both unit tests and instrumented tests.
         // fileTree silently ignores paths that do not exist yet.
