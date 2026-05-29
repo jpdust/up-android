@@ -209,6 +209,22 @@ class CountriesRobot(private val composeTestRule: ComposeTestRule) {
         return this
     }
 
+    /**
+     * Taps at a position on the map expressed as fractions of the map canvas size.
+     * [normX] = 0.0 is the left edge, 1.0 is the right edge.
+     * [normY] = 0.0 is the top edge, 1.0 is the bottom edge.
+     *
+     * Mercator reference points:
+     *   Russia (54°E, 62°N) → normX ≈ 0.65, normY ≈ 0.27
+     */
+    fun tapMapAtRelative(normX: Float, normY: Float): CountriesRobot {
+        composeTestRule.onNodeWithTag("world_map").performTouchInput {
+            click(Offset(left + width * normX, top + height * normY))
+        }
+        composeTestRule.waitForIdle()
+        return this
+    }
+
     // ==================== Map Mode Selection ====================
 
     fun selectDefaultMapMode(): CountriesRobot {
