@@ -367,7 +367,7 @@ private class HitTestSnapshot(
 private fun hitTestCountry(
     position: Offset,
     snapshot: HitTestSnapshot,
-    locale: java.util.Locale = java.util.Locale.getDefault()
+    locale: java.util.Locale,
 ): Pair<String?, String?> {
     val pts = floatArrayOf(position.x, position.y)
     android.graphics.Matrix().apply { setValues(snapshot.matrixValues) }.mapPoints(pts)
