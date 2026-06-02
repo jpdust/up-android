@@ -1,9 +1,16 @@
 package com.unstampedpages.app.ui.screens.countryinfo
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.unstampedpages.app.data.AppConstants
 import com.unstampedpages.app.ui.theme.UnstampedPagesTheme
@@ -538,5 +545,107 @@ class WorldMapCanvasTest {
         composeTestRule.onNodeWithTag("legend_item_low_risk").assertDoesNotExist()
         composeTestRule.onNodeWithTag("legend_item_visa_not_required").assertDoesNotExist()
         composeTestRule.onNodeWithTag("legend_item_6_months").assertDoesNotExist()
+    }
+
+    // ==================== drawCountryMercator — drawPath and drawCircle branches ====================
+    // drawCountryMercator has four branches gated on (isSmall, isSelected):
+    //   isSmall=false, isSelected=false → 2× drawPath  (fill + stroke)
+    //   isSmall=false, isSelected=true  → 3× drawPath  (fill + stroke + glow)
+    //   isSmall=true,  isSelected=false → 2× drawCircle (fill dot + stroke ring)
+    //   isSmall=true,  isSelected=true  → 4× drawCircle (outer glow + inner glow + fill + stroke)
+    //
+    // Tests call drawCountryMercator directly via a minimal Canvas composable with synthetic Path
+    // and CountryRenderStyle objects. No WorldMapCanvas, no CountryGeometryData, no GeoJSON parse —
+    // so these tests add negligible heap pressure and cannot cause OOM in later test classes.
+
+    private fun testRenderStyle() = CountryRenderStyle(
+        normalStroke   = Stroke(width = 1f),
+        selectedStroke = Stroke(width = 2f),
+        glowStyle      = Stroke(width = 4f),
+        dotRadius      = 4f
+    )
+
+    private fun trianglePath() = Path().apply {
+        moveTo(10f, 10f); lineTo(60f, 10f); lineTo(35f, 50f); close()
+    }
+
+    @Test
+    fun drawCountryMercator_drawPath_unselected_rendersWithoutCrash() {
+        // isSmall=false, isSelected=false → 2× drawPath (fill + stroke)
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                Canvas(modifier = Modifier.size(100.dp)) {
+                    drawCountryMercator(
+                        path       = trianglePath(),
+                        isSelected = false,
+                        fillColor  = Color.Green,
+                        renderStyle = testRenderStyle(),
+                        isSmall    = false,
+                        centroid   = Offset.Zero
+                    )
+                }
+            }
+        }
+        composeTestRule.onRoot().assertIsDisplayed()
+    }
+
+    @Test
+    fun drawCountryMercator_drawPath_selected_rendersWithoutCrash() {
+        // isSmall=false, isSelected=true → 3× drawPath (fill + stroke + glow)
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                Canvas(modifier = Modifier.size(100.dp)) {
+                    drawCountryMercator(
+                        path       = trianglePath(),
+                        isSelected = true,
+                        fillColor  = Color.Blue,
+                        renderStyle = testRenderStyle(),
+                        isSmall    = false,
+                        centroid   = Offset.Zero
+                    )
+                }
+            }
+        }
+        composeTestRule.onRoot().assertIsDisplayed()
+    }
+
+    @Test
+    fun drawCountryMercator_drawCircle_unselected_rendersWithoutCrash() {
+        // isSmall=true, isSelected=false → 2× drawCircle (fill dot + stroke ring)
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                Canvas(modifier = Modifier.size(100.dp)) {
+                    drawCountryMercator(
+                        path       = trianglePath(),
+                        isSelected = false,
+                        fillColor  = Color.Yellow,
+                        renderStyle = testRenderStyle(),
+                        isSmall    = true,
+                        centroid   = Offset(50f, 50f)
+                    )
+                }
+            }
+        }
+        composeTestRule.onRoot().assertIsDisplayed()
+    }
+
+    @Test
+    fun drawCountryMercator_drawCircle_selected_rendersWithoutCrash() {
+        // isSmall=true, isSelected=true → 4× drawCircle (outer glow + inner glow + fill + stroke)
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                Canvas(modifier = Modifier.size(100.dp)) {
+                    drawCountryMercator(
+                        path       = trianglePath(),
+                        isSelected = true,
+                        fillColor  = Color.Red,
+                        renderStyle = testRenderStyle(),
+                        isSmall    = true,
+                        centroid   = Offset(50f, 50f)
+                    )
+                }
+            }
+        }
+        composeTestRule.onRoot().assertIsDisplayed()
     }
 }

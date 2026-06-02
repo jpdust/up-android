@@ -688,7 +688,7 @@ private data class MapDrawParams(
     val labelTextLayouts: Map<String, TextLayoutResult> = emptyMap()
 )
 
-private data class CountryRenderStyle(
+internal data class CountryRenderStyle(
     val normalStroke: Stroke,
     val selectedStroke: Stroke,
     val glowStyle: Stroke,
@@ -1778,7 +1778,7 @@ private fun isPointInLatLngPolygon(lat: Float, lng: Float, polygon: List<LatLng>
 /**
  * Convert LatLng to screen position using Mercator projection.
  */
-private fun latLngToMercator(latLng: LatLng, mapWidth: Float, mapHeight: Float): Offset {
+internal fun latLngToMercator(latLng: LatLng, mapWidth: Float, mapHeight: Float): Offset {
     val x = MercatorProjection.longitudeToX(latLng.lng) * mapWidth
     val y = MercatorProjection.latitudeToY(latLng.lat) * mapHeight
     return Offset(x, y)
@@ -1789,7 +1789,7 @@ private fun latLngToMercator(latLng: LatLng, mapWidth: Float, mapHeight: Float):
  * Fill color and stroke objects are pre-computed by the caller — no per-country allocations.
  * [isSmall] and [centroid] are pre-computed by the caller from bounds, mapWidth/Height, and scale.
  */
-private fun DrawScope.drawCountryMercator(
+internal fun DrawScope.drawCountryMercator(
     path: Path,
     isSelected: Boolean,
     fillColor: Color,

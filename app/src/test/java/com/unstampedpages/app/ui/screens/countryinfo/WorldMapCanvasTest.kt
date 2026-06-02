@@ -4026,4 +4026,164 @@ class ComputeVisibleLabelSpecsTest {
         assertEquals(1, result.size)
         assertTrue(result.containsKey("FRA"))
     }
+
+    // ==================== latLngToMercator Tests ====================
+    // latLngToMercator converts a LatLng to an Offset in map-pixel space by scaling
+    // the normalized Mercator coordinates by mapWidth and mapHeight respectively.
+
+    private fun latLng(lat: Float, lng: Float) = com.unstampedpages.app.data.model.LatLng(lat, lng)
+
+    @Test
+    fun `latLngToMercator prime meridian equator returns x at half mapWidth`() {
+        val result = latLngToMercator(latLng(0f, 0f), mapWidth = 1000f, mapHeight = 500f)
+        assertEquals(500f, result.x, 0.1f)
+    }
+
+    @Test
+    fun `latLngToMercator west edge longitude minus 180 returns x of 0`() {
+        val result = latLngToMercator(latLng(0f, -180f), mapWidth = 1000f, mapHeight = 500f)
+        assertEquals(0f, result.x, 0.1f)
+    }
+
+    @Test
+    fun `latLngToMercator east edge longitude 180 returns x equal to mapWidth`() {
+        val result = latLngToMercator(latLng(0f, 180f), mapWidth = 1000f, mapHeight = 500f)
+        assertEquals(1000f, result.x, 0.1f)
+    }
+
+    @Test
+    fun `latLngToMercator x scales linearly with mapWidth`() {
+        val smallMap = latLngToMercator(latLng(0f, 90f), mapWidth = 100f, mapHeight = 50f)
+        val largeMap = latLngToMercator(latLng(0f, 90f), mapWidth = 800f, mapHeight = 400f)
+        // longitudeToX(90) = 0.75, so x = 0.75 * mapWidth
+        assertEquals(75f, smallMap.x, 0.1f)
+        assertEquals(600f, largeMap.x, 0.1f)
+    }
+
+    @Test
+    fun `latLngToMercator y scales with mapHeight`() {
+        val smallMap = latLngToMercator(latLng(0f, 0f), mapWidth = 100f, mapHeight = 50f)
+        val largeMap = latLngToMercator(latLng(0f, 0f), mapWidth = 100f, mapHeight = 400f)
+        val expectedNormY = MercatorProjection.latitudeToY(0f)
+        assertEquals(expectedNormY * 50f, smallMap.y, 0.1f)
+        assertEquals(expectedNormY * 400f, largeMap.y, 0.1f)
+    }
+
+    @Test
+    fun `latLngToMercator high north latitude produces small y`() {
+        val result = latLngToMercator(latLng(80f, 0f), mapWidth = 1000f, mapHeight = 500f)
+        // y=0 is north pole, so high latitude → small y
+        assertTrue("High north lat should produce small y", result.y < 500f * 0.2f)
+        assertTrue("y should be non-negative", result.y >= 0f)
+    }
+
+    @Test
+    fun `latLngToMercator high south latitude produces large y`() {
+        val result = latLngToMercator(latLng(-80f, 0f), mapWidth = 1000f, mapHeight = 500f)
+        // y=mapHeight is south pole, so far-south latitude → large y
+        assertTrue("High south lat should produce large y", result.y > 500f * 0.8f)
+        assertTrue("y should not exceed mapHeight", result.y <= 500f)
+    }
+
+    @Test
+    fun `latLngToMercator equator y is between 40 and 60 percent of mapHeight`() {
+        // Asymmetric latitude range (-85..83) means equator is not at exactly 50%
+        val result = latLngToMercator(latLng(0f, 0f), mapWidth = 1000f, mapHeight = 500f)
+        assertTrue(result.y > 500f * 0.4f)
+        assertTrue(result.y < 500f * 0.6f)
+    }
+
+    @Test
+    fun `latLngToMercator clamps latitude above MAX_LATITUDE`() {
+        val atMax = latLngToMercator(latLng(MercatorProjection.MAX_LATITUDE, 0f), mapWidth = 1000f, mapHeight = 500f)
+        val aboveMax = latLngToMercator(latLng(90f, 0f), mapWidth = 1000f, mapHeight = 500f)
+        assertEquals(atMax.y, aboveMax.y, 0.01f)
+    }
+
+    @Test
+    fun `latLngToMercator clamps latitude below MIN_LATITUDE`() {
+        val atMin = latLngToMercator(latLng(MercatorProjection.MIN_LATITUDE, 0f), mapWidth = 1000f, mapHeight = 500f)
+        val belowMin = latLngToMercator(latLng(-90f, 0f), mapWidth = 1000f, mapHeight = 500f)
+        assertEquals(atMin.y, belowMin.y, 0.01f)
+    }
+
+    @Test
+    fun `latLngToMercator x and y are independent of each other`() {
+        val base = latLngToMercator(latLng(45f, 90f), mapWidth = 800f, mapHeight = 400f)
+        val sameLatDiffLng = latLngToMercator(latLng(45f, -90f), mapWidth = 800f, mapHeight = 400f)
+        val diffLatSameLng = latLngToMercator(latLng(-45f, 90f), mapWidth = 800f, mapHeight = 400f)
+
+        // Same latitude → same y
+        assertEquals(base.y, sameLatDiffLng.y, 0.01f)
+        // Same longitude → same x
+        assertEquals(base.x, diffLatSameLng.x, 0.01f)
+        // Different latitudes → different y
+        assertNotEquals(base.y, diffLatSameLng.y)
+        // Different longitudes → different x
+        assertNotEquals(base.x, sameLatDiffLng.x)
+    }
+
+    @Test
+    fun `latLngToMercator result matches direct MercatorProjection calculation`() {
+        val lat = 51.5074f  // London
+        val lng = -0.1278f
+        val mapWidth = 1200f
+        val mapHeight = 600f
+
+        val result = latLngToMercator(latLng(lat, lng), mapWidth, mapHeight)
+
+        val expectedX = MercatorProjection.longitudeToX(lng) * mapWidth
+        val expectedY = MercatorProjection.latitudeToY(lat) * mapHeight
+        assertEquals(expectedX, result.x, 0.001f)
+        assertEquals(expectedY, result.y, 0.001f)
+    }
+
+    @Test
+    fun `latLngToMercator returns zero offset for zero-size map`() {
+        val result = latLngToMercator(latLng(45f, 90f), mapWidth = 0f, mapHeight = 0f)
+        assertEquals(0f, result.x, 0.001f)
+        assertEquals(0f, result.y, 0.001f)
+    }
+
+    @Test
+    fun `latLngToMercator north pole clamped y is less than equator y`() {
+        val northPole = latLngToMercator(latLng(90f, 0f), mapWidth = 1000f, mapHeight = 500f)
+        val equator = latLngToMercator(latLng(0f, 0f), mapWidth = 1000f, mapHeight = 500f)
+        assertTrue(northPole.y < equator.y)
+    }
+
+    @Test
+    fun `latLngToMercator south pole clamped y is greater than equator y`() {
+        val southPole = latLngToMercator(latLng(-90f, 0f), mapWidth = 1000f, mapHeight = 500f)
+        val equator = latLngToMercator(latLng(0f, 0f), mapWidth = 1000f, mapHeight = 500f)
+        assertTrue(southPole.y > equator.y)
+    }
+
+    @Test
+    fun `latLngToMercator x increases monotonically with longitude`() {
+        val longitudes = listOf(-180f, -90f, 0f, 90f, 180f)
+        val xValues = longitudes.map { lng ->
+            latLngToMercator(latLng(0f, lng), mapWidth = 1000f, mapHeight = 500f).x
+        }
+        for (i in 0 until xValues.size - 1) {
+            assertTrue(
+                "x at lng ${longitudes[i + 1]} (${xValues[i + 1]}) should be > x at ${longitudes[i]} (${xValues[i]})",
+                xValues[i + 1] > xValues[i]
+            )
+        }
+    }
+
+    @Test
+    fun `latLngToMercator y increases monotonically as latitude decreases`() {
+        val latitudes = listOf(80f, 40f, 0f, -40f, -80f)
+        val yValues = latitudes.map { lat ->
+            latLngToMercator(latLng(lat, 0f), mapWidth = 1000f, mapHeight = 500f).y
+        }
+        for (i in 0 until yValues.size - 1) {
+            assertTrue(
+                "y at lat ${latitudes[i + 1]} (${yValues[i + 1]}) should be > y at ${latitudes[i]} (${yValues[i]})",
+                yValues[i + 1] > yValues[i]
+            )
+        }
+    }
 }

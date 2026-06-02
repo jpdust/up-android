@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Debug-build manifest overlay.
+
+    android:largeHeap="true" raises the Dalvik/ART heap growth limit from the default
+    (~192 MB on this emulator) to the device's large-heap limit (typically 256–512 MB).
+    This is needed because the instrumented test suite loads world_geo.json (195-country
+    GeoJSON), renders WorldMapCanvas across 40+ tests, and launches MainActivity multiple
+    times in MainActivityTest — collectively exhausting the default heap.
+
+    This file is merged into the main manifest for debug builds only; the release APK is
+    unaffected.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application android:largeHeap="true" />
+</manifest>
