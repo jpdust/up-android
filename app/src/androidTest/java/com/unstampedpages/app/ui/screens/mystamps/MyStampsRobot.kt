@@ -217,6 +217,24 @@ class MyStampsRobot(private val composeTestRule: ComposeTestRule) {
     }
 
     /**
+     * Verifies only the Gallery button is displayed in the dialog
+     */
+    fun verifyGalleryButtonDisplayed(): MyStampsRobot {
+        composeTestRule.onNodeWithTag("gallery_button").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Gallery").assertIsDisplayed()
+        return this
+    }
+
+    /**
+     * Verifies only the Camera button is displayed in the dialog
+     */
+    fun verifyCameraButtonDisplayed(): MyStampsRobot {
+        composeTestRule.onNodeWithTag("camera_button").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Camera").assertIsDisplayed()
+        return this
+    }
+
+    /**
      * Verifies the Cancel button is displayed in the dialog
      */
     fun verifyCancelButtonDisplayed(): MyStampsRobot {

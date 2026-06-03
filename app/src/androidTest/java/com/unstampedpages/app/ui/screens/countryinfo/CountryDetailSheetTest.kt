@@ -1,7 +1,7 @@
 package com.unstampedpages.app.ui.screens.countryinfo
 
 import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.geometry.Offset
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.unstampedpages.app.data.AppConstants
@@ -15,6 +15,32 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+
+private const val TEST_COUNTRY = "Test Country"
+private const val CURRENCY_US_DOLLAR = "US Dollar"
+private const val CURRENCY_JAPANESE_YEN = "Japanese Yen"
+private const val CURRENCY_BRITISH_POUND = "British Pound"
+private const val CURRENCY_EURO_EUR = "Euro (EUR)"
+private const val EXCHANGE_RATE_PREFIX = "="
+private const val OUTLET_TYPE_A_B = "Type A/B"
+private const val OUTLET_TYPE_C_F = "Type C/F"
+private const val OUTLET_TYPE_G = "Type G"
+private const val LABEL_SAFETY_LEVEL = "Safety Level"
+private const val LABEL_ENTRY_REQUIREMENT = "Entry Requirement"
+private const val LABEL_POWER_OUTLET = "Power Outlet"
+private const val FLAG_FRANCE = "\uD83C\uDDEB\uD83C\uDDF7"
+
+private data class CurrencyConfig(
+    val currencyCode: String = "USD",
+    val currency: String = CURRENCY_US_DOLLAR,
+    val exchangeRateToUSD: Double = 1.0
+)
+
+private data class EntryPolicy(
+    val safetyLevel: SafetyLevel = SafetyLevel.NORMAL_SECURITY_PRECAUTIONS,
+    val visaRequirement: VisaRequirement = VisaRequirement.VISA_NOT_REQUIRED,
+    val passportValidity: String? = null
+)
 
 @RunWith(AndroidJUnit4::class)
 class CountryDetailSheetTest {
@@ -48,15 +74,10 @@ class CountryDetailSheetTest {
      * Distinct from [createCountry] which defaults to USD and non-null advisories.
      */
     private fun country(
-        name: String = "Test Country",
         currencyCode: String = "EUR",
         currency: String = "Euro",
         exchangeRateToUSD: Double = 1.08,
         safetyLevel: SafetyLevel = SafetyLevel.NORMAL_SECURITY_PRECAUTIONS,
-        visaRequirement: VisaRequirement = VisaRequirement.VISA_NOT_REQUIRED,
-        outletType: String = "Type C/F (230V)",
-        continent: Continent = Continent.EUROPE,
-        flagEmoji: String = "\uD83C\uDDEB\uD83C\uDDF7",
         passportValidity: String? = null,
         travelAdvisories: TravelAdvisories? = TravelAdvisories(
             us = "https://travel.state.gov",
@@ -65,16 +86,16 @@ class CountryDetailSheetTest {
             ca = "https://travel.gc.ca"
         )
     ) = Country(
-        id = name.lowercase().replace(" ", "_"),
-        name = name,
+        id = TEST_COUNTRY.lowercase().replace(" ", "_"),
+        name = TEST_COUNTRY,
         safetyLevel = safetyLevel,
-        visaRequirement = visaRequirement,
+        visaRequirement = VisaRequirement.VISA_NOT_REQUIRED,
         currency = currency,
         currencyCode = currencyCode,
         exchangeRateToUSD = exchangeRateToUSD,
-        outletType = outletType,
-        continent = continent,
-        flagEmoji = flagEmoji,
+        outletType = OUTLET_TYPE_C_F,
+        continent = Continent.EUROPE,
+        flagEmoji = FLAG_FRANCE,
         passportValidity = passportValidity,
         travelAdvisories = travelAdvisories
     )
@@ -83,35 +104,30 @@ class CountryDetailSheetTest {
 
     private fun createCountry(
         id: String = "test",
-        name: String = "Test Country",
-        currencyCode: String = "USD",
-        currency: String = "US Dollar",
-        exchangeRateToUSD: Double = 1.0,
-        visaRequirement: VisaRequirement = VisaRequirement.VISA_NOT_REQUIRED,
-        safetyLevel: SafetyLevel = SafetyLevel.NORMAL_SECURITY_PRECAUTIONS,
-        outletType: String = "Type A/B (120V)",
+        name: String = TEST_COUNTRY,
+        currencyConfig: CurrencyConfig = CurrencyConfig(),
+        entryPolicy: EntryPolicy = EntryPolicy(),
+        outletType: String = OUTLET_TYPE_A_B,
         continent: Continent = Continent.NORTH_AMERICA,
-        flagEmoji: String = "\uD83C\uDDFA\uD83C\uDDF8",
-        passportValidity: String? = null,
-        travelAdvisories: TravelAdvisories = TravelAdvisories(
+        flagEmoji: String = "\uD83C\uDDFA\uD83C\uDDF8"
+    ) = Country(
+        id = id,
+        name = name,
+        safetyLevel = entryPolicy.safetyLevel,
+        visaRequirement = entryPolicy.visaRequirement,
+        currency = currencyConfig.currency,
+        currencyCode = currencyConfig.currencyCode,
+        exchangeRateToUSD = currencyConfig.exchangeRateToUSD,
+        outletType = outletType,
+        continent = continent,
+        flagEmoji = flagEmoji,
+        passportValidity = entryPolicy.passportValidity,
+        travelAdvisories = TravelAdvisories(
             us = "https://travel.state.gov/en/international-travel/travel-advisories/test-country.html",
             uk = "https://www.gov.uk/foreign-travel-advice/test-country",
             au = "https://www.smartraveller.gov.au/destinations/americas/test-country",
             ca = "https://travel.gc.ca/destinations/test-country"
         )
-    ) = Country(
-        id = id,
-        name = name,
-        safetyLevel = safetyLevel,
-        visaRequirement = visaRequirement,
-        currency = currency,
-        currencyCode = currencyCode,
-        exchangeRateToUSD = exchangeRateToUSD,
-        outletType = outletType,
-        continent = continent,
-        flagEmoji = flagEmoji,
-        passportValidity = passportValidity,
-        travelAdvisories = travelAdvisories
     )
 
     private fun focusClearedCurrencyInput(testTag: String) {
@@ -126,9 +142,7 @@ class CountryDetailSheetTest {
         val usdCountry = createCountry(
             id = "us",
             name = AppConstants.CountryName.UNITED_STATES,
-            currencyCode = "USD",
-            currency = "US Dollar",
-            exchangeRateToUSD = 1.0
+            currencyConfig = CurrencyConfig("USD", CURRENCY_US_DOLLAR, 1.0)
         )
 
         composeTestRule.setContent {
@@ -145,7 +159,7 @@ class CountryDetailSheetTest {
         composeTestRule.onNodeWithText("US Dollar (USD)").assertIsDisplayed()
 
         // Verify exchange rate text is NOT displayed for USD countries
-        composeTestRule.onNodeWithText("1 USD =").assertDoesNotExist()
+        composeTestRule.onNodeWithText(EXCHANGE_RATE_PREFIX).assertDoesNotExist()
     }
 
     @Test
@@ -153,9 +167,7 @@ class CountryDetailSheetTest {
         val euroCountry = createCountry(
             id = "fr",
             name = AppConstants.CountryName.FRANCE,
-            currencyCode = "EUR",
-            currency = "Euro",
-            exchangeRateToUSD = 1.08
+            currencyConfig = CurrencyConfig("EUR", "Euro", 1.08)
         )
 
         composeTestRule.setContent {
@@ -169,7 +181,7 @@ class CountryDetailSheetTest {
         }
 
         // Verify currency is displayed
-        composeTestRule.onNodeWithText("Euro (EUR)").assertIsDisplayed()
+        composeTestRule.onNodeWithText(CURRENCY_EURO_EUR).assertIsDisplayed()
 
         // Verify currency converter IS displayed for non-USD countries
         composeTestRule.onNodeWithText("USD").assertIsDisplayed()
@@ -182,9 +194,7 @@ class CountryDetailSheetTest {
         val jpyCountry = createCountry(
             id = "jp",
             name = AppConstants.CountryName.JAPAN,
-            currencyCode = "JPY",
-            currency = "Japanese Yen",
-            exchangeRateToUSD = 0.0067
+            currencyConfig = CurrencyConfig("JPY", CURRENCY_JAPANESE_YEN, 0.0067)
         )
 
         composeTestRule.setContent {
@@ -212,9 +222,7 @@ class CountryDetailSheetTest {
         val panamaCountry = createCountry(
             id = "pa",
             name = "Panama",
-            currencyCode = "USD",
-            currency = "US Dollar",
-            exchangeRateToUSD = 1.0
+            currencyConfig = CurrencyConfig("USD", CURRENCY_US_DOLLAR, 1.0)
         )
 
         composeTestRule.setContent {
@@ -231,7 +239,7 @@ class CountryDetailSheetTest {
         composeTestRule.onNodeWithText("US Dollar (USD)").assertIsDisplayed()
 
         // Verify exchange rate is NOT displayed for Panama (uses USD)
-        composeTestRule.onNodeWithText("1 USD =").assertDoesNotExist()
+        composeTestRule.onNodeWithText(EXCHANGE_RATE_PREFIX).assertDoesNotExist()
     }
 
     @Test
@@ -240,9 +248,7 @@ class CountryDetailSheetTest {
         val ecuadorCountry = createCountry(
             id = "ec",
             name = "Ecuador",
-            currencyCode = "USD",
-            currency = "US Dollar",
-            exchangeRateToUSD = 1.0
+            currencyConfig = CurrencyConfig("USD", CURRENCY_US_DOLLAR, 1.0)
         )
 
         composeTestRule.setContent {
@@ -256,7 +262,7 @@ class CountryDetailSheetTest {
         }
 
         // Verify exchange rate is NOT displayed for Ecuador (uses USD)
-        composeTestRule.onNodeWithText("1 USD =").assertDoesNotExist()
+        composeTestRule.onNodeWithText(EXCHANGE_RATE_PREFIX).assertDoesNotExist()
     }
 
     @Test
@@ -264,9 +270,7 @@ class CountryDetailSheetTest {
         val gbpCountry = createCountry(
             id = "gb",
             name = AppConstants.CountryName.UNITED_KINGDOM,
-            currencyCode = "GBP",
-            currency = "British Pound",
-            exchangeRateToUSD = 1.27
+            currencyConfig = CurrencyConfig("GBP", CURRENCY_BRITISH_POUND, 1.27)
         )
 
         composeTestRule.setContent {
@@ -303,12 +307,12 @@ class CountryDetailSheetTest {
         }
 
         // When not visible, country name should not be displayed
-        composeTestRule.onNodeWithText("Test Country").assertDoesNotExist()
+        composeTestRule.onNodeWithText(TEST_COUNTRY).assertDoesNotExist()
     }
 
     @Test
     fun countryDetailSheet_visible_showsCountryName() {
-        val country = createCountry(name = "Test Country")
+        val country = createCountry(name = TEST_COUNTRY)
 
         composeTestRule.setContent {
             UnstampedPagesTheme {
@@ -321,7 +325,7 @@ class CountryDetailSheetTest {
         }
 
         // When visible, country name should be displayed
-        composeTestRule.onNodeWithText("Test Country").assertIsDisplayed()
+        composeTestRule.onNodeWithText(TEST_COUNTRY).assertIsDisplayed()
     }
 
     // ============================================================
@@ -335,9 +339,7 @@ class CountryDetailSheetTest {
         val euroCountry = createCountry(
             id = "fr",
             name = AppConstants.CountryName.FRANCE,
-            currencyCode = "EUR",
-            currency = "Euro",
-            exchangeRateToUSD = 1.08
+            currencyConfig = CurrencyConfig("EUR", "Euro", 1.08)
         )
 
         composeTestRule.setContent {
@@ -363,9 +365,7 @@ class CountryDetailSheetTest {
         val jpyCountry = createCountry(
             id = "jp",
             name = AppConstants.CountryName.JAPAN,
-            currencyCode = "JPY",
-            currency = "Japanese Yen",
-            exchangeRateToUSD = 0.0067
+            currencyConfig = CurrencyConfig("JPY", CURRENCY_JAPANESE_YEN, 0.0067)
         )
 
         composeTestRule.setContent {
@@ -391,9 +391,7 @@ class CountryDetailSheetTest {
         val gbpCountry = createCountry(
             id = "gb",
             name = AppConstants.CountryName.UNITED_KINGDOM,
-            currencyCode = "GBP",
-            currency = "British Pound",
-            exchangeRateToUSD = 1.27
+            currencyConfig = CurrencyConfig("GBP", CURRENCY_BRITISH_POUND, 1.27)
         )
 
         composeTestRule.setContent {
@@ -419,9 +417,7 @@ class CountryDetailSheetTest {
         val mxnCountry = createCountry(
             id = "mx",
             name = "Mexico",
-            currencyCode = "MXN",
-            currency = "Mexican Peso",
-            exchangeRateToUSD = 0.058
+            currencyConfig = CurrencyConfig("MXN", "Mexican Peso", 0.058)
         )
 
         composeTestRule.setContent {
@@ -445,9 +441,7 @@ class CountryDetailSheetTest {
         val euroCountry = createCountry(
             id = "fr",
             name = AppConstants.CountryName.FRANCE,
-            currencyCode = "EUR",
-            currency = "Euro",
-            exchangeRateToUSD = 1.08
+            currencyConfig = CurrencyConfig("EUR", "Euro", 1.08)
         )
 
         composeTestRule.setContent {
@@ -470,9 +464,7 @@ class CountryDetailSheetTest {
         val euroCountry = createCountry(
             id = "fr",
             name = AppConstants.CountryName.FRANCE,
-            currencyCode = "EUR",
-            currency = "Euro",
-            exchangeRateToUSD = 1.08
+            currencyConfig = CurrencyConfig("EUR", "Euro", 1.08)
         )
 
         composeTestRule.setContent {
@@ -496,8 +488,7 @@ class CountryDetailSheetTest {
     @Test
     fun countryDetailSheet_showsLowRiskSafetyLevel() {
         val country = createCountry(
-            name = "Safe Country",
-            safetyLevel = SafetyLevel.NORMAL_SECURITY_PRECAUTIONS
+            name = "Safe Country"
         )
 
         composeTestRule.setContent {
@@ -510,7 +501,7 @@ class CountryDetailSheetTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Safety Level").assertIsDisplayed()
+        composeTestRule.onNodeWithText(LABEL_SAFETY_LEVEL).assertIsDisplayed()
         composeTestRule.onNodeWithText(AppConstants.SafetyLevelDisplay.NORMAL_SECURITY_PRECAUTIONS).assertIsDisplayed()
     }
 
@@ -518,7 +509,7 @@ class CountryDetailSheetTest {
     fun countryDetailSheet_showsMediumRiskSafetyLevel() {
         val country = createCountry(
             name = "Medium Risk Country",
-            safetyLevel = SafetyLevel.HIGH_DEGREE_CAUTION
+            entryPolicy = EntryPolicy(safetyLevel = SafetyLevel.HIGH_DEGREE_CAUTION)
         )
 
         composeTestRule.setContent {
@@ -531,7 +522,7 @@ class CountryDetailSheetTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Safety Level").assertIsDisplayed()
+        composeTestRule.onNodeWithText(LABEL_SAFETY_LEVEL).assertIsDisplayed()
         composeTestRule.onNodeWithText(AppConstants.SafetyLevelDisplay.HIGH_DEGREE_CAUTION).assertIsDisplayed()
     }
 
@@ -539,7 +530,7 @@ class CountryDetailSheetTest {
     fun countryDetailSheet_showsHighRiskSafetyLevel() {
         val country = createCountry(
             name = "High Risk Country",
-            safetyLevel = SafetyLevel.RECONSIDER_TRAVEL
+            entryPolicy = EntryPolicy(safetyLevel = SafetyLevel.RECONSIDER_TRAVEL)
         )
 
         composeTestRule.setContent {
@@ -552,7 +543,7 @@ class CountryDetailSheetTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Safety Level").assertIsDisplayed()
+        composeTestRule.onNodeWithText(LABEL_SAFETY_LEVEL).assertIsDisplayed()
         composeTestRule.onNodeWithText(AppConstants.SafetyLevelDisplay.RECONSIDER_TRAVEL).assertIsDisplayed()
     }
 
@@ -560,7 +551,7 @@ class CountryDetailSheetTest {
     fun countryDetailSheet_showsExtremeRiskSafetyLevel() {
         val country = createCountry(
             name = "Extreme Risk Country",
-            safetyLevel = SafetyLevel.DO_NOT_TRAVEL
+            entryPolicy = EntryPolicy(safetyLevel = SafetyLevel.DO_NOT_TRAVEL)
         )
 
         composeTestRule.setContent {
@@ -573,7 +564,7 @@ class CountryDetailSheetTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Safety Level").assertIsDisplayed()
+        composeTestRule.onNodeWithText(LABEL_SAFETY_LEVEL).assertIsDisplayed()
         composeTestRule.onNodeWithText(AppConstants.SafetyLevelDisplay.DO_NOT_TRAVEL).assertIsDisplayed()
     }
 
@@ -583,9 +574,7 @@ class CountryDetailSheetTest {
 
     @Test
     fun countryDetailSheet_showsVisaNotRequired() {
-        val country = createCountry(
-            visaRequirement = VisaRequirement.VISA_NOT_REQUIRED
-        )
+        val country = createCountry()
 
         composeTestRule.setContent {
             UnstampedPagesTheme {
@@ -597,14 +586,14 @@ class CountryDetailSheetTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Entry Requirement").assertIsDisplayed()
+        composeTestRule.onNodeWithText(LABEL_ENTRY_REQUIREMENT).assertIsDisplayed()
         composeTestRule.onNodeWithText("Visa not required").assertIsDisplayed()
     }
 
     @Test
     fun countryDetailSheet_showsVisaRequired() {
         val country = createCountry(
-            visaRequirement = VisaRequirement.VISA_REQUIRED
+            entryPolicy = EntryPolicy(visaRequirement = VisaRequirement.VISA_REQUIRED)
         )
 
         composeTestRule.setContent {
@@ -617,14 +606,14 @@ class CountryDetailSheetTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Entry Requirement").assertIsDisplayed()
+        composeTestRule.onNodeWithText(LABEL_ENTRY_REQUIREMENT).assertIsDisplayed()
         composeTestRule.onNodeWithText("Visa required").assertIsDisplayed()
     }
 
     @Test
     fun countryDetailSheet_showsEVisa() {
         val country = createCountry(
-            visaRequirement = VisaRequirement.E_VISA
+            entryPolicy = EntryPolicy(visaRequirement = VisaRequirement.E_VISA)
         )
 
         composeTestRule.setContent {
@@ -637,14 +626,14 @@ class CountryDetailSheetTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Entry Requirement").assertIsDisplayed()
+        composeTestRule.onNodeWithText(LABEL_ENTRY_REQUIREMENT).assertIsDisplayed()
         composeTestRule.onNodeWithText(AppConstants.VisaRequirementDisplay.E_VISA).assertIsDisplayed()
     }
 
     @Test
     fun countryDetailSheet_showsVisaOnArrival() {
         val country = createCountry(
-            visaRequirement = VisaRequirement.VISA_ON_ARRIVAL
+            entryPolicy = EntryPolicy(visaRequirement = VisaRequirement.VISA_ON_ARRIVAL)
         )
 
         composeTestRule.setContent {
@@ -657,7 +646,7 @@ class CountryDetailSheetTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Entry Requirement").assertIsDisplayed()
+        composeTestRule.onNodeWithText(LABEL_ENTRY_REQUIREMENT).assertIsDisplayed()
         composeTestRule.onNodeWithText("Visa on arrival").assertIsDisplayed()
     }
 
@@ -665,7 +654,7 @@ class CountryDetailSheetTest {
     fun countryDetailSheet_showsRestricted() {
         val country = createCountry(
             name = "Restricted Country",
-            visaRequirement = VisaRequirement.RESTRICTED
+            entryPolicy = EntryPolicy(visaRequirement = VisaRequirement.RESTRICTED)
         )
 
         composeTestRule.setContent {
@@ -678,7 +667,7 @@ class CountryDetailSheetTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Entry Requirement").assertIsDisplayed()
+        composeTestRule.onNodeWithText(LABEL_ENTRY_REQUIREMENT).assertIsDisplayed()
         composeTestRule.onNodeWithText(AppConstants.VisaRequirementDisplay.RESTRICTED).assertIsDisplayed()
     }
 
@@ -689,7 +678,7 @@ class CountryDetailSheetTest {
     @Test
     fun countryDetailSheet_showsOutletTypeA() {
         val country = createCountry(
-            outletType = "Type A/B (120V)"
+            outletType = OUTLET_TYPE_A_B
         )
 
         composeTestRule.setContent {
@@ -702,14 +691,14 @@ class CountryDetailSheetTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Power Outlet").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Type A/B (120V)").assertIsDisplayed()
+        composeTestRule.onNodeWithText(LABEL_POWER_OUTLET).assertIsDisplayed()
+        composeTestRule.onNodeWithText(OUTLET_TYPE_A_B).assertIsDisplayed()
     }
 
     @Test
     fun countryDetailSheet_showsOutletTypeG() {
         val country = createCountry(
-            outletType = "Type G (230V)"
+            outletType = OUTLET_TYPE_G
         )
 
         composeTestRule.setContent {
@@ -722,14 +711,14 @@ class CountryDetailSheetTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Power Outlet").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Type G (230V)").assertIsDisplayed()
+        composeTestRule.onNodeWithText(LABEL_POWER_OUTLET).assertIsDisplayed()
+        composeTestRule.onNodeWithText(OUTLET_TYPE_G).assertIsDisplayed()
     }
 
     @Test
     fun countryDetailSheet_showsOutletTypeC() {
         val country = createCountry(
-            outletType = "Type C/F (230V)"
+            outletType = OUTLET_TYPE_C_F
         )
 
         composeTestRule.setContent {
@@ -742,8 +731,8 @@ class CountryDetailSheetTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Power Outlet").assertExists()
-        composeTestRule.onNodeWithText("Type C/F (230V)").assertExists()
+        composeTestRule.onNodeWithText(LABEL_POWER_OUTLET).assertExists()
+        composeTestRule.onNodeWithText(OUTLET_TYPE_C_F).assertExists()
     }
 
     // ============================================================
@@ -901,7 +890,7 @@ class CountryDetailSheetTest {
     fun countryDetailSheet_showsFlagEmoji() {
         val country = createCountry(
             name = AppConstants.CountryName.FRANCE,
-            flagEmoji = "\uD83C\uDDEB\uD83C\uDDF7" // French flag
+            flagEmoji = FLAG_FRANCE // French flag
         )
 
         composeTestRule.setContent {
@@ -914,7 +903,7 @@ class CountryDetailSheetTest {
             }
         }
 
-        composeTestRule.onNodeWithText("\uD83C\uDDEB\uD83C\uDDF7").assertIsDisplayed()
+        composeTestRule.onNodeWithText(FLAG_FRANCE).assertIsDisplayed()
     }
 
     @Test
@@ -972,8 +961,8 @@ class CountryDetailSheetTest {
         }
 
         // When country is null, no country-specific content should be displayed
-        composeTestRule.onNodeWithText("Safety Level").assertDoesNotExist()
-        composeTestRule.onNodeWithText("Entry Requirement").assertDoesNotExist()
+        composeTestRule.onNodeWithText(LABEL_SAFETY_LEVEL).assertDoesNotExist()
+        composeTestRule.onNodeWithText(LABEL_ENTRY_REQUIREMENT).assertDoesNotExist()
         composeTestRule.onNodeWithText("Currency").assertDoesNotExist()
     }
 
@@ -990,7 +979,7 @@ class CountryDetailSheetTest {
         }
 
         // No content should be displayed
-        composeTestRule.onNodeWithText("Safety Level").assertDoesNotExist()
+        composeTestRule.onNodeWithText(LABEL_SAFETY_LEVEL).assertDoesNotExist()
     }
 
     // ============================================================
@@ -1001,9 +990,7 @@ class CountryDetailSheetTest {
     fun currencyConverter_zeroExchangeRate_handlesGracefully() {
         // Edge case: exchange rate is 0
         val country = createCountry(
-            currencyCode = "XXX",
-            currency = "Unknown Currency",
-            exchangeRateToUSD = 0.0
+            currencyConfig = CurrencyConfig("XXX", "Unknown Currency", 0.0)
         )
 
         composeTestRule.setContent {
@@ -1027,9 +1014,7 @@ class CountryDetailSheetTest {
         val vndCountry = createCountry(
             id = "vn",
             name = "Vietnam",
-            currencyCode = "VND",
-            currency = "Vietnamese Dong",
-            exchangeRateToUSD = 0.00004
+            currencyConfig = CurrencyConfig("VND", "Vietnamese Dong", 0.00004)
         )
 
         composeTestRule.setContent {
@@ -1054,9 +1039,7 @@ class CountryDetailSheetTest {
         val strongCountry = createCountry(
             id = "xx",
             name = "Strong Country",
-            currencyCode = "XXX",
-            currency = "Strong Currency",
-            exchangeRateToUSD = 10.0
+            currencyConfig = CurrencyConfig("XXX", "Strong Currency", 10.0)
         )
 
         composeTestRule.setContent {
@@ -1078,12 +1061,8 @@ class CountryDetailSheetTest {
         // Comprehensive test that all fields are displayed together
         val country = createCountry(
             name = AppConstants.CountryName.GERMANY,
-            safetyLevel = SafetyLevel.NORMAL_SECURITY_PRECAUTIONS,
-            visaRequirement = VisaRequirement.VISA_NOT_REQUIRED,
-            currency = "Euro",
-            currencyCode = "EUR",
-            exchangeRateToUSD = 1.08,
-            outletType = "Type C/F (230V)",
+            currencyConfig = CurrencyConfig("EUR", "Euro", 1.08),
+            outletType = OUTLET_TYPE_C_F,
             continent = Continent.EUROPE,
             flagEmoji = "\uD83C\uDDE9\uD83C\uDDEA"
         )
@@ -1104,14 +1083,14 @@ class CountryDetailSheetTest {
         composeTestRule.onNodeWithText(AppConstants.ContinentDisplay.EUROPE).assertIsDisplayed()
 
         // Info rows
-        composeTestRule.onNodeWithText("Safety Level").assertIsDisplayed()
+        composeTestRule.onNodeWithText(LABEL_SAFETY_LEVEL).assertIsDisplayed()
         composeTestRule.onNodeWithText(AppConstants.SafetyLevelDisplay.NORMAL_SECURITY_PRECAUTIONS).assertExists()
-        composeTestRule.onNodeWithText("Entry Requirement").assertIsDisplayed()
+        composeTestRule.onNodeWithText(LABEL_ENTRY_REQUIREMENT).assertIsDisplayed()
         composeTestRule.onNodeWithText("Visa not required").assertIsDisplayed()
         composeTestRule.onNodeWithText("Currency").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Euro (EUR)").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Power Outlet").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Type C/F (230V)").assertIsDisplayed()
+        composeTestRule.onNodeWithText(CURRENCY_EURO_EUR).assertIsDisplayed()
+        composeTestRule.onNodeWithText(LABEL_POWER_OUTLET).assertIsDisplayed()
+        composeTestRule.onNodeWithText(OUTLET_TYPE_C_F).assertIsDisplayed()
 
         // Currency converter (non-USD)
         composeTestRule.onNodeWithText("USD").assertExists()
@@ -1128,8 +1107,7 @@ class CountryDetailSheetTest {
     @Test
     fun countryDetailSheet_longCurrencyName_displays() {
         val country = createCountry(
-            currency = "United Arab Emirates Dirham",
-            currencyCode = "AED"
+            currencyConfig = CurrencyConfig(currencyCode = "AED", currency = "United Arab Emirates Dirham")
         )
 
         composeTestRule.setContent {
@@ -1154,9 +1132,7 @@ class CountryDetailSheetTest {
         val euroCountry = createCountry(
             id = "fr",
             name = AppConstants.CountryName.FRANCE,
-            currencyCode = "EUR",
-            currency = "Euro",
-            exchangeRateToUSD = 1.08
+            currencyConfig = CurrencyConfig("EUR", "Euro", 1.08)
         )
 
         composeTestRule.setContent {
@@ -1177,9 +1153,7 @@ class CountryDetailSheetTest {
         val euroCountry = createCountry(
             id = "fr",
             name = AppConstants.CountryName.FRANCE,
-            currencyCode = "EUR",
-            currency = "Euro",
-            exchangeRateToUSD = 1.08
+            currencyConfig = CurrencyConfig("EUR", "Euro", 1.08)
         )
 
         composeTestRule.setContent {
@@ -1200,9 +1174,7 @@ class CountryDetailSheetTest {
         val euroCountry = createCountry(
             id = "fr",
             name = AppConstants.CountryName.FRANCE,
-            currencyCode = "EUR",
-            currency = "Euro",
-            exchangeRateToUSD = 1.08
+            currencyConfig = CurrencyConfig("EUR", "Euro", 1.08)
         )
 
         composeTestRule.setContent {
@@ -1224,9 +1196,7 @@ class CountryDetailSheetTest {
         val euroCountry = createCountry(
             id = "fr",
             name = AppConstants.CountryName.FRANCE,
-            currencyCode = "EUR",
-            currency = "Euro",
-            exchangeRateToUSD = 1.08
+            currencyConfig = CurrencyConfig("EUR", "Euro", 1.08)
         )
 
         composeTestRule.setContent {
@@ -1248,9 +1218,7 @@ class CountryDetailSheetTest {
         val euroCountry = createCountry(
             id = "fr",
             name = AppConstants.CountryName.FRANCE,
-            currencyCode = "EUR",
-            currency = "Euro",
-            exchangeRateToUSD = 1.08
+            currencyConfig = CurrencyConfig("EUR", "Euro", 1.08)
         )
 
         composeTestRule.setContent {
@@ -1278,9 +1246,7 @@ class CountryDetailSheetTest {
         val euroCountry = createCountry(
             id = "fr",
             name = AppConstants.CountryName.FRANCE,
-            currencyCode = "EUR",
-            currency = "Euro",
-            exchangeRateToUSD = 1.08
+            currencyConfig = CurrencyConfig("EUR", "Euro", 1.08)
         )
 
         composeTestRule.setContent {
@@ -1310,9 +1276,7 @@ class CountryDetailSheetTest {
         val jpyCountry = createCountry(
             id = "jp",
             name = AppConstants.CountryName.JAPAN,
-            currencyCode = "JPY",
-            currency = "Japanese Yen",
-            exchangeRateToUSD = 0.0067
+            currencyConfig = CurrencyConfig("JPY", CURRENCY_JAPANESE_YEN, 0.0067)
         )
 
         composeTestRule.setContent {
@@ -1343,9 +1307,7 @@ class CountryDetailSheetTest {
         val euroCountry = createCountry(
             id = "fr",
             name = AppConstants.CountryName.FRANCE,
-            currencyCode = "EUR",
-            currency = "Euro",
-            exchangeRateToUSD = 1.08
+            currencyConfig = CurrencyConfig("EUR", "Euro", 1.08)
         )
 
         composeTestRule.setContent {
@@ -1376,9 +1338,7 @@ class CountryDetailSheetTest {
         val euroCountry = createCountry(
             id = "fr",
             name = AppConstants.CountryName.FRANCE,
-            currencyCode = "EUR",
-            currency = "Euro",
-            exchangeRateToUSD = 1.08
+            currencyConfig = CurrencyConfig("EUR", "Euro", 1.08)
         )
 
         composeTestRule.setContent {
@@ -1408,9 +1368,7 @@ class CountryDetailSheetTest {
         val euroCountry = createCountry(
             id = "fr",
             name = AppConstants.CountryName.FRANCE,
-            currencyCode = "EUR",
-            currency = "Euro",
-            exchangeRateToUSD = 1.08
+            currencyConfig = CurrencyConfig("EUR", "Euro", 1.08)
         )
 
         composeTestRule.setContent {
@@ -1438,9 +1396,7 @@ class CountryDetailSheetTest {
         val euroCountry = createCountry(
             id = "fr",
             name = AppConstants.CountryName.FRANCE,
-            currencyCode = "EUR",
-            currency = "Euro",
-            exchangeRateToUSD = 1.08
+            currencyConfig = CurrencyConfig("EUR", "Euro", 1.08)
         )
 
         composeTestRule.setContent {
@@ -1470,9 +1426,7 @@ class CountryDetailSheetTest {
         val gbpCountry = createCountry(
             id = "gb",
             name = AppConstants.CountryName.UNITED_KINGDOM,
-            currencyCode = "GBP",
-            currency = "British Pound",
-            exchangeRateToUSD = 1.27
+            currencyConfig = CurrencyConfig("GBP", CURRENCY_BRITISH_POUND, 1.27)
         )
 
         composeTestRule.setContent {
@@ -1503,9 +1457,7 @@ class CountryDetailSheetTest {
         val mxnCountry = createCountry(
             id = "mx",
             name = "Mexico",
-            currencyCode = "MXN",
-            currency = "Mexican Peso",
-            exchangeRateToUSD = 0.058
+            currencyConfig = CurrencyConfig("MXN", "Mexican Peso", 0.058)
         )
 
         composeTestRule.setContent {
@@ -1534,9 +1486,7 @@ class CountryDetailSheetTest {
         val usdCountry = createCountry(
             id = "us",
             name = AppConstants.CountryName.UNITED_STATES,
-            currencyCode = "USD",
-            currency = "US Dollar",
-            exchangeRateToUSD = 1.0
+            currencyConfig = CurrencyConfig("USD", CURRENCY_US_DOLLAR, 1.0)
         )
 
         composeTestRule.setContent {
@@ -1563,9 +1513,7 @@ class CountryDetailSheetTest {
         val euroCountry = createCountry(
             id = "fr",
             name = AppConstants.CountryName.FRANCE,
-            currencyCode = "EUR",
-            currency = "Euro",
-            exchangeRateToUSD = 1.08
+            currencyConfig = CurrencyConfig("EUR", "Euro", 1.08)
         )
 
         composeTestRule.setContent {
@@ -1598,9 +1546,7 @@ class CountryDetailSheetTest {
         val euroCountry = createCountry(
             id = "fr",
             name = AppConstants.CountryName.FRANCE,
-            currencyCode = "EUR",
-            currency = "Euro",
-            exchangeRateToUSD = 1.08
+            currencyConfig = CurrencyConfig("EUR", "Euro", 1.08)
         )
 
         composeTestRule.setContent {
@@ -1632,9 +1578,7 @@ class CountryDetailSheetTest {
         val euroCountry = createCountry(
             id = "fr",
             name = AppConstants.CountryName.FRANCE,
-            currencyCode = "EUR",
-            currency = "Euro",
-            exchangeRateToUSD = 1.08
+            currencyConfig = CurrencyConfig("EUR", "Euro", 1.08)
         )
 
         composeTestRule.setContent {
@@ -1666,9 +1610,7 @@ class CountryDetailSheetTest {
         val gbpCountry = createCountry(
             id = "gb",
             name = AppConstants.CountryName.UNITED_KINGDOM,
-            currencyCode = "GBP",
-            currency = "British Pound",
-            exchangeRateToUSD = 1.27
+            currencyConfig = CurrencyConfig("GBP", CURRENCY_BRITISH_POUND, 1.27)
         )
 
         composeTestRule.setContent {
@@ -1703,9 +1645,7 @@ class CountryDetailSheetTest {
         val euroCountry = createCountry(
             id = "fr",
             name = AppConstants.CountryName.FRANCE,
-            currencyCode = "EUR",
-            currency = "Euro",
-            exchangeRateToUSD = 1.08
+            currencyConfig = CurrencyConfig("EUR", "Euro", 1.08)
         )
 
         composeTestRule.setContent {
@@ -1735,9 +1675,7 @@ class CountryDetailSheetTest {
         val euroCountry = createCountry(
             id = "fr",
             name = AppConstants.CountryName.FRANCE,
-            currencyCode = "EUR",
-            currency = "Euro",
-            exchangeRateToUSD = 1.08
+            currencyConfig = CurrencyConfig("EUR", "Euro", 1.08)
         )
 
         composeTestRule.setContent {
@@ -1843,7 +1781,7 @@ class CountryDetailSheetTest {
 
     @Test
     fun safetyLevelRow_chips_visibleForMediumRisk() {
-        val country = createCountry(safetyLevel = SafetyLevel.HIGH_DEGREE_CAUTION)
+        val country = createCountry(entryPolicy = EntryPolicy(safetyLevel = SafetyLevel.HIGH_DEGREE_CAUTION))
 
         composeTestRule.setContent {
             UnstampedPagesTheme {
@@ -1859,7 +1797,7 @@ class CountryDetailSheetTest {
 
     @Test
     fun safetyLevelRow_chips_visibleForHighRisk() {
-        val country = createCountry(safetyLevel = SafetyLevel.RECONSIDER_TRAVEL)
+        val country = createCountry(entryPolicy = EntryPolicy(safetyLevel = SafetyLevel.RECONSIDER_TRAVEL))
 
         composeTestRule.setContent {
             UnstampedPagesTheme {
@@ -1875,7 +1813,7 @@ class CountryDetailSheetTest {
 
     @Test
     fun safetyLevelRow_chips_visibleForExtremeRisk() {
-        val country = createCountry(safetyLevel = SafetyLevel.DO_NOT_TRAVEL)
+        val country = createCountry(entryPolicy = EntryPolicy(safetyLevel = SafetyLevel.DO_NOT_TRAVEL))
 
         composeTestRule.setContent {
             UnstampedPagesTheme {
@@ -2044,7 +1982,7 @@ class CountryDetailSheetTest {
 
     @Test
     fun countryDetailSheet_passportValidity_showsLabelRow() {
-        val country = createCountry(passportValidity = AppConstants.PassportValidity.SIX_MONTHS)
+        val country = createCountry(entryPolicy = EntryPolicy(passportValidity = AppConstants.PassportValidity.SIX_MONTHS))
 
         composeTestRule.setContent {
             UnstampedPagesTheme {
@@ -2058,7 +1996,7 @@ class CountryDetailSheetTest {
     @Test
     fun countryDetailSheet_passportValidity_sixMonths_localizes() {
         // "6 months" in the data → localized string "6 months"
-        val country = createCountry(passportValidity = AppConstants.PassportValidity.SIX_MONTHS)
+        val country = createCountry(entryPolicy = EntryPolicy(passportValidity = AppConstants.PassportValidity.SIX_MONTHS))
 
         composeTestRule.setContent {
             UnstampedPagesTheme {
@@ -2072,7 +2010,7 @@ class CountryDetailSheetTest {
     @Test
     fun countryDetailSheet_passportValidity_sixMonthsWithPrefix_localizes() {
         // "At least 6 months" also matches the "6 month" pattern (case-insensitive)
-        val country = createCountry(passportValidity = "At least 6 months")
+        val country = createCountry(entryPolicy = EntryPolicy(passportValidity = "At least 6 months"))
 
         composeTestRule.setContent {
             UnstampedPagesTheme {
@@ -2085,7 +2023,7 @@ class CountryDetailSheetTest {
 
     @Test
     fun countryDetailSheet_passportValidity_threeMonths_localizes() {
-        val country = createCountry(passportValidity = AppConstants.PassportValidity.THREE_MONTHS)
+        val country = createCountry(entryPolicy = EntryPolicy(passportValidity = AppConstants.PassportValidity.THREE_MONTHS))
 
         composeTestRule.setContent {
             UnstampedPagesTheme {
@@ -2098,7 +2036,7 @@ class CountryDetailSheetTest {
 
     @Test
     fun countryDetailSheet_passportValidity_durationOfStay_localizes() {
-        val country = createCountry(passportValidity = "duration of stay")
+        val country = createCountry(entryPolicy = EntryPolicy(passportValidity = "duration of stay"))
 
         composeTestRule.setContent {
             UnstampedPagesTheme {
@@ -2111,7 +2049,7 @@ class CountryDetailSheetTest {
 
     @Test
     fun countryDetailSheet_passportValidity_lengthOfStay_localizes() {
-        val country = createCountry(passportValidity = "length of stay")
+        val country = createCountry(entryPolicy = EntryPolicy(passportValidity = "length of stay"))
 
         composeTestRule.setContent {
             UnstampedPagesTheme {
@@ -2124,7 +2062,7 @@ class CountryDetailSheetTest {
 
     @Test
     fun countryDetailSheet_passportValidity_stayKeyword_localizes() {
-        val country = createCountry(passportValidity = "valid for the length of stay")
+        val country = createCountry(entryPolicy = EntryPolicy(passportValidity = "valid for the length of stay"))
 
         composeTestRule.setContent {
             UnstampedPagesTheme {
@@ -2137,7 +2075,7 @@ class CountryDetailSheetTest {
 
     @Test
     fun countryDetailSheet_passportValidity_null_showsNotSpecified() {
-        val country = createCountry(passportValidity = null)
+        val country = createCountry()
 
         composeTestRule.setContent {
             UnstampedPagesTheme {
@@ -2151,7 +2089,7 @@ class CountryDetailSheetTest {
     @Test
     fun countryDetailSheet_passportValidity_unknownValue_showsRawString() {
         // A value that doesn't match any known pattern falls through to the raw string
-        val country = createCountry(passportValidity = "1 year minimum")
+        val country = createCountry(entryPolicy = EntryPolicy(passportValidity = "1 year minimum"))
 
         composeTestRule.setContent {
             UnstampedPagesTheme {
@@ -2256,7 +2194,7 @@ class CountryDetailSheetTest {
     @Test
     fun countryDetailSheet_testTag_countryFlag_displaysEmoji() {
         val country = createCountry(
-            flagEmoji = "\uD83C\uDDEB\uD83C\uDDF7"
+            flagEmoji = FLAG_FRANCE
         )
 
         composeTestRule.setContent {
@@ -2267,7 +2205,7 @@ class CountryDetailSheetTest {
 
         composeTestRule.onNodeWithTag("country_flag")
             .assertExists()
-            .assertTextEquals("\uD83C\uDDEB\uD83C\uDDF7")
+            .assertTextEquals(FLAG_FRANCE)
     }
 
     @Test
@@ -2287,7 +2225,7 @@ class CountryDetailSheetTest {
 
     @Test
     fun countryDetailSheet_testTag_safetyLevelValue_matchesSafetyLevel() {
-        val country = createCountry(safetyLevel = SafetyLevel.RECONSIDER_TRAVEL)
+        val country = createCountry(entryPolicy = EntryPolicy(safetyLevel = SafetyLevel.RECONSIDER_TRAVEL))
 
         composeTestRule.setContent {
             UnstampedPagesTheme {
@@ -2302,7 +2240,7 @@ class CountryDetailSheetTest {
 
     @Test
     fun countryDetailSheet_testTag_entryRequirementValue_matchesRequirement() {
-        val country = createCountry(visaRequirement = VisaRequirement.E_VISA)
+        val country = createCountry(entryPolicy = EntryPolicy(visaRequirement = VisaRequirement.E_VISA))
 
         composeTestRule.setContent {
             UnstampedPagesTheme {
@@ -2317,7 +2255,7 @@ class CountryDetailSheetTest {
 
     @Test
     fun countryDetailSheet_testTag_passportValidityValue_matchesValidity() {
-        val country = createCountry(passportValidity = AppConstants.PassportValidity.SIX_MONTHS)
+        val country = createCountry(entryPolicy = EntryPolicy(passportValidity = AppConstants.PassportValidity.SIX_MONTHS))
 
         composeTestRule.setContent {
             UnstampedPagesTheme {
@@ -2332,7 +2270,7 @@ class CountryDetailSheetTest {
 
     @Test
     fun countryDetailSheet_testTag_currencyValue_matchesCurrency() {
-        val country = createCountry(currency = "Euro", currencyCode = "EUR")
+        val country = createCountry(currencyConfig = CurrencyConfig(currencyCode = "EUR", currency = "Euro"))
 
         composeTestRule.setContent {
             UnstampedPagesTheme {
@@ -2342,12 +2280,12 @@ class CountryDetailSheetTest {
 
         composeTestRule.onNodeWithTag("info_currency_value")
             .assertExists()
-            .assertTextEquals("Euro (EUR)")
+            .assertTextEquals(CURRENCY_EURO_EUR)
     }
 
     @Test
     fun countryDetailSheet_testTag_powerOutletValue_matchesOutletType() {
-        val country = createCountry(outletType = "Type G (230V)")
+        val country = createCountry(outletType = OUTLET_TYPE_G)
 
         composeTestRule.setContent {
             UnstampedPagesTheme {
@@ -2357,12 +2295,12 @@ class CountryDetailSheetTest {
 
         composeTestRule.onNodeWithTag("info_power_outlet_value")
             .assertExists()
-            .assertTextEquals("Type G (230V)")
+            .assertTextEquals(OUTLET_TYPE_G)
     }
 
     @Test
     fun countryDetailSheet_testTag_currencyConverter_existsForNonUsd() {
-        val country = createCountry(currencyCode = "EUR", exchangeRateToUSD = 1.08)
+        val country = createCountry(currencyConfig = CurrencyConfig(currencyCode = "EUR", exchangeRateToUSD = 1.08))
 
         composeTestRule.setContent {
             UnstampedPagesTheme {
@@ -2375,7 +2313,7 @@ class CountryDetailSheetTest {
 
     @Test
     fun countryDetailSheet_testTag_currencyConverter_absentForUsd() {
-        val country = createCountry(currencyCode = "USD", exchangeRateToUSD = 1.0)
+        val country = createCountry()
 
         composeTestRule.setContent {
             UnstampedPagesTheme {
@@ -2424,7 +2362,7 @@ class CountryDetailSheetTest {
         // The Safety Level row itself (label + value) is always rendered regardless of advisories.
         launchSheet(country(travelAdvisories = null))
 
-        composeTestRule.onNodeWithText("Safety Level").assertIsDisplayed()
+        composeTestRule.onNodeWithText(LABEL_SAFETY_LEVEL).assertIsDisplayed()
         composeTestRule.onNodeWithText(AppConstants.SafetyLevelDisplay.NORMAL_SECURITY_PRECAUTIONS).assertIsDisplayed()
     }
 
@@ -2710,7 +2648,7 @@ class CountryDetailSheetTest {
     @Test
     fun currencyInput_usdField_blurWithNoInput_doesNotShowZero() {
         // Blurring USD without typing must not produce "0.00" in either field.
-        launchSheet(country(exchangeRateToUSD = 1.27, currencyCode = "GBP", currency = "British Pound"))
+        launchSheet(country(exchangeRateToUSD = 1.27, currencyCode = "GBP", currency = CURRENCY_BRITISH_POUND))
 
         composeTestRule.onNodeWithTag("currency_input_usd").performClick()
         composeTestRule.waitForIdle()
@@ -2728,7 +2666,7 @@ class CountryDetailSheetTest {
 
     @Test
     fun currencyConverter_present_forSubUnitCurrency() {
-        launchSheet(country(currencyCode = "JPY", currency = "Japanese Yen", exchangeRateToUSD = 0.0067))
+        launchSheet(country(currencyCode = "JPY", currency = CURRENCY_JAPANESE_YEN, exchangeRateToUSD = 0.0067))
 
         composeTestRule.onNodeWithTag("currency_converter").assertExists()
     }
@@ -2742,7 +2680,7 @@ class CountryDetailSheetTest {
 
     @Test
     fun currencyConverter_absent_forUSD() {
-        launchSheet(country(currencyCode = "USD", currency = "US Dollar", exchangeRateToUSD = 1.0))
+        launchSheet(country(currencyCode = "USD", currency = CURRENCY_US_DOLLAR, exchangeRateToUSD = 1.0))
 
         composeTestRule.onNodeWithTag("currency_converter").assertDoesNotExist()
     }
@@ -2797,7 +2735,7 @@ class CountryDetailSheetTest {
      */
     @Test
     fun converterTestTags_absentForUsdCountry() {
-        launchSheet(country(currencyCode = "USD", currency = "US Dollar", exchangeRateToUSD = 1.0))
+        launchSheet(country(currencyCode = "USD", currency = CURRENCY_US_DOLLAR, exchangeRateToUSD = 1.0))
 
         listOf("currency_converter", "currency_input_usd", "currency_input_foreign")
             .forEach { tag ->

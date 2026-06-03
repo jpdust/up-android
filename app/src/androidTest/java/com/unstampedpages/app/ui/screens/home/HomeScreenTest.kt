@@ -2,7 +2,7 @@ package com.unstampedpages.app.ui.screens.home
 
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -34,6 +34,15 @@ import org.junit.runner.RunWith
  * rather than assertIsDisplayed() (which checks on-screen visibility), and
  * performScrollTo() is called before performClick() on off-screen card nodes.
  */
+private const val CARD_EXPLORE_COUNTRIES = "Explore Countries"
+private const val CARD_TRAVEL_CHECKLIST = "Travel Checklist"
+private const val CARD_TRIP_JOURNAL = "Trip Journal"
+private const val CARD_MY_PASSPORT_STAMPS = "My Passport Stamps"
+private const val MSG_CHECKLIST_NO_FIRE = "Checklist callback should not have been invoked"
+private const val MSG_TRIP_LOG_NO_FIRE = "Trip log callback should not have been invoked"
+private const val MSG_STAMPS_NO_FIRE = "Stamps callback should not have been invoked"
+private const val MSG_COUNTRIES_NO_FIRE = "Countries callback should not have been invoked"
+
 @RunWith(AndroidJUnit4::class)
 class HomeScreenTest {
 
@@ -137,7 +146,7 @@ class HomeScreenTest {
     fun homeScreen_exploreCountriesCard_titleIsDisplayed() {
         launchHomeScreen()
 
-        composeTestRule.onNodeWithText("Explore Countries").assertIsDisplayed()
+        composeTestRule.onNodeWithText(CARD_EXPLORE_COUNTRIES).assertIsDisplayed()
     }
 
     @Test
@@ -155,7 +164,7 @@ class HomeScreenTest {
     fun homeScreen_travelChecklistCard_titleIsDisplayed() {
         launchHomeScreen()
 
-        composeTestRule.onNodeWithText("Travel Checklist").assertExists()
+        composeTestRule.onNodeWithText(CARD_TRAVEL_CHECKLIST).assertExists()
     }
 
     @Test
@@ -173,7 +182,7 @@ class HomeScreenTest {
     fun homeScreen_tripJournalCard_titleIsDisplayed() {
         launchHomeScreen()
 
-        composeTestRule.onNodeWithText("Trip Journal").assertExists()
+        composeTestRule.onNodeWithText(CARD_TRIP_JOURNAL).assertExists()
     }
 
     @Test
@@ -189,7 +198,7 @@ class HomeScreenTest {
     fun homeScreen_myPassportStampsCard_titleIsDisplayed() {
         launchHomeScreen()
 
-        composeTestRule.onNodeWithText("My Passport Stamps").assertExists()
+        composeTestRule.onNodeWithText(CARD_MY_PASSPORT_STAMPS).assertExists()
     }
 
     @Test
@@ -210,10 +219,10 @@ class HomeScreenTest {
         launchHomeScreen()
 
         listOf(
-            "Explore Countries",
-            "Travel Checklist",
-            "Trip Journal",
-            "My Passport Stamps"
+            CARD_EXPLORE_COUNTRIES,
+            CARD_TRAVEL_CHECKLIST,
+            CARD_TRIP_JOURNAL,
+            CARD_MY_PASSPORT_STAMPS
         ).forEach { title ->
             composeTestRule.onNodeWithText(title).assertExists()
         }
@@ -227,14 +236,14 @@ class HomeScreenTest {
     fun homeScreen_exploreCountriesCard_hasClickAction() {
         launchHomeScreen()
 
-        composeTestRule.onNodeWithText("Explore Countries").assertHasClickAction()
+        composeTestRule.onNodeWithText(CARD_EXPLORE_COUNTRIES).assertHasClickAction()
     }
 
     @Test
     fun homeScreen_travelChecklistCard_hasClickAction() {
         launchHomeScreen()
 
-        composeTestRule.onNodeWithText("Travel Checklist")
+        composeTestRule.onNodeWithText(CARD_TRAVEL_CHECKLIST)
             .performScrollTo()
             .assertHasClickAction()
     }
@@ -243,7 +252,7 @@ class HomeScreenTest {
     fun homeScreen_tripJournalCard_hasClickAction() {
         launchHomeScreen()
 
-        composeTestRule.onNodeWithText("Trip Journal")
+        composeTestRule.onNodeWithText(CARD_TRIP_JOURNAL)
             .performScrollTo()
             .assertHasClickAction()
     }
@@ -252,7 +261,7 @@ class HomeScreenTest {
     fun homeScreen_myPassportStampsCard_hasClickAction() {
         launchHomeScreen()
 
-        composeTestRule.onNodeWithText("My Passport Stamps")
+        composeTestRule.onNodeWithText(CARD_MY_PASSPORT_STAMPS)
             .performScrollTo()
             .assertHasClickAction()
     }
@@ -266,7 +275,7 @@ class HomeScreenTest {
         var called = false
         launchHomeScreen(onNavigateToCountries = { called = true })
 
-        composeTestRule.onNodeWithText("Explore Countries").performClick()
+        composeTestRule.onNodeWithText(CARD_EXPLORE_COUNTRIES).performClick()
         composeTestRule.waitForIdle()
 
         assertTrue("onNavigateToCountries should be called", called)
@@ -277,7 +286,7 @@ class HomeScreenTest {
         var called = false
         launchHomeScreen(onNavigateToChecklist = { called = true })
 
-        composeTestRule.onNodeWithText("Travel Checklist")
+        composeTestRule.onNodeWithText(CARD_TRAVEL_CHECKLIST)
             .performScrollTo()
             .performClick()
         composeTestRule.waitForIdle()
@@ -290,7 +299,7 @@ class HomeScreenTest {
         var called = false
         launchHomeScreen(onNavigateToTripLog = { called = true })
 
-        composeTestRule.onNodeWithText("Trip Journal")
+        composeTestRule.onNodeWithText(CARD_TRIP_JOURNAL)
             .performScrollTo()
             .performClick()
         composeTestRule.waitForIdle()
@@ -303,7 +312,7 @@ class HomeScreenTest {
         var called = false
         launchHomeScreen(onNavigateToMyStamps = { called = true })
 
-        composeTestRule.onNodeWithText("My Passport Stamps")
+        composeTestRule.onNodeWithText(CARD_MY_PASSPORT_STAMPS)
             .performScrollTo()
             .performClick()
         composeTestRule.waitForIdle()
@@ -328,12 +337,12 @@ class HomeScreenTest {
             onNavigateToMyStamps = { stampsCalled = true }
         )
 
-        composeTestRule.onNodeWithText("Explore Countries").performClick()
+        composeTestRule.onNodeWithText(CARD_EXPLORE_COUNTRIES).performClick()
         composeTestRule.waitForIdle()
 
-        assertFalse("Checklist callback must not fire", checklistCalled)
-        assertFalse("TripLog callback must not fire", tripLogCalled)
-        assertFalse("Stamps callback must not fire", stampsCalled)
+        assertFalse(MSG_CHECKLIST_NO_FIRE, checklistCalled)
+        assertFalse(MSG_TRIP_LOG_NO_FIRE, tripLogCalled)
+        assertFalse(MSG_STAMPS_NO_FIRE, stampsCalled)
     }
 
     @Test
@@ -349,14 +358,14 @@ class HomeScreenTest {
             onNavigateToMyStamps = { stampsCalled = true }
         )
 
-        composeTestRule.onNodeWithText("Travel Checklist")
+        composeTestRule.onNodeWithText(CARD_TRAVEL_CHECKLIST)
             .performScrollTo()
             .performClick()
         composeTestRule.waitForIdle()
 
-        assertFalse("Countries callback must not fire", countriesCalled)
-        assertFalse("TripLog callback must not fire", tripLogCalled)
-        assertFalse("Stamps callback must not fire", stampsCalled)
+        assertFalse(MSG_COUNTRIES_NO_FIRE, countriesCalled)
+        assertFalse(MSG_TRIP_LOG_NO_FIRE, tripLogCalled)
+        assertFalse(MSG_STAMPS_NO_FIRE, stampsCalled)
     }
 
     @Test
@@ -372,14 +381,14 @@ class HomeScreenTest {
             onNavigateToMyStamps = { stampsCalled = true }
         )
 
-        composeTestRule.onNodeWithText("Trip Journal")
+        composeTestRule.onNodeWithText(CARD_TRIP_JOURNAL)
             .performScrollTo()
             .performClick()
         composeTestRule.waitForIdle()
 
-        assertFalse("Countries callback must not fire", countriesCalled)
-        assertFalse("Checklist callback must not fire", checklistCalled)
-        assertFalse("Stamps callback must not fire", stampsCalled)
+        assertFalse(MSG_COUNTRIES_NO_FIRE, countriesCalled)
+        assertFalse(MSG_CHECKLIST_NO_FIRE, checklistCalled)
+        assertFalse(MSG_STAMPS_NO_FIRE, stampsCalled)
     }
 
     @Test
@@ -395,14 +404,14 @@ class HomeScreenTest {
             onNavigateToMyStamps = {}
         )
 
-        composeTestRule.onNodeWithText("My Passport Stamps")
+        composeTestRule.onNodeWithText(CARD_MY_PASSPORT_STAMPS)
             .performScrollTo()
             .performClick()
         composeTestRule.waitForIdle()
 
-        assertFalse("Countries callback must not fire", countriesCalled)
-        assertFalse("Checklist callback must not fire", checklistCalled)
-        assertFalse("TripLog callback must not fire", tripLogCalled)
+        assertFalse(MSG_COUNTRIES_NO_FIRE, countriesCalled)
+        assertFalse(MSG_CHECKLIST_NO_FIRE, checklistCalled)
+        assertFalse(MSG_TRIP_LOG_NO_FIRE, tripLogCalled)
     }
 
     // ---------------------------------------------------------------------------
@@ -414,7 +423,7 @@ class HomeScreenTest {
         var count = 0
         launchHomeScreen(onNavigateToCountries = { count++ })
 
-        composeTestRule.onNodeWithText("Explore Countries").performClick()
+        composeTestRule.onNodeWithText(CARD_EXPLORE_COUNTRIES).performClick()
         composeTestRule.waitForIdle()
 
         assertEquals(1, count)
@@ -425,7 +434,7 @@ class HomeScreenTest {
         var count = 0
         launchHomeScreen(onNavigateToChecklist = { count++ })
 
-        composeTestRule.onNodeWithText("Travel Checklist")
+        composeTestRule.onNodeWithText(CARD_TRAVEL_CHECKLIST)
             .performScrollTo()
             .performClick()
         composeTestRule.waitForIdle()
@@ -438,7 +447,7 @@ class HomeScreenTest {
         var count = 0
         launchHomeScreen(onNavigateToTripLog = { count++ })
 
-        composeTestRule.onNodeWithText("Trip Journal")
+        composeTestRule.onNodeWithText(CARD_TRIP_JOURNAL)
             .performScrollTo()
             .performClick()
         composeTestRule.waitForIdle()
@@ -451,7 +460,7 @@ class HomeScreenTest {
         var count = 0
         launchHomeScreen(onNavigateToMyStamps = { count++ })
 
-        composeTestRule.onNodeWithText("My Passport Stamps")
+        composeTestRule.onNodeWithText(CARD_MY_PASSPORT_STAMPS)
             .performScrollTo()
             .performClick()
         composeTestRule.waitForIdle()
@@ -487,7 +496,7 @@ class HomeScreenTest {
         }
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Explore Countries").performClick()
+        composeTestRule.onNodeWithText(CARD_EXPLORE_COUNTRIES).performClick()
         composeTestRule.waitForIdle()
         // No exception → test passes
     }
@@ -499,7 +508,7 @@ class HomeScreenTest {
         }
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Travel Checklist")
+        composeTestRule.onNodeWithText(CARD_TRAVEL_CHECKLIST)
             .performScrollTo()
             .performClick()
         composeTestRule.waitForIdle()
@@ -512,7 +521,7 @@ class HomeScreenTest {
         }
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Trip Journal")
+        composeTestRule.onNodeWithText(CARD_TRIP_JOURNAL)
             .performScrollTo()
             .performClick()
         composeTestRule.waitForIdle()
@@ -525,7 +534,7 @@ class HomeScreenTest {
         }
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("My Passport Stamps")
+        composeTestRule.onNodeWithText(CARD_MY_PASSPORT_STAMPS)
             .performScrollTo()
             .performClick()
         composeTestRule.waitForIdle()
@@ -541,7 +550,7 @@ class HomeScreenTest {
         launchHomeScreen(onNavigateToCountries = { count++ })
 
         repeat(3) {
-            composeTestRule.onNodeWithText("Explore Countries").performClick()
+            composeTestRule.onNodeWithText(CARD_EXPLORE_COUNTRIES).performClick()
             composeTestRule.waitForIdle()
         }
 

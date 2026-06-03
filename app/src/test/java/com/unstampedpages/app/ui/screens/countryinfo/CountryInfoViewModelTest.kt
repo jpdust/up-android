@@ -6,6 +6,9 @@ import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 
+private const val CAYMAN_ISLANDS = "Cayman Islands"
+private const val EASTER_ISLAND = "Easter Island"
+
 class CountryInfoViewModelTest {
 
     private lateinit var viewModel: CountryInfoViewModel
@@ -535,8 +538,8 @@ class CountryInfoViewModelTest {
 
     @Test
     fun `selectCountry with displayName stores it in selectedDisplayName`() {
-        viewModel.selectCountry("gb", "Cayman Islands")
-        assertEquals("Cayman Islands", viewModel.uiState.value.selectedDisplayName)
+        viewModel.selectCountry("gb", CAYMAN_ISLANDS)
+        assertEquals(CAYMAN_ISLANDS, viewModel.uiState.value.selectedDisplayName)
     }
 
     @Test
@@ -553,7 +556,7 @@ class CountryInfoViewModelTest {
 
     @Test
     fun `clearSelection clears selectedDisplayName`() {
-        viewModel.selectCountry("gb", "Cayman Islands")
+        viewModel.selectCountry("gb", CAYMAN_ISLANDS)
         assertNotNull(viewModel.uiState.value.selectedDisplayName)
 
         viewModel.clearSelection()
@@ -564,8 +567,8 @@ class CountryInfoViewModelTest {
 
     @Test
     fun `selecting a new country replaces previous displayName`() {
-        viewModel.selectCountry("gb", "Cayman Islands")
-        assertEquals("Cayman Islands", viewModel.uiState.value.selectedDisplayName)
+        viewModel.selectCountry("gb", CAYMAN_ISLANDS)
+        assertEquals(CAYMAN_ISLANDS, viewModel.uiState.value.selectedDisplayName)
 
         viewModel.selectCountry("dk", "Greenland")
         assertEquals("Greenland", viewModel.uiState.value.selectedDisplayName)
@@ -573,7 +576,7 @@ class CountryInfoViewModelTest {
 
     @Test
     fun `selecting a country without displayName after one with displayName clears displayName`() {
-        viewModel.selectCountry("gb", "Cayman Islands")
+        viewModel.selectCountry("gb", CAYMAN_ISLANDS)
         assertNotNull(viewModel.uiState.value.selectedDisplayName)
 
         viewModel.selectCountry("us")
@@ -584,12 +587,12 @@ class CountryInfoViewModelTest {
 
     @Test
     fun `searching Easter Island returns Chile`() {
-        viewModel.updateSearchQuery("Easter Island")
+        viewModel.updateSearchQuery(EASTER_ISLAND)
 
         val results = viewModel.uiState.value.searchResults
         assertTrue(results.isNotEmpty())
         val suggestion = results.first()
-        assertEquals("Easter Island", suggestion.displayName)
+        assertEquals(EASTER_ISLAND, suggestion.displayName)
         assertEquals("cl", suggestion.country.id)
         assertNotNull(suggestion.parentCountryName)
     }
@@ -601,7 +604,7 @@ class CountryInfoViewModelTest {
         val results = viewModel.uiState.value.searchResults
         assertTrue(results.isNotEmpty())
         // Cayman Islands now has its own repository entry (KYD currency)
-        assertTrue(results.any { it.displayName == "Cayman Islands" && it.country.id == "ky" })
+        assertTrue(results.any { it.displayName == CAYMAN_ISLANDS && it.country.id == "ky" })
     }
 
     @Test
@@ -847,10 +850,10 @@ class CountryInfoUiStateTest {
 
     @Test
     fun `state component3 returns selectedDisplayName`() {
-        val state = CountryInfoUiState(selectedDisplayName = "Easter Island")
+        val state = CountryInfoUiState(selectedDisplayName = EASTER_ISLAND)
         val (_, _, selectedDisplayName, _, _, _) = state
 
-        assertEquals("Easter Island", selectedDisplayName)
+        assertEquals(EASTER_ISLAND, selectedDisplayName)
     }
 
     @Test

@@ -2,7 +2,7 @@ package com.unstampedpages.app.ui.screens.triplog
 
 import android.app.Application
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -32,6 +32,11 @@ import org.junit.runner.RunWith
  * The singleton [AppDatabase] is wiped in [setUp] and [tearDown] to guarantee
  * each test starts from an empty, deterministic state.
  */
+private const val EMPTY_STATE_TITLE = "No journal entries yet"
+private const val FAB_NEW_ENTRY = "New entry"
+private const val ENTRY_DUBLIN_DAY = "Day in Dublin"
+private const val ENTRY_TO_BE_DELETED = "Entry to Delete"
+
 @RunWith(AndroidJUnit4::class)
 class TripLogScreenTest {
 
@@ -95,7 +100,7 @@ class TripLogScreenTest {
     fun tripLogScreen_emptyState_showsEmptyTitle() {
         launch()
 
-        composeTestRule.onNodeWithText("No journal entries yet").assertIsDisplayed()
+        composeTestRule.onNodeWithText(EMPTY_STATE_TITLE).assertIsDisplayed()
     }
 
     @Test
@@ -111,7 +116,7 @@ class TripLogScreenTest {
     fun tripLogScreen_emptyState_fabIsDisplayed() {
         launch()
 
-        composeTestRule.onNodeWithContentDescription("New entry").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(FAB_NEW_ENTRY).assertIsDisplayed()
     }
 
     @Test
@@ -136,7 +141,7 @@ class TripLogScreenTest {
     fun tripLogScreen_clickingFab_showsNewEntryHeading() {
         launch()
 
-        composeTestRule.onNodeWithContentDescription("New entry").performClick()
+        composeTestRule.onNodeWithContentDescription(FAB_NEW_ENTRY).performClick()
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("New Entry").assertIsDisplayed()
@@ -146,27 +151,27 @@ class TripLogScreenTest {
     fun tripLogScreen_clickingFab_hidesFab() {
         launch()
 
-        composeTestRule.onNodeWithContentDescription("New entry").performClick()
+        composeTestRule.onNodeWithContentDescription(FAB_NEW_ENTRY).performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithContentDescription("New entry").assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription(FAB_NEW_ENTRY).assertDoesNotExist()
     }
 
     @Test
     fun tripLogScreen_clickingFab_hidesEmptyTitle() {
         launch()
 
-        composeTestRule.onNodeWithContentDescription("New entry").performClick()
+        composeTestRule.onNodeWithContentDescription(FAB_NEW_ENTRY).performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("No journal entries yet").assertDoesNotExist()
+        composeTestRule.onNodeWithText(EMPTY_STATE_TITLE).assertDoesNotExist()
     }
 
     @Test
     fun tripLogScreen_clickingFab_showsSaveAndCancelButtons() {
         launch()
 
-        composeTestRule.onNodeWithContentDescription("New entry").performClick()
+        composeTestRule.onNodeWithContentDescription(FAB_NEW_ENTRY).performClick()
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithContentDescription("Save").assertIsDisplayed()
@@ -190,7 +195,7 @@ class TripLogScreenTest {
         viewModel.startNewEntry()
         launch()
 
-        composeTestRule.onNodeWithContentDescription("New entry").assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription(FAB_NEW_ENTRY).assertDoesNotExist()
     }
 
     @Test
@@ -198,7 +203,7 @@ class TripLogScreenTest {
         viewModel.startNewEntry()
         launch()
 
-        composeTestRule.onNodeWithText("No journal entries yet").assertDoesNotExist()
+        composeTestRule.onNodeWithText(EMPTY_STATE_TITLE).assertDoesNotExist()
     }
 
     @Test
@@ -209,7 +214,7 @@ class TripLogScreenTest {
         composeTestRule.onNodeWithContentDescription("Cancel").performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithContentDescription("New entry").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(FAB_NEW_ENTRY).assertIsDisplayed()
     }
 
     @Test
@@ -272,7 +277,7 @@ class TripLogScreenTest {
         insertEntry("My Trip", "Some content")
         launch()
 
-        composeTestRule.onNodeWithText("No journal entries yet").assertDoesNotExist()
+        composeTestRule.onNodeWithText(EMPTY_STATE_TITLE).assertDoesNotExist()
     }
 
     @Test
@@ -280,7 +285,7 @@ class TripLogScreenTest {
         insertEntry("My Trip", "Some content")
         launch()
 
-        composeTestRule.onNodeWithContentDescription("New entry").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(FAB_NEW_ENTRY).assertIsDisplayed()
     }
 
     @Test
@@ -298,7 +303,7 @@ class TripLogScreenTest {
 
     @Test
     fun tripLogScreen_clickingEditButton_showsEditEntryHeading() {
-        insertEntry("Dublin Day", "Guinness tasting")
+        insertEntry(ENTRY_DUBLIN_DAY, "Guinness tasting")
         launch()
 
         composeTestRule.onNodeWithContentDescription("Edit").performClick()
@@ -309,13 +314,13 @@ class TripLogScreenTest {
 
     @Test
     fun tripLogScreen_clickingEditButton_populatesEditorWithEntryTitle() {
-        insertEntry("Dublin Day", "Guinness tasting")
+        insertEntry(ENTRY_DUBLIN_DAY, "Guinness tasting")
         launch()
 
         composeTestRule.onNodeWithContentDescription("Edit").performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Dublin Day").assertIsDisplayed()
+        composeTestRule.onNodeWithText(ENTRY_DUBLIN_DAY).assertIsDisplayed()
     }
 
     @Test
@@ -331,20 +336,20 @@ class TripLogScreenTest {
 
     @Test
     fun tripLogScreen_clickingDeleteButton_removesEntryFromList() {
-        insertEntry("To Be Deleted", "Temporary content")
+        insertEntry(ENTRY_TO_BE_DELETED, "Temporary content")
         launch()
-        composeTestRule.onNodeWithText("To Be Deleted").assertIsDisplayed()
+        composeTestRule.onNodeWithText(ENTRY_TO_BE_DELETED).assertIsDisplayed()
 
         composeTestRule.onNodeWithContentDescription("Delete").performClick()
 
         runBlocking {
             withTimeout(3_000L) {
-                viewModel.uiState.first { it.entries.none { e -> e.title == "To Be Deleted" } }
+                viewModel.uiState.first { it.entries.none { e -> e.title == ENTRY_TO_BE_DELETED } }
             }
         }
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("To Be Deleted").assertDoesNotExist()
+        composeTestRule.onNodeWithText(ENTRY_TO_BE_DELETED).assertDoesNotExist()
     }
 
     @Test
@@ -361,6 +366,6 @@ class TripLogScreenTest {
         }
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("No journal entries yet").assertIsDisplayed()
+        composeTestRule.onNodeWithText(EMPTY_STATE_TITLE).assertIsDisplayed()
     }
 }

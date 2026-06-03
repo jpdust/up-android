@@ -4,6 +4,9 @@ import com.unstampedpages.app.data.AppConstants
 import org.junit.Assert.*
 import org.junit.Test
 
+private const val IMAGE_PATH = "/files/upimages/test_stamp.jpg"
+private const val IMAGE_PATH_SHORT = "/test.jpg"
+
 class StampItemTest {
 
     @Test
@@ -87,7 +90,7 @@ class StampItemTest {
         val original = StampItem(
             countryCode = "US",
             countryName = AppConstants.CountryName.UNITED_STATES,
-            imagePath = "/path/to/image.jpg",
+            imagePath = IMAGE_PATH,
             createdAt = 1000L,
             updatedAt = 2000L
         )
@@ -116,13 +119,13 @@ class StampItemTest {
         val original = StampItem(
             countryCode = "US",
             countryName = AppConstants.CountryName.UNITED_STATES,
-            imagePath = "/path/to/image.jpg"
+            imagePath = IMAGE_PATH
         )
 
         val modified = original.copy(imagePath = null)
 
         assertNull(modified.imagePath)
-        assertEquals("/path/to/image.jpg", original.imagePath)
+        assertEquals(IMAGE_PATH, original.imagePath)
     }
 
     @Test
@@ -130,14 +133,14 @@ class StampItemTest {
         val stamp1 = StampItem(
             countryCode = "US",
             countryName = AppConstants.CountryName.UNITED_STATES,
-            imagePath = "/path.jpg",
+            imagePath = IMAGE_PATH_SHORT,
             createdAt = 1000L,
             updatedAt = 2000L
         )
         val stamp2 = StampItem(
             countryCode = "US",
             countryName = AppConstants.CountryName.UNITED_STATES,
-            imagePath = "/path.jpg",
+            imagePath = IMAGE_PATH_SHORT,
             createdAt = 1000L,
             updatedAt = 2000L
         )
@@ -158,14 +161,14 @@ class StampItemTest {
         val stamp1 = StampItem(
             countryCode = "US",
             countryName = AppConstants.CountryName.UNITED_STATES,
-            imagePath = "/path.jpg",
+            imagePath = IMAGE_PATH_SHORT,
             createdAt = 1000L,
             updatedAt = 2000L
         )
         val stamp2 = StampItem(
             countryCode = "US",
             countryName = AppConstants.CountryName.UNITED_STATES,
-            imagePath = "/path.jpg",
+            imagePath = IMAGE_PATH_SHORT,
             createdAt = 1000L,
             updatedAt = 2000L
         )

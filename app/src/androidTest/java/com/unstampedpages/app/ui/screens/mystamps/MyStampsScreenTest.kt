@@ -1,14 +1,20 @@
 package com.unstampedpages.app.ui.screens.mystamps
 
+import android.app.Application
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.unstampedpages.app.MainActivity
 import com.unstampedpages.app.data.AppConstants
 import com.unstampedpages.app.data.CountryList
+import com.unstampedpages.app.data.local.AppDatabase
+import com.unstampedpages.app.data.local.entity.StampItem
 import com.unstampedpages.app.ui.screens.mystamps.MyStampsRobot.Companion.myStampsRobot
+import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -33,10 +39,30 @@ class MyStampsScreenTest {
     @get:Rule
     val composeTestRule = createAndroidComposeRule<MainActivity>()
 
+    private val application: Application
+        get() = ApplicationProvider.getApplicationContext()
+
     @Before
     fun setUp() {
         // Navigate to My Stamps tab
         composeTestRule.onNodeWithText("My Stamps").performClick()
+        composeTestRule.waitForIdle()
+    }
+
+    @After
+    fun tearDown() {
+        runBlocking {
+            AppDatabase.getDatabase(application).stampDao()
+                .deleteStampByCountryCode(CountryList.countries.first().code)
+        }
+    }
+
+    private fun insertTestStamp(countryCode: String, countryName: String) {
+        runBlocking {
+            AppDatabase.getDatabase(application).stampDao().insertStamp(
+                StampItem(countryCode = countryCode, countryName = countryName, imagePath = "/test_stamp.jpg")
+            )
+        }
         composeTestRule.waitForIdle()
     }
 
@@ -184,6 +210,18 @@ class MyStampsScreenTest {
     }
 
     @Test
+    fun myStampsScreen_addStampDialog_galleryAndCameraButtonsExist() {
+        val country = CountryList.countries.first()
+        composeTestRule.myStampsRobot {
+            verifyScreenDisplayed()
+            clickAddStampButton(country.code)
+            verifyAddStampDialogDisplayed()
+            verifyGalleryButtonDisplayed()
+            verifyCameraButtonDisplayed()
+        }
+    }
+
+    @Test
     fun myStampsScreen_addStampDialog_showsCancelButton() {
         val country = CountryList.countries.first()
         composeTestRule.myStampsRobot {
@@ -229,7 +267,7 @@ class MyStampsScreenTest {
             verifyScreenDisplayed()
             clickAddStampButton(country.code)
             verifyAddStampDialogDisplayed()
-            verifyDialogOptionsDisplayed()
+            verifyGalleryButtonDisplayed()
         }
     }
 
@@ -255,7 +293,7 @@ class MyStampsScreenTest {
             verifyScreenDisplayed()
             clickAddStampButton(country.code)
             verifyAddStampDialogDisplayed()
-            verifyDialogOptionsDisplayed()
+            verifyCameraButtonDisplayed()
         }
     }
 
@@ -313,6 +351,70 @@ class MyStampsScreenTest {
             scrollToCountryByCode(lastCountry.code)
             verifyCountryRowDisplayed(lastCountry.code)
             verifyCountryDisplayed(lastCountry.englishName)
+        }
+    }
+
+    // ==================== Stamp Presence Tests ====================
+
+    @Test
+    fun myStampsScreen_withStamp_verifyStampExists() {
+        val country = CountryList.countries.first()
+        insertTestStamp(country.code, country.englishName)
+        composeTestRule.myStampsRobot {
+            verifyScreenDisplayed()
+            verifyStampExists(country.code)
+        }
+    }
+
+    @Test
+    fun myStampsScreen_withStamp_verifyRemoveButtonVisible() {
+        val country = CountryList.countries.first()
+        insertTestStamp(country.code, country.englishName)
+        composeTestRule.myStampsRobot {
+            verifyScreenDisplayed()
+            verifyRemoveButtonVisible(country.code)
+        }
+    }
+
+    @Test
+    fun myStampsScreen_withStamp_clickRemoveStampButton_removesStamp() {
+        val country = CountryList.countries.first()
+        insertTestStamp(country.code, country.englishName)
+        composeTestRule.myStampsRobot {
+            verifyScreenDisplayed()
+            verifyStampExists(country.code)
+            clickRemoveStampButton(country.code)
+            verifyNoStampExists(country.code)
+        }
+    }
+
+    @Test
+    fun myStampsScreen_withStamp_removeStampByName_removesStamp() {
+        val country = CountryList.countries.first()
+        insertTestStamp(country.code, country.englishName)
+        composeTestRule.myStampsRobot {
+            verifyScreenDisplayed()
+            verifyStampExists(country.code)
+            removeStampByName(country.englishName)
+            verifyNoStampExists(country.code)
+        }
+    }
+
+    // ==================== Utility Method Tests ====================
+
+    @Test
+    fun myStampsScreen_waitForIdle_doesNotThrow() {
+        composeTestRule.myStampsRobot {
+            verifyScreenDisplayed()
+            waitForIdle()
+        }
+    }
+
+    @Test
+    fun myStampsScreen_waitUntil_completesWhenConditionMet() {
+        composeTestRule.myStampsRobot {
+            verifyScreenDisplayed()
+            waitUntil(timeoutMillis = 3000) { true }
         }
     }
 

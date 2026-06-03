@@ -1,6 +1,6 @@
 package com.unstampedpages.app.ui.screens.countryinfo
 
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -83,6 +83,7 @@ class CountriesScreenTest {
             verifySearchResultsDisplayed()
             selectSearchResult("jp")
             verifyBottomSheetDisplayed()
+            verifyBottomSheetCountryName(AppConstants.CountryName.JAPAN)
             verifyAllCountryInfoDisplayed()
         }
     }
@@ -94,6 +95,7 @@ class CountriesScreenTest {
             verifySearchResultsDisplayed()
             selectSearchResult("fr")
             verifyBottomSheetDisplayed()
+            verifyBottomSheetCountryName(AppConstants.CountryName.FRANCE)
         }
     }
 
@@ -751,6 +753,24 @@ class CountriesScreenTest {
         composeTestRule.waitForIdle()
         composeTestRule.countriesRobot {
             verifyDefaultMapModeSelected()
+        }
+    }
+
+    // ==================== Direct Map Tap Tests ====================
+
+    /**
+     * Taps directly on the map canvas at the approximate Mercator coordinates for Russia
+     * (54°E longitude, 62°N latitude → normX ≈ 0.65, normY ≈ 0.27).
+     *
+     * This exercises the `geoJsonId != null` branch of `hitTestCountry` in WorldMapCanvas.kt,
+     * which is only reachable via a direct canvas tap — not via the search-bar flow.
+     */
+    @Test
+    fun countriesScreen_tapMapPolygon_opensBottomSheet() {
+        composeTestRule.countriesRobot {
+            verifyWorldMapDisplayed()
+            tapMapAtRelative(0.65f, 0.27f)
+            verifyBottomSheetDisplayed()
         }
     }
 }

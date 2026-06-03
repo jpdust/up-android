@@ -367,7 +367,7 @@ private class HitTestSnapshot(
 private fun hitTestCountry(
     position: Offset,
     snapshot: HitTestSnapshot,
-    locale: java.util.Locale = java.util.Locale.getDefault()
+    locale: java.util.Locale,
 ): Pair<String?, String?> {
     val pts = floatArrayOf(position.x, position.y)
     android.graphics.Matrix().apply { setValues(snapshot.matrixValues) }.mapPoints(pts)
@@ -672,7 +672,7 @@ private fun computeModeColors(
  * Color data is excluded — it is passed as pre-computed maps to avoid
  * per-country per-frame recalculation.
  */
-private data class MapDrawParams(
+internal data class MapDrawParams(
     val geometries: List<CountryGeometry>,
     val selectedCountryId: String?,
     val transitionProgress: Float,
@@ -688,7 +688,7 @@ private data class MapDrawParams(
     val labelTextLayouts: Map<String, TextLayoutResult> = emptyMap()
 )
 
-private data class CountryRenderStyle(
+internal data class CountryRenderStyle(
     val normalStroke: Stroke,
     val selectedStroke: Stroke,
     val glowStyle: Stroke,
@@ -1266,7 +1266,7 @@ internal fun computeVisibleLabelSpecs(
     }
 }
 
-private fun DrawScope.drawCountryLabels(
+internal fun DrawScope.drawCountryLabels(
     wrapOffset: Float,
     layout: MapLayout,
     params: MapDrawParams,
@@ -1293,7 +1293,7 @@ private fun DrawScope.drawCountryLabels(
         screenMapper  = { pts -> gestureState.forwardMatrix.mapPoints(pts) }
     )
     for ((countryId, spec) in specs) {
-        val textLayout = params.labelTextLayouts[countryId] ?: continue
+        val textLayout = params.labelTextLayouts.getValue(countryId)
         drawText(textLayout, color = spec.shadowColor, topLeft = spec.topLeft + Offset(0f,              -spec.shadowOffset))
         drawText(textLayout, color = spec.shadowColor, topLeft = spec.topLeft + Offset(0f,              +spec.shadowOffset))
         drawText(textLayout, color = spec.shadowColor, topLeft = spec.topLeft + Offset(-spec.shadowOffset, 0f))
@@ -1778,7 +1778,7 @@ private fun isPointInLatLngPolygon(lat: Float, lng: Float, polygon: List<LatLng>
 /**
  * Convert LatLng to screen position using Mercator projection.
  */
-private fun latLngToMercator(latLng: LatLng, mapWidth: Float, mapHeight: Float): Offset {
+internal fun latLngToMercator(latLng: LatLng, mapWidth: Float, mapHeight: Float): Offset {
     val x = MercatorProjection.longitudeToX(latLng.lng) * mapWidth
     val y = MercatorProjection.latitudeToY(latLng.lat) * mapHeight
     return Offset(x, y)
@@ -1789,7 +1789,7 @@ private fun latLngToMercator(latLng: LatLng, mapWidth: Float, mapHeight: Float):
  * Fill color and stroke objects are pre-computed by the caller — no per-country allocations.
  * [isSmall] and [centroid] are pre-computed by the caller from bounds, mapWidth/Height, and scale.
  */
-private fun DrawScope.drawCountryMercator(
+internal fun DrawScope.drawCountryMercator(
     path: Path,
     isSelected: Boolean,
     fillColor: Color,

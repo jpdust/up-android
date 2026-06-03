@@ -14,6 +14,11 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
+private const val ENTRY_MY_TRIP = "My Trip"
+private const val CONTENT_ORIGINAL = "Original content"
+private const val TITLE_UPDATED = "Updated Title"
+private const val ENTRY_TO_DELETE = "Entry to Delete"
+
 @RunWith(AndroidJUnit4::class)
 class TripLogViewModelTest {
 
@@ -84,9 +89,9 @@ class TripLogViewModelTest {
 
     @Test
     fun updateEditingTitle_updatesState() {
-        viewModel.updateEditingTitle("My Trip")
+        viewModel.updateEditingTitle(ENTRY_MY_TRIP)
 
-        assertEquals("My Trip", viewModel.uiState.value.editingTitle)
+        assertEquals(ENTRY_MY_TRIP, viewModel.uiState.value.editingTitle)
     }
 
     @Test
@@ -208,7 +213,7 @@ class TripLogViewModelTest {
 
     @Test
     fun editEntry_setsIsEditingTrue() {
-        val entry = TripLogEntry(id = 1L, title = "My Trip", content = "Content")
+        val entry = TripLogEntry(id = 1L, title = ENTRY_MY_TRIP, content = "Content")
 
         viewModel.editEntry(entry)
 
@@ -217,7 +222,7 @@ class TripLogViewModelTest {
 
     @Test
     fun editEntry_setsSelectedEntry() {
-        val entry = TripLogEntry(id = 1L, title = "My Trip", content = "Content")
+        val entry = TripLogEntry(id = 1L, title = ENTRY_MY_TRIP, content = "Content")
 
         viewModel.editEntry(entry)
 
@@ -318,18 +323,18 @@ class TripLogViewModelTest {
         // Insert via repository then re-use the entry reference for editing
         viewModel.startNewEntry()
         viewModel.updateEditingTitle("Original Title")
-        viewModel.updateEditingContent("Original content")
+        viewModel.updateEditingContent(CONTENT_ORIGINAL)
         viewModel.saveEntry()
         val stateWithEntry = awaitState { it.entries.isNotEmpty() && !it.isEditing }
         val originalEntry = stateWithEntry.entries.first()
 
         viewModel.editEntry(originalEntry)
-        viewModel.updateEditingTitle("Updated Title")
+        viewModel.updateEditingTitle(TITLE_UPDATED)
         viewModel.saveEntry()
 
-        val finalState = awaitState { it.entries.any { e -> e.title == "Updated Title" } }
+        val finalState = awaitState { it.entries.any { e -> e.title == TITLE_UPDATED } }
         assertEquals(1, finalState.entries.size) // still one entry, not two
-        assertEquals("Updated Title", finalState.entries.first().title)
+        assertEquals(TITLE_UPDATED, finalState.entries.first().title)
     }
 
     // ---------------------------------------------------------------------------
@@ -339,16 +344,16 @@ class TripLogViewModelTest {
     @Test
     fun deleteEntry_removesEntryFromState() {
         viewModel.startNewEntry()
-        viewModel.updateEditingTitle("To Delete")
+        viewModel.updateEditingTitle(ENTRY_TO_DELETE)
         viewModel.updateEditingContent("Content")
         viewModel.saveEntry()
         val stateWithEntry = awaitState { it.entries.isNotEmpty() && !it.isEditing }
-        val entry = stateWithEntry.entries.first { it.title == "To Delete" }
+        val entry = stateWithEntry.entries.first { it.title == ENTRY_TO_DELETE }
 
         viewModel.deleteEntry(entry)
 
-        val finalState = awaitState { it.entries.none { e -> e.title == "To Delete" } }
-        assertTrue(finalState.entries.none { it.title == "To Delete" })
+        val finalState = awaitState { it.entries.none { e -> e.title == ENTRY_TO_DELETE } }
+        assertTrue(finalState.entries.none { it.title == ENTRY_TO_DELETE })
     }
 
     // ---------------------------------------------------------------------------
@@ -496,12 +501,12 @@ class TripLogUiStateTest {
 
     @Test
     fun state_copy_modifiesEditingContent() {
-        val original = TripLogUiState(editingContent = "Original content")
+        val original = TripLogUiState(editingContent = CONTENT_ORIGINAL)
 
         val modified = original.copy(editingContent = "Modified content")
 
         assertEquals("Modified content", modified.editingContent)
-        assertEquals("Original content", original.editingContent)
+        assertEquals(CONTENT_ORIGINAL, original.editingContent)
     }
 
     @Test

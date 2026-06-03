@@ -8,6 +8,9 @@ import java.util.Locale
  * Unit tests for TerritoryAliases.kt — covers [getLocalizedTerritoryName] and
  * [getCombinedTerritoryAliases]. All JVM-safe: no Android runtime required.
  */
+private const val PUERTO_RICO = "Puerto Rico"
+private const val HONG_KONG = "Hong Kong"
+
 class TerritoryAliasesTest {
 
     // ==================== getLocalizedTerritoryName ====================
@@ -58,7 +61,7 @@ class TerritoryAliasesTest {
     fun `returns English fallback for PRI (Puerto Rico) in English locale`() {
         val name = getLocalizedTerritoryName("PRI", Locale.ENGLISH)
         assertNotNull(name)
-        assertTrue("Expected 'Puerto Rico' in name, got: $name", name!!.contains("Puerto Rico", ignoreCase = true))
+        assertTrue("Expected 'Puerto Rico' in name, got: $name", name!!.contains(PUERTO_RICO, ignoreCase = true))
     }
 
     @Test
@@ -72,7 +75,7 @@ class TerritoryAliasesTest {
     fun `returns English fallback for HKG (Hong Kong) in English locale`() {
         val name = getLocalizedTerritoryName("HKG", Locale.ENGLISH)
         assertNotNull(name)
-        assertTrue("Expected 'Hong Kong' in name, got: $name", name!!.contains("Hong Kong", ignoreCase = true))
+        assertTrue("Expected 'Hong Kong' in name, got: $name", name!!.contains(HONG_KONG, ignoreCase = true))
     }
 
     @Test
@@ -151,8 +154,8 @@ class TerritoryAliasesTest {
 
         // Spot-check a spread of entries from TERRITORY_ALIASES
         listOf(
-            "Cayman Islands", "Puerto Rico", "French Polynesia",
-            "Greenland", "Hong Kong", "Easter Island", "Azores",
+            "Cayman Islands", PUERTO_RICO, "French Polynesia",
+            "Greenland", HONG_KONG, "Easter Island", "Azores",
             "Kosovo", "Canary Islands", "Sicily"
         ).forEach { alias ->
             assertTrue("TERRITORY_ALIASES entry '$alias' missing from combined list", names.contains(alias))
@@ -200,7 +203,7 @@ class TerritoryAliasesTest {
     @Test
     fun `Puerto Rico maps to us in combined aliases`() {
         val combined = getCombinedTerritoryAliases(Locale.ENGLISH)
-        val entry = combined.find { it.first == "Puerto Rico" }
+        val entry = combined.find { it.first == PUERTO_RICO }
         assertNotNull("'Puerto Rico' not found in combined aliases", entry)
         assertEquals("us", entry!!.second)
     }
@@ -216,7 +219,7 @@ class TerritoryAliasesTest {
     @Test
     fun `Hong Kong maps to cn in combined aliases`() {
         val combined = getCombinedTerritoryAliases(Locale.ENGLISH)
-        val entry = combined.find { it.first == "Hong Kong" }
+        val entry = combined.find { it.first == HONG_KONG }
         assertNotNull("'Hong Kong' not found in combined aliases", entry)
         assertEquals("cn", entry!!.second)
     }

@@ -6,6 +6,8 @@ import com.unstampedpages.app.data.AppConstants
 import org.junit.Assert.*
 import org.junit.Test
 
+private const val OUTLET_TYPE_A_B = "Type A/B"
+
 class CountryTest {
 
     @Test
@@ -18,7 +20,7 @@ class CountryTest {
             currency = "US Dollar",
             currencyCode = "USD",
             exchangeRateToUSD = 1.0,
-            outletType = "Type A/B",
+            outletType = OUTLET_TYPE_A_B,
             continent = Continent.NORTH_AMERICA,
             flagEmoji = "\uD83C\uDDFA\uD83C\uDDF8"
         )
@@ -30,7 +32,7 @@ class CountryTest {
         assertEquals("US Dollar", country.currency)
         assertEquals("USD", country.currencyCode)
         assertEquals(1.0, country.exchangeRateToUSD, 0.001)
-        assertEquals("Type A/B", country.outletType)
+        assertEquals(OUTLET_TYPE_A_B, country.outletType)
         assertEquals(Continent.NORTH_AMERICA, country.continent)
         assertNull(country.imageUrl)
         assertNull(country.passportValidity)
@@ -65,7 +67,7 @@ class CountryTest {
             currency = "Yen",
             currencyCode = "JPY",
             exchangeRateToUSD = 0.0067,
-            outletType = "Type A/B",
+            outletType = OUTLET_TYPE_A_B,
             continent = Continent.ASIA,
             flagEmoji = "\uD83C\uDDEF\uD83C\uDDF5",
             passportValidity = AppConstants.PassportValidity.PLANNED_STAY
@@ -84,7 +86,7 @@ class CountryTest {
             currency = "Yen",
             currencyCode = "JPY",
             exchangeRateToUSD = 0.0067,
-            outletType = "Type A/B",
+            outletType = OUTLET_TYPE_A_B,
             continent = Continent.ASIA,
             flagEmoji = "\uD83C\uDDEF\uD83C\uDDF5"
         )

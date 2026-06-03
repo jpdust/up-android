@@ -2333,7 +2333,7 @@ class LabelSizeAlphaTest {
     fun `finalAlpha skip threshold — values below 0_01 would cause label skip`() {
         // Guard against accidental changes to the early-exit comparison.
         // Any finalAlpha >= 0.01f should pass; < 0.01f should be skipped.
-        assertTrue(0.01f >= 0.01f)   // boundary: exactly at threshold is kept
+        assertFalse(0.01f < 0.01f)    // boundary: exactly at threshold is kept
         assertTrue(0.009f < 0.01f)   // just below: skipped
     }
 
@@ -2366,13 +2366,13 @@ class LabelCentroidOverridesTest {
 
     @Test
     fun `NZL override X matches longitude 173 east`() {
-        val (x, _) = LABEL_CENTROID_OVERRIDES["NZL"]!!
+        val (x, _) = LABEL_CENTROID_OVERRIDES.getValue("NZL")
         assertEquals(MercatorProjection.longitudeToX(173f), x, 0.0001f)
     }
 
     @Test
     fun `NZL override Y matches latitude 41_5 south`() {
-        val (_, y) = LABEL_CENTROID_OVERRIDES["NZL"]!!
+        val (_, y) = LABEL_CENTROID_OVERRIDES.getValue("NZL")
         assertEquals(MercatorProjection.latitudeToY(-41.5f), y, 0.0001f)
     }
 
@@ -2408,20 +2408,20 @@ class LabelCentroidOverridesTest {
 
     @Test
     fun `KIR override X matches longitude 174 east (Gilbert Islands)`() {
-        val (x, _) = LABEL_CENTROID_OVERRIDES["KIR"]!!
+        val (x, _) = LABEL_CENTROID_OVERRIDES.getValue("KIR")
         assertEquals(MercatorProjection.longitudeToX(174f), x, 0.0001f)
     }
 
     @Test
     fun `KIR override Y matches latitude 1_5 south (near Tarawa)`() {
-        val (_, y) = LABEL_CENTROID_OVERRIDES["KIR"]!!
+        val (_, y) = LABEL_CENTROID_OVERRIDES.getValue("KIR")
         assertEquals(MercatorProjection.latitudeToY(-1.5f), y, 0.0001f)
     }
 
     @Test
     fun `KIR override X is in eastern Pacific (right side of map)`() {
         // Gilbert Islands are near 174°E; normalized X should be > 0.95.
-        val (x, _) = LABEL_CENTROID_OVERRIDES["KIR"]!!
+        val (x, _) = LABEL_CENTROID_OVERRIDES.getValue("KIR")
         assertTrue("KIR X $x is not in eastern Pacific (expected > 0.95)", x > 0.95f)
     }
 }
@@ -3338,7 +3338,6 @@ class SelectCountryFillColorTest {
             previousModeColors = emptyMap(),
             currentModeColors  = mapOf("zz" to blue)
         )
-        // lerp(MapLand, blue, 0.5)
         val expected = androidx.compose.ui.graphics.lerp(
             com.unstampedpages.app.ui.theme.MapLand, blue, 0.5f
         )
@@ -3761,11 +3760,14 @@ class ComputeVisibleLabelSpecsTest {
     // Identity mapper: leaves pts untouched (simulates a no-op matrix).
     private val identity: (FloatArray) -> Unit = { }
 
+    private data class RenderConfig(
+        val labelAlpha: Float = 1f,
+        val matrixValid: Boolean = true
+    )
+
     private fun defaultSpecs(
         wrapOffset: Float = 0f,
-        labelAlpha: Float = 1f,
-        matrixValid: Boolean = true,
-        scale: Float = 1f,
+        renderConfig: RenderConfig = RenderConfig(),
         geometries: List<com.unstampedpages.app.data.model.CountryGeometry> = listOf(geom("FRA")),
         countryBounds: Map<String, CountryBounds> = mapOf("FRA" to largeBounds()),
         labelTextSizes: Map<String, Pair<Float, Float>> = mapOf("FRA" to (60f to 20f)),
@@ -3773,7 +3775,7 @@ class ComputeVisibleLabelSpecsTest {
         overrideCanvasWidth: Float = canvasWidth
     ) = computeVisibleLabelSpecs(
         wrapOffset,
-        LabelRenderContext(labelAlpha, matrixValid, scale, mapWidth, mapHeight, overrideCanvasWidth, canvasHeight),
+        LabelRenderContext(renderConfig.labelAlpha, renderConfig.matrixValid, 1f, mapWidth, mapHeight, overrideCanvasWidth, canvasHeight),
         geometries, countryBounds, labelTextSizes, screenMapper
     )
 
@@ -3781,22 +3783,22 @@ class ComputeVisibleLabelSpecsTest {
 
     @Test
     fun `returns empty map when labelAlpha is below threshold`() {
-        assertTrue(defaultSpecs(labelAlpha = 0.005f).isEmpty())
+        assertTrue(defaultSpecs(renderConfig = RenderConfig(labelAlpha = 0.005f)).isEmpty())
     }
 
     @Test
     fun `returns empty map when labelAlpha is exactly 0`() {
-        assertTrue(defaultSpecs(labelAlpha = 0f).isEmpty())
+        assertTrue(defaultSpecs(renderConfig = RenderConfig(labelAlpha = 0f)).isEmpty())
     }
 
     @Test
     fun `returns empty map when matrixValid is false`() {
-        assertTrue(defaultSpecs(matrixValid = false).isEmpty())
+        assertTrue(defaultSpecs(renderConfig = RenderConfig(matrixValid = false)).isEmpty())
     }
 
     @Test
     fun `returns empty map when both alpha low and matrix invalid`() {
-        assertTrue(defaultSpecs(labelAlpha = 0f, matrixValid = false).isEmpty())
+        assertTrue(defaultSpecs(renderConfig = RenderConfig(labelAlpha = 0f, matrixValid = false)).isEmpty())
     }
 
     // ── per-geometry skip conditions ──────────────────────────────────────────
@@ -3886,27 +3888,27 @@ class ComputeVisibleLabelSpecsTest {
     @Test
     fun `topLeft centres text on centroid screenX`() {
         // centroid (0.5,0.5), identity mapper → screenX=500, tw=60 → topLeft.x=470
-        val spec = defaultSpecs()["FRA"]!!
+        val spec = defaultSpecs().getValue("FRA")
         assertEquals(470f, spec.topLeft.x, 0.01f)
     }
 
     @Test
     fun `topLeft centres text on centroid screenY`() {
         // screenY=250, th=20 → topLeft.y=240
-        val spec = defaultSpecs()["FRA"]!!
+        val spec = defaultSpecs().getValue("FRA")
         assertEquals(240f, spec.topLeft.y, 0.01f)
     }
 
     @Test
     fun `shadowOffset is 8 percent of text height`() {
-        val spec = defaultSpecs()["FRA"]!!
+        val spec = defaultSpecs().getValue("FRA")
         assertEquals(20f * 0.08f, spec.shadowOffset, 0.001f)
     }
 
     @Test
     fun `shadowColor alpha is finalAlpha times 0_67`() {
         val labelAlpha = 0.8f
-        val spec = defaultSpecs(labelAlpha = labelAlpha)["FRA"]!!
+        val spec = defaultSpecs(renderConfig = RenderConfig(labelAlpha = labelAlpha)).getValue("FRA")
         // largeBounds → sizeAlpha=1 → finalAlpha=0.8
         // Color stores alpha as 8-bit, so allow ≈1/255 ≈ 0.004 rounding error.
         assertEquals(labelAlpha * 0.67f, spec.shadowColor.alpha, 0.005f)
@@ -3918,7 +3920,7 @@ class ComputeVisibleLabelSpecsTest {
     @Test
     fun `fillColor alpha equals finalAlpha`() {
         val labelAlpha = 0.6f
-        val spec = defaultSpecs(labelAlpha = labelAlpha)["FRA"]!!
+        val spec = defaultSpecs(renderConfig = RenderConfig(labelAlpha = labelAlpha)).getValue("FRA")
         assertEquals(labelAlpha, spec.fillColor.alpha, 0.001f)
         assertEquals(1f, spec.fillColor.red,   0.001f)  // Color.White base
         assertEquals(1f, spec.fillColor.green, 0.001f)
@@ -3931,8 +3933,8 @@ class ComputeVisibleLabelSpecsTest {
     fun `wrapOffset shifts screenX proportionally`() {
         // wrapOffset=0 → pts[0] = 0.5*1000 = 500, topLeft.x = 470
         // wrapOffset=0.3 → pts[0] = 0.8*1000 = 800, topLeft.x = 770
-        val spec0  = defaultSpecs(wrapOffset = 0f)["FRA"]!!
-        val spec03 = defaultSpecs(wrapOffset = 0.3f)["FRA"]!!
+        val spec0  = defaultSpecs(wrapOffset = 0f).getValue("FRA")
+        val spec03 = defaultSpecs(wrapOffset = 0.3f).getValue("FRA")
         assertEquals(470f, spec0.topLeft.x,  0.01f)
         assertEquals(770f, spec03.topLeft.x, 0.01f)
     }
@@ -3943,7 +3945,7 @@ class ComputeVisibleLabelSpecsTest {
     fun `screenMapper translation shifts topLeft`() {
         // mapper shifts x by +50 → screenX=550 → topLeft.x = 550-30 = 520
         val shiftMapper: (FloatArray) -> Unit = { pts -> pts[0] += 50f }
-        val spec = defaultSpecs(screenMapper = shiftMapper)["FRA"]!!
+        val spec = defaultSpecs(screenMapper = shiftMapper).getValue("FRA")
         assertEquals(520f, spec.topLeft.x, 0.01f)
     }
 
@@ -3953,7 +3955,7 @@ class ComputeVisibleLabelSpecsTest {
     fun `uses LABEL_CENTROID_OVERRIDES when available`() {
         // "NZL" has an override at ~longitude 173° → normX ≈ 0.981.
         // Use a wide canvas (3000px) so the label is not culled.
-        val override = LABEL_CENTROID_OVERRIDES["NZL"]!!
+        val override = LABEL_CENTROID_OVERRIDES.getValue("NZL")
         val cx = override.first
         val cy = override.second
         val expectedScreenX = cx * mapWidth
@@ -3964,7 +3966,7 @@ class ComputeVisibleLabelSpecsTest {
             labelTextSizes = mapOf("NZL" to (60f to 20f)),
             overrideCanvasWidth = 3000f
         )
-        val spec = result["NZL"]!!
+        val spec = result.getValue("NZL")
         assertEquals(expectedScreenX - 30f, spec.topLeft.x, 0.01f)
         assertEquals(expectedScreenY - 10f, spec.topLeft.y, 0.01f)
     }
@@ -3978,7 +3980,7 @@ class ComputeVisibleLabelSpecsTest {
             countryBounds  = mapOf("DEU" to largeBounds(cx, cy)),
             labelTextSizes = mapOf("DEU" to (60f to 20f))
         )
-        val spec = result["DEU"]!!
+        val spec = result.getValue("DEU")
         assertEquals(cx * mapWidth - 30f, spec.topLeft.x, 0.01f)
         assertEquals(cy * mapHeight - 10f, spec.topLeft.y, 0.01f)
     }
@@ -4023,5 +4025,165 @@ class ComputeVisibleLabelSpecsTest {
         )
         assertEquals(1, result.size)
         assertTrue(result.containsKey("FRA"))
+    }
+
+    // ==================== latLngToMercator Tests ====================
+    // latLngToMercator converts a LatLng to an Offset in map-pixel space by scaling
+    // the normalized Mercator coordinates by mapWidth and mapHeight respectively.
+
+    private fun latLng(lat: Float, lng: Float) = com.unstampedpages.app.data.model.LatLng(lat, lng)
+
+    @Test
+    fun `latLngToMercator prime meridian equator returns x at half mapWidth`() {
+        val result = latLngToMercator(latLng(0f, 0f), mapWidth = 1000f, mapHeight = 500f)
+        assertEquals(500f, result.x, 0.1f)
+    }
+
+    @Test
+    fun `latLngToMercator west edge longitude minus 180 returns x of 0`() {
+        val result = latLngToMercator(latLng(0f, -180f), mapWidth = 1000f, mapHeight = 500f)
+        assertEquals(0f, result.x, 0.1f)
+    }
+
+    @Test
+    fun `latLngToMercator east edge longitude 180 returns x equal to mapWidth`() {
+        val result = latLngToMercator(latLng(0f, 180f), mapWidth = 1000f, mapHeight = 500f)
+        assertEquals(1000f, result.x, 0.1f)
+    }
+
+    @Test
+    fun `latLngToMercator x scales linearly with mapWidth`() {
+        val smallMap = latLngToMercator(latLng(0f, 90f), mapWidth = 100f, mapHeight = 50f)
+        val largeMap = latLngToMercator(latLng(0f, 90f), mapWidth = 800f, mapHeight = 400f)
+        // longitudeToX(90) = 0.75, so x = 0.75 * mapWidth
+        assertEquals(75f, smallMap.x, 0.1f)
+        assertEquals(600f, largeMap.x, 0.1f)
+    }
+
+    @Test
+    fun `latLngToMercator y scales with mapHeight`() {
+        val smallMap = latLngToMercator(latLng(0f, 0f), mapWidth = 100f, mapHeight = 50f)
+        val largeMap = latLngToMercator(latLng(0f, 0f), mapWidth = 100f, mapHeight = 400f)
+        val expectedNormY = MercatorProjection.latitudeToY(0f)
+        assertEquals(expectedNormY * 50f, smallMap.y, 0.1f)
+        assertEquals(expectedNormY * 400f, largeMap.y, 0.1f)
+    }
+
+    @Test
+    fun `latLngToMercator high north latitude produces small y`() {
+        val result = latLngToMercator(latLng(80f, 0f), mapWidth = 1000f, mapHeight = 500f)
+        // y=0 is north pole, so high latitude → small y
+        assertTrue("High north lat should produce small y", result.y < 500f * 0.2f)
+        assertTrue("y should be non-negative", result.y >= 0f)
+    }
+
+    @Test
+    fun `latLngToMercator high south latitude produces large y`() {
+        val result = latLngToMercator(latLng(-80f, 0f), mapWidth = 1000f, mapHeight = 500f)
+        // y=mapHeight is south pole, so far-south latitude → large y
+        assertTrue("High south lat should produce large y", result.y > 500f * 0.8f)
+        assertTrue("y should not exceed mapHeight", result.y <= 500f)
+    }
+
+    @Test
+    fun `latLngToMercator equator y is between 40 and 60 percent of mapHeight`() {
+        // Asymmetric latitude range (-85..83) means equator is not at exactly 50%
+        val result = latLngToMercator(latLng(0f, 0f), mapWidth = 1000f, mapHeight = 500f)
+        assertTrue(result.y > 500f * 0.4f)
+        assertTrue(result.y < 500f * 0.6f)
+    }
+
+    @Test
+    fun `latLngToMercator clamps latitude above MAX_LATITUDE`() {
+        val atMax = latLngToMercator(latLng(MercatorProjection.MAX_LATITUDE, 0f), mapWidth = 1000f, mapHeight = 500f)
+        val aboveMax = latLngToMercator(latLng(90f, 0f), mapWidth = 1000f, mapHeight = 500f)
+        assertEquals(atMax.y, aboveMax.y, 0.01f)
+    }
+
+    @Test
+    fun `latLngToMercator clamps latitude below MIN_LATITUDE`() {
+        val atMin = latLngToMercator(latLng(MercatorProjection.MIN_LATITUDE, 0f), mapWidth = 1000f, mapHeight = 500f)
+        val belowMin = latLngToMercator(latLng(-90f, 0f), mapWidth = 1000f, mapHeight = 500f)
+        assertEquals(atMin.y, belowMin.y, 0.01f)
+    }
+
+    @Test
+    fun `latLngToMercator x and y are independent of each other`() {
+        val base = latLngToMercator(latLng(45f, 90f), mapWidth = 800f, mapHeight = 400f)
+        val sameLatDiffLng = latLngToMercator(latLng(45f, -90f), mapWidth = 800f, mapHeight = 400f)
+        val diffLatSameLng = latLngToMercator(latLng(-45f, 90f), mapWidth = 800f, mapHeight = 400f)
+
+        // Same latitude → same y
+        assertEquals(base.y, sameLatDiffLng.y, 0.01f)
+        // Same longitude → same x
+        assertEquals(base.x, diffLatSameLng.x, 0.01f)
+        // Different latitudes → different y
+        assertNotEquals(base.y, diffLatSameLng.y)
+        // Different longitudes → different x
+        assertNotEquals(base.x, sameLatDiffLng.x)
+    }
+
+    @Test
+    fun `latLngToMercator result matches direct MercatorProjection calculation`() {
+        val lat = 51.5074f  // London
+        val lng = -0.1278f
+        val mapWidth = 1200f
+        val mapHeight = 600f
+
+        val result = latLngToMercator(latLng(lat, lng), mapWidth, mapHeight)
+
+        val expectedX = MercatorProjection.longitudeToX(lng) * mapWidth
+        val expectedY = MercatorProjection.latitudeToY(lat) * mapHeight
+        assertEquals(expectedX, result.x, 0.001f)
+        assertEquals(expectedY, result.y, 0.001f)
+    }
+
+    @Test
+    fun `latLngToMercator returns zero offset for zero-size map`() {
+        val result = latLngToMercator(latLng(45f, 90f), mapWidth = 0f, mapHeight = 0f)
+        assertEquals(0f, result.x, 0.001f)
+        assertEquals(0f, result.y, 0.001f)
+    }
+
+    @Test
+    fun `latLngToMercator north pole clamped y is less than equator y`() {
+        val northPole = latLngToMercator(latLng(90f, 0f), mapWidth = 1000f, mapHeight = 500f)
+        val equator = latLngToMercator(latLng(0f, 0f), mapWidth = 1000f, mapHeight = 500f)
+        assertTrue(northPole.y < equator.y)
+    }
+
+    @Test
+    fun `latLngToMercator south pole clamped y is greater than equator y`() {
+        val southPole = latLngToMercator(latLng(-90f, 0f), mapWidth = 1000f, mapHeight = 500f)
+        val equator = latLngToMercator(latLng(0f, 0f), mapWidth = 1000f, mapHeight = 500f)
+        assertTrue(southPole.y > equator.y)
+    }
+
+    @Test
+    fun `latLngToMercator x increases monotonically with longitude`() {
+        val longitudes = listOf(-180f, -90f, 0f, 90f, 180f)
+        val xValues = longitudes.map { lng ->
+            latLngToMercator(latLng(0f, lng), mapWidth = 1000f, mapHeight = 500f).x
+        }
+        for (i in 0 until xValues.size - 1) {
+            assertTrue(
+                "x at lng ${longitudes[i + 1]} (${xValues[i + 1]}) should be > x at ${longitudes[i]} (${xValues[i]})",
+                xValues[i + 1] > xValues[i]
+            )
+        }
+    }
+
+    @Test
+    fun `latLngToMercator y increases monotonically as latitude decreases`() {
+        val latitudes = listOf(80f, 40f, 0f, -40f, -80f)
+        val yValues = latitudes.map { lat ->
+            latLngToMercator(latLng(lat, 0f), mapWidth = 1000f, mapHeight = 500f).y
+        }
+        for (i in 0 until yValues.size - 1) {
+            assertTrue(
+                "y at lat ${latitudes[i + 1]} (${yValues[i + 1]}) should be > y at ${latitudes[i]} (${yValues[i]})",
+                yValues[i + 1] > yValues[i]
+            )
+        }
     }
 }
