@@ -306,6 +306,32 @@ Typography uses Material 3's `Typography` with display and body type scales.
 
 ---
 
+## Localisation
+
+The app ships with translations for five languages:
+
+| Language | Code | Region |
+|----------|------|--------|
+| English | `en` | Default |
+| Spanish | `es` | — |
+| French | `fr` | — |
+| Arabic | `ar` | — |
+| Chinese (Simplified) | `zh-CN` | Mainland China |
+
+### Changing the language
+
+**Android 13 and above (per-app language):**
+1. Open the device **Settings** app
+2. Navigate to **Apps → Unstamped Pages → Language**
+3. Select your preferred language
+
+The app advertises its supported locales via `res/xml/locale_config.xml`, so only the five languages above appear in the per-app picker.
+
+**Android 12 and below:**
+The app follows the system language. To change it, go to **Settings → General Management → Language** (path varies by manufacturer) and set your preferred language system-wide.
+
+---
+
 ## Observability
 
 The app integrates **New Relic Mobile** (SDK 7.7.5) for production monitoring.
