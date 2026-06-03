@@ -18,12 +18,12 @@ A travel companion app for tracking countries visited, managing travel checklist
 # Clean build
 ./gradlew clean assembleDebug
 
-# Check Java version (requires Java 17)
+# Check Java version (requires Java 21)
 java -version
 ```
 
 ### Requirements
-- **Java:** 17
+- **Java:** 21
 - **Android SDK:** 36 (compile/target), 26 (min)
 - **Gradle:** 8.9.3
 - **Kotlin:** 2.1.20
