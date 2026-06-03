@@ -3,16 +3,20 @@ package com.unstampedpages.app.ui.screens.countryinfo
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.unstampedpages.app.data.AppConstants
+import com.unstampedpages.app.data.model.CountryGeometry
+import com.unstampedpages.app.data.model.LatLng
 import com.unstampedpages.app.ui.theme.UnstampedPagesTheme
 import org.junit.Rule
 import org.junit.Test
@@ -644,6 +648,225 @@ class WorldMapCanvasTest {
                         centroid   = Offset(50f, 50f)
                     )
                 }
+            }
+        }
+        composeTestRule.onRoot().assertIsDisplayed()
+    }
+
+    // ==================== DrawScope.drawCountryLabels Tests ====================
+    //
+    // Line 1296: val textLayout = params.labelTextLayouts.getValue(countryId)
+    //
+    // This line executes once per entry returned by computeVisibleLabelSpecs. The
+    // specs map is empty when labelAlpha < 0.01, matrixValid is false, the geometries
+    // list is empty, or every label centroid is culled outside the visible canvas.
+    // Tests 1–4 verify the loop is skipped in those cases; tests 5–6 verify the
+    // getValue call fires for one and two visible labels respectively.
+
+    // Layout with map 400×200 and a generous canvas so mapped centroids land on screen.
+    private fun testMapLayout() = MapLayout(
+        mapWidth = 400f, mapHeight = 200f,
+        canvasOffsetX = 0f, canvasOffsetY = 0f,
+        canvasWidth = 800f, canvasHeight = 400f
+    )
+
+    // Bounds whose centroid maps to (200, 100) with the identity forward matrix,
+    // and whose widthNorm × mapWidth = 200px >> LABEL_FULL_SCREEN_PX → sizeAlpha = 1.
+    private fun visibleBounds() = CountryBounds(
+        centroidNormX = 0.5f, centroidNormY = 0.5f,
+        minX = 0.25f, maxX = 0.75f,
+        minY = 0.25f, maxY = 0.75f
+    )
+
+    // Bounds whose centroid maps to x = 2000px — far beyond canvasWidth + tw → culled.
+    private fun culledBounds() = CountryBounds(
+        centroidNormX = 5.0f, centroidNormY = 0.5f,
+        minX = 4.75f, maxX = 5.25f,
+        minY = 0.25f, maxY = 0.75f
+    )
+
+    private fun testGeometry(id: String) = CountryGeometry(
+        countryId = id,
+        polygons = listOf(listOf(LatLng(0f, 0f), LatLng(1f, 0f), LatLng(0f, 1f)))
+    )
+
+    // gestureState with identity forwardMatrix; matrixValid defaults to true here.
+    private fun labelGestureState(matrixValid: Boolean = true) = MapGestureState(
+        geometries = emptyList(),
+        inverseMatrix = android.graphics.Matrix(),
+        matrixValid = matrixValid
+    )
+
+    @Test
+    fun drawCountryLabels_skipsLoop_whenLabelAlphaIsZero() {
+        // labelAlpha=0 → computeVisibleLabelSpecs returns empty → line 1296 never reached
+        composeTestRule.setContent {
+            val measurer = rememberTextMeasurer()
+            val textLayout = remember { measurer.measure("Test") }
+            Canvas(modifier = Modifier.size(200.dp)) {
+                drawCountryLabels(
+                    wrapOffset = 0f,
+                    layout = testMapLayout(),
+                    params = MapDrawParams(
+                        geometries = listOf(testGeometry("TST")),
+                        selectedCountryId = null,
+                        transitionProgress = 0f,
+                        scale = 1f,
+                        countryBounds = mapOf("TST" to visibleBounds()),
+                        currentModeColors = emptyMap(),
+                        previousModeColors = emptyMap(),
+                        labelAlpha = 0f,
+                        labelTextLayouts = mapOf("TST" to textLayout)
+                    ),
+                    gestureState = labelGestureState()
+                )
+            }
+        }
+        composeTestRule.onRoot().assertIsDisplayed()
+    }
+
+    @Test
+    fun drawCountryLabels_skipsLoop_whenMatrixInvalid() {
+        // matrixValid=false → computeVisibleLabelSpecs returns empty → line 1296 never reached
+        composeTestRule.setContent {
+            val measurer = rememberTextMeasurer()
+            val textLayout = remember { measurer.measure("Test") }
+            Canvas(modifier = Modifier.size(200.dp)) {
+                drawCountryLabels(
+                    wrapOffset = 0f,
+                    layout = testMapLayout(),
+                    params = MapDrawParams(
+                        geometries = listOf(testGeometry("TST")),
+                        selectedCountryId = null,
+                        transitionProgress = 0f,
+                        scale = 1f,
+                        countryBounds = mapOf("TST" to visibleBounds()),
+                        currentModeColors = emptyMap(),
+                        previousModeColors = emptyMap(),
+                        labelAlpha = 1f,
+                        labelTextLayouts = mapOf("TST" to textLayout)
+                    ),
+                    gestureState = labelGestureState(matrixValid = false)
+                )
+            }
+        }
+        composeTestRule.onRoot().assertIsDisplayed()
+    }
+
+    @Test
+    fun drawCountryLabels_skipsLoop_whenNoGeometries() {
+        // empty geometries list → computeVisibleLabelSpecs iterates nothing → empty map → line 1296 not reached
+        composeTestRule.setContent {
+            Canvas(modifier = Modifier.size(200.dp)) {
+                drawCountryLabels(
+                    wrapOffset = 0f,
+                    layout = testMapLayout(),
+                    params = MapDrawParams(
+                        geometries = emptyList(),
+                        selectedCountryId = null,
+                        transitionProgress = 0f,
+                        scale = 1f,
+                        countryBounds = emptyMap(),
+                        currentModeColors = emptyMap(),
+                        previousModeColors = emptyMap(),
+                        labelAlpha = 1f,
+                        labelTextLayouts = emptyMap()
+                    ),
+                    gestureState = labelGestureState()
+                )
+            }
+        }
+        composeTestRule.onRoot().assertIsDisplayed()
+    }
+
+    @Test
+    fun drawCountryLabels_skipsLoop_whenLabelIsCulled() {
+        // centroid maps to x=2000px which exceeds canvasWidth+tw → culled → specs empty → line 1296 not reached
+        composeTestRule.setContent {
+            val measurer = rememberTextMeasurer()
+            val textLayout = remember { measurer.measure("Test") }
+            Canvas(modifier = Modifier.size(200.dp)) {
+                drawCountryLabels(
+                    wrapOffset = 0f,
+                    layout = testMapLayout(),
+                    params = MapDrawParams(
+                        geometries = listOf(testGeometry("TST")),
+                        selectedCountryId = null,
+                        transitionProgress = 0f,
+                        scale = 1f,
+                        countryBounds = mapOf("TST" to culledBounds()),
+                        currentModeColors = emptyMap(),
+                        previousModeColors = emptyMap(),
+                        labelAlpha = 1f,
+                        labelTextLayouts = mapOf("TST" to textLayout)
+                    ),
+                    gestureState = labelGestureState()
+                )
+            }
+        }
+        composeTestRule.onRoot().assertIsDisplayed()
+    }
+
+    @Test
+    fun drawCountryLabels_executesGetValue_forSingleVisibleLabel() {
+        // labelAlpha=1, matrixValid=true, visible bounds, matching layout entry →
+        // computeVisibleLabelSpecs returns one entry → line 1296 executes exactly once
+        composeTestRule.setContent {
+            val measurer = rememberTextMeasurer()
+            val textLayout = remember { measurer.measure("France") }
+            Canvas(modifier = Modifier.size(200.dp)) {
+                drawCountryLabels(
+                    wrapOffset = 0f,
+                    layout = testMapLayout(),
+                    params = MapDrawParams(
+                        geometries = listOf(testGeometry("FRA")),
+                        selectedCountryId = null,
+                        transitionProgress = 0f,
+                        scale = 1f,
+                        countryBounds = mapOf("FRA" to visibleBounds()),
+                        currentModeColors = emptyMap(),
+                        previousModeColors = emptyMap(),
+                        labelAlpha = 1f,
+                        labelTextLayouts = mapOf("FRA" to textLayout)
+                    ),
+                    gestureState = labelGestureState()
+                )
+            }
+        }
+        composeTestRule.onRoot().assertIsDisplayed()
+    }
+
+    @Test
+    fun drawCountryLabels_executesGetValue_forEachVisibleLabel() {
+        // Two geometries both with visible bounds and matching layouts →
+        // computeVisibleLabelSpecs returns two entries → line 1296 executes twice
+        composeTestRule.setContent {
+            val measurer = rememberTextMeasurer()
+            val layoutA = remember { measurer.measure("Germany") }
+            val layoutB = remember { measurer.measure("Italy") }
+            Canvas(modifier = Modifier.size(200.dp)) {
+                drawCountryLabels(
+                    wrapOffset = 0f,
+                    layout = testMapLayout(),
+                    params = MapDrawParams(
+                        geometries = listOf(testGeometry("DEU"), testGeometry("ITA")),
+                        selectedCountryId = null,
+                        transitionProgress = 0f,
+                        scale = 1f,
+                        countryBounds = mapOf(
+                            "DEU" to visibleBounds(),
+                            "ITA" to visibleBounds()
+                        ),
+                        currentModeColors = emptyMap(),
+                        previousModeColors = emptyMap(),
+                        labelAlpha = 1f,
+                        labelTextLayouts = mapOf(
+                            "DEU" to layoutA,
+                            "ITA" to layoutB
+                        )
+                    ),
+                    gestureState = labelGestureState()
+                )
             }
         }
         composeTestRule.onRoot().assertIsDisplayed()

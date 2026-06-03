@@ -672,7 +672,7 @@ private fun computeModeColors(
  * Color data is excluded — it is passed as pre-computed maps to avoid
  * per-country per-frame recalculation.
  */
-private data class MapDrawParams(
+internal data class MapDrawParams(
     val geometries: List<CountryGeometry>,
     val selectedCountryId: String?,
     val transitionProgress: Float,
@@ -1266,7 +1266,7 @@ internal fun computeVisibleLabelSpecs(
     }
 }
 
-private fun DrawScope.drawCountryLabels(
+internal fun DrawScope.drawCountryLabels(
     wrapOffset: Float,
     layout: MapLayout,
     params: MapDrawParams,

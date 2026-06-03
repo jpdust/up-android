@@ -1,7 +1,7 @@
 package com.unstampedpages.app.ui.screens.countryinfo
 
 import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.geometry.Offset
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.unstampedpages.app.data.AppConstants
