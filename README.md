@@ -2,7 +2,7 @@
 
 A travel companion app for Android that helps adventurers track countries visited, manage packing checklists, journal their trips, and collect digital passport stamps. Built with Jetpack Compose and an Indiana Jones–inspired adventure theme.
 
-[Watch the demo](https://www.youtube.com/watch?v=j8xZrijS6s0)
+[Watch the demo](https://www.youtube.com/watch?v=j8xZrijS6s0) · [SonarCloud](https://sonarcloud.io/project/overview?id=jpdust_up-android)
 
 ---
 
