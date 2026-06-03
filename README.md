@@ -48,11 +48,12 @@ A travel companion app for Android that helps adventurers track countries visite
 
 | Tool | Version |
 |------|---------|
-| Java | 17 |
+| Java | 21 |
 | Android SDK (compile/target) | 36 |
 | Android SDK (minimum) | 26 (Android 8.0 Oreo) |
-| Gradle | 8.9.3 |
-| Kotlin | 2.1.20 |
+| Gradle | 9.5.1 |
+| AGP | 9.1.1 |
+| Kotlin | 2.3.21 |
 
 ### Build Commands
 
@@ -387,7 +388,7 @@ The GitHub Actions workflow (`.github/workflows/up-android.yml`) runs on every p
 Runs on all pushes and PRs:
 
 1. Checkout (full history for SonarCloud blame)
-2. Set up JDK 17 (Temurin)
+2. Set up JDK 21 (Temurin)
 3. Set up Gradle (with action caching)
 4. Write `local.properties` with `$ANDROID_HOME`
 5. **Run unit tests** — `testDebugUnitTest`

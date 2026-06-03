@@ -26,11 +26,11 @@ jobs:
           fetch-depth: 0
 
       # ── Java ─────────────────────────────────────────────────────────────────
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
 
       # ── Gradle ───────────────────────────────────────────────────────────────
       - name: Set up Gradle
@@ -170,11 +170,11 @@ jobs:
           fetch-depth: 0
 
       # ── Java ─────────────────────────────────────────────────────────────────
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
 
       # ── Gradle ───────────────────────────────────────────────────────────────
       - name: Set up Gradle
