@@ -1,11 +1,14 @@
 package com.unstampedpages.app
 
+import android.content.Intent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.v2.AndroidComposeTestRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Rule
 import org.junit.Test
@@ -32,7 +35,16 @@ private const val MY_STAMPS_TAB = "My Stamps"
 class MainActivityTest {
 
     @get:Rule
-    val composeTestRule = createAndroidComposeRule<MainActivity>()
+    val composeTestRule = AndroidComposeTestRule(
+        activityRule = ActivityScenarioRule<MainActivity>(
+            Intent(ApplicationProvider.getApplicationContext(), MainActivity::class.java)
+        ),
+        activityProvider = { rule ->
+            var activity: MainActivity? = null
+            rule.scenario.onActivity { activity = it }
+            activity!!
+        }
+    )
 
     // -------------------------------------------------------------------------
     // 1. Initial launch

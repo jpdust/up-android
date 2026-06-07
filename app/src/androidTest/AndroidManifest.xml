@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    AndroidTest manifest overlay.
+
+    Declares package visibility for the app under test.
+
+    Android API 30+ (package visibility filtering) requires that the test APK
+    explicitly declare which app packages it needs to query or interact with.
+    Without this, PackageManager.resolveActivity() returns null when the test
+    process (com.unstampedpages.app.test) attempts to launch an activity in the
+    app process (com.unstampedpages.app), causing:
+
+      RuntimeException: Unable to resolve activity for: Intent {
+        cmp=com.unstampedpages.app.test/com.unstampedpages.app.MainActivity }
+
+    This file is merged into the test APK manifest only; the release APK is
+    unaffected.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <queries>
+        <package android:name="com.unstampedpages.app" />
+    </queries>
+</manifest>
