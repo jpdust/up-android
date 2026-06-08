@@ -40,7 +40,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -128,7 +127,7 @@ internal object PassportValidityColors {
 /**
  * Transform state for map zoom and pan
  */
-private data class TransformState(
+internal data class TransformState(
     val scale: Float = 1f,
     val panX: Float = 0f,
     val panY: Float = 0f
@@ -186,36 +185,47 @@ internal fun calculateMapLayout(canvasWidth: Float, canvasHeight: Float): MapLay
 }
 
 /**
- * Calculate new transform state for multi-touch zoom/pan gesture.
+ * Calculate new transform state for a multi-touch zoom/pan gesture frame.
  *
- * The canvas transform pivots scale around (canvasOffsetX + 0.5*mapWidth,
- * canvasOffsetY + 0.5*mapHeight) — the canvas centre, not the pinch centroid.
- * Without compensation, any zoom whose centroid differs from that pivot causes
- * the map to drift toward the opposite corner.
+ * The canvas scale-pivot is fixed at the map centre
+ * (canvasOffsetX + 0.5·mapWidth, canvasOffsetY + 0.5·mapHeight).
+ * To make the zoom appear to pivot around the pinch centroid, we compute a pan
+ * correction that keeps the map point under [prevCentroid] stationary relative
+ * to the fingers:
  *
- * Fix: after computing the new scale, derive the pan adjustment that keeps the
- * map point currently under [centroid] stationary on screen:
+ *   panX_new = panX_old
+ *            + (prevCentroid.x − pivotX) · (1/s_new − 1/s_old) / mapWidth   ← zoom correction
+ *            + pan.x / (s_new · mapWidth)                                     ← centroid translation
  *
- *   panX_new = panX_old + (centroid.x - pivotX) * (1/s_new - 1/s_old) / mapWidth
+ * Why [prevCentroid] and NOT the current centroid:
+ *   [pan] = currentCentroid − prevCentroid (the centroid translation for this frame).
+ *   Substituting currentCentroid = prevCentroid + pan into the zoom-correction term
+ *   introduces an error of pan · (1 − s_new/s_old) per frame.  For fast lateral
+ *   movement during a zoom this accumulates into tens of pixels of drift per second,
+ *   making the pivot appear to stay at the map centre.  Using [prevCentroid] cancels
+ *   the error exactly: the map point that was under prevCentroid ends up exactly under
+ *   prevCentroid + pan (i.e. under the current finger position).
  *
- * where pivotX = canvasOffsetX + 0.5 * mapWidth.  The same formula applies for Y.
- * The centroid-translation component ([pan]) is applied on top of this correction.
+ * @param prevCentroid  The centroid position at the PREVIOUS pointer event
+ *                      (calculateCentroid(useCurrent = false)).
+ * @param pan           The centroid translation for this frame
+ *                      (calculatePan() = currentCentroid − prevCentroid).
  */
-private fun calculateMultiTouchTransform(
+internal fun calculateMultiTouchTransform(
     current: TransformState,
     zoom: Float,
     pan: Offset,
-    centroid: Offset,
+    prevCentroid: Offset,
     layout: MapLayout
 ): TransformState {
     val newScale = (current.scale * zoom).coerceIn(1f, 200f)
 
-    // Distance of the pinch centroid from the canvas scale-pivot in pixels.
-    val pivotX = centroid.x - layout.canvasOffsetX - 0.5f * layout.mapWidth
-    val pivotY = centroid.y - layout.canvasOffsetY - 0.5f * layout.mapHeight
+    // Displacement of prevCentroid from the canvas scale-pivot in pixels.
+    val pivotX = prevCentroid.x - layout.canvasOffsetX - 0.5f * layout.mapWidth
+    val pivotY = prevCentroid.y - layout.canvasOffsetY - 0.5f * layout.mapHeight
 
-    // How much the inverse-scale changed; multiplying by the pivot offset gives the
-    // pan correction needed to keep the map point under the centroid stationary.
+    // Δ(1/scale): multiplying by the pivot displacement gives the pan correction
+    // needed to keep the map point under prevCentroid stationary under the fingers.
     val scaleInvDelta = 1f / newScale - 1f / current.scale
 
     val newPanX = current.panX + pivotX * scaleInvDelta / layout.mapWidth  + pan.x / (layout.mapWidth  * newScale)
@@ -508,7 +518,7 @@ private fun handleMultiTouch(
             current = currentTransform(),
             zoom = event.calculateZoom(),
             pan = event.calculatePan(),
-            centroid = event.calculateCentroid(),
+            prevCentroid = event.calculateCentroid(useCurrent = false),
             layout = layout
         )
     )
@@ -1493,7 +1503,6 @@ fun WorldMapCanvas(
 ) {
     val tapScope = rememberCoroutineScope()
     var transform by remember { mutableStateOf(TransformState()) }
-    val currentTransform by rememberUpdatedState(transform)
 
     // Re-read both geometry datasets whenever the async load completes.
     val isLoaded by CountryGeometryData.isLoaded
@@ -1677,7 +1686,7 @@ fun WorldMapCanvas(
                 .fillMaxSize()
                 .mapGestures(
                     gestureState = gestureState,
-                    currentTransform = { currentTransform },
+                    currentTransform = { transform },
                     onTransformChange = { transform = it },
                     onCountryTapped = onCountryTapped,
                     tapConfig = TapConfig(scope = tapScope)
