@@ -1,11 +1,13 @@
 package com.unstampedpages.app.ui.screens.mystamps
 
 import android.app.Application
+import android.content.Intent
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.v2.AndroidComposeTestRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.unstampedpages.app.MainActivity
 import com.unstampedpages.app.data.AppConstants
@@ -37,7 +39,16 @@ import org.junit.runner.RunWith
 class MyStampsScreenTest {
 
     @get:Rule
-    val composeTestRule = createAndroidComposeRule<MainActivity>()
+    val composeTestRule = AndroidComposeTestRule(
+        activityRule = ActivityScenarioRule<MainActivity>(
+            Intent(ApplicationProvider.getApplicationContext(), MainActivity::class.java)
+        ),
+        activityProvider = { rule ->
+            var activity: MainActivity? = null
+            rule.scenario.onActivity { activity = it }
+            activity!!
+        }
+    )
 
     private val application: Application
         get() = ApplicationProvider.getApplicationContext()
