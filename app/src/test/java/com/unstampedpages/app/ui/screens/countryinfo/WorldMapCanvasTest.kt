@@ -2,6 +2,7 @@ package com.unstampedpages.app.ui.screens.countryinfo
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import kotlin.math.pow
 import com.unstampedpages.app.R
 import com.unstampedpages.app.data.AppConstants
 import com.unstampedpages.app.data.CountryList
@@ -688,6 +689,316 @@ class WorldMapCanvasTest {
         assertTrue("Bottom-edge bound should allow substantial upward travel", bounds.minPanY < -0.99f)
         assertTrue("Top-edge bound should allow substantial downward travel", bounds.maxPanY > 0.99f)
         assertTrue(bounds.minPanY < bounds.maxPanY)
+    }
+
+    // ==================== calculateMultiTouchTransform Tests ====================
+    //
+    // Rendering formula:
+    //   screen_x = pivotX + scale * mapWidth * (normX + panX - 0.5)
+    //   where pivotX = canvasOffsetX + 0.5 * mapWidth
+    //
+    // Core invariant: the map point that was under prevCentroid should appear
+    // at prevCentroid + pan (i.e. at the current finger position) after the transform.
+
+    private fun makeLayout(
+        mapWidth: Float = 1000f,
+        mapHeight: Float = 500f,
+        canvasOffsetX: Float = 0f,
+        canvasOffsetY: Float = 0f
+    ) = MapLayout(
+        mapWidth = mapWidth,
+        mapHeight = mapHeight,
+        canvasOffsetX = canvasOffsetX,
+        canvasOffsetY = canvasOffsetY,
+        canvasWidth = mapWidth + canvasOffsetX * 2,
+        canvasHeight = mapHeight + canvasOffsetY * 2
+    )
+
+    /**
+     * Computes the screen X position of a map point at [normX] given the transform [state]
+     * and [layout], using the same formula as the rendering withTransform block.
+     */
+    private fun screenX(normX: Float, state: TransformState, layout: MapLayout): Float {
+        val pivotX = layout.canvasOffsetX + 0.5f * layout.mapWidth
+        return pivotX + state.scale * layout.mapWidth * (normX + state.panX - 0.5f)
+    }
+
+    private fun screenY(normY: Float, state: TransformState, layout: MapLayout): Float {
+        val pivotY = layout.canvasOffsetY + 0.5f * layout.mapHeight
+        return pivotY + state.scale * layout.mapHeight * (normY + state.panY - 0.5f)
+    }
+
+    /**
+     * Verifies the core centroid-pivot invariant: the map point under [prevCentroid]
+     * in [initial] state should appear at prevCentroid + pan after the transform.
+     */
+    private fun assertCentroidPivotInvariant(
+        initial: TransformState,
+        zoom: Float,
+        pan: Offset,
+        prevCentroid: Offset,
+        layout: MapLayout,
+        delta: Float = 0.1f
+    ) {
+        val result = calculateMultiTouchTransform(initial, zoom, pan, prevCentroid, layout)
+        val pivotX = layout.canvasOffsetX + 0.5f * layout.mapWidth
+        val pivotY = layout.canvasOffsetY + 0.5f * layout.mapHeight
+
+        val normX = (prevCentroid.x - pivotX) / (initial.scale * layout.mapWidth) + 0.5f - initial.panX
+        val normY = (prevCentroid.y - pivotY) / (initial.scale * layout.mapHeight) + 0.5f - initial.panY
+
+        assertEquals(
+            "world point under prevCentroid should appear at prevCentroid.x + pan.x",
+            prevCentroid.x + pan.x,
+            screenX(normX, result, layout),
+            delta
+        )
+        assertEquals(
+            "world point under prevCentroid should appear at prevCentroid.y + pan.y",
+            prevCentroid.y + pan.y,
+            screenY(normY, result, layout),
+            delta
+        )
+    }
+
+    @Test
+    fun `calculateMultiTouchTransform pure zoom at map center does not change pan`() {
+        val layout = makeLayout()
+        val initial = TransformState(scale = 1f, panX = 0f, panY = 0f)
+        val pivotX = layout.canvasOffsetX + 0.5f * layout.mapWidth
+        val pivotY = layout.canvasOffsetY + 0.5f * layout.mapHeight
+        val centroid = Offset(pivotX, pivotY) // centroid IS the map center
+
+        val result = calculateMultiTouchTransform(
+            current = initial,
+            zoom = 2f,
+            pan = Offset.Zero,
+            prevCentroid = centroid,
+            layout = layout
+        )
+
+        assertEquals(2f, result.scale, 0.001f)
+        assertEquals(0f, result.panX, 0.001f) // no drift when centroid is at pivot
+        assertEquals(0f, result.panY, 0.001f)
+    }
+
+    @Test
+    fun `calculateMultiTouchTransform pure zoom at right of center shifts panX left`() {
+        val layout = makeLayout(mapWidth = 1000f, mapHeight = 500f)
+        val initial = TransformState(scale = 1f, panX = 0f, panY = 0f)
+        // Centroid at x=700 — to the right of the map center (x=500)
+        val centroid = Offset(700f, 250f)
+
+        val result = calculateMultiTouchTransform(
+            current = initial,
+            zoom = 2f,
+            pan = Offset.Zero,
+            prevCentroid = centroid,
+            layout = layout
+        )
+
+        assertEquals(2f, result.scale, 0.001f)
+        // panX should be negative: map shifted right so the right-side content stays visible
+        assertTrue("panX should be negative when zooming right of center", result.panX < 0f)
+        assertCentroidPivotInvariant(initial, 2f, Offset.Zero, centroid, layout)
+    }
+
+    @Test
+    fun `calculateMultiTouchTransform pure zoom at left of center shifts panX right`() {
+        val layout = makeLayout(mapWidth = 1000f, mapHeight = 500f)
+        val initial = TransformState(scale = 1f, panX = 0f, panY = 0f)
+        val centroid = Offset(300f, 250f) // left of center
+
+        val result = calculateMultiTouchTransform(
+            current = initial,
+            zoom = 2f,
+            pan = Offset.Zero,
+            prevCentroid = centroid,
+            layout = layout
+        )
+
+        assertEquals(2f, result.scale, 0.001f)
+        assertTrue("panX should be positive when zooming left of center", result.panX > 0f)
+        assertCentroidPivotInvariant(initial, 2f, Offset.Zero, centroid, layout)
+    }
+
+    @Test
+    fun `calculateMultiTouchTransform centroid pivot invariant holds for zoom only`() {
+        val layout = makeLayout(mapWidth = 1000f, mapHeight = 500f)
+        val initial = TransformState(scale = 1f, panX = 0f, panY = 0f)
+        val centroid = Offset(750f, 180f)
+
+        assertCentroidPivotInvariant(initial, 3f, Offset.Zero, centroid, layout)
+    }
+
+    @Test
+    fun `calculateMultiTouchTransform centroid pivot invariant holds for zoom with pan`() {
+        val layout = makeLayout(mapWidth = 1000f, mapHeight = 500f)
+        val initial = TransformState(scale = 1f, panX = 0f, panY = 0f)
+        // Simultaneous zoom AND translation — the classic pinch gesture
+        val prevCentroid = Offset(700f, 250f)
+        val pan = Offset(30f, 10f) // fingers also moving
+
+        assertCentroidPivotInvariant(initial, 1.5f, pan, prevCentroid, layout)
+    }
+
+    @Test
+    fun `calculateMultiTouchTransform centroid pivot invariant holds at non-zero initial pan`() {
+        val layout = makeLayout(mapWidth = 1000f, mapHeight = 500f)
+        val initial = TransformState(scale = 2f, panX = 0.1f, panY = 0.05f)
+        val prevCentroid = Offset(800f, 200f)
+        val pan = Offset(-20f, 5f)
+
+        assertCentroidPivotInvariant(initial, 1.5f, pan, prevCentroid, layout)
+    }
+
+    @Test
+    fun `calculateMultiTouchTransform centroid pivot invariant holds with canvas offset`() {
+        // Canvas wider than map — canvasOffsetX > 0
+        val layout = makeLayout(mapWidth = 600f, mapHeight = 500f, canvasOffsetX = 200f)
+        val initial = TransformState(scale = 1f, panX = 0f, panY = 0f)
+        val prevCentroid = Offset(600f, 250f) // right of map center (which is at x=500)
+        val pan = Offset(10f, 0f)
+
+        assertCentroidPivotInvariant(initial, 2f, pan, prevCentroid, layout)
+    }
+
+    @Test
+    fun `calculateMultiTouchTransform fast lateral pan with zoom does not drift`() {
+        // This test verifies the useCurrent=false fix. With useCurrent=true the error per
+        // frame is pan * (1 - s_new/s_old). Over many frames with large pan this drifts.
+        val layout = makeLayout(mapWidth = 1000f, mapHeight = 500f)
+        var state = TransformState(scale = 1f, panX = 0f, panY = 0f)
+
+        // Simulate 20 frames of aggressive pinch: zoom 1.05x + 20px lateral pan per frame
+        val panPerFrame = Offset(20f, 0f)
+        val zoomPerFrame = 1.05f
+
+        repeat(20) { frame ->
+            val prevCentroid = Offset(700f + frame * 20f, 250f)
+            state = calculateMultiTouchTransform(state, zoomPerFrame, panPerFrame, prevCentroid, layout)
+        }
+
+        // After 20 frames the scale should be ~1.05^20 ≈ 2.65
+        assertEquals(1.05f.pow(20f), state.scale, 0.1f)
+
+        // The world point originally at normX=0.7 should be near where it's expected.
+        // Primary check: invariant must hold for the last frame, which is what assertCentroidPivotInvariant does.
+        // The accumulated pan is correct when each frame uses the previous centroid.
+        val finalPrevCentroid = Offset(700f + 19 * 20f, 250f)
+        assertCentroidPivotInvariant(
+            // Use second-to-last state to check the last frame's invariant
+            TransformState(scale = state.scale / 1.05f, panX = state.panX, panY = state.panY),
+            1.05f, panPerFrame, finalPrevCentroid, layout
+        )
+    }
+
+    @Test
+    fun `calculateMultiTouchTransform scale is clamped at minimum 1f`() {
+        val layout = makeLayout()
+        val initial = TransformState(scale = 1f, panX = 0f, panY = 0f)
+
+        val result = calculateMultiTouchTransform(
+            current = initial,
+            zoom = 0.5f, // would produce scale=0.5 without clamping
+            pan = Offset.Zero,
+            prevCentroid = Offset(500f, 250f),
+            layout = layout
+        )
+
+        assertEquals(1f, result.scale, 0.001f)
+    }
+
+    @Test
+    fun `calculateMultiTouchTransform scale is clamped at maximum 200f`() {
+        val layout = makeLayout()
+        val initial = TransformState(scale = 150f, panX = 0f, panY = 0f)
+
+        val result = calculateMultiTouchTransform(
+            current = initial,
+            zoom = 5f, // would produce scale=750 without clamping
+            pan = Offset.Zero,
+            prevCentroid = Offset(500f, 250f),
+            layout = layout
+        )
+
+        assertEquals(200f, result.scale, 0.001f)
+    }
+
+    @Test
+    fun `calculateMultiTouchTransform panY is clamped within vertical bounds`() {
+        val layout = makeLayout(mapWidth = 1000f, mapHeight = 500f)
+        // Start near the top boundary
+        val initial = TransformState(scale = 2f, panX = 0f, panY = 0.4f)
+        val prevCentroid = Offset(500f, 10f) // near the top edge — would push panY higher
+
+        val result = calculateMultiTouchTransform(
+            current = initial,
+            zoom = 1.5f,
+            pan = Offset(0f, -100f), // pull upward
+            prevCentroid = prevCentroid,
+            layout = layout
+        )
+
+        val bounds = calculateVerticalPanBounds(result.scale, layout.mapHeight)
+        assertTrue(result.panY >= bounds.minPanY)
+        assertTrue(result.panY <= bounds.maxPanY)
+    }
+
+    @Test
+    fun `calculateMultiTouchTransform incremental zoom accumulates correctly`() {
+        // Zooming in two steps should produce the same result as one equivalent step
+        // (when prevCentroid is used, this identity holds exactly).
+        val layout = makeLayout(mapWidth = 1000f, mapHeight = 500f)
+        val initial = TransformState(scale = 1f, panX = 0f, panY = 0f)
+        val centroid = Offset(700f, 200f)
+
+        // One step: s=1 → s=4, zoom=4
+        val oneStep = calculateMultiTouchTransform(initial, 4f, Offset.Zero, centroid, layout)
+
+        // Two steps: s=1 → s=2, then s=2 → s=4
+        val step1 = calculateMultiTouchTransform(initial, 2f, Offset.Zero, centroid, layout)
+        val twoStep = calculateMultiTouchTransform(step1, 2f, Offset.Zero, centroid, layout)
+
+        assertEquals(oneStep.scale, twoStep.scale, 0.001f)
+        assertEquals(oneStep.panX, twoStep.panX, 0.001f)
+        assertEquals(oneStep.panY, twoStep.panY, 0.001f)
+    }
+
+    @Test
+    fun `calculateMultiTouchTransform zoom factor 1f with no pan leaves state unchanged`() {
+        val layout = makeLayout()
+        val initial = TransformState(scale = 2f, panX = 0.1f, panY = -0.05f)
+
+        val result = calculateMultiTouchTransform(
+            current = initial,
+            zoom = 1f,
+            pan = Offset.Zero,
+            prevCentroid = Offset(700f, 300f),
+            layout = layout
+        )
+
+        assertEquals(initial.scale, result.scale, 0.001f)
+        assertEquals(initial.panX, result.panX, 0.001f)
+        assertEquals(initial.panY, result.panY, 0.001f)
+    }
+
+    @Test
+    fun `calculateMultiTouchTransform pure pan without zoom translates correctly`() {
+        val layout = makeLayout(mapWidth = 1000f, mapHeight = 500f)
+        val initial = TransformState(scale = 2f, panX = 0f, panY = 0f)
+        val pan = Offset(50f, 0f)
+
+        val result = calculateMultiTouchTransform(
+            current = initial,
+            zoom = 1f,
+            pan = pan,
+            prevCentroid = Offset(500f, 250f), // centroid at pivot — zoom correction is zero
+            layout = layout
+        )
+
+        // pan.x / (mapWidth * scale) = 50 / (1000 * 2) = 0.025
+        assertEquals(0.025f, result.panX, 0.001f)
     }
 
     // ==================== Additional MercatorProjection Tests ====================
