@@ -15,6 +15,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculateCentroid
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.Arrangement
@@ -185,23 +186,42 @@ internal fun calculateMapLayout(canvasWidth: Float, canvasHeight: Float): MapLay
 }
 
 /**
- * Calculate new transform state for multi-touch zoom/pan gesture
+ * Calculate new transform state for multi-touch zoom/pan gesture.
+ *
+ * The canvas transform pivots scale around (canvasOffsetX + 0.5*mapWidth,
+ * canvasOffsetY + 0.5*mapHeight) — the canvas centre, not the pinch centroid.
+ * Without compensation, any zoom whose centroid differs from that pivot causes
+ * the map to drift toward the opposite corner.
+ *
+ * Fix: after computing the new scale, derive the pan adjustment that keeps the
+ * map point currently under [centroid] stationary on screen:
+ *
+ *   panX_new = panX_old + (centroid.x - pivotX) * (1/s_new - 1/s_old) / mapWidth
+ *
+ * where pivotX = canvasOffsetX + 0.5 * mapWidth.  The same formula applies for Y.
+ * The centroid-translation component ([pan]) is applied on top of this correction.
  */
 private fun calculateMultiTouchTransform(
     current: TransformState,
     zoom: Float,
     pan: Offset,
-    mapWidth: Float,
-    mapHeight: Float
+    centroid: Offset,
+    layout: MapLayout
 ): TransformState {
     val newScale = (current.scale * zoom).coerceIn(1f, 200f)
-    val verticalPanBounds = calculateVerticalPanBounds(
-        scale = newScale,
-        mapHeight = mapHeight
-    )
-    val newPanX = current.panX + pan.x / (mapWidth * newScale)
-    val newPanY = current.panY + pan.y / (mapHeight * newScale)
 
+    // Distance of the pinch centroid from the canvas scale-pivot in pixels.
+    val pivotX = centroid.x - layout.canvasOffsetX - 0.5f * layout.mapWidth
+    val pivotY = centroid.y - layout.canvasOffsetY - 0.5f * layout.mapHeight
+
+    // How much the inverse-scale changed; multiplying by the pivot offset gives the
+    // pan correction needed to keep the map point under the centroid stationary.
+    val scaleInvDelta = 1f / newScale - 1f / current.scale
+
+    val newPanX = current.panX + pivotX * scaleInvDelta / layout.mapWidth  + pan.x / (layout.mapWidth  * newScale)
+    val newPanY = current.panY + pivotY * scaleInvDelta / layout.mapHeight + pan.y / (layout.mapHeight * newScale)
+
+    val verticalPanBounds = calculateVerticalPanBounds(scale = newScale, mapHeight = layout.mapHeight)
     return TransformState(
         scale = newScale,
         panX = normalizeOffsetX(newPanX),
@@ -488,8 +508,8 @@ private fun handleMultiTouch(
             current = currentTransform(),
             zoom = event.calculateZoom(),
             pan = event.calculatePan(),
-            mapWidth = layout.mapWidth,
-            mapHeight = layout.mapHeight
+            centroid = event.calculateCentroid(),
+            layout = layout
         )
     )
     event.changes.forEach { it.consume() }
@@ -800,7 +820,8 @@ internal fun buildCountryNames(
             ?: countries[repoId]?.name
             ?: CountryList.countries.find { it.code.equals(repoId, ignoreCase = true) }
                 ?.getLocalizedName(locale)
-        if (name != null) put(geoId, name)
+            ?: return@forEach
+        put(geoId, name)
     }
 }
 

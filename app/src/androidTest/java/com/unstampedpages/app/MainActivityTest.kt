@@ -18,6 +18,12 @@ private const val WELCOME_TEXT = "Welcome, Explorer"
 private const val TRIP_LOG_TAB = "Trip Log"
 private const val MY_STAMPS_TAB = "My Stamps"
 
+private const val CHECKLIST_TAB = "Checklist"
+
+private const val COUNTRIES_TAB = "Countries"
+
+private const val HOME_TAB = "Home"
+
 /**
  * Instrumented integration tests for [MainActivity].
  *
@@ -83,21 +89,21 @@ class MainActivityTest {
     fun mainActivityBottomNavBarShowsHomeTab() {
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Home").assertIsDisplayed()
+        composeTestRule.onNodeWithText(HOME_TAB).assertIsDisplayed()
     }
 
     @Test
     fun mainActivityBottomNavBarShowsCountriesTab() {
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Countries").assertIsDisplayed()
+        composeTestRule.onNodeWithText(COUNTRIES_TAB).assertIsDisplayed()
     }
 
     @Test
     fun mainActivityBottomNavBarShowsChecklistTab() {
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Checklist").assertIsDisplayed()
+        composeTestRule.onNodeWithText(CHECKLIST_TAB).assertIsDisplayed()
     }
 
     @Test
@@ -118,15 +124,15 @@ class MainActivityTest {
     fun mainActivityHomeTabIsSelectedByDefault() {
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Home").assertIsSelected()
+        composeTestRule.onNodeWithText(HOME_TAB).assertIsSelected()
     }
 
     @Test
     fun mainActivityNonHomeTabsAreNotSelectedByDefault() {
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Countries").assertIsNotSelected()
-        composeTestRule.onNodeWithText("Checklist").assertIsNotSelected()
+        composeTestRule.onNodeWithText(COUNTRIES_TAB).assertIsNotSelected()
+        composeTestRule.onNodeWithText(CHECKLIST_TAB).assertIsNotSelected()
         composeTestRule.onNodeWithText(TRIP_LOG_TAB).assertIsNotSelected()
         composeTestRule.onNodeWithText(MY_STAMPS_TAB).assertIsNotSelected()
     }
@@ -139,7 +145,7 @@ class MainActivityTest {
     fun mainActivityClickingCountriesTabShowsCountriesScreen() {
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Countries").performClick()
+        composeTestRule.onNodeWithText(COUNTRIES_TAB).performClick()
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Tap a country to discover more").assertExists()
@@ -149,17 +155,17 @@ class MainActivityTest {
     fun mainActivityClickingCountriesTabSelectsCountriesTab() {
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Countries").performClick()
+        composeTestRule.onNodeWithText(COUNTRIES_TAB).performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Countries").assertIsSelected()
+        composeTestRule.onNodeWithText(COUNTRIES_TAB).assertIsSelected()
     }
 
     @Test
     fun mainActivityClickingChecklistTabShowsChecklistScreen() {
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Checklist").performClick()
+        composeTestRule.onNodeWithText(CHECKLIST_TAB).performClick()
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("TRAVEL CHECKLIST").assertExists()
@@ -169,10 +175,10 @@ class MainActivityTest {
     fun mainActivityClickingChecklistTabSelectsChecklistTab() {
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Checklist").performClick()
+        composeTestRule.onNodeWithText(CHECKLIST_TAB).performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Checklist").assertIsSelected()
+        composeTestRule.onNodeWithText(CHECKLIST_TAB).assertIsSelected()
     }
 
     @Test
@@ -182,7 +188,7 @@ class MainActivityTest {
         composeTestRule.onNodeWithText(TRIP_LOG_TAB).performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("TRIP LOG").assertExists()
+        composeTestRule.onNodeWithText(TRIP_LOG_TAB).assertExists()
     }
 
     @Test
@@ -218,10 +224,10 @@ class MainActivityTest {
     @Test
     fun mainActivityClickingHomeTabFromCountriesScreenReturnsToHomeScreen() {
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("Countries").performClick()
+        composeTestRule.onNodeWithText(COUNTRIES_TAB).performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Home").performClick()
+        composeTestRule.onNodeWithText(HOME_TAB).performClick()
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText(WELCOME_TEXT).assertIsDisplayed()
@@ -230,14 +236,14 @@ class MainActivityTest {
     @Test
     fun mainActivityClickingHomeTabFromCountriesScreenSelectsHomeTab() {
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("Countries").performClick()
+        composeTestRule.onNodeWithText(COUNTRIES_TAB).performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Home").performClick()
+        composeTestRule.onNodeWithText(HOME_TAB).performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Home").assertIsSelected()
-        composeTestRule.onNodeWithText("Countries").assertIsNotSelected()
+        composeTestRule.onNodeWithText(HOME_TAB).assertIsSelected()
+        composeTestRule.onNodeWithText(COUNTRIES_TAB).assertIsNotSelected()
     }
 
     /**
@@ -252,11 +258,11 @@ class MainActivityTest {
         data class Step(val label: String, val previousLabel: String)
 
         listOf(
-            Step("Countries", "Home"),
-            Step("Checklist", "Countries"),
-            Step(TRIP_LOG_TAB, "Checklist"),
+            Step(COUNTRIES_TAB, HOME_TAB),
+            Step(CHECKLIST_TAB, COUNTRIES_TAB),
+            Step(TRIP_LOG_TAB, CHECKLIST_TAB),
             Step(MY_STAMPS_TAB, TRIP_LOG_TAB),
-            Step("Home", MY_STAMPS_TAB)
+            Step(HOME_TAB, MY_STAMPS_TAB)
         ).forEach { (label, previous) ->
             composeTestRule.onNodeWithText(label).performClick()
             composeTestRule.waitForIdle()
@@ -288,13 +294,13 @@ class MainActivityTest {
     @Test
     fun mainActivityRecreationAfterNavigatingToChecklistDoesNotCrash() {
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("Checklist").performClick()
+        composeTestRule.onNodeWithText(CHECKLIST_TAB).performClick()
         composeTestRule.waitForIdle()
 
         composeTestRule.activityRule.scenario.recreate()
         composeTestRule.waitForIdle()
 
         // App remains usable after recreation regardless of which screen was active.
-        composeTestRule.onNodeWithText("Home").assertIsDisplayed()
+        composeTestRule.onNodeWithText(HOME_TAB).assertIsDisplayed()
     }
 }

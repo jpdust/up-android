@@ -32,7 +32,7 @@ jacoco {
 
 android {
     namespace = "com.unstampedpages.app"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.unstampedpages.app"

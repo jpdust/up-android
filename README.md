@@ -48,7 +48,7 @@ A travel companion app for Android that helps adventurers track countries visite
 
 | Tool | Version |
 |------|---------|
-| Java | 17 |
+| Java | 21 |
 | Android SDK (compile/target) | 36 |
 | Android SDK (minimum) | 26 (Android 8.0 Oreo) |
 | Gradle | 8.9.3 |
