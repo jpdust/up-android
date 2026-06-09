@@ -38,7 +38,7 @@ android {
         applicationId = "com.unstampedpages.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 202606083 // Set to the highest code in Play Console — workflow will increment from here
+        versionCode = 202606091 // Set to the highest code in Play Console — workflow will increment from here
         versionName = "1.0.1"
 
         val newRelicToken = System.getenv("NEW_RELIC_TOKEN")
