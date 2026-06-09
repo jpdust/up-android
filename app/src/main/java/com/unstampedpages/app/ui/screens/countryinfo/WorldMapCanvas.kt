@@ -170,14 +170,23 @@ internal fun calculateMapLayout(canvasWidth: Float, canvasHeight: Float): MapLay
             canvasHeight = canvasHeight
         )
     } else {
-        // Canvas is taller than map - fit to width, align to top
+        // Canvas is taller than map - fit to width, center vertically.
+        // Centering is required for correct pinch-to-zoom behaviour: the rendering
+        // pivot is (cx, cy) = (canvasOffsetX + 0.5·mapWidth,
+        //                      canvasOffsetY + 0.5·mapHeight).
+        // When canvasOffsetY = 0 the pivot sits at mapHeight/2 (top quarter of a
+        // tall phone screen).  Fingers placed in the visual centre of the canvas
+        // then land below the pivot, biasing every focal-point calculation toward
+        // the southern edge of the map.  Setting canvasOffsetY to half the
+        // remaining vertical space ensures cy == canvasHeight/2, so fingers at
+        // the canvas centre produce focalNormY == 0.5 (exact map centre).
         val mapWidth = canvasWidth
         val mapHeight = canvasWidth / mapAspectRatio
         MapLayout(
             mapWidth = mapWidth,
             mapHeight = mapHeight,
             canvasOffsetX = 0f,
-            canvasOffsetY = 0f,
+            canvasOffsetY = (canvasHeight - mapHeight) / 2,
             canvasWidth = canvasWidth,
             canvasHeight = canvasHeight
         )
@@ -185,30 +194,35 @@ internal fun calculateMapLayout(canvasWidth: Float, canvasHeight: Float): MapLay
 }
 
 /**
- * Calculate new transform state for a multi-touch zoom/pan gesture frame.
+ * Calculate new transform state for a multi-touch zoom/pan gesture frame using
+ * explicit focal-point tracking.
  *
- * The canvas scale-pivot is fixed at the map centre
- * (canvasOffsetX + 0.5·mapWidth, canvasOffsetY + 0.5·mapHeight).
- * To make the zoom appear to pivot around the pinch centroid, we compute a pan
- * correction that keeps the map point under [prevCentroid] stationary relative
- * to the fingers:
+ * Rendering equation (from the withTransform block in drawMapCopy):
+ *   screen_x = cx + scale · mapWidth  · (normX + panX − 0.5)
+ *   screen_y = cy + scale · mapHeight · (normY + panY − 0.5)
+ * where (cx, cy) = (canvasOffsetX + 0.5·mapWidth, canvasOffsetY + 0.5·mapHeight).
  *
- *   panX_new = panX_old
- *            + (prevCentroid.x − pivotX) · (1/s_new − 1/s_old) / mapWidth   ← zoom correction
- *            + pan.x / (s_new · mapWidth)                                     ← centroid translation
+ * The algorithm locks the map point currently under [prevCentroid] so that it
+ * appears at [prevCentroid] + [pan] (the new finger centroid) after the transform:
  *
- * Why [prevCentroid] and NOT the current centroid:
- *   [pan] = currentCentroid − prevCentroid (the centroid translation for this frame).
- *   Substituting currentCentroid = prevCentroid + pan into the zoom-correction term
- *   introduces an error of pan · (1 − s_new/s_old) per frame.  For fast lateral
- *   movement during a zoom this accumulates into tens of pixels of drift per second,
- *   making the pivot appear to stay at the map centre.  Using [prevCentroid] cancels
- *   the error exactly: the map point that was under prevCentroid ends up exactly under
- *   prevCentroid + pan (i.e. under the current finger position).
+ *   Step 1 — inverse-project prevCentroid to map-normalised coordinates:
+ *     focalNormX = (prevCentroid.x − cx) / (scale_old · mapWidth) − panX_old + 0.5
  *
- * @param prevCentroid  The centroid position at the PREVIOUS pointer event
+ *   Step 2 — target screen position = prevCentroid + pan (= calculatePan() result).
+ *
+ *   Step 3 — solve the rendering equation for the new pan values:
+ *     panX_new = (newCentroid.x − cx) / (scale_new · mapWidth) − focalNormX + 0.5
+ *
+ * Why [prevCentroid] (calculateCentroid(useCurrent = false)) and NOT the current
+ * centroid: pan = currentCentroid − prevCentroid.  The focal point in step 1 is
+ * found by inverse-projecting prevCentroid under the OLD scale.  Using the current
+ * centroid instead would mix old-scale and new-scale coordinates, introducing a
+ * per-frame error of pan · (1 − s_new/s_old) that drifts toward the map centre
+ * during aggressive lateral zoom gestures.
+ *
+ * @param prevCentroid  Centroid at the PREVIOUS pointer event
  *                      (calculateCentroid(useCurrent = false)).
- * @param pan           The centroid translation for this frame
+ * @param pan           Centroid translation this frame
  *                      (calculatePan() = currentCentroid − prevCentroid).
  */
 internal fun calculateMultiTouchTransform(
@@ -220,16 +234,21 @@ internal fun calculateMultiTouchTransform(
 ): TransformState {
     val newScale = (current.scale * zoom).coerceIn(1f, 200f)
 
-    // Displacement of prevCentroid from the canvas scale-pivot in pixels.
-    val pivotX = prevCentroid.x - layout.canvasOffsetX - 0.5f * layout.mapWidth
-    val pivotY = prevCentroid.y - layout.canvasOffsetY - 0.5f * layout.mapHeight
+    // Canvas centre — the fixed pivot of the withTransform scale operation.
+    val cx = layout.canvasOffsetX + 0.5f * layout.mapWidth
+    val cy = layout.canvasOffsetY + 0.5f * layout.mapHeight
 
-    // Δ(1/scale): multiplying by the pivot displacement gives the pan correction
-    // needed to keep the map point under prevCentroid stationary under the fingers.
-    val scaleInvDelta = 1f / newScale - 1f / current.scale
+    // Step 1: inverse-project prevCentroid to find the focal point in map space.
+    val focalNormX = (prevCentroid.x - cx) / (current.scale * layout.mapWidth)  - current.panX + 0.5f
+    val focalNormY = (prevCentroid.y - cy) / (current.scale * layout.mapHeight) - current.panY + 0.5f
 
-    val newPanX = current.panX + pivotX * scaleInvDelta / layout.mapWidth  + pan.x / (layout.mapWidth  * newScale)
-    val newPanY = current.panY + pivotY * scaleInvDelta / layout.mapHeight + pan.y / (layout.mapHeight * newScale)
+    // Step 2: the focal point must appear at prevCentroid + pan under the new scale.
+    val newCentroidX = prevCentroid.x + pan.x
+    val newCentroidY = prevCentroid.y + pan.y
+
+    // Step 3: solve rendering equation for new pan.
+    val newPanX = (newCentroidX - cx) / (newScale * layout.mapWidth)  - focalNormX + 0.5f
+    val newPanY = (newCentroidY - cy) / (newScale * layout.mapHeight) - focalNormY + 0.5f
 
     val verticalPanBounds = calculateVerticalPanBounds(scale = newScale, mapHeight = layout.mapHeight)
     return TransformState(

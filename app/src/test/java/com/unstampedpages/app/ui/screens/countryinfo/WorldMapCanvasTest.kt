@@ -3517,7 +3517,7 @@ class CalculateMapLayoutTest {
     }
 
     @Test
-    fun `tall canvas fits to width and aligns to top`() {
+    fun `tall canvas fits to width and centers vertically`() {
         // Make canvas much taller than the map aspect ratio so it takes the "fit to width" branch.
         val canvasWidth = 400f
         val canvasHeight = 2000f
@@ -3525,11 +3525,12 @@ class CalculateMapLayoutTest {
 
         val expectedMapWidth = canvasWidth
         val expectedMapHeight = canvasWidth / mapAspectRatio
+        val expectedCanvasOffsetY = (canvasHeight - expectedMapHeight) / 2
 
         assertEquals(expectedMapWidth, layout.mapWidth, 0.01f)
         assertEquals(expectedMapHeight, layout.mapHeight, 0.01f)
         assertEquals(0f, layout.canvasOffsetX, 0.01f)
-        assertEquals(0f, layout.canvasOffsetY, 0.01f)
+        assertEquals(expectedCanvasOffsetY, layout.canvasOffsetY, 0.01f)
         assertEquals(canvasWidth, layout.canvasWidth, 0.01f)
         assertEquals(canvasHeight, layout.canvasHeight, 0.01f)
     }
@@ -3572,10 +3573,51 @@ class CalculateMapLayoutTest {
     }
 
     @Test
-    fun `canvasOffsetY is always zero`() {
+    fun `canvasOffsetY is zero for wide canvas (map fills full height)`() {
+        // Wide canvas: map is fit-to-height, so no vertical gap.
         assertEquals(0f, calculateMapLayout(1920f, 600f).canvasOffsetY, 0.001f)
-        assertEquals(0f, calculateMapLayout(600f, 1920f).canvasOffsetY, 0.001f)
-        assertEquals(0f, calculateMapLayout(800f, 800f).canvasOffsetY, 0.001f)
+    }
+
+    @Test
+    fun `canvasOffsetY centers map vertically for tall canvas`() {
+        // Tall canvas: map is fit-to-width, canvasOffsetY = (canvasHeight - mapHeight) / 2.
+        val layout600x1920 = calculateMapLayout(600f, 1920f)
+        val expectedOffsetY = (1920f - layout600x1920.mapHeight) / 2f
+        assertEquals(expectedOffsetY, layout600x1920.canvasOffsetY, 0.001f)
+        // The map centre (cy) must equal the canvas centre.
+        val cy = layout600x1920.canvasOffsetY + 0.5f * layout600x1920.mapHeight
+        assertEquals(1920f / 2f, cy, 0.001f)
+
+        val layout800x800 = calculateMapLayout(800f, 800f)
+        val expectedOffsetY800 = (800f - layout800x800.mapHeight) / 2f
+        assertEquals(expectedOffsetY800, layout800x800.canvasOffsetY, 0.001f)
+        val cy800 = layout800x800.canvasOffsetY + 0.5f * layout800x800.mapHeight
+        assertEquals(800f / 2f, cy800, 0.001f)
+    }
+
+    @Test
+    fun `tall canvas zoom at canvas centre produces focalNormY of 0_5`() {
+        // Regression test: fingers at the canvas centre must produce a focal point
+        // at the map centre (normY = 0.5), not the southern hemisphere.
+        val canvasWidth = 1080f
+        val canvasHeight = 1920f
+        val layout = calculateMapLayout(canvasWidth, canvasHeight)
+
+        val cy = layout.canvasOffsetY + 0.5f * layout.mapHeight
+        assertEquals(canvasHeight / 2f, cy, 0.1f)
+
+        // Simulate fingers at canvas centre with no existing pan.
+        val state = TransformState(scale = 1f, panX = 0f, panY = 0f)
+        val prevCentroid = Offset(canvasWidth / 2f, canvasHeight / 2f)
+        val result = calculateMultiTouchTransform(
+            current = state,
+            zoom = 2f,
+            pan = Offset.Zero,
+            prevCentroid = prevCentroid,
+            layout = layout
+        )
+        // With correct vertical centring, panY after zoom must remain ~0 (map centre fixed).
+        assertEquals(0f, result.panY, 0.001f)
     }
 }
 
