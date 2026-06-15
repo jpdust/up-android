@@ -10,11 +10,11 @@ import androidx.compose.ui.Modifier
 import com.unstampedpages.app.data.repository.CountryGeometryData
 import com.unstampedpages.app.ui.theme.UnstampedPagesTheme
 import com.newrelic.agent.android.NewRelic
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        NewRelic.withApplicationToken(
-            BuildConfig.NEW_RELIC_TOKEN
-        ).start(this.applicationContext)
+        NewRelic.withApplicationToken(BuildConfig.NEW_RELIC_TOKEN)
+            .start(this.applicationContext)
 
         super.onCreate(savedInstanceState)
 

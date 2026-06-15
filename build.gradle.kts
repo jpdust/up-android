@@ -5,7 +5,7 @@ buildscript {
     }
 
     dependencies {
-        classpath("com.newrelic.agent.android:agent-gradle-plugin:7.7.6")
+        classpath("com.newrelic.agent.android:agent-gradle-plugin:7.7.5")
     }
 }
 

@@ -37,18 +37,18 @@ fun BottomNavBar(
                 selected = selected,
                 onClick = {
                     if (currentRoute != item.route) {
-                        if (item.route == NavRoute.CountryInfo.route) {
-                            NewRelic.recordCustomEvent(
-                                "TabNavigation",
-                                mapOf("tab" to "Countries")
-                            )
-                        }
                         navController.navigate(item.route) {
                             popUpTo(navController.graph.startDestinationId) {
                                 saveState = true
                             }
                             launchSingleTop = true
                             restoreState = true
+                        }
+                        if (item.route == NavRoute.CountryInfo.route) {
+                            NewRelic.recordCustomEvent(
+                                "TabNavigation",
+                                mapOf("tab" to "Countries")
+                            )
                         }
                     }
                 },
