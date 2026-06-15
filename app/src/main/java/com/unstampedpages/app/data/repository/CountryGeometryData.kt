@@ -8,6 +8,7 @@ import com.unstampedpages.app.util.GeoJsonParser
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -37,10 +38,13 @@ object CountryGeometryData {
     /** Compose-observable flag: true once both geometry datasets have been loaded. */
     val isLoaded = mutableStateOf(false)
 
+    private var loadingJob: Job? = null
+
     /**
      * Asynchronously load both geometry datasets on an IO thread.
      * Should be called once at app startup (e.g., from MainActivity.onCreate).
-     * Safe to call multiple times; subsequent calls are no-ops.
+     * Safe to call multiple times; subsequent calls are no-ops if loading is
+     * already complete or in progress.
      *
      * Each dataset is read from its binary cache if available, otherwise parsed from
      * the bundled GeoJSON and written to the cache for subsequent launches.
@@ -50,8 +54,8 @@ object CountryGeometryData {
         ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
         mainDispatcher: CoroutineDispatcher = Dispatchers.Main
     ) {
-        if (isLoaded.value) return
-        CoroutineScope(ioDispatcher).launch {
+        if (isLoaded.value || loadingJob?.isActive == true) return
+        loadingJob = CoroutineScope(ioDispatcher).launch {
             val appContext = context.applicationContext
 
             // Parse both datasets concurrently.
