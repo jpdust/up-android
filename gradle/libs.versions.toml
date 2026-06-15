@@ -20,7 +20,7 @@ test-rules = "1.7.0"
 test-core = "1.7.0"
 espresso = "3.7.0"
 browser = "1.10.0"
-newrelic = "7.7.5"
+newrelic = "7.7.6"
 robolectric = "4.16.1"
 
 [libraries]
