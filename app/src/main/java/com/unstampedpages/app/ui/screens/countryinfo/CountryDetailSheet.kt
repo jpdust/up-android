@@ -2,6 +2,7 @@ package com.unstampedpages.app.ui.screens.countryinfo
 
 import android.content.Context
 import androidx.core.net.toUri
+import com.unstampedpages.app.util.CurrencySymbols
 import androidx.browser.customtabs.CustomTabColorSchemeParams
 import androidx.core.graphics.toColorInt
 import androidx.browser.customtabs.CustomTabsIntent
@@ -181,7 +182,9 @@ fun CountryDetailSheet(
 
                             // Currency
                             InfoRow(
-                                icon = Icons.Default.AttachMoney,
+                                iconContent = {
+                                    CurrencySymbolIcon(it.currencyCode)
+                                },
                                 label = stringResource(R.string.country_currency),
                                 value = "${it.currency} (${it.currencyCode})",
                                 testTag = "info_currency"
@@ -404,18 +407,42 @@ private fun InfoRow(
     valueColor: Color = MaterialTheme.colorScheme.onSurface,
     testTag: String = ""
 ) {
+    InfoRow(
+        iconContent = {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = Secondary,
+                modifier = Modifier.size(24.dp)
+            )
+        },
+        label = label,
+        value = value,
+        valueColor = valueColor,
+        testTag = testTag
+    )
+}
+
+@Composable
+private fun InfoRow(
+    iconContent: @Composable () -> Unit,
+    label: String,
+    value: String,
+    valueColor: Color = MaterialTheme.colorScheme.onSurface,
+    testTag: String = ""
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .testTag(testTag),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = Secondary,
-            modifier = Modifier.size(24.dp)
-        )
+        Box(
+            modifier = Modifier.size(24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            iconContent()
+        }
 
         Spacer(modifier = Modifier.width(12.dp))
 
@@ -434,6 +461,16 @@ private fun InfoRow(
             )
         }
     }
+}
+
+@Composable
+private fun CurrencySymbolIcon(currencyCode: String) {
+    Text(
+        text = CurrencySymbols.getSymbol(currencyCode),
+        color = Secondary,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold
+    )
 }
 
 @Composable
