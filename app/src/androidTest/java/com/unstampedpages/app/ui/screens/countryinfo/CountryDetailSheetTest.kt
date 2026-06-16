@@ -2743,4 +2743,71 @@ class CountryDetailSheetTest {
             }
     }
 
+    // ============================================================
+    // Currency Symbol Display Tests
+    // ============================================================
+
+    @Test
+    fun currencySymbol_gbp_showsPoundSign() {
+        launchSheet(country(currencyCode = "GBP", currency = "British Pound", exchangeRateToUSD = 1.27))
+        composeTestRule.onNodeWithTag("info_currency_symbol").assertTextEquals("£")
+        composeTestRule.onNodeWithTag("info_currency_value").assertTextContains("British Pound (GBP)")
+    }
+
+    @Test
+    fun currencySymbol_eur_showsEuroSign() {
+        launchSheet(country(currencyCode = "EUR", currency = "Euro", exchangeRateToUSD = 1.08))
+        composeTestRule.onNodeWithTag("info_currency_symbol").assertTextEquals("€")
+        composeTestRule.onNodeWithTag("info_currency_value").assertTextContains("Euro (EUR)")
+    }
+
+    @Test
+    fun currencySymbol_jpy_showsYenSign() {
+        launchSheet(country(currencyCode = "JPY", currency = "Japanese Yen", exchangeRateToUSD = 0.0067))
+        composeTestRule.onNodeWithTag("info_currency_symbol").assertTextEquals("¥")
+        composeTestRule.onNodeWithTag("info_currency_value").assertTextContains("Japanese Yen (JPY)")
+    }
+
+    @Test
+    fun currencySymbol_usd_showsDollarSign() {
+        launchSheet(country(currencyCode = "USD", currency = CURRENCY_US_DOLLAR, exchangeRateToUSD = 1.0))
+        composeTestRule.onNodeWithTag("info_currency_symbol").assertTextEquals("$")
+        composeTestRule.onNodeWithTag("info_currency_value").assertTextContains("US Dollar (USD)")
+    }
+
+    @Test
+    fun currencySymbol_inr_showsRupeeSign() {
+        launchSheet(country(currencyCode = "INR", currency = "Indian Rupee", exchangeRateToUSD = 0.012))
+        composeTestRule.onNodeWithTag("info_currency_symbol").assertTextEquals("₹")
+        composeTestRule.onNodeWithTag("info_currency_value").assertTextContains("Indian Rupee (INR)")
+    }
+
+    @Test
+    fun currencySymbol_krw_showsWonSign() {
+        launchSheet(country(currencyCode = "KRW", currency = "South Korean Won", exchangeRateToUSD = 0.00073))
+        composeTestRule.onNodeWithTag("info_currency_symbol").assertTextEquals("₩")
+        composeTestRule.onNodeWithTag("info_currency_value").assertTextContains("South Korean Won (KRW)")
+    }
+
+    @Test
+    fun currencySymbol_brl_showsRealSign() {
+        launchSheet(country(currencyCode = "BRL", currency = "Brazilian Real", exchangeRateToUSD = 0.20))
+        composeTestRule.onNodeWithTag("info_currency_symbol").assertTextEquals("R$")
+        composeTestRule.onNodeWithTag("info_currency_value").assertTextContains("Brazilian Real (BRL)")
+    }
+
+    @Test
+    fun currencySymbol_try_showsTurkishLiraSign() {
+        launchSheet(country(currencyCode = "TRY", currency = "Turkish Lira", exchangeRateToUSD = 0.031))
+        composeTestRule.onNodeWithTag("info_currency_symbol").assertTextEquals("₺")
+        composeTestRule.onNodeWithTag("info_currency_value").assertTextContains("Turkish Lira (TRY)")
+    }
+
+    @Test
+    fun currencySymbol_unknown_fallbackToDollarSign() {
+        launchSheet(country(currencyCode = "XYZ", currency = "Unknown Currency", exchangeRateToUSD = 1.0))
+        composeTestRule.onNodeWithTag("info_currency_symbol").assertTextEquals("$")
+        composeTestRule.onNodeWithTag("info_currency_value").assertTextContains("Unknown Currency (XYZ)")
+    }
+
 }
