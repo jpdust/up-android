@@ -469,7 +469,8 @@ private fun CurrencySymbolIcon(currencyCode: String) {
         text = CurrencySymbols.getSymbol(currencyCode),
         color = Secondary,
         style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.testTag("info_currency_symbol")
     )
 }
 
