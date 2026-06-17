@@ -502,10 +502,11 @@ internal class MapGestureState(
     var countryBounds: Map<String, CountryBounds> = emptyMap(),
     var currentScale: Float = 1f,
     // Stored here so mapGestures can use pointerInput(Unit) and avoid restarting
-    // the gesture coroutine on every color mode toggle or locale change.
+    // the gesture coroutine on every color mode toggle, locale change, or callback update.
     var colorMode: MapColorMode = MapColorMode.DEFAULT,
     var onCompassTapped: () -> Unit = {},
     var currentLocale: java.util.Locale = java.util.Locale.getDefault(),
+    var gestureCallbacks: MapGestureCallbacks = MapGestureCallbacks(),
     // Forward rendering matrix (captured from nativeCanvas inside withTransform for wrapOffset=0).
     // Used by drawCountryLabels to position labels in the same coordinate space as the polygons,
     // bypassing any analytic formula that might mis-model the scale pivot or compose order.
@@ -725,7 +726,6 @@ private fun Modifier.mapGestures(
     onTransformChange: (TransformState) -> Unit,
     onCountryTapped: (String?, String?) -> Unit,
     tapConfig: TapConfig,
-    gestureCallbacks: MapGestureCallbacks = MapGestureCallbacks()
 ): Modifier = this.pointerInput(Unit) {
     var tapJob: Job? = null
     awaitEachGesture {
@@ -743,7 +743,8 @@ private fun Modifier.mapGestures(
         if (accumulator.wasDragged) {
             dispatchGestureEnd(
                 accumulator.wasMultiTouch, initialScale, currentTransform().scale,
-                accumulator.accumulatedPanX, accumulator.accumulatedPanY, gestureCallbacks
+                accumulator.accumulatedPanX, accumulator.accumulatedPanY,
+                gestureState.gestureCallbacks
             )
         } else {
             tapJob = dispatchTap(downPosition, gestureState, tapJob, tapConfig, onCountryTapped)
@@ -1619,6 +1620,7 @@ fun WorldMapCanvas(
     gestureState.colorMode = colorMode
     gestureState.onCompassTapped = legendConfig.onCompassTapped
     gestureState.currentLocale = currentLocale
+    gestureState.gestureCallbacks = gestureCallbacks
 
     // Separate path caches per resolution — both use countryId as key, so they must
     // not share a cache or they'd collide when the same ID maps to different geometry.
@@ -1787,7 +1789,6 @@ fun WorldMapCanvas(
                     onTransformChange = { transform = it },
                     onCountryTapped = onCountryTapped,
                     tapConfig = TapConfig(scope = tapScope),
-                    gestureCallbacks = gestureCallbacks
                 )
         )
 
