@@ -159,6 +159,8 @@ dependencies {
     testImplementation(libs.mockito.core)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core.ktx)
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.compose.bom))

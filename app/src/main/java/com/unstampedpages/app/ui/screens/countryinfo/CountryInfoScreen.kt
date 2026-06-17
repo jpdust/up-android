@@ -52,6 +52,8 @@ import com.unstampedpages.app.R
 import com.unstampedpages.app.data.model.Country
 import com.unstampedpages.app.data.repository.CountryGeometryData
 import com.unstampedpages.app.ui.theme.Primary
+import androidx.compose.ui.focus.onFocusChanged
+import com.unstampedpages.app.analytics.AppAnalytics
 import com.unstampedpages.app.ui.theme.Secondary
 
 @Composable
@@ -108,7 +110,8 @@ fun CountryInfoScreen(
                 onClearSearch = {
                     viewModel.clearSearch()
                     focusManager.clearFocus()
-                }
+                },
+                onFocused = { AppAnalytics.trackCountrySearchFocused() }
             )
 
             // World Map
@@ -126,14 +129,30 @@ fun CountryInfoScreen(
                             focusManager.clearFocus()
                             viewModel.clearSearch()
                             showSheet = true
+                            val countryName = countriesMap[it]?.name ?: it
+                            AppAnalytics.trackCountrySelected(it, countryName, AppAnalytics.SOURCE_MAP)
                         }
                     },
                     colorMode = selectedColorMode,
                     countries = countriesMap,
                     legendConfig = MapLegendConfig(
                         showLegend = showLegend,
-                        onCompassTapped = { showLegend = true },
-                        onLegendClose = { showLegend = false }
+                        onCompassTapped = {
+                            showLegend = true
+                            AppAnalytics.trackMapLegendOpened()
+                        },
+                        onLegendClose = {
+                            showLegend = false
+                            AppAnalytics.trackMapLegendClosed()
+                        }
+                    ),
+                    gestureCallbacks = MapGestureCallbacks(
+                        onZoomGestureEnd = { zoomedIn, zoomLevel ->
+                            AppAnalytics.trackMapZoomed(zoomedIn, zoomLevel)
+                        },
+                        onPanGestureEnd = { direction ->
+                            AppAnalytics.trackMapPanned(direction)
+                        }
                     ),
                     modifier = Modifier
                         .fillMaxSize()
@@ -174,7 +193,10 @@ fun CountryInfoScreen(
             // Map Color Mode Selection
             MapColorModeSelector(
                 selectedMode = selectedColorMode,
-                onModeSelected = { selectedColorMode = it },
+                onModeSelected = { mode ->
+                    selectedColorMode = mode
+                    trackMapColorModeSelected(mode)
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 4.dp)
@@ -191,6 +213,11 @@ fun CountryInfoScreen(
                 viewModel.clearSearch()
                 focusManager.clearFocus()
                 showSheet = true
+                AppAnalytics.trackCountrySelected(
+                    suggestion.country.id,
+                    suggestion.country.name,
+                    AppAnalytics.SOURCE_SEARCH
+                )
             }
         )
 
@@ -202,8 +229,48 @@ fun CountryInfoScreen(
             onDismiss = {
                 showSheet = false
                 viewModel.clearSelection()
-            }
+            },
+            analytics = CountrySheetAnalytics(
+                onDismissed = {
+                    displayedCountry?.let { c ->
+                        AppAnalytics.trackCountryDetailDismissed(c.id, c.name)
+                    }
+                },
+                onUsAdvisoryTapped = {
+                    displayedCountry?.let { c -> AppAnalytics.trackUsAdvisoryOpened(c.id, c.name) }
+                },
+                onUkAdvisoryTapped = {
+                    displayedCountry?.let { c -> AppAnalytics.trackUkAdvisoryOpened(c.id, c.name) }
+                },
+                onCaAdvisoryTapped = {
+                    displayedCountry?.let { c -> AppAnalytics.trackCaAdvisoryOpened(c.id, c.name) }
+                },
+                onAuAdvisoryTapped = {
+                    displayedCountry?.let { c -> AppAnalytics.trackAuAdvisoryOpened(c.id, c.name) }
+                },
+                onUsdFocused = {
+                    displayedCountry?.let { c ->
+                        AppAnalytics.trackUsdChanged(c.id, c.name, c.currencyCode)
+                    }
+                },
+                onForeignFocused = {
+                    displayedCountry?.let { c ->
+                        AppAnalytics.trackForeignChanged(c.id, c.name, c.currencyCode)
+                    }
+                }
+            )
         )
+    }
+}
+
+internal fun trackMapColorModeSelected(mode: MapColorMode) {
+    when (mode) {
+        MapColorMode.DEFAULT           -> AppAnalytics.trackDefaultFilterSelected()
+        MapColorMode.SECURITY_RISK     -> AppAnalytics.trackSecurityRiskFilterSelected()
+        MapColorMode.VISA_REQUIREMENTS -> AppAnalytics.trackVisaRequirementsFilterSelected()
+        MapColorMode.PASSPORT_VALIDITY -> AppAnalytics.trackPassportValidityFilterSelected()
+        MapColorMode.YELLOW_FEVER      -> AppAnalytics.trackYellowFeverFilterSelected()
+        MapColorMode.MALARIA           -> AppAnalytics.trackMalariaFilterSelected()
     }
 }
 
@@ -224,7 +291,8 @@ private fun LockOrientationPortrait() {
 private fun CountrySearchBar(
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
-    onClearSearch: () -> Unit
+    onClearSearch: () -> Unit,
+    onFocused: () -> Unit = {}
 ) {
     OutlinedTextField(
         value = searchQuery,
@@ -268,6 +336,7 @@ private fun CountrySearchBar(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp)
             .testTag("search_bar")
+            .onFocusChanged { if (it.isFocused) onFocused() }
     )
 }
 

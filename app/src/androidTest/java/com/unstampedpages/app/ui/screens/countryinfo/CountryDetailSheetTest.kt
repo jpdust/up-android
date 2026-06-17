@@ -11,6 +11,7 @@ import com.unstampedpages.app.data.model.SafetyLevel
 import com.unstampedpages.app.data.model.TravelAdvisories
 import com.unstampedpages.app.data.model.VisaRequirement
 import com.unstampedpages.app.ui.theme.UnstampedPagesTheme
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -2808,6 +2809,340 @@ class CountryDetailSheetTest {
         launchSheet(country(currencyCode = "XYZ", currency = "Unknown Currency", exchangeRateToUSD = 1.0))
         composeTestRule.onNodeWithTag("info_currency_symbol").assertTextEquals("$")
         composeTestRule.onNodeWithTag("info_currency_value").assertTextContains("Unknown Currency (XYZ)")
+    }
+
+    // ============================================================
+    // Currency converter analytics callbacks
+    // ============================================================
+
+    @Test
+    fun currencyConverter_usdFieldFocus_firesOnUsdFocusedCallback() {
+        var usdFocusFired = false
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country(currencyCode = "EUR", currency = "Euro", exchangeRateToUSD = 1.08),
+                    visible = true,
+                    onDismiss = {},
+                    analytics = CountrySheetAnalytics(onUsdFocused = { usdFocusFired = true })
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag("currency_input_usd").performClick()
+        composeTestRule.waitForIdle()
+
+        assertTrue("onUsdFocused callback should fire when USD field is focused", usdFocusFired)
+    }
+
+    @Test
+    fun currencyConverter_foreignFieldFocus_firesOnForeignFocusedCallback() {
+        var foreignFocusFired = false
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country(currencyCode = "EUR", currency = "Euro", exchangeRateToUSD = 1.08),
+                    visible = true,
+                    onDismiss = {},
+                    analytics = CountrySheetAnalytics(onForeignFocused = { foreignFocusFired = true })
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag("currency_input_foreign").performClick()
+        composeTestRule.waitForIdle()
+
+        assertTrue("onForeignFocused callback should fire when foreign field is focused", foreignFocusFired)
+    }
+
+    @Test
+    fun currencyConverter_usdFieldFocus_doesNotFireForeignCallback() {
+        var foreignFocusFired = false
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country(currencyCode = "GBP", currency = "British Pound", exchangeRateToUSD = 1.27),
+                    visible = true,
+                    onDismiss = {},
+                    analytics = CountrySheetAnalytics(onForeignFocused = { foreignFocusFired = true })
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag("currency_input_usd").performClick()
+        composeTestRule.waitForIdle()
+
+        assertFalse(
+            "onForeignFocused should not fire when USD field is focused",
+            foreignFocusFired
+        )
+    }
+
+    @Test
+    fun currencyConverter_foreignFieldFocus_doesNotFireUsdCallback() {
+        var usdFocusFired = false
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country(currencyCode = "GBP", currency = "British Pound", exchangeRateToUSD = 1.27),
+                    visible = true,
+                    onDismiss = {},
+                    analytics = CountrySheetAnalytics(onUsdFocused = { usdFocusFired = true })
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag("currency_input_foreign").performClick()
+        composeTestRule.waitForIdle()
+
+        assertFalse(
+            "onUsdFocused should not fire when foreign field is focused",
+            usdFocusFired
+        )
+    }
+
+    @Test
+    fun currencyConverter_usdCountry_neitherCallbackFires() {
+        var usdFocusFired = false
+        var foreignFocusFired = false
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country(currencyCode = "USD", currency = "US Dollar", exchangeRateToUSD = 1.0),
+                    visible = true,
+                    onDismiss = {},
+                    analytics = CountrySheetAnalytics(
+                        onUsdFocused = { usdFocusFired = true },
+                        onForeignFocused = { foreignFocusFired = true }
+                    )
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        // Currency converter is hidden for USD countries — neither input exists
+        composeTestRule.onNodeWithTag("currency_input_usd").assertDoesNotExist()
+        composeTestRule.onNodeWithTag("currency_input_foreign").assertDoesNotExist()
+
+        assertFalse("onUsdFocused should not fire for USD countries", usdFocusFired)
+        assertFalse("onForeignFocused should not fire for USD countries", foreignFocusFired)
+    }
+
+    // ============================================================
+    // Advisory chip analytics callbacks
+    // ============================================================
+
+    private fun countryWithAdvisories() = country(
+        travelAdvisories = TravelAdvisories(
+            us = "https://travel.state.gov",
+            uk = "https://gov.uk",
+            au = "https://smartraveller.gov.au",
+            ca = "https://travel.gc.ca"
+        )
+    )
+
+    @Test
+    fun advisoryChip_us_tap_firesOnUsAdvisoryTappedCallback() {
+        var fired = false
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = countryWithAdvisories(),
+                    visible = true,
+                    onDismiss = {},
+                    analytics = CountrySheetAnalytics(onUsAdvisoryTapped = { fired = true })
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag("advisory_chip_us").performClick()
+        composeTestRule.waitForIdle()
+
+        assertTrue("onUsAdvisoryTapped should fire when US chip is tapped", fired)
+    }
+
+    @Test
+    fun advisoryChip_uk_tap_firesOnUkAdvisoryTappedCallback() {
+        var fired = false
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = countryWithAdvisories(),
+                    visible = true,
+                    onDismiss = {},
+                    analytics = CountrySheetAnalytics(onUkAdvisoryTapped = { fired = true })
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag("advisory_chip_uk").performClick()
+        composeTestRule.waitForIdle()
+
+        assertTrue("onUkAdvisoryTapped should fire when UK chip is tapped", fired)
+    }
+
+    @Test
+    fun advisoryChip_ca_tap_firesOnCaAdvisoryTappedCallback() {
+        var fired = false
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = countryWithAdvisories(),
+                    visible = true,
+                    onDismiss = {},
+                    analytics = CountrySheetAnalytics(onCaAdvisoryTapped = { fired = true })
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag("advisory_chip_ca").performClick()
+        composeTestRule.waitForIdle()
+
+        assertTrue("onCaAdvisoryTapped should fire when CA chip is tapped", fired)
+    }
+
+    @Test
+    fun advisoryChip_au_tap_firesOnAuAdvisoryTappedCallback() {
+        var fired = false
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = countryWithAdvisories(),
+                    visible = true,
+                    onDismiss = {},
+                    analytics = CountrySheetAnalytics(onAuAdvisoryTapped = { fired = true })
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag("advisory_chip_au").performClick()
+        composeTestRule.waitForIdle()
+
+        assertTrue("onAuAdvisoryTapped should fire when AU chip is tapped", fired)
+    }
+
+    @Test
+    fun advisoryChip_us_tap_doesNotFireOtherAdvisoryCallbacks() {
+        var ukFired = false
+        var caFired = false
+        var auFired = false
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = countryWithAdvisories(),
+                    visible = true,
+                    onDismiss = {},
+                    analytics = CountrySheetAnalytics(
+                        onUkAdvisoryTapped = { ukFired = true },
+                        onCaAdvisoryTapped = { caFired = true },
+                        onAuAdvisoryTapped = { auFired = true }
+                    )
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag("advisory_chip_us").performClick()
+        composeTestRule.waitForIdle()
+
+        assertFalse("onUkAdvisoryTapped should not fire when US chip is tapped", ukFired)
+        assertFalse("onCaAdvisoryTapped should not fire when US chip is tapped", caFired)
+        assertFalse("onAuAdvisoryTapped should not fire when US chip is tapped", auFired)
+    }
+
+    // ============================================================
+    // Dismiss analytics callback (onDismissed)
+    // ============================================================
+
+    @Test
+    fun countryDetailSheet_closeButton_firesOnDismissedCallback() {
+        var dismissedFired = false
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country(),
+                    visible = true,
+                    onDismiss = {},
+                    analytics = CountrySheetAnalytics(onDismissed = { dismissedFired = true })
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag("bottom_sheet_close_button").performClick()
+        composeTestRule.waitForIdle()
+
+        assertTrue("onDismissed should fire when close button is tapped", dismissedFired)
+    }
+
+    @Test
+    fun countryDetailSheet_scrimTap_firesOnDismissedCallback() {
+        var dismissedFired = false
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country(),
+                    visible = true,
+                    onDismiss = {},
+                    analytics = CountrySheetAnalytics(onDismissed = { dismissedFired = true })
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag("bottom_sheet_scrim").performTouchInput {
+            click(Offset(width / 2f, height * 0.1f))
+        }
+        composeTestRule.waitForIdle()
+
+        assertTrue("onDismissed should fire when scrim is tapped", dismissedFired)
+    }
+
+    @Test
+    fun countryDetailSheet_dismissed_firesBeforeOnDismiss() {
+        val callOrder = mutableListOf<String>()
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryDetailSheet(
+                    country = country(),
+                    visible = true,
+                    onDismiss = { callOrder.add("onDismiss") },
+                    analytics = CountrySheetAnalytics(onDismissed = { callOrder.add("onDismissed") })
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag("bottom_sheet_close_button").performClick()
+        composeTestRule.waitForIdle()
+
+        assertTrue("onDismissed should be called", callOrder.contains("onDismissed"))
+        assertTrue("onDismiss should be called", callOrder.contains("onDismiss"))
+        assertTrue(
+            "onDismissed must fire before onDismiss",
+            callOrder.indexOf("onDismissed") < callOrder.indexOf("onDismiss")
+        )
     }
 
 }
