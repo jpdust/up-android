@@ -146,12 +146,14 @@ fun CountryInfoScreen(
                             AppAnalytics.trackMapLegendClosed()
                         }
                     ),
-                    onZoomGestureEnd = { zoomedIn, zoomLevel ->
-                        AppAnalytics.trackMapZoomed(zoomedIn, zoomLevel)
-                    },
-                    onPanGestureEnd = { direction ->
-                        AppAnalytics.trackMapPanned(direction)
-                    },
+                    gestureCallbacks = MapGestureCallbacks(
+                        onZoomGestureEnd = { zoomedIn, zoomLevel ->
+                            AppAnalytics.trackMapZoomed(zoomedIn, zoomLevel)
+                        },
+                        onPanGestureEnd = { direction ->
+                            AppAnalytics.trackMapPanned(direction)
+                        }
+                    ),
                     modifier = Modifier
                         .fillMaxSize()
                         .testTag("world_map")
@@ -193,14 +195,7 @@ fun CountryInfoScreen(
                 selectedMode = selectedColorMode,
                 onModeSelected = { mode ->
                     selectedColorMode = mode
-                    when (mode) {
-                        MapColorMode.DEFAULT           -> AppAnalytics.trackDefaultFilterSelected()
-                        MapColorMode.SECURITY_RISK     -> AppAnalytics.trackSecurityRiskFilterSelected()
-                        MapColorMode.VISA_REQUIREMENTS -> AppAnalytics.trackVisaRequirementsFilterSelected()
-                        MapColorMode.PASSPORT_VALIDITY -> AppAnalytics.trackPassportValidityFilterSelected()
-                        MapColorMode.YELLOW_FEVER      -> AppAnalytics.trackYellowFeverFilterSelected()
-                        MapColorMode.MALARIA           -> AppAnalytics.trackMalariaFilterSelected()
-                    }
+                    trackMapColorModeSelected(mode)
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -235,34 +230,47 @@ fun CountryInfoScreen(
                 showSheet = false
                 viewModel.clearSelection()
             },
-            onDismissed = {
-                displayedCountry?.let { c ->
-                    AppAnalytics.trackCountryDetailDismissed(c.id, c.name)
+            analytics = CountrySheetAnalytics(
+                onDismissed = {
+                    displayedCountry?.let { c ->
+                        AppAnalytics.trackCountryDetailDismissed(c.id, c.name)
+                    }
+                },
+                onUsAdvisoryTapped = {
+                    displayedCountry?.let { c -> AppAnalytics.trackUsAdvisoryOpened(c.id, c.name) }
+                },
+                onUkAdvisoryTapped = {
+                    displayedCountry?.let { c -> AppAnalytics.trackUkAdvisoryOpened(c.id, c.name) }
+                },
+                onCaAdvisoryTapped = {
+                    displayedCountry?.let { c -> AppAnalytics.trackCaAdvisoryOpened(c.id, c.name) }
+                },
+                onAuAdvisoryTapped = {
+                    displayedCountry?.let { c -> AppAnalytics.trackAuAdvisoryOpened(c.id, c.name) }
+                },
+                onUsdFocused = {
+                    displayedCountry?.let { c ->
+                        AppAnalytics.trackUsdChanged(c.id, c.name, c.currencyCode)
+                    }
+                },
+                onForeignFocused = {
+                    displayedCountry?.let { c ->
+                        AppAnalytics.trackForeignChanged(c.id, c.name, c.currencyCode)
+                    }
                 }
-            },
-            onUsAdvisoryTapped = {
-                displayedCountry?.let { c -> AppAnalytics.trackUsAdvisoryOpened(c.id, c.name) }
-            },
-            onUkAdvisoryTapped = {
-                displayedCountry?.let { c -> AppAnalytics.trackUkAdvisoryOpened(c.id, c.name) }
-            },
-            onCaAdvisoryTapped = {
-                displayedCountry?.let { c -> AppAnalytics.trackCaAdvisoryOpened(c.id, c.name) }
-            },
-            onAuAdvisoryTapped = {
-                displayedCountry?.let { c -> AppAnalytics.trackAuAdvisoryOpened(c.id, c.name) }
-            },
-            onUsdFocused = {
-                displayedCountry?.let { c ->
-                    AppAnalytics.trackUsdChanged(c.id, c.name, c.currencyCode)
-                }
-            },
-            onForeignFocused = {
-                displayedCountry?.let { c ->
-                    AppAnalytics.trackForeignChanged(c.id, c.name, c.currencyCode)
-                }
-            }
+            )
         )
+    }
+}
+
+internal fun trackMapColorModeSelected(mode: MapColorMode) {
+    when (mode) {
+        MapColorMode.DEFAULT           -> AppAnalytics.trackDefaultFilterSelected()
+        MapColorMode.SECURITY_RISK     -> AppAnalytics.trackSecurityRiskFilterSelected()
+        MapColorMode.VISA_REQUIREMENTS -> AppAnalytics.trackVisaRequirementsFilterSelected()
+        MapColorMode.PASSPORT_VALIDITY -> AppAnalytics.trackPassportValidityFilterSelected()
+        MapColorMode.YELLOW_FEVER      -> AppAnalytics.trackYellowFeverFilterSelected()
+        MapColorMode.MALARIA           -> AppAnalytics.trackMalariaFilterSelected()
     }
 }
 

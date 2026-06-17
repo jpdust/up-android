@@ -55,6 +55,7 @@ import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.platform.testTag
@@ -112,6 +113,15 @@ data class MapLegendConfig(
     val showLegend: Boolean = false,
     val onCompassTapped: () -> Unit = {},
     val onLegendClose: () -> Unit = {}
+)
+
+/**
+ * Gesture end callbacks for the world map.
+ * Groups zoom and pan callbacks so [WorldMapCanvas] stays within the parameter limit.
+ */
+data class MapGestureCallbacks(
+    val onZoomGestureEnd: (zoomedIn: Boolean, zoomLevel: Float) -> Unit = { _, _ -> },
+    val onPanGestureEnd: (direction: String) -> Unit = {}
 )
 
 /**
@@ -586,6 +596,15 @@ private data class TapConfig(
     val mainDispatcher: CoroutineDispatcher = Dispatchers.Main
 )
 
+/** Accumulated displacement and flags for a single gesture sequence. */
+private class GestureAccumulator {
+    var totalDragDistance: Float = 0f
+    var wasDragged: Boolean = false
+    var wasMultiTouch: Boolean = false
+    var accumulatedPanX: Float = 0f
+    var accumulatedPanY: Float = 0f
+}
+
 /**
  * Returns the dominant pan direction ("left", "right", "up", or "down") given the total
  * accumulated displacement of a single-finger drag gesture. The axis with the larger
@@ -597,6 +616,101 @@ internal fun determinePanDirection(panX: Float, panY: Float): String =
     } else {
         if (panY > 0) "down" else "up"
     }
+
+/**
+ * Processes a single [PointerEvent] during a gesture sequence, updating [accumulator] in place.
+ */
+private fun processGestureEvent(
+    event: PointerEvent,
+    layout: MapLayout,
+    accumulator: GestureAccumulator,
+    currentTransform: () -> TransformState,
+    onTransformChange: (TransformState) -> Unit
+) {
+    val changes = event.changes
+    when {
+        changes.size > 1 -> {
+            accumulator.wasDragged = true
+            accumulator.wasMultiTouch = true
+            handleMultiTouch(event, layout, currentTransform, onTransformChange)
+        }
+        changes.size == 1 -> {
+            val change = changes.first()
+            if (change.positionChanged()) {
+                val delta = change.position - change.previousPosition
+                accumulator.accumulatedPanX += delta.x
+                accumulator.accumulatedPanY += delta.y
+            }
+            val result = handleSingleTouch(
+                change, accumulator.totalDragDistance, layout, currentTransform, onTransformChange
+            )
+            accumulator.totalDragDistance = result.dragDistance
+            accumulator.wasDragged = accumulator.wasDragged || result.wasDragged
+        }
+    }
+}
+
+/**
+ * Fires the appropriate gesture-end callback after a drag completes.
+ * Zoom callback is used for multi-touch; pan callback for single-touch.
+ */
+private fun dispatchGestureEnd(
+    wasMultiTouch: Boolean,
+    initialScale: Float,
+    finalScale: Float,
+    accumulatedPanX: Float,
+    accumulatedPanY: Float,
+    callbacks: MapGestureCallbacks
+) {
+    if (wasMultiTouch) {
+        callbacks.onZoomGestureEnd(finalScale > initialScale, finalScale)
+    } else {
+        callbacks.onPanGestureEnd(determinePanDirection(accumulatedPanX, accumulatedPanY))
+    }
+}
+
+/**
+ * Handles a tap gesture: compass tap, async country hit-test, or miss.
+ * Returns the current (possibly new) in-flight [tapJob].
+ */
+private fun dispatchTap(
+    downPosition: Offset,
+    gestureState: MapGestureState,
+    currentTapJob: Job?,
+    tapConfig: TapConfig,
+    onCountryTapped: (String?, String?) -> Unit
+): Job? {
+    if (gestureState.colorMode != MapColorMode.DEFAULT && gestureState.isCompassTap(downPosition)) {
+        gestureState.onCompassTapped()
+        return currentTapJob
+    }
+    if (gestureState.isReadyForHitTest()) {
+        // Snapshot all mutable state on the main thread before dispatching.
+        // android.graphics.Matrix is not thread-safe — copy its 9 float values.
+        // List<CountryGeometry> and Map<String, CountryBounds> are immutable and
+        // safe to pass across threads by reference.
+        val matrixValues = FloatArray(9).also { gestureState.inverseMatrix.getValues(it) }
+        currentTapJob?.cancel()
+        return tapConfig.scope.launch(tapConfig.computeDispatcher) {
+            val snapshot = HitTestSnapshot(
+                matrixValues = matrixValues,
+                mapWidth = gestureState.mapLayoutWidth,
+                mapHeight = gestureState.mapLayoutHeight,
+                geometries = gestureState.geometries,
+                countryBounds = gestureState.countryBounds,
+                currentScale = gestureState.currentScale,
+            )
+            val (repoId, territoryName) = hitTestCountry(
+                position = downPosition,
+                snapshot = snapshot,
+                locale = gestureState.currentLocale
+            )
+            withContext(tapConfig.mainDispatcher) { onCountryTapped(repoId, territoryName) }
+        }
+    }
+    onCountryTapped(null, null)
+    return currentTapJob
+}
 
 /**
  * Modifier extension for map gesture handling (pan, zoom, tap).
@@ -611,99 +725,28 @@ private fun Modifier.mapGestures(
     onTransformChange: (TransformState) -> Unit,
     onCountryTapped: (String?, String?) -> Unit,
     tapConfig: TapConfig,
-    onZoomGestureEnd: (zoomedIn: Boolean, zoomLevel: Float) -> Unit = { _, _ -> },
-    onPanGestureEnd: (direction: String) -> Unit = {}
+    gestureCallbacks: MapGestureCallbacks = MapGestureCallbacks()
 ): Modifier = this.pointerInput(Unit) {
     var tapJob: Job? = null
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false)
         val downPosition = down.position
-        var totalDragDistance = 0f
-        var wasDragged = false
-        var wasMultiTouch = false
-        var accumulatedPanX = 0f
-        var accumulatedPanY = 0f
+        val accumulator = GestureAccumulator()
         val initialScale = currentTransform().scale
-        val canvasHeight = size.height.toFloat()
-        val layout = calculateMapLayout(size.width.toFloat(), canvasHeight)
+        val layout = calculateMapLayout(size.width.toFloat(), size.height.toFloat())
 
         do {
             val event = awaitPointerEvent()
-            val changes = event.changes
+            processGestureEvent(event, layout, accumulator, currentTransform, onTransformChange)
+        } while (event.changes.any { it.pressed })
 
-            when {
-                changes.size > 1 -> {
-                    wasDragged = true
-                    wasMultiTouch = true
-                    handleMultiTouch(event, layout, currentTransform, onTransformChange)
-                }
-                changes.size == 1 -> {
-                    val change = changes.first()
-                    if (change.positionChanged()) {
-                        val delta = change.position - change.previousPosition
-                        accumulatedPanX += delta.x
-                        accumulatedPanY += delta.y
-                    }
-                    val result = handleSingleTouch(
-                        change, totalDragDistance, layout, currentTransform, onTransformChange
-                    )
-                    totalDragDistance = result.dragDistance
-                    wasDragged = wasDragged || result.wasDragged
-                }
-            }
-        } while (changes.any { it.pressed })
-
-        if (wasDragged) {
-            if (wasMultiTouch) {
-                val finalScale = currentTransform().scale
-                onZoomGestureEnd(finalScale > initialScale, finalScale)
-            } else {
-                onPanGestureEnd(determinePanDirection(accumulatedPanX, accumulatedPanY))
-            }
-        }
-
-        if (!wasDragged) {
-            // Check if compass was tapped (only for non-default modes)
-            if (gestureState.colorMode != MapColorMode.DEFAULT && gestureState.isCompassTap(downPosition)) {
-                gestureState.onCompassTapped()
-            } else if (gestureState.isReadyForHitTest()) {
-                // Snapshot all mutable state on the main thread before dispatching.
-                // android.graphics.Matrix is not thread-safe — copy its 9 float values.
-                // List<CountryGeometry> and Map<String, CountryBounds> are immutable and
-                // safe to pass across threads by reference.
-                val matrixValues = FloatArray(9).also { gestureState.inverseMatrix.getValues(it) }
-                val mapWidth = gestureState.mapLayoutWidth
-                val mapHeight = gestureState.mapLayoutHeight
-                val geometries = gestureState.geometries
-                val countryBounds = gestureState.countryBounds
-                val currentScale = gestureState.currentScale
-                val locale = gestureState.currentLocale
-
-                // Cancel any in-flight hit-test from a previous rapid tap, then start
-                // a new one on the Default dispatcher so the main thread (and renderer)
-                // are never blocked by O(n·m) ray-casting.
-                tapJob?.cancel()
-                tapJob = tapConfig.scope.launch(tapConfig.computeDispatcher) {
-                    val snapshot = HitTestSnapshot(
-                        matrixValues = matrixValues,
-                        mapWidth = mapWidth,
-                        mapHeight = mapHeight,
-                        geometries = geometries,
-                        countryBounds = countryBounds,
-                        currentScale = currentScale,
-                    )
-                    val (repoId, territoryName) = hitTestCountry(
-                        position = downPosition,
-                        snapshot = snapshot,
-                        locale = locale
-                    )
-                    withContext(tapConfig.mainDispatcher) {
-                        onCountryTapped(repoId, territoryName)
-                    }
-                }
-            } else {
-                onCountryTapped(null, null)
-            }
+        if (accumulator.wasDragged) {
+            dispatchGestureEnd(
+                accumulator.wasMultiTouch, initialScale, currentTransform().scale,
+                accumulator.accumulatedPanX, accumulator.accumulatedPanY, gestureCallbacks
+            )
+        } else {
+            tapJob = dispatchTap(downPosition, gestureState, tapJob, tapConfig, onCountryTapped)
         }
     }
 }
@@ -1553,8 +1596,7 @@ fun WorldMapCanvas(
     colorMode: MapColorMode = MapColorMode.DEFAULT,
     countries: Map<String, Country> = emptyMap(),
     legendConfig: MapLegendConfig = MapLegendConfig(),
-    onZoomGestureEnd: (zoomedIn: Boolean, zoomLevel: Float) -> Unit = { _, _ -> },
-    onPanGestureEnd: (direction: String) -> Unit = {}
+    gestureCallbacks: MapGestureCallbacks = MapGestureCallbacks()
 ) {
     val tapScope = rememberCoroutineScope()
     var transform by remember { mutableStateOf(TransformState()) }
@@ -1745,8 +1787,7 @@ fun WorldMapCanvas(
                     onTransformChange = { transform = it },
                     onCountryTapped = onCountryTapped,
                     tapConfig = TapConfig(scope = tapScope),
-                    onZoomGestureEnd = onZoomGestureEnd,
-                    onPanGestureEnd = onPanGestureEnd
+                    gestureCallbacks = gestureCallbacks
                 )
         )
 

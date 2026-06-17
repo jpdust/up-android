@@ -88,23 +88,31 @@ import java.util.Locale
 
 private const val ANIMATION_DURATION = 300
 
+/**
+ * Analytics callbacks for the country detail sheet.
+ * Groups all sheet-level events so [CountryDetailSheet] stays within the parameter limit.
+ */
+data class CountrySheetAnalytics(
+    val onDismissed: () -> Unit = {},
+    val onUsAdvisoryTapped: () -> Unit = {},
+    val onUkAdvisoryTapped: () -> Unit = {},
+    val onCaAdvisoryTapped: () -> Unit = {},
+    val onAuAdvisoryTapped: () -> Unit = {},
+    val onUsdFocused: () -> Unit = {},
+    val onForeignFocused: () -> Unit = {}
+)
+
 @Composable
 fun CountryDetailSheet(
     country: Country?,
     visible: Boolean,
     onDismiss: () -> Unit,
     displayName: String? = null,
-    onUsdFocused: () -> Unit = {},
-    onForeignFocused: () -> Unit = {},
-    onDismissed: () -> Unit = {},
-    onUsAdvisoryTapped: () -> Unit = {},
-    onUkAdvisoryTapped: () -> Unit = {},
-    onCaAdvisoryTapped: () -> Unit = {},
-    onAuAdvisoryTapped: () -> Unit = {}
+    analytics: CountrySheetAnalytics = CountrySheetAnalytics()
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         val trackAndDismiss = {
-            onDismissed()
+            analytics.onDismissed()
             onDismiss()
         }
 
@@ -170,10 +178,10 @@ fun CountryDetailSheet(
                             // Safety Level
                             SafetyLevelRow(
                                 country = it,
-                                onUsAdvisoryTapped = onUsAdvisoryTapped,
-                                onUkAdvisoryTapped = onUkAdvisoryTapped,
-                                onCaAdvisoryTapped = onCaAdvisoryTapped,
-                                onAuAdvisoryTapped = onAuAdvisoryTapped
+                                onUsAdvisoryTapped = analytics.onUsAdvisoryTapped,
+                                onUkAdvisoryTapped = analytics.onUkAdvisoryTapped,
+                                onCaAdvisoryTapped = analytics.onCaAdvisoryTapped,
+                                onAuAdvisoryTapped = analytics.onAuAdvisoryTapped
                             )
 
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -225,8 +233,8 @@ fun CountryDetailSheet(
                                             scrollState.animateScrollTo(0)
                                         }
                                     },
-                                    onUsdFocused = onUsdFocused,
-                                    onForeignFocused = onForeignFocused
+                                    onUsdFocused = analytics.onUsdFocused,
+                                    onForeignFocused = analytics.onForeignFocused
                                 )
 
                                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)

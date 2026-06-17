@@ -885,7 +885,7 @@ class WorldMapCanvasTest {
                 WorldMapCanvas(
                     selectedCountryId = null,
                     onCountryTapped = { _, _ -> },
-                    onPanGestureEnd = { panCallbackFired = true },
+                    gestureCallbacks = MapGestureCallbacks(onPanGestureEnd = { panCallbackFired = true }),
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -913,7 +913,7 @@ class WorldMapCanvasTest {
                 WorldMapCanvas(
                     selectedCountryId = null,
                     onCountryTapped = { _, _ -> },
-                    onZoomGestureEnd = { _, _ -> zoomCallbackFired = true },
+                    gestureCallbacks = MapGestureCallbacks(onZoomGestureEnd = { _, _ -> zoomCallbackFired = true }),
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -942,7 +942,7 @@ class WorldMapCanvasTest {
                 WorldMapCanvas(
                     selectedCountryId = null,
                     onCountryTapped = { _, _ -> },
-                    onZoomGestureEnd = { zoomedIn, _ -> capturedZoomedIn = zoomedIn },
+                    gestureCallbacks = MapGestureCallbacks(onZoomGestureEnd = { zoomedIn, _ -> capturedZoomedIn = zoomedIn }),
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -972,7 +972,7 @@ class WorldMapCanvasTest {
                 WorldMapCanvas(
                     selectedCountryId = null,
                     onCountryTapped = { _, _ -> },
-                    onPanGestureEnd = { direction -> capturedDirection = direction },
+                    gestureCallbacks = MapGestureCallbacks(onPanGestureEnd = { direction -> capturedDirection = direction }),
                     modifier = Modifier.fillMaxSize()
                 )
             }

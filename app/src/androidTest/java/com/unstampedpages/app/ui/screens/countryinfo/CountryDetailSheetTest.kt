@@ -2825,7 +2825,7 @@ class CountryDetailSheetTest {
                     country = country(currencyCode = "EUR", currency = "Euro", exchangeRateToUSD = 1.08),
                     visible = true,
                     onDismiss = {},
-                    onUsdFocused = { usdFocusFired = true }
+                    analytics = CountrySheetAnalytics(onUsdFocused = { usdFocusFired = true })
                 )
             }
         }
@@ -2847,7 +2847,7 @@ class CountryDetailSheetTest {
                     country = country(currencyCode = "EUR", currency = "Euro", exchangeRateToUSD = 1.08),
                     visible = true,
                     onDismiss = {},
-                    onForeignFocused = { foreignFocusFired = true }
+                    analytics = CountrySheetAnalytics(onForeignFocused = { foreignFocusFired = true })
                 )
             }
         }
@@ -2869,7 +2869,7 @@ class CountryDetailSheetTest {
                     country = country(currencyCode = "GBP", currency = "British Pound", exchangeRateToUSD = 1.27),
                     visible = true,
                     onDismiss = {},
-                    onForeignFocused = { foreignFocusFired = true }
+                    analytics = CountrySheetAnalytics(onForeignFocused = { foreignFocusFired = true })
                 )
             }
         }
@@ -2894,7 +2894,7 @@ class CountryDetailSheetTest {
                     country = country(currencyCode = "GBP", currency = "British Pound", exchangeRateToUSD = 1.27),
                     visible = true,
                     onDismiss = {},
-                    onUsdFocused = { usdFocusFired = true }
+                    analytics = CountrySheetAnalytics(onUsdFocused = { usdFocusFired = true })
                 )
             }
         }
@@ -2920,8 +2920,10 @@ class CountryDetailSheetTest {
                     country = country(currencyCode = "USD", currency = "US Dollar", exchangeRateToUSD = 1.0),
                     visible = true,
                     onDismiss = {},
-                    onUsdFocused = { usdFocusFired = true },
-                    onForeignFocused = { foreignFocusFired = true }
+                    analytics = CountrySheetAnalytics(
+                        onUsdFocused = { usdFocusFired = true },
+                        onForeignFocused = { foreignFocusFired = true }
+                    )
                 )
             }
         }
@@ -2958,7 +2960,7 @@ class CountryDetailSheetTest {
                     country = countryWithAdvisories(),
                     visible = true,
                     onDismiss = {},
-                    onUsAdvisoryTapped = { fired = true }
+                    analytics = CountrySheetAnalytics(onUsAdvisoryTapped = { fired = true })
                 )
             }
         }
@@ -2980,7 +2982,7 @@ class CountryDetailSheetTest {
                     country = countryWithAdvisories(),
                     visible = true,
                     onDismiss = {},
-                    onUkAdvisoryTapped = { fired = true }
+                    analytics = CountrySheetAnalytics(onUkAdvisoryTapped = { fired = true })
                 )
             }
         }
@@ -3002,7 +3004,7 @@ class CountryDetailSheetTest {
                     country = countryWithAdvisories(),
                     visible = true,
                     onDismiss = {},
-                    onCaAdvisoryTapped = { fired = true }
+                    analytics = CountrySheetAnalytics(onCaAdvisoryTapped = { fired = true })
                 )
             }
         }
@@ -3024,7 +3026,7 @@ class CountryDetailSheetTest {
                     country = countryWithAdvisories(),
                     visible = true,
                     onDismiss = {},
-                    onAuAdvisoryTapped = { fired = true }
+                    analytics = CountrySheetAnalytics(onAuAdvisoryTapped = { fired = true })
                 )
             }
         }
@@ -3048,9 +3050,11 @@ class CountryDetailSheetTest {
                     country = countryWithAdvisories(),
                     visible = true,
                     onDismiss = {},
-                    onUkAdvisoryTapped = { ukFired = true },
-                    onCaAdvisoryTapped = { caFired = true },
-                    onAuAdvisoryTapped = { auFired = true }
+                    analytics = CountrySheetAnalytics(
+                        onUkAdvisoryTapped = { ukFired = true },
+                        onCaAdvisoryTapped = { caFired = true },
+                        onAuAdvisoryTapped = { auFired = true }
+                    )
                 )
             }
         }
@@ -3078,7 +3082,7 @@ class CountryDetailSheetTest {
                     country = country(),
                     visible = true,
                     onDismiss = {},
-                    onDismissed = { dismissedFired = true }
+                    analytics = CountrySheetAnalytics(onDismissed = { dismissedFired = true })
                 )
             }
         }
@@ -3100,7 +3104,7 @@ class CountryDetailSheetTest {
                     country = country(),
                     visible = true,
                     onDismiss = {},
-                    onDismissed = { dismissedFired = true }
+                    analytics = CountrySheetAnalytics(onDismissed = { dismissedFired = true })
                 )
             }
         }
@@ -3124,7 +3128,7 @@ class CountryDetailSheetTest {
                     country = country(),
                     visible = true,
                     onDismiss = { callOrder.add("onDismiss") },
-                    onDismissed = { callOrder.add("onDismissed") }
+                    analytics = CountrySheetAnalytics(onDismissed = { callOrder.add("onDismissed") })
                 )
             }
         }
