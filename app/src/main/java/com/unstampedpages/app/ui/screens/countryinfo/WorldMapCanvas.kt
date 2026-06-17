@@ -587,6 +587,18 @@ private data class TapConfig(
 )
 
 /**
+ * Returns the dominant pan direction ("left", "right", "up", or "down") given the total
+ * accumulated displacement of a single-finger drag gesture. The axis with the larger
+ * absolute displacement wins; ties go to the vertical axis.
+ */
+internal fun determinePanDirection(panX: Float, panY: Float): String =
+    if (kotlin.math.abs(panX) > kotlin.math.abs(panY)) {
+        if (panX > 0) "right" else "left"
+    } else {
+        if (panY > 0) "down" else "up"
+    }
+
+/**
  * Modifier extension for map gesture handling (pan, zoom, tap).
  *
  * Keyed on [Unit] so the coroutine is never restarted when the color mode changes.
@@ -598,7 +610,9 @@ private fun Modifier.mapGestures(
     currentTransform: () -> TransformState,
     onTransformChange: (TransformState) -> Unit,
     onCountryTapped: (String?, String?) -> Unit,
-    tapConfig: TapConfig
+    tapConfig: TapConfig,
+    onZoomGestureEnd: (zoomedIn: Boolean, zoomLevel: Float) -> Unit = { _, _ -> },
+    onPanGestureEnd: (direction: String) -> Unit = {}
 ): Modifier = this.pointerInput(Unit) {
     var tapJob: Job? = null
     awaitEachGesture {
@@ -606,6 +620,10 @@ private fun Modifier.mapGestures(
         val downPosition = down.position
         var totalDragDistance = 0f
         var wasDragged = false
+        var wasMultiTouch = false
+        var accumulatedPanX = 0f
+        var accumulatedPanY = 0f
+        val initialScale = currentTransform().scale
         val canvasHeight = size.height.toFloat()
         val layout = calculateMapLayout(size.width.toFloat(), canvasHeight)
 
@@ -616,17 +634,33 @@ private fun Modifier.mapGestures(
             when {
                 changes.size > 1 -> {
                     wasDragged = true
+                    wasMultiTouch = true
                     handleMultiTouch(event, layout, currentTransform, onTransformChange)
                 }
                 changes.size == 1 -> {
+                    val change = changes.first()
+                    if (change.positionChanged()) {
+                        val delta = change.position - change.previousPosition
+                        accumulatedPanX += delta.x
+                        accumulatedPanY += delta.y
+                    }
                     val result = handleSingleTouch(
-                        changes.first(), totalDragDistance, layout, currentTransform, onTransformChange
+                        change, totalDragDistance, layout, currentTransform, onTransformChange
                     )
                     totalDragDistance = result.dragDistance
                     wasDragged = wasDragged || result.wasDragged
                 }
             }
         } while (changes.any { it.pressed })
+
+        if (wasDragged) {
+            if (wasMultiTouch) {
+                val finalScale = currentTransform().scale
+                onZoomGestureEnd(finalScale > initialScale, finalScale)
+            } else {
+                onPanGestureEnd(determinePanDirection(accumulatedPanX, accumulatedPanY))
+            }
+        }
 
         if (!wasDragged) {
             // Check if compass was tapped (only for non-default modes)
@@ -1518,7 +1552,9 @@ fun WorldMapCanvas(
     modifier: Modifier = Modifier,
     colorMode: MapColorMode = MapColorMode.DEFAULT,
     countries: Map<String, Country> = emptyMap(),
-    legendConfig: MapLegendConfig = MapLegendConfig()
+    legendConfig: MapLegendConfig = MapLegendConfig(),
+    onZoomGestureEnd: (zoomedIn: Boolean, zoomLevel: Float) -> Unit = { _, _ -> },
+    onPanGestureEnd: (direction: String) -> Unit = {}
 ) {
     val tapScope = rememberCoroutineScope()
     var transform by remember { mutableStateOf(TransformState()) }
@@ -1708,7 +1744,9 @@ fun WorldMapCanvas(
                     currentTransform = { transform },
                     onTransformChange = { transform = it },
                     onCountryTapped = onCountryTapped,
-                    tapConfig = TapConfig(scope = tapScope)
+                    tapConfig = TapConfig(scope = tapScope),
+                    onZoomGestureEnd = onZoomGestureEnd,
+                    onPanGestureEnd = onPanGestureEnd
                 )
         )
 

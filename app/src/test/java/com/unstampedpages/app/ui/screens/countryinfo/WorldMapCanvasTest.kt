@@ -4539,4 +4539,74 @@ class ComputeVisibleLabelSpecsTest {
             )
         }
     }
+
+    // ==================== determinePanDirection Tests ====================
+
+    @Test
+    fun `determinePanDirection returns right when panX is positive and dominant`() {
+        assertEquals("right", determinePanDirection(100f, 10f))
+    }
+
+    @Test
+    fun `determinePanDirection returns left when panX is negative and dominant`() {
+        assertEquals("left", determinePanDirection(-100f, 10f))
+    }
+
+    @Test
+    fun `determinePanDirection returns down when panY is positive and dominant`() {
+        assertEquals("down", determinePanDirection(5f, 80f))
+    }
+
+    @Test
+    fun `determinePanDirection returns up when panY is negative and dominant`() {
+        assertEquals("up", determinePanDirection(5f, -80f))
+    }
+
+    @Test
+    fun `determinePanDirection prefers vertical when axes are equal`() {
+        // When abs(panX) == abs(panY), the vertical axis wins (ties go to vertical)
+        val result = determinePanDirection(50f, 50f)
+        assertEquals("down", result)
+    }
+
+    @Test
+    fun `determinePanDirection prefers vertical when axes are equal and negative Y`() {
+        val result = determinePanDirection(50f, -50f)
+        assertEquals("up", result)
+    }
+
+    @Test
+    fun `determinePanDirection handles large horizontal displacement`() {
+        assertEquals("right", determinePanDirection(9999f, 9998f))
+    }
+
+    @Test
+    fun `determinePanDirection handles large vertical displacement`() {
+        assertEquals("down", determinePanDirection(9998f, 9999f))
+    }
+
+    @Test
+    fun `determinePanDirection handles near-zero displacement`() {
+        assertEquals("right", determinePanDirection(0.01f, 0.005f))
+    }
+
+    @Test
+    fun `determinePanDirection returns left for purely horizontal negative movement`() {
+        assertEquals("left", determinePanDirection(-200f, 0f))
+    }
+
+    @Test
+    fun `determinePanDirection returns right for purely horizontal positive movement`() {
+        assertEquals("right", determinePanDirection(200f, 0f))
+    }
+
+    @Test
+    fun `determinePanDirection returns down for purely vertical positive movement`() {
+        assertEquals("down", determinePanDirection(0f, 200f))
+    }
+
+    @Test
+    fun `determinePanDirection returns up for purely vertical negative movement`() {
+        assertEquals("up", determinePanDirection(0f, -200f))
+    }
 }

@@ -18,6 +18,8 @@ import com.unstampedpages.app.data.AppConstants
 import com.unstampedpages.app.data.model.CountryGeometry
 import com.unstampedpages.app.data.model.LatLng
 import com.unstampedpages.app.ui.theme.UnstampedPagesTheme
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -870,5 +872,122 @@ class WorldMapCanvasTest {
             }
         }
         composeTestRule.onRoot().assertIsDisplayed()
+    }
+
+    // ==================== Gesture Callback Tests ====================
+
+    @Test
+    fun worldMapCanvas_panGesture_firesOnPanGestureEndCallback() {
+        var panCallbackFired = false
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                WorldMapCanvas(
+                    selectedCountryId = null,
+                    onCountryTapped = { _, _ -> },
+                    onPanGestureEnd = { panCallbackFired = true },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onRoot().performTouchInput {
+            swipe(
+                start = center,
+                end = center.copy(x = center.x - 200f),
+                durationMillis = 200
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        assertTrue("onPanGestureEnd should fire after a pan gesture", panCallbackFired)
+    }
+
+    @Test
+    fun worldMapCanvas_zoomGesture_firesOnZoomGestureEndCallback() {
+        var zoomCallbackFired = false
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                WorldMapCanvas(
+                    selectedCountryId = null,
+                    onCountryTapped = { _, _ -> },
+                    onZoomGestureEnd = { _, _ -> zoomCallbackFired = true },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onRoot().performTouchInput {
+            pinch(
+                start0 = center.copy(x = center.x - 100f),
+                end0   = center.copy(x = center.x - 200f),
+                start1 = center.copy(x = center.x + 100f),
+                end1   = center.copy(x = center.x + 200f)
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        assertTrue("onZoomGestureEnd should fire after a pinch-zoom gesture", zoomCallbackFired)
+    }
+
+    @Test
+    fun worldMapCanvas_zoomIn_passesZoomedInTrue() {
+        var capturedZoomedIn: Boolean? = null
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                WorldMapCanvas(
+                    selectedCountryId = null,
+                    onCountryTapped = { _, _ -> },
+                    onZoomGestureEnd = { zoomedIn, _ -> capturedZoomedIn = zoomedIn },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        // Pinch outward = zoom in
+        composeTestRule.onRoot().performTouchInput {
+            pinch(
+                start0 = center.copy(x = center.x - 50f),
+                end0   = center.copy(x = center.x - 200f),
+                start1 = center.copy(x = center.x + 50f),
+                end1   = center.copy(x = center.x + 200f)
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        assertTrue("zoomedIn should be true after pinching outward", capturedZoomedIn == true)
+    }
+
+    @Test
+    fun worldMapCanvas_panLeft_passesLeftDirection() {
+        var capturedDirection: String? = null
+
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                WorldMapCanvas(
+                    selectedCountryId = null,
+                    onCountryTapped = { _, _ -> },
+                    onPanGestureEnd = { direction -> capturedDirection = direction },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onRoot().performTouchInput {
+            swipe(
+                start = center,
+                end = center.copy(x = center.x - 300f),
+                durationMillis = 200
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        assertEquals("Pan left should report 'left' direction", "left", capturedDirection)
     }
 }

@@ -123,7 +123,7 @@ UI (Composables)
 | Image handling | `ActivityResultContracts` (camera + gallery), `FileProvider` |
 | JSON parsing | Gson (GeoJSON world map) |
 | Build tooling | Gradle 8.9.3 (Kotlin DSL), KSP |
-| Monitoring | New Relic Mobile SDK 7.7.5 |
+| Monitoring | New Relic Mobile SDK 7.7.6 |
 | Code quality | SonarCloud, Android Lint, JaCoCo |
 
 ### Database Schema
@@ -334,7 +334,12 @@ The app follows the system language. To change it, go to **Settings → General 
 
 ## Observability
 
-The app integrates **New Relic Mobile** (SDK 7.7.5) for production monitoring.
+The app integrates **New Relic Mobile** for production monitoring.
+
+| Component | Version |
+|-----------|---------|
+| Gradle plugin (`com.newrelic.agent.android:agent-gradle-plugin`) | `7.7.6` |
+| Android agent SDK (`com.newrelic.agent.android:android-agent`) | `7.7.6` |
 
 ### Initialisation
 
@@ -342,21 +347,140 @@ New Relic is started in `MainActivity.onCreate()` before `super.onCreate()` to c
 
 ```kotlin
 NewRelic.withApplicationToken(BuildConfig.NEW_RELIC_TOKEN)
+    .withLogLevel(AgentLog.DEBUG)
     .start(this.applicationContext)
 ```
 
-The token is injected at build time via `BuildConfig.NEW_RELIC_TOKEN`, sourced from the `NEW_RELIC_TOKEN` environment variable (CI) or `newrelic.token` in `local.properties` (local dev).
+The token is injected at build time via `BuildConfig.NEW_RELIC_TOKEN`, sourced from:
+- **CI**: `NEW_RELIC_TOKEN` GitHub Actions secret
+- **Local dev**: `newrelic.token` in `local.properties` (gitignored)
 
-### Custom Events
+If the token is absent or empty, New Relic starts but does not report events — the app runs normally.
 
-| Event Type | Attribute | Fired when |
-|------------|-----------|------------|
-| `TabNavigation` | `tab = "Countries"` | User taps the Countries tab in the bottom nav bar |
+The Gradle plugin (`id("newrelic")` in `app/build.gradle.kts`) performs bytecode instrumentation of HTTP calls and interaction traces at build time.
 
-New Relic automatically captures crashes, HTTP errors, interaction traces, and memory/CPU metrics. Custom events supplement this with product-level analytics queryable via NRQL:
+### Custom Event Schema
+
+All product-level analytics flow through two custom event tables defined in `AppAnalytics.kt`:
+
+#### `UserAction` — deliberate user interactions
+
+Every tap, selection, or form input across all screens. Filter by `screen` and `action`.
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `screen` | String | Which tab the event originated from (see screen values below) |
+| `action` | String | What the user did (see action values below) |
+| `countryId` | String | ISO country code — present on country-scoped events |
+| `countryName` | String | Human-readable country name — present on country-scoped events |
+| `source` | String | `"map"` or `"search"` — present on `countrySelected` events |
+| `currencyCode` | String | ISO currency code — present on `usdChanged` / `foreignChanged` events |
+
+**Screen values:**
+
+| `screen` | Tab |
+|----------|-----|
+| `countries` | Country Info (world map) |
+| `checklist` | Travel Checklist |
+| `tripLog` | Trip Log |
+| `stamps` | My Stamps |
+| `home` | Home |
+
+**Action values — Countries tab (`screen = 'countries'`):**
+
+| `action` | Fired when |
+|----------|-----------|
+| `searchFocused` | User taps the country search bar |
+| `countrySelected` | User selects a country (map tap or search result) |
+| `legendOpened` | User taps the compass icon to open the map legend |
+| `legendClosed` | User taps X to close the map legend |
+| `filterDefault` | User selects the Default map view |
+| `filterSecurityRisk` | User selects the Security Risk map view |
+| `filterVisaRequirements` | User selects the Visa Requirements map view |
+| `filterPassportValidity` | User selects the Passport Validity map view |
+| `filterYellowFever` | User selects the Yellow Fever map view |
+| `filterMalaria` | User selects the Malaria map view |
+| `advisoryUsOpened` | User taps the US State Dept. travel advisory chip |
+| `advisoryUkOpened` | User taps the UK FCDO travel advisory chip |
+| `advisoryCaOpened` | User taps the Canadian Global Affairs advisory chip |
+| `advisoryAuOpened` | User taps the Australian DFAT advisory chip |
+| `usdChanged` | User focuses the USD input in the currency converter |
+| `foreignChanged` | User focuses the foreign currency input in the currency converter |
+| `countryInfoDismissed` | User dismisses the country detail bottom sheet |
+
+#### `MapGesture` — high-frequency map gestures
+
+Pinch-zoom and pan gestures are stored separately from `UserAction` to avoid skewing interaction counts and to allow independent retention/sampling.
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `action` | String | `"zoomed"` or `"panned"` |
+| `zoomedIn` | Boolean | `true` if final scale > starting scale — present on `zoomed` events |
+| `zoomLevel` | Double | Scale factor at gesture end (1.0 = default zoom) — present on `zoomed` events |
+| `direction` | String | Dominant pan direction — present on `panned` events |
+
+**Pan direction values:** `"left"`, `"right"`, `"up"`, `"down"`
+
+#### `TabNavigation` — bottom nav bar
+
+Fired directly in `BottomNavBar.kt` (outside `AppAnalytics`) when the user taps the Countries tab:
+
+| Attribute | Value |
+|-----------|-------|
+| `tab` | `"Countries"` |
+
+### Example NRQL Queries
 
 ```sql
-SELECT count(*) FROM TabNavigation WHERE tab = 'Countries' SINCE 1 week ago TIMESERIES
+-- All Countries tab interactions by action
+SELECT count(*) FROM UserAction
+WHERE screen = 'countries'
+FACET action SINCE 7 days ago
+
+-- Most selected countries and how users found them
+SELECT count(*) FROM UserAction
+WHERE action = 'countrySelected'
+FACET countryName, source SINCE 30 days ago LIMIT 20
+
+-- Search-to-selection conversion funnel
+SELECT funnel(sessionId,
+  WHERE action = 'searchFocused',
+  WHERE action = 'countrySelected' AND source = 'search'
+) FROM UserAction WHERE screen = 'countries' SINCE 7 days ago
+
+-- Map filter usage breakdown
+SELECT count(*) FROM UserAction
+WHERE action IN ('filterDefault','filterSecurityRisk','filterVisaRequirements',
+                 'filterPassportValidity','filterYellowFever','filterMalaria')
+FACET action SINCE 7 days ago
+
+-- Travel advisory engagement by country and provider
+SELECT count(*) FROM UserAction
+WHERE action IN ('advisoryUsOpened','advisoryUkOpened','advisoryCaOpened','advisoryAuOpened')
+FACET countryName, action SINCE 30 days ago LIMIT 20
+
+-- Currency converter engagement
+SELECT count(*) FROM UserAction
+WHERE action IN ('usdChanged','foreignChanged')
+FACET countryName, currencyCode SINCE 30 days ago
+
+-- Zoom depth distribution
+SELECT histogram(zoomLevel, 10, 20) FROM MapGesture
+WHERE action = 'zoomed' SINCE 7 days ago
+
+-- Pan direction breakdown
+SELECT count(*) FROM MapGesture
+WHERE action = 'panned'
+FACET direction SINCE 7 days ago
+
+-- Full user journey funnel on the Countries tab
+SELECT funnel(sessionId,
+  WHERE screen = 'countries',
+  WHERE action = 'countrySelected',
+  WHERE action IN ('advisoryUsOpened','advisoryUkOpened','advisoryCaOpened','advisoryAuOpened'),
+  WHERE action IN ('usdChanged','foreignChanged'),
+  WHERE action = 'countryInfoDismissed'
+) FROM UserAction SINCE 30 days ago
 ```
 
 ---
@@ -486,7 +610,7 @@ The root `build.gradle.kts` explicitly pins `commons-io` to `2.20.0` in both the
 - [ ] **Trip planning mode** — pre-trip checklist and itinerary builder separate from the active trip log
 - [ ] **Push notifications** — travel advisory alerts when the safety level of a saved country changes
 - [ ] **Stamp sharing** — share passport stamp collections as a shareable image or PDF
-- [ ] **Additional New Relic events** — instrument checklist interactions, journal entry creation, and map country taps
+- [ ] **Additional New Relic events** — extend `AppAnalytics` to cover checklist interactions, journal entry creation, and stamp additions across the remaining tabs
 - [ ] **Accessibility audit** — full TalkBack support and WCAG 2.1 AA compliance pass
 - [ ] **Tablet / foldable layout** — adaptive two-pane layout for larger screens
 - [ ] **Widgets** — home screen widget for quick checklist access

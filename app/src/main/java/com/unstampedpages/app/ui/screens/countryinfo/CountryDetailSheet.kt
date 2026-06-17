@@ -93,9 +93,21 @@ fun CountryDetailSheet(
     country: Country?,
     visible: Boolean,
     onDismiss: () -> Unit,
-    displayName: String? = null
+    displayName: String? = null,
+    onUsdFocused: () -> Unit = {},
+    onForeignFocused: () -> Unit = {},
+    onDismissed: () -> Unit = {},
+    onUsAdvisoryTapped: () -> Unit = {},
+    onUkAdvisoryTapped: () -> Unit = {},
+    onCaAdvisoryTapped: () -> Unit = {},
+    onAuAdvisoryTapped: () -> Unit = {}
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
+        val trackAndDismiss = {
+            onDismissed()
+            onDismiss()
+        }
+
         // Scrim (dark overlay)
         AnimatedVisibility(
             visible = visible,
@@ -109,7 +121,7 @@ fun CountryDetailSheet(
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                        onClick = onDismiss
+                        onClick = trackAndDismiss
                     )
                     .testTag("bottom_sheet_scrim")
             )
@@ -144,7 +156,7 @@ fun CountryDetailSheet(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         // Header with country image/gradient
-                        CountryHeader(country = it, displayName = displayName, onClose = onDismiss)
+                        CountryHeader(country = it, displayName = displayName, onClose = trackAndDismiss)
 
                         // Country details
                         Column(
@@ -156,7 +168,13 @@ fun CountryDetailSheet(
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             // Safety Level
-                            SafetyLevelRow(country = it)
+                            SafetyLevelRow(
+                                country = it,
+                                onUsAdvisoryTapped = onUsAdvisoryTapped,
+                                onUkAdvisoryTapped = onUkAdvisoryTapped,
+                                onCaAdvisoryTapped = onCaAdvisoryTapped,
+                                onAuAdvisoryTapped = onAuAdvisoryTapped
+                            )
 
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
@@ -206,7 +224,9 @@ fun CountryDetailSheet(
                                         coroutineScope.launch {
                                             scrollState.animateScrollTo(0)
                                         }
-                                    }
+                                    },
+                                    onUsdFocused = onUsdFocused,
+                                    onForeignFocused = onForeignFocused
                                 )
 
                                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -303,7 +323,13 @@ private fun CountryHeader(
 }
 
 @Composable
-private fun SafetyLevelRow(country: Country) {
+private fun SafetyLevelRow(
+    country: Country,
+    onUsAdvisoryTapped: () -> Unit = {},
+    onUkAdvisoryTapped: () -> Unit = {},
+    onCaAdvisoryTapped: () -> Unit = {},
+    onAuAdvisoryTapped: () -> Unit = {}
+) {
     val context = LocalContext.current
     val advisories = country.travelAdvisories
 
@@ -344,22 +370,38 @@ private fun SafetyLevelRow(country: Country) {
                 TravelAdvisoryChip(
                     label = "US",
                     contentDescription = stringResource(R.string.cd_travel_advisory_us, country.name),
-                    onClick = { openInCustomTab(context, advisories.us) }
+                    onClick = {
+                        onUsAdvisoryTapped()
+                        openInCustomTab(context, advisories.us)
+                    },
+                    testTag = "advisory_chip_us"
                 )
                 TravelAdvisoryChip(
                     label = "UK",
                     contentDescription = stringResource(R.string.cd_travel_advisory_uk, country.name),
-                    onClick = { openInCustomTab(context, advisories.uk) }
+                    onClick = {
+                        onUkAdvisoryTapped()
+                        openInCustomTab(context, advisories.uk)
+                    },
+                    testTag = "advisory_chip_uk"
                 )
                 TravelAdvisoryChip(
                     label = "AU",
                     contentDescription = stringResource(R.string.cd_travel_advisory_au, country.name),
-                    onClick = { openInCustomTab(context, advisories.au) }
+                    onClick = {
+                        onAuAdvisoryTapped()
+                        openInCustomTab(context, advisories.au)
+                    },
+                    testTag = "advisory_chip_au"
                 )
                 TravelAdvisoryChip(
                     label = "CA",
                     contentDescription = stringResource(R.string.cd_travel_advisory_ca, country.name),
-                    onClick = { openInCustomTab(context, advisories.ca) }
+                    onClick = {
+                        onCaAdvisoryTapped()
+                        openInCustomTab(context, advisories.ca)
+                    },
+                    testTag = "advisory_chip_ca"
                 )
             }
         }
@@ -370,7 +412,8 @@ private fun SafetyLevelRow(country: Country) {
 private fun TravelAdvisoryChip(
     label: String,
     contentDescription: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    testTag: String = ""
 ) {
     Text(
         text = label,
@@ -382,6 +425,7 @@ private fun TravelAdvisoryChip(
             .border(1.dp, Secondary, RoundedCornerShape(4.dp))
             .clickable(onClickLabel = contentDescription, onClick = onClick)
             .padding(horizontal = 6.dp, vertical = 3.dp)
+            .testTag(testTag)
     )
 }
 
@@ -479,7 +523,9 @@ private fun CurrencyConverter(
     exchangeRateToUSD: Double,
     currencyCode: String,
     onFieldFocused: () -> Unit = {},
-    onDone: () -> Unit = {}
+    onDone: () -> Unit = {},
+    onUsdFocused: () -> Unit = {},
+    onForeignFocused: () -> Unit = {}
 ) {
     // Calculate foreign currency per USD
     val foreignPerUsd = if (exchangeRateToUSD > 0) 1.0 / exchangeRateToUSD else 0.0
@@ -521,7 +567,7 @@ private fun CurrencyConverter(
                         "0.00"
                     }
                 },
-                onFieldFocused = onFieldFocused,
+                onFieldFocused = { onFieldFocused(); onUsdFocused() },
                 onDone = onDone,
                 modifier = Modifier.weight(1f),
                 testTag = "currency_input_usd"
@@ -553,7 +599,7 @@ private fun CurrencyConverter(
                         "0.00"
                     }
                 },
-                onFieldFocused = onFieldFocused,
+                onFieldFocused = { onFieldFocused(); onForeignFocused() },
                 onDone = onDone,
                 modifier = Modifier.weight(1f),
                 testTag = "currency_input_foreign"
