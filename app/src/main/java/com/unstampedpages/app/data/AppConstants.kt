@@ -24,6 +24,7 @@ object AppConstants {
         const val GERMANY = "Germany"
         const val JAPAN = "Japan"
         const val SUDAN = "Sudan"
+        const val UNITED_ARAB_EMIRATES = "United Arab Emirates"
         const val UNITED_KINGDOM = "United Kingdom"
         const val UNITED_STATES = "United States"
     }

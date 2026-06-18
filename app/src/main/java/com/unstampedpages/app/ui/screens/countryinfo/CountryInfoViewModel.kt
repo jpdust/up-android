@@ -4,10 +4,16 @@ import androidx.lifecycle.ViewModel
 import com.unstampedpages.app.data.model.Continent
 import com.unstampedpages.app.data.model.Country
 import com.unstampedpages.app.data.repository.CountryRepository
+import java.text.Normalizer
 import java.util.Locale
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+
+private val COMBINING_MARKS = "\\p{M}".toRegex()
+
+private fun String.stripAccents(): String =
+    Normalizer.normalize(this, Normalizer.Form.NFD).replace(COMBINING_MARKS, "")
 
 /**
  * A search result entry — either a direct country match or a named territory/dependency.
@@ -91,12 +97,14 @@ class CountryInfoViewModel : ViewModel() {
         val results = if (query.isBlank()) {
             emptyList()
         } else {
+            val normalizedQuery = query.stripAccents()
+
             val directMatches = repository.getAllCountries(locale)
-                .filter { it.name.contains(query, ignoreCase = true) }
+                .filter { it.name.stripAccents().contains(normalizedQuery, ignoreCase = true) }
                 .map { SearchSuggestion(country = it, displayName = it.name) }
 
             val territoryMatches = getCombinedTerritoryAliases(locale)
-                .filter { (name, _) -> name.contains(query, ignoreCase = true) }
+                .filter { (name, _) -> name.stripAccents().contains(normalizedQuery, ignoreCase = true) }
                 .mapNotNull { (name, parentId) ->
                     repository.getCountryById(parentId, locale)?.let { parent ->
                         SearchSuggestion(
@@ -107,8 +115,13 @@ class CountryInfoViewModel : ViewModel() {
                     }
                 }
 
+            val lowerQuery = normalizedQuery.lowercase(locale)
             (directMatches + territoryMatches)
-                .distinctBy { it.displayName }
+                .distinctBy { it.displayName.stripAccents().lowercase(locale) }
+                .sortedWith(
+                    compareBy<SearchSuggestion> { !it.displayName.stripAccents().lowercase(locale).startsWith(lowerQuery) }
+                        .thenBy { it.displayName.lowercase(locale) }
+                )
                 .take(5)
         }
         _uiState.value = _uiState.value.copy(

@@ -660,6 +660,17 @@ class CountryInfoViewModelTest {
     }
 
     @Test
+    fun `searching without accents matches accented territory and returns single result`() {
+        viewModel.updateSearchQuery("Reunion")
+
+        val results = viewModel.uiState.value.searchResults
+        assertTrue(results.isNotEmpty())
+        val reunionResults = results.filter { it.displayName.contains("union", ignoreCase = true) }
+        assertEquals(1, reunionResults.size)
+        assertEquals("Réunion", reunionResults.first().displayName)
+    }
+
+    @Test
     fun `results are still limited to 5 when territory matches are included`() {
         // "Island" appears in many territory names
         viewModel.updateSearchQuery("Island")
@@ -674,6 +685,62 @@ class CountryInfoViewModelTest {
         // Search for a common letter that matches many countries
         viewModel.updateSearchQuery("a")
         assertTrue(viewModel.uiState.value.searchResults.size <= 5)
+    }
+
+    @Test
+    fun `search results are capped at exactly 5 for broad queries`() {
+        viewModel.updateSearchQuery("a")
+        assertEquals(5, viewModel.uiState.value.searchResults.size)
+
+        viewModel.updateSearchQuery("an")
+        assertEquals(5, viewModel.uiState.value.searchResults.size)
+    }
+
+    @Test
+    fun `search results are sorted alphabetically within prefix and substring groups`() {
+        viewModel.updateSearchQuery("an")
+        val results = viewModel.uiState.value.searchResults
+        assertTrue(results.size > 1)
+        val names = results.map { it.displayName }
+        val prefixMatches = names.filter { it.startsWith("An", ignoreCase = true) }
+        val substringMatches = names.filter { !it.startsWith("An", ignoreCase = true) }
+        assertEquals(prefixMatches.sorted(), prefixMatches)
+        assertEquals(substringMatches.sorted(), substringMatches)
+        assertEquals(prefixMatches + substringMatches, names)
+    }
+
+    @Test
+    fun `prefix matches appear before substring matches`() {
+        viewModel.updateSearchQuery("Uni")
+        val results = viewModel.uiState.value.searchResults
+        assertTrue(results.size >= 3)
+        val names = results.map { it.displayName }
+        val expectedPrefix = listOf(
+            AppConstants.CountryName.UNITED_ARAB_EMIRATES,
+            AppConstants.CountryName.UNITED_KINGDOM,
+            AppConstants.CountryName.UNITED_STATES
+        )
+        assertEquals(expectedPrefix, names.take(3))
+    }
+
+    @Test
+    fun `progressive search narrows results and all match input`() {
+        viewModel.updateSearchQuery("U")
+        val resultsU = viewModel.uiState.value.searchResults.toList()
+        assertTrue(resultsU.isNotEmpty())
+        assertTrue(resultsU.all { it.displayName.contains("U", ignoreCase = true) })
+
+        viewModel.updateSearchQuery("Un")
+        val resultsUn = viewModel.uiState.value.searchResults.toList()
+        assertTrue(resultsUn.isNotEmpty())
+        assertTrue(resultsUn.all { it.displayName.contains("Un", ignoreCase = true) })
+        assertTrue(resultsUn.size <= resultsU.size)
+
+        viewModel.updateSearchQuery("Uni")
+        val resultsUni = viewModel.uiState.value.searchResults.toList()
+        assertTrue(resultsUni.isNotEmpty())
+        assertTrue(resultsUni.all { it.displayName.contains("Uni", ignoreCase = true) })
+        assertTrue(resultsUni.size <= resultsUn.size)
     }
 
     @Test
