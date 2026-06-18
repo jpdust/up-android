@@ -310,6 +310,9 @@ class CountriesRobot(private val composeTestRule: ComposeTestRule) {
     }
 
     fun verifyLegendDisplayed(): CountriesRobot {
+        composeTestRule.waitUntil(timeoutMillis = 5000L) {
+            composeTestRule.onAllNodesWithTag("map_legend").fetchSemanticsNodes().isNotEmpty()
+        }
         composeTestRule.onNodeWithTag("map_legend").assertIsDisplayed()
         return this
     }
@@ -395,6 +398,9 @@ class CountriesRobot(private val composeTestRule: ComposeTestRule) {
     // ==================== Bottom Sheet Verification ====================
 
     fun verifyBottomSheetDisplayed(): CountriesRobot {
+        composeTestRule.waitUntil(timeoutMillis = 5000L) {
+            composeTestRule.onAllNodesWithTag("country_detail_sheet").fetchSemanticsNodes().isNotEmpty()
+        }
         composeTestRule.onNodeWithTag("country_detail_sheet").assertIsDisplayed()
         return this
     }
