@@ -448,7 +448,7 @@ class AppAnalyticsTest {
             mock.verify {
                 NewRelic.recordCustomEvent(
                     "MapGesture",
-                    mapOf("action" to "zoomed", "zoomedIn" to true, "zoomLevel" to 2.5)
+                    mapOf("action" to "zoomed", "zoomedIn" to true, "zoomLevel" to 2.5f)
                 )
             }
         }
@@ -461,7 +461,7 @@ class AppAnalyticsTest {
             mock.verify {
                 NewRelic.recordCustomEvent(
                     "MapGesture",
-                    mapOf("action" to "zoomed", "zoomedIn" to false, "zoomLevel" to 0.75)
+                    mapOf("action" to "zoomed", "zoomedIn" to false, "zoomLevel" to 0.75f)
                 )
             }
         }

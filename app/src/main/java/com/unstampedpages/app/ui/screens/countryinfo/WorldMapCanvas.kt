@@ -663,10 +663,19 @@ private fun dispatchGestureEnd(
     accumulatedPanY: Float,
     callbacks: MapGestureCallbacks
 ) {
-    if (wasMultiTouch) {
-        callbacks.onZoomGestureEnd(finalScale > initialScale, finalScale)
-    } else {
-        callbacks.onPanGestureEnd(determinePanDirection(accumulatedPanX, accumulatedPanY))
+    try {
+        if (wasMultiTouch) {
+            android.util.Log.d("WorldMapCanvas", "dispatchGestureEnd: zoom zoomedIn=${finalScale > initialScale} finalScale=$finalScale")
+            callbacks.onZoomGestureEnd(finalScale > initialScale, finalScale)
+            android.util.Log.d("WorldMapCanvas", "dispatchGestureEnd: zoom callback returned")
+        } else {
+            val direction = determinePanDirection(accumulatedPanX, accumulatedPanY)
+            android.util.Log.d("WorldMapCanvas", "dispatchGestureEnd: pan direction=$direction")
+            callbacks.onPanGestureEnd(direction)
+            android.util.Log.d("WorldMapCanvas", "dispatchGestureEnd: pan callback returned")
+        }
+    } catch (e: Exception) {
+        android.util.Log.e("WorldMapCanvas", "dispatchGestureEnd callback threw", e)
     }
 }
 
