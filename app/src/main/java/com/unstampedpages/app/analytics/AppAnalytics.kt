@@ -7,7 +7,8 @@ import com.newrelic.agent.android.NewRelic
  *
  * All user interactions are stored in two event tables:
  *
- *   UserAction  — every deliberate tap, selection, or form input across all screens.
+ *   UserAction  — every deliberate tap, selection, or form input across all screens,
+ *                 including bottom-navigation tab taps ([ACTION_TAB_SELECTED]).
  *                 Filtered by [SCREEN_*] and [ACTION_*] attributes.
  *
  *   MapGesture  — high-frequency pinch-zoom and pan gestures on the world map,
@@ -25,15 +26,13 @@ object AppAnalytics {
 
     // ── Event tables ─────────────────────────────────────────────────────────────
 
-    private const val EVENT_USER_ACTION    = "UserAction"
-    private const val EVENT_MAP_GESTURE   = "MapGesture"
-    private const val EVENT_TAB_NAVIGATION = "TabNavigation"
+    private const val EVENT_USER_ACTION  = "UserAction"
+    private const val EVENT_MAP_GESTURE  = "MapGesture"
 
     // ── Attribute keys ──────────────────────────────────────────────────────────
 
     private const val ATTR_SCREEN        = "screen"
     private const val ATTR_ACTION        = "action"
-    private const val ATTR_TAB           = "tab"
     private const val ATTR_DIRECTION     = "direction"
     private const val ATTR_ZOOMED_IN     = "zoomedIn"
     private const val ATTR_ZOOM_LEVEL    = "zoomLevel"
@@ -52,6 +51,7 @@ object AppAnalytics {
 
     // ── Action constants — UserAction ────────────────────────────────────────────
 
+    const val ACTION_TAB_SELECTED              = "tabSelected"
     const val ACTION_FILTER_DEFAULT           = "filterDefault"
     const val ACTION_FILTER_SECURITY_RISK     = "filterSecurityRisk"
     const val ACTION_FILTER_VISA_REQUIREMENTS = "filterVisaRequirements"
@@ -87,19 +87,21 @@ object AppAnalytics {
     const val SOURCE_MAP    = "map"
     const val SOURCE_SEARCH = "search"
 
-    // ── Bottom navigation (TabNavigation) ───────────────────────────────────────
+    // ── Bottom navigation (UserAction) ──────────────────────────────────────────
 
     /**
      * User taps a bottom navigation tab.
      *
      * @param tab One of [SCREEN_HOME], [SCREEN_COUNTRIES], [SCREEN_CHECKLIST],
-     *            [SCREEN_TRIP_LOG], [SCREEN_STAMPS]. Values match the [SCREEN_*] constants
-     *            so TabNavigation events can be joined with UserAction events in NRQL.
+     *            [SCREEN_TRIP_LOG], [SCREEN_STAMPS].
      */
     fun trackTabSelected(tab: String) {
         NewRelic.recordCustomEvent(
-            EVENT_TAB_NAVIGATION,
-            mapOf(ATTR_TAB to tab)
+            EVENT_USER_ACTION,
+            mapOf(
+                ATTR_SCREEN to tab,
+                ATTR_ACTION to ACTION_TAB_SELECTED
+            )
         )
     }
 

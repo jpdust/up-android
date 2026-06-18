@@ -17,7 +17,7 @@ import org.mockito.Mockito.mockStatic
  *      that will land in New Relic.
  *
  * Schema: two event tables.
- *   UserAction  — screen + action + contextual attributes
+ *   UserAction  — screen + action + contextual attributes (includes tab navigation)
  *   MapGesture  — action (zoomed/panned) + gesture-specific attributes
  */
 class AppAnalyticsTest {
@@ -180,6 +180,7 @@ class AppAnalyticsTest {
     @Test
     fun `all UserAction action constants are distinct`() {
         val actions = listOf(
+            AppAnalytics.ACTION_TAB_SELECTED,
             AppAnalytics.ACTION_FILTER_DEFAULT,
             AppAnalytics.ACTION_FILTER_SECURITY_RISK,
             AppAnalytics.ACTION_FILTER_VISA_REQUIREMENTS,
@@ -650,51 +651,66 @@ class AppAnalyticsTest {
     // Tab navigation methods
 
     @Test
-    fun `trackTabSelected records TabNavigation with home tab`() {
+    fun `trackTabSelected records UserAction with tabSelected action for home tab`() {
         mockStatic(NewRelic::class.java).use { mock ->
             AppAnalytics.trackTabSelected(AppAnalytics.SCREEN_HOME)
             mock.verify {
-                NewRelic.recordCustomEvent("TabNavigation", mapOf("tab" to "home"))
+                NewRelic.recordCustomEvent(
+                    "UserAction",
+                    mapOf("screen" to "home", "action" to "tabSelected")
+                )
             }
         }
     }
 
     @Test
-    fun `trackTabSelected records TabNavigation with countries tab`() {
+    fun `trackTabSelected records UserAction with tabSelected action for countries tab`() {
         mockStatic(NewRelic::class.java).use { mock ->
             AppAnalytics.trackTabSelected(AppAnalytics.SCREEN_COUNTRIES)
             mock.verify {
-                NewRelic.recordCustomEvent("TabNavigation", mapOf("tab" to "countries"))
+                NewRelic.recordCustomEvent(
+                    "UserAction",
+                    mapOf("screen" to "countries", "action" to "tabSelected")
+                )
             }
         }
     }
 
     @Test
-    fun `trackTabSelected records TabNavigation with checklist tab`() {
+    fun `trackTabSelected records UserAction with tabSelected action for checklist tab`() {
         mockStatic(NewRelic::class.java).use { mock ->
             AppAnalytics.trackTabSelected(AppAnalytics.SCREEN_CHECKLIST)
             mock.verify {
-                NewRelic.recordCustomEvent("TabNavigation", mapOf("tab" to "checklist"))
+                NewRelic.recordCustomEvent(
+                    "UserAction",
+                    mapOf("screen" to "checklist", "action" to "tabSelected")
+                )
             }
         }
     }
 
     @Test
-    fun `trackTabSelected records TabNavigation with tripLog tab`() {
+    fun `trackTabSelected records UserAction with tabSelected action for tripLog tab`() {
         mockStatic(NewRelic::class.java).use { mock ->
             AppAnalytics.trackTabSelected(AppAnalytics.SCREEN_TRIP_LOG)
             mock.verify {
-                NewRelic.recordCustomEvent("TabNavigation", mapOf("tab" to "tripLog"))
+                NewRelic.recordCustomEvent(
+                    "UserAction",
+                    mapOf("screen" to "tripLog", "action" to "tabSelected")
+                )
             }
         }
     }
 
     @Test
-    fun `trackTabSelected records TabNavigation with stamps tab`() {
+    fun `trackTabSelected records UserAction with tabSelected action for stamps tab`() {
         mockStatic(NewRelic::class.java).use { mock ->
             AppAnalytics.trackTabSelected(AppAnalytics.SCREEN_STAMPS)
             mock.verify {
-                NewRelic.recordCustomEvent("TabNavigation", mapOf("tab" to "stamps"))
+                NewRelic.recordCustomEvent(
+                    "UserAction",
+                    mapOf("screen" to "stamps", "action" to "tabSelected")
+                )
             }
         }
     }
