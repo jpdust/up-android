@@ -153,7 +153,7 @@ object AppAnalytics {
             mapOf(
                 ATTR_ACTION     to ACTION_ZOOMED,
                 ATTR_ZOOMED_IN  to zoomedIn,
-                ATTR_ZOOM_LEVEL to zoomLevel.toDouble()
+                ATTR_ZOOM_LEVEL to zoomLevel
             )
         )
     }
