@@ -307,9 +307,7 @@ internal val TERRITORY_ALIASES: List<Pair<String, String>> = listOf(
     "Mayotte" to "fr",
     TerritoryName.NEW_CALEDONIA to "fr",
     "Réunion" to "fr",
-    "Reunion" to "fr",
     TerritoryName.SAINT_BARTHELEMY to "fr",
-    "Saint Barthelemy" to "fr",
     TerritoryName.SAINT_MARTIN to "fr",
     TerritoryName.SAINT_PIERRE_AND_MIQUELON to "fr",
     TerritoryName.WALLIS_AND_FUTUNA to "fr",
@@ -319,7 +317,6 @@ internal val TERRITORY_ALIASES: List<Pair<String, String>> = listOf(
     TerritoryName.ARUBA to "nl",
     "Bonaire" to "nl",
     TerritoryName.CURACAO to "nl",
-    "Curacao" to "nl",
     TerritoryName.SINT_MAARTEN to "nl",
     "Sint Eustatius" to "nl",
     "Saba" to "nl",
@@ -343,7 +340,6 @@ internal val TERRITORY_ALIASES: List<Pair<String, String>> = listOf(
 
     // ── Finnish territories ──────────────────────────────────────────────────
     TerritoryName.ALAND_ISLANDS to "fi",
-    "Aland Islands" to "fi",
 
     // ── Chinese territories ──────────────────────────────────────────────────
     TerritoryName.HONG_KONG to "cn",
