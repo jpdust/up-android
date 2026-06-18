@@ -6,14 +6,13 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
-import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.newrelic.agent.android.NewRelic
+import com.unstampedpages.app.analytics.AppAnalytics
 import com.unstampedpages.app.ui.theme.Secondary
 
 @Composable
@@ -45,13 +44,7 @@ fun BottomNavBar(
                             launchSingleTop = true
                             restoreState = true
                         }
-                        if (item.route == NavRoute.CountryInfo.route) {
-                            val queued = NewRelic.recordCustomEvent(
-                                "TabNavigation",
-                                mapOf("tab" to "Countries")
-                            )
-                            Log.d("NewRelic", "TabNavigation queued: $queued — isStarted: ${NewRelic.isStarted()}")
-                        }
+                        AppAnalytics.trackTabSelected(item.analyticsName)
                     }
                 },
                 icon = {

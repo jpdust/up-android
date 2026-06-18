@@ -647,6 +647,58 @@ class AppAnalyticsTest {
         }
     }
 
+    // Tab navigation methods
+
+    @Test
+    fun `trackTabSelected records TabNavigation with home tab`() {
+        mockStatic(NewRelic::class.java).use { mock ->
+            AppAnalytics.trackTabSelected(AppAnalytics.SCREEN_HOME)
+            mock.verify {
+                NewRelic.recordCustomEvent("TabNavigation", mapOf("tab" to "home"))
+            }
+        }
+    }
+
+    @Test
+    fun `trackTabSelected records TabNavigation with countries tab`() {
+        mockStatic(NewRelic::class.java).use { mock ->
+            AppAnalytics.trackTabSelected(AppAnalytics.SCREEN_COUNTRIES)
+            mock.verify {
+                NewRelic.recordCustomEvent("TabNavigation", mapOf("tab" to "countries"))
+            }
+        }
+    }
+
+    @Test
+    fun `trackTabSelected records TabNavigation with checklist tab`() {
+        mockStatic(NewRelic::class.java).use { mock ->
+            AppAnalytics.trackTabSelected(AppAnalytics.SCREEN_CHECKLIST)
+            mock.verify {
+                NewRelic.recordCustomEvent("TabNavigation", mapOf("tab" to "checklist"))
+            }
+        }
+    }
+
+    @Test
+    fun `trackTabSelected records TabNavigation with tripLog tab`() {
+        mockStatic(NewRelic::class.java).use { mock ->
+            AppAnalytics.trackTabSelected(AppAnalytics.SCREEN_TRIP_LOG)
+            mock.verify {
+                NewRelic.recordCustomEvent("TabNavigation", mapOf("tab" to "tripLog"))
+            }
+        }
+    }
+
+    @Test
+    fun `trackTabSelected records TabNavigation with stamps tab`() {
+        mockStatic(NewRelic::class.java).use { mock ->
+            AppAnalytics.trackTabSelected(AppAnalytics.SCREEN_STAMPS)
+            mock.verify {
+                NewRelic.recordCustomEvent("TabNavigation", mapOf("tab" to "stamps"))
+            }
+        }
+    }
+
     // Detail sheet method
 
     @Test

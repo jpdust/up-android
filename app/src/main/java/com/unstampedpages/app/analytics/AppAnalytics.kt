@@ -25,13 +25,15 @@ object AppAnalytics {
 
     // ── Event tables ─────────────────────────────────────────────────────────────
 
-    private const val EVENT_USER_ACTION = "UserAction"
-    private const val EVENT_MAP_GESTURE = "MapGesture"
+    private const val EVENT_USER_ACTION    = "UserAction"
+    private const val EVENT_MAP_GESTURE   = "MapGesture"
+    private const val EVENT_TAB_NAVIGATION = "TabNavigation"
 
     // ── Attribute keys ──────────────────────────────────────────────────────────
 
     private const val ATTR_SCREEN        = "screen"
     private const val ATTR_ACTION        = "action"
+    private const val ATTR_TAB           = "tab"
     private const val ATTR_DIRECTION     = "direction"
     private const val ATTR_ZOOMED_IN     = "zoomedIn"
     private const val ATTR_ZOOM_LEVEL    = "zoomLevel"
@@ -84,6 +86,22 @@ object AppAnalytics {
 
     const val SOURCE_MAP    = "map"
     const val SOURCE_SEARCH = "search"
+
+    // ── Bottom navigation (TabNavigation) ───────────────────────────────────────
+
+    /**
+     * User taps a bottom navigation tab.
+     *
+     * @param tab One of [SCREEN_HOME], [SCREEN_COUNTRIES], [SCREEN_CHECKLIST],
+     *            [SCREEN_TRIP_LOG], [SCREEN_STAMPS]. Values match the [SCREEN_*] constants
+     *            so TabNavigation events can be joined with UserAction events in NRQL.
+     */
+    fun trackTabSelected(tab: String) {
+        NewRelic.recordCustomEvent(
+            EVENT_TAB_NAVIGATION,
+            mapOf(ATTR_TAB to tab)
+        )
+    }
 
     // ── Countries tab — map filter selection (UserAction) ───────────────────────
 
