@@ -165,6 +165,7 @@
     <string name="cd_add_item">Ajouter un article</string>
     <string name="cd_close_legend">Fermer la légende</string>
     <string name="cd_close">Fermer</string>
+    <string name="cd_country_flag">Drapeau de %1$s</string>
     <string name="cd_search">Rechercher</string>
     <string name="cd_clear">Effacer</string>
     <string name="cd_new_entry">Nouvelle entrée</string>

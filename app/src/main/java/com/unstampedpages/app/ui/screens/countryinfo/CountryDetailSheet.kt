@@ -12,6 +12,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -64,6 +65,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -300,12 +302,23 @@ private fun CountryHeader(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Flag emoji
-            Text(
-                text = country.flagEmoji,
-                fontSize = 64.sp,
-                modifier = Modifier.testTag("country_flag")
-            )
+            // Flag — use custom drawable override when available, otherwise emoji
+            val customFlagRes = CustomFlagProvider.getFlagDrawable(country.id)
+            if (customFlagRes != null) {
+                Image(
+                    painter = painterResource(id = customFlagRes),
+                    contentDescription = stringResource(R.string.cd_country_flag, country.name),
+                    modifier = Modifier
+                        .size(64.dp)
+                        .testTag("country_flag")
+                )
+            } else {
+                Text(
+                    text = country.flagEmoji,
+                    fontSize = 64.sp,
+                    modifier = Modifier.testTag("country_flag")
+                )
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 

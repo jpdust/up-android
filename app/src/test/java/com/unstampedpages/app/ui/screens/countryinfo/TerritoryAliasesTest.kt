@@ -39,9 +39,7 @@ class TerritoryAliasesTest {
             "CXR", "CCK", "HMD", "NFK",
             "COK", "NIU", "TKL",
             "ALD",
-            "HKG", "MAC",
-            "SAH",
-            "KOS"
+            "HKG", "MAC"
         )
         fallbackKeys.forEach { geoId ->
             val name = getLocalizedTerritoryName(geoId, Locale.ENGLISH)
@@ -93,18 +91,15 @@ class TerritoryAliasesTest {
     }
 
     @Test
-    fun `returns English fallback for KOS (Kosovo) which has no ISO alpha-2`() {
-        // KOS is not in GEO_ID_TO_ISO_ALPHA2, so it must fall through to GEO_ID_ENGLISH_FALLBACK.
+    fun `returns null for KOS (Kosovo) which is now a standalone country`() {
         val name = getLocalizedTerritoryName("KOS", Locale.ENGLISH)
-        assertNotNull(name)
-        assertEquals("Kosovo", name)
+        assertNull(name)
     }
 
     @Test
-    fun `returns English fallback for SAH (Western Sahara)`() {
+    fun `returns null for SAH (Western Sahara) which is now a standalone country`() {
         val name = getLocalizedTerritoryName("SAH", Locale.ENGLISH)
-        assertNotNull(name)
-        assertTrue("Expected 'Western Sahara' in name, got: $name", name!!.contains("Sahara", ignoreCase = true))
+        assertNull(name)
     }
 
     @Test
@@ -156,7 +151,7 @@ class TerritoryAliasesTest {
         listOf(
             "Cayman Islands", PUERTO_RICO, "French Polynesia",
             "Greenland", HONG_KONG, "Easter Island", "Azores",
-            "Kosovo", "Canary Islands", "Sicily"
+            "Canary Islands", "Sicily"
         ).forEach { alias ->
             assertTrue("TERRITORY_ALIASES entry '$alias' missing from combined list", names.contains(alias))
         }

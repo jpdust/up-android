@@ -62,9 +62,6 @@ private object GeoId {
     // Chinese territories
     const val HKG = "HKG"
     const val MAC = "MAC"
-    // Other
-    const val SAH = "SAH"
-    const val KOS = "KOS"
 }
 
 // ── Territory display name constants ──────────────────────────────────────────
@@ -128,8 +125,6 @@ private object TerritoryName {
     const val HONG_KONG = "Hong Kong"
     const val MACAU = "Macau"
     // Other
-    const val WESTERN_SAHARA = "Western Sahara"
-    const val KOSOVO = "Kosovo"
 }
 
 /**
@@ -167,14 +162,11 @@ private val GEO_ID_TO_ISO_ALPHA2: Map<String, String> = mapOf(
     GeoId.ALD to "AX",
     // Chinese territories
     GeoId.HKG to "HK", GeoId.MAC to "MO",
-    // Other
-    GeoId.SAH to "EH",
 )
 
 /**
  * English fallback names for territory GeoJSON IDs whose ISO alpha-2 code may not be
- * recognized by all Android versions / locales. Also covers Kosovo (XK) which is not an
- * official ISO 3166-1 entry.
+ * recognized by all Android versions / locales.
  */
 private val GEO_ID_ENGLISH_FALLBACK: Map<String, String> = mapOf(
     GeoId.AIA to TerritoryName.ANGUILLA,
@@ -222,8 +214,6 @@ private val GEO_ID_ENGLISH_FALLBACK: Map<String, String> = mapOf(
     GeoId.ALD to TerritoryName.ALAND_ISLANDS,
     GeoId.HKG to TerritoryName.HONG_KONG,
     GeoId.MAC to TerritoryName.MACAU,
-    GeoId.SAH to TerritoryName.WESTERN_SAHARA,
-    GeoId.KOS to TerritoryName.KOSOVO,
 )
 
 /**
@@ -377,8 +367,6 @@ internal val TERRITORY_ALIASES: List<Pair<String, String>> = listOf(
     "Jan Mayen" to "no",
 
     // ── Other territories / administered regions ─────────────────────────────
-    TerritoryName.WESTERN_SAHARA to "ma",
-    TerritoryName.KOSOVO to "rs",
     "Kaliningrad" to "ru",
     "Sakhalin" to "ru",
     "Andaman Islands" to "in",
