@@ -1518,8 +1518,8 @@ internal val geoJsonToRepoId = mapOf(
     // Chinese territories (HKG already mapped above)
     "MAC" to "cn",
     // Other
-    "SAH" to "ma",  // Western Sahara — administered by Morocco (disputed)
-    "KOS" to "rs"   // Kosovo — administered by Serbia (disputed)
+    "SAH" to "eh",
+    "KOS" to "xk"
 )
 
 /**

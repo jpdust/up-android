@@ -167,6 +167,7 @@
     <string name="cd_add_item">Add item</string>
     <string name="cd_close_legend">Close legend</string>
     <string name="cd_close">Close</string>
+    <string name="cd_country_flag">Flag of %1$s</string>
     <string name="cd_search">Search</string>
     <string name="cd_clear">Clear</string>
     <string name="cd_new_entry">New entry</string>

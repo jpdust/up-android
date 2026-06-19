@@ -159,6 +159,7 @@
     <string name="cd_add_item">添加物品</string>
     <string name="cd_close_legend">关闭图例</string>
     <string name="cd_close">关闭</string>
+    <string name="cd_country_flag">%1$s的国旗</string>
     <string name="cd_search">搜索</string>
     <string name="cd_clear">清除</string>
     <string name="cd_new_entry">新条目</string>

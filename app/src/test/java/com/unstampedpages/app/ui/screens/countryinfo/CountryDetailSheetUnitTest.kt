@@ -1,6 +1,8 @@
 package com.unstampedpages.app.ui.screens.countryinfo
 
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -664,5 +666,30 @@ class CountryDetailSheetUnitTest {
     fun countryHeader_closeButtonPresent() {
         launchSheet()
         composeTestRule.onNodeWithTag("bottom_sheet_close_button").assertExists()
+    }
+
+    // ── Custom flag override (Image vs emoji Text) ───────────────────────────
+
+    @Test
+    fun countryWithCustomFlag_somaliland_rendersImageNotEmoji() {
+        launchSheet(country = makeCountry(id = "xso", name = "Somaliland", flagEmoji = "🇸🇴"))
+        composeTestRule.onNode(hasTestTag("country_flag") and hasContentDescription("Flag of Somaliland"))
+            .assertExists()
+    }
+
+    @Test
+    fun countryWithCustomFlag_northernIreland_rendersImageNotEmoji() {
+        launchSheet(country = makeCountry(id = "xni", name = "Northern Ireland", flagEmoji = ""))
+        composeTestRule.onNode(hasTestTag("country_flag") and hasContentDescription("Flag of Northern Ireland"))
+            .assertExists()
+    }
+
+    @Test
+    fun countryWithoutCustomFlag_rendersEmojiText() {
+        launchSheet(country = makeCountry(id = "jp", name = "Japan", flagEmoji = "🇯🇵"))
+        composeTestRule.onNodeWithTag("country_flag").assertExists()
+        // Emoji text node — no content description since it's a Text composable
+        composeTestRule.onNode(hasTestTag("country_flag") and hasContentDescription("Flag of Japan"))
+            .assertDoesNotExist()
     }
 }

@@ -112,6 +112,7 @@ object CountryList {
         CountryListItem("KI", "Kiribati"),
         CountryListItem("KP", "Korea (North)"),
         CountryListItem("KR", "Korea (South)"),
+        CountryListItem("XK", "Kosovo"),
         CountryListItem("KW", "Kuwait"),
         CountryListItem("KG", "Kyrgyzstan"),
         CountryListItem("LA", "Laos"),
@@ -150,6 +151,7 @@ object CountryList {
         CountryListItem("NE", "Niger"),
         CountryListItem("NG", "Nigeria"),
         CountryListItem("MK", "North Macedonia"),
+        CountryListItem("XN", "Northern Ireland"),
         CountryListItem("NO", "Norway"),
         CountryListItem("OM", "Oman"),
         CountryListItem("PK", "Pakistan"),
@@ -214,6 +216,7 @@ object CountryList {
         CountryListItem("VA", "Vatican City"),
         CountryListItem("VE", "Venezuela"),
         CountryListItem("VN", "Vietnam"),
+        CountryListItem("EH", "Western Sahara"),
         CountryListItem("YE", "Yemen"),
         CountryListItem("ZM", "Zambia"),
         CountryListItem("ZW", "Zimbabwe")
