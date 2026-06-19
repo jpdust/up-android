@@ -11,9 +11,11 @@ data class CountryListItem(
      * Falls back to the English name if localization is not available.
      */
     fun getLocalizedName(locale: Locale = Locale.getDefault()): String {
+        // englishName is our source of truth for English — avoids CLDR drift
+        // (e.g. CLDR now returns "Türkiye" instead of "Turkey")
+        if (locale.language == "en") return englishName
         val countryLocale = Locale.Builder().setRegion(code).build()
         val localized = countryLocale.getDisplayCountry(locale)
-        // If the localized name is the same as the code, it means no translation was found
         return if (localized == code || localized.isBlank()) englishName else localized
     }
 }

@@ -173,6 +173,31 @@ class WorldMapTapTest {
         assertEquals("first", result)   // stops at the first match
     }
 
+    @Test
+    fun `smaller enclave country wins over larger parent when both match`() {
+        val parent = CountryGeometry("ITA", listOf(squareAroundOrigin()))
+        val tinySquare = listOf(
+            LatLng(lat = 1f, lng = -1f), LatLng(lat = 1f, lng = 1f),
+            LatLng(lat = -1f, lng = 1f), LatLng(lat = -1f, lng = -1f),
+            LatLng(lat = 1f, lng = -1f)
+        )
+        val enclave = CountryGeometry("VAT", listOf(tinySquare))
+
+        val bounds = mapOf(
+            "ITA" to tightBoundsForSquare(),
+            "VAT" to CountryBounds(
+                centroidNormX = tapX, centroidNormY = tapY,
+                minX = MercatorProjection.longitudeToX(-1f),
+                maxX = MercatorProjection.longitudeToX(1f),
+                minY = MercatorProjection.latitudeToY(1f),
+                maxY = MercatorProjection.latitudeToY(-1f)
+            )
+        )
+
+        val result = findCountryAtNormalizedPoint(tapX, tapY, listOf(parent, enclave), bounds)
+        assertEquals("VAT", result)
+    }
+
     // --- multipolygon ----------------------------------------------------------
 
     @Test
