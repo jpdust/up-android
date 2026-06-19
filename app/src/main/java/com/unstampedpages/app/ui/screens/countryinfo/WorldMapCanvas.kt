@@ -1871,6 +1871,9 @@ internal fun findCountryAtNormalizedPoint(
     val lng = MercatorProjection.xToLongitude(normalizedX)
     val lat = MercatorProjection.yToLatitude(normalizedY)
 
+    var bestId: String? = null
+    var bestArea = Float.MAX_VALUE
+
     for (geometry in geometries) {
         val bounds = countryBounds[geometry.countryId]
 
@@ -1882,10 +1885,19 @@ internal fun findCountryAtNormalizedPoint(
         }
 
         if (checkGeometryPolygons(lat, lng, normalizedX, normalizedY, geometry, bounds?.polygonBounds)) {
-            return geometry.countryId
+            if (bestId == null) {
+                bestId = geometry.countryId
+                bestArea = if (bounds != null) bounds.widthNorm * bounds.heightNorm else Float.MAX_VALUE
+            } else if (bounds != null) {
+                val area = bounds.widthNorm * bounds.heightNorm
+                if (area < bestArea) {
+                    bestArea = area
+                    bestId = geometry.countryId
+                }
+            }
         }
     }
-    return null
+    return bestId
 }
 
 /**

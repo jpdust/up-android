@@ -3,6 +3,7 @@ package com.unstampedpages.app.data
 import com.unstampedpages.app.data.AppConstants
 import org.junit.Assert.*
 import org.junit.Test
+import java.util.Locale
 
 class CountryListTest {
 
@@ -98,6 +99,24 @@ class CountryListTest {
 
         assertNotNull(br)
         assertEquals("Brazil", br?.englishName)
+    }
+
+    @Test
+    fun `Turkey returns Turkey in English locale not Turkiye`() {
+        val turkey = CountryList.countries.find { it.code == "TR" }
+        assertNotNull(turkey)
+        assertEquals("Turkey", turkey!!.getLocalizedName(Locale.ENGLISH))
+    }
+
+    @Test
+    fun `English locale uses englishName for all countries`() {
+        CountryList.countries.forEach { country ->
+            assertEquals(
+                "English locale should return englishName for ${country.code}",
+                country.englishName,
+                country.getLocalizedName(Locale.ENGLISH)
+            )
+        }
     }
 
     @Test
