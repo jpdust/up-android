@@ -271,7 +271,7 @@ internal fun calculateMultiTouchTransform(
 /**
  * Calculate new transform state for single-touch pan gesture
  */
-private fun calculateSingleTouchTransform(
+internal fun calculateSingleTouchTransform(
     current: TransformState,
     panDelta: Offset,
     mapWidth: Float,
@@ -406,7 +406,7 @@ internal fun proximityFallbackHitTest(
  * [matrixValues] is a freshly copied 9-float array so the live
  * [android.graphics.Matrix] is never shared across threads.
  */
-private class HitTestSnapshot(
+internal class HitTestSnapshot(
     val matrixValues: FloatArray,
     val mapWidth: Float,
     val mapHeight: Float,
@@ -423,7 +423,7 @@ private class HitTestSnapshot(
  * an optional territory display name (e.g. "Cayman Islands") if the tapped feature is a
  * known standalone territory. Both values are null when no country was hit.
  */
-private fun hitTestCountry(
+internal fun hitTestCountry(
     position: Offset,
     snapshot: HitTestSnapshot,
     locale: java.util.Locale,

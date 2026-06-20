@@ -4681,3 +4681,110 @@ class ComputeVisibleLabelSpecsTest {
         assertEquals("up", determinePanDirection(0f, -200f))
     }
 }
+
+// =============================================================================
+// CalculateSingleTouchTransform Tests
+// =============================================================================
+
+class CalculateSingleTouchTransformTest {
+
+    private val mapWidth = 1000f
+    private val mapHeight = 500f
+
+    @Test
+    fun `zero pan delta returns same state`() {
+        val initial = TransformState(scale = 2f, panX = 0.1f, panY = 0.1f)
+        val result = calculateSingleTouchTransform(initial, Offset.Zero, mapWidth, mapHeight)
+        assertEquals(initial.panX, result.panX, 0.0001f)
+        assertEquals(initial.panY, result.panY, 0.0001f)
+        assertEquals(initial.scale, result.scale, 0.0001f)
+    }
+
+    @Test
+    fun `positive x pan delta moves panX right`() {
+        val initial = TransformState(scale = 1f, panX = 0f, panY = 0f)
+        val result = calculateSingleTouchTransform(initial, Offset(100f, 0f), mapWidth, mapHeight)
+        assertTrue(result.panX > initial.panX)
+    }
+
+    @Test
+    fun `negative x pan delta moves panX left`() {
+        val initial = TransformState(scale = 1f, panX = 0f, panY = 0f)
+        val result = calculateSingleTouchTransform(initial, Offset(-100f, 0f), mapWidth, mapHeight)
+        assertTrue(result.panX < initial.panX)
+    }
+
+    @Test
+    fun `positive y pan delta moves panY down`() {
+        val initial = TransformState(scale = 2f, panX = 0f, panY = 0f)
+        val result = calculateSingleTouchTransform(initial, Offset(0f, 100f), mapWidth, mapHeight)
+        assertTrue(result.panY > initial.panY)
+    }
+
+    @Test
+    fun `negative y pan delta moves panY up`() {
+        val initial = TransformState(scale = 2f, panX = 0f, panY = 0f)
+        val result = calculateSingleTouchTransform(initial, Offset(0f, -100f), mapWidth, mapHeight)
+        assertTrue(result.panY < initial.panY)
+    }
+
+    @Test
+    fun `panX wraps via normalizeOffsetX`() {
+        val initial = TransformState(scale = 1f, panX = 0.49f, panY = 0f)
+        val result = calculateSingleTouchTransform(initial, Offset(100f, 0f), mapWidth, mapHeight)
+        assertTrue("panX should wrap into [-0.5, 0.5)", result.panX >= -0.5f && result.panX < 0.5f)
+    }
+
+    @Test
+    fun `panY is clamped at scale 1`() {
+        val initial = TransformState(scale = 1f, panX = 0f, panY = 0f)
+        val result = calculateSingleTouchTransform(initial, Offset(0f, 5000f), mapWidth, mapHeight)
+        assertEquals(0f, result.panY, 0.0001f)
+    }
+
+    @Test
+    fun `panY is clamped to vertical bounds when zoomed in`() {
+        val initial = TransformState(scale = 3f, panX = 0f, panY = 0f)
+        val result = calculateSingleTouchTransform(initial, Offset(0f, 100000f), mapWidth, mapHeight)
+        val bounds = calculateVerticalPanBounds(3f, mapHeight)
+        assertEquals(bounds.maxPanY, result.panY, 0.0001f)
+    }
+
+    @Test
+    fun `panY negative clamp when zoomed in`() {
+        val initial = TransformState(scale = 3f, panX = 0f, panY = 0f)
+        val result = calculateSingleTouchTransform(initial, Offset(0f, -100000f), mapWidth, mapHeight)
+        val bounds = calculateVerticalPanBounds(3f, mapHeight)
+        assertEquals(bounds.minPanY, result.panY, 0.0001f)
+    }
+
+    @Test
+    fun `scale is preserved unchanged`() {
+        val initial = TransformState(scale = 5f, panX = 0.1f, panY = 0.05f)
+        val result = calculateSingleTouchTransform(initial, Offset(50f, 50f), mapWidth, mapHeight)
+        assertEquals(initial.scale, result.scale, 0.0001f)
+    }
+
+    @Test
+    fun `higher scale reduces pan distance per pixel`() {
+        val initial = TransformState(scale = 1f, panX = 0f, panY = 0f)
+        val delta = Offset(100f, 0f)
+        val result1x = calculateSingleTouchTransform(initial, delta, mapWidth, mapHeight)
+
+        val initial2x = TransformState(scale = 2f, panX = 0f, panY = 0f)
+        val result2x = calculateSingleTouchTransform(initial2x, delta, mapWidth, mapHeight)
+
+        assertTrue(
+            "Pan distance should be smaller at higher scale",
+            kotlin.math.abs(result2x.panX) < kotlin.math.abs(result1x.panX)
+        )
+    }
+
+    @Test
+    fun `diagonal pan moves both axes`() {
+        val initial = TransformState(scale = 2f, panX = 0f, panY = 0f)
+        val result = calculateSingleTouchTransform(initial, Offset(100f, 100f), mapWidth, mapHeight)
+        assertTrue(result.panX != 0f)
+        assertTrue(result.panY != 0f)
+    }
+}
