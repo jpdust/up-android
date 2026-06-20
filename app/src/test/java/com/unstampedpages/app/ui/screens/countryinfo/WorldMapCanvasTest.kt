@@ -495,6 +495,16 @@ class WorldMapCanvasTest {
     }
 
     @Test
+    fun `geoJsonToRepoId contains NIR mapping for Northern Ireland`() {
+        assertEquals("xni", geoJsonToRepoId["NIR"])
+    }
+
+    @Test
+    fun `geoJsonToRepoId contains CYN mapping for Northern Cyprus`() {
+        assertEquals("xnc", geoJsonToRepoId["CYN"])
+    }
+
+    @Test
     fun `geoJsonToRepoId returns null for unknown code`() {
         assertNull(geoJsonToRepoId["INVALID"])
     }
@@ -3441,10 +3451,10 @@ class HitTestNormalizedPointTest {
         assertNull(result)
     }
 
-    // ── priority: ray-cast wins over fallback ────────────────────────────
+    // ── priority: dot-marker country wins over ray-cast ───────────────────
 
     @Test
-    fun `ray-cast result wins over nearby fallback candidate`() {
+    fun `nearby dot-marker country wins over ray-cast parent`() {
         // Polygon at origin (ray-cast will hit FRA), plus a dot-marker SYC also nearby
         val fGeom = geometryAt("FRA", triangleAtOrigin)
         val fBounds = boundsFor(fGeom)
@@ -3465,7 +3475,22 @@ class HitTestNormalizedPointTest {
             countryBounds = mapOf("FRA" to fBounds, "SYC" to sycBounds),
             mapWidth = mapWidth, mapHeight = mapHeight, currentScale = scale
         )
-        // FRA wins because ray-cast fires first
+        // SYC wins because proximity to dot-marker countries is checked first
+        assertEquals("sc", result)
+    }
+
+    @Test
+    fun `ray-cast still works when no dot-marker country is nearby`() {
+        val fGeom = geometryAt("FRA", triangleAtOrigin)
+        val fBounds = boundsFor(fGeom)
+
+        val result = hitTestNormalizedPoint(
+            normalizedX = MercatorProjection.longitudeToX(0f),
+            normalizedY = MercatorProjection.latitudeToY(0f),
+            geometries = listOf(fGeom),
+            countryBounds = mapOf("FRA" to fBounds),
+            mapWidth = mapWidth, mapHeight = mapHeight, currentScale = scale
+        )
         assertEquals("fr", result)
     }
 

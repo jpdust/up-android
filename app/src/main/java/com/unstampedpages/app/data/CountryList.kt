@@ -153,6 +153,7 @@ object CountryList {
         CountryListItem("NE", "Niger"),
         CountryListItem("NG", "Nigeria"),
         CountryListItem("MK", "North Macedonia"),
+        CountryListItem("XC", "Northern Cyprus"),
         CountryListItem("XN", "Northern Ireland"),
         CountryListItem("NO", "Norway"),
         CountryListItem("OM", "Oman"),

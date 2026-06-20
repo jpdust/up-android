@@ -678,6 +678,13 @@ class CountryDetailSheetUnitTest {
     }
 
     @Test
+    fun countryWithCustomFlag_northernCyprus_rendersImageNotEmoji() {
+        launchSheet(country = makeCountry(id = "xnc", name = "Northern Cyprus", flagEmoji = "🇨🇾"))
+        composeTestRule.onNode(hasTestTag("country_flag") and hasContentDescription("Flag of Northern Cyprus"))
+            .assertExists()
+    }
+
+    @Test
     fun countryWithCustomFlag_northernIreland_rendersImageNotEmoji() {
         launchSheet(country = makeCountry(id = "xni", name = "Northern Ireland", flagEmoji = ""))
         composeTestRule.onNode(hasTestTag("country_flag") and hasContentDescription("Flag of Northern Ireland"))

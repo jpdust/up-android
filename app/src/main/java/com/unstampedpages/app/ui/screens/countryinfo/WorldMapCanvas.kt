@@ -433,17 +433,22 @@ private fun hitTestCountry(
     val normX = normalizeNormalizedX(pts[0] / snapshot.mapWidth)
     val normY = pts[1] / snapshot.mapHeight
 
-    // Primary: exact polygon ray-cast — captures geoJsonId for territory name lookup.
+    // Check proximity to small dot-marker countries first — their polygons are
+    // subpixel-sized and can never win a ray-cast against the parent country.
+    val proximityId = proximityFallbackHitTest(
+        normX, normY, snapshot.countryBounds, snapshot.mapWidth, snapshot.mapHeight, snapshot.currentScale
+    )
+    if (proximityId != null) {
+        return geoJsonToRepoId[proximityId] to getLocalizedTerritoryName(proximityId, locale)
+    }
+
+    // Standard polygon ray-cast.
     val geoJsonId = findCountryAtNormalizedPoint(normX, normY, snapshot.geometries, snapshot.countryBounds)
     if (geoJsonId != null) {
         return geoJsonToRepoId[geoJsonId] to getLocalizedTerritoryName(geoJsonId, locale)
     }
 
-    // Fallback: proximity to small dot-marker countries and tiny island polygons.
-    val fallbackId = proximityFallbackHitTest(
-        normX, normY, snapshot.countryBounds, snapshot.mapWidth, snapshot.mapHeight, snapshot.currentScale
-    )
-    return (fallbackId?.let { geoJsonToRepoId[it] }) to (fallbackId?.let { getLocalizedTerritoryName(it, locale) })
+    return null to null
 }
 
 /**
@@ -466,13 +471,15 @@ internal fun hitTestNormalizedPoint(
     mapHeight: Float,
     currentScale: Float
 ): String? {
-    // Primary: exact polygon ray-cast
+    // Proximity to small dot-marker countries first — their polygons are subpixel-sized.
+    val proximityId = proximityFallbackHitTest(normalizedX, normalizedY, countryBounds, mapWidth, mapHeight, currentScale)
+    if (proximityId != null) return geoJsonToRepoId[proximityId]
+
+    // Standard polygon ray-cast
     val geoJsonId = findCountryAtNormalizedPoint(normalizedX, normalizedY, geometries, countryBounds)
     if (geoJsonId != null) return geoJsonToRepoId[geoJsonId]
 
-    // Fallback: proximity to small dot-marker countries and small island polygons
-    val fallbackId = proximityFallbackHitTest(normalizedX, normalizedY, countryBounds, mapWidth, mapHeight, currentScale)
-    return fallbackId?.let { geoJsonToRepoId[it] }
+    return null
 }
 
 /**
@@ -1454,14 +1461,14 @@ internal val geoJsonToRepoId = mapOf(
     "CHL" to "cl", "ECU" to "ec", "BOL" to "bo", "PRY" to "py", "URY" to "uy",
     "GUY" to "gy", "SUR" to "sr",
     // Europe
-    "GBR" to "gb", "FRA" to "fr", "DEU" to "de", "ITA" to "it", "ESP" to "es",
+    "GBR" to "gb", "NIR" to "xni", "FRA" to "fr", "DEU" to "de", "ITA" to "it", "ESP" to "es",
     "POL" to "pl", "ROU" to "ro", "NLD" to "nl", "BEL" to "be", "CZE" to "cz",
     "GRC" to "gr", "PRT" to "pt", "SWE" to "se", "HUN" to "hu", "AUT" to "at",
     "CHE" to "ch", "BGR" to "bg", "DNK" to "dk", "FIN" to "fi", "NOR" to "no",
     "IRL" to "ie", "HRV" to "hr", "SVK" to "sk", "UKR" to "ua", "RUS" to "ru",
     "TUR" to "tr", "SRB" to "rs", "LTU" to "lt", "LVA" to "lv", "EST" to "ee",
     "SVN" to "si", "ISL" to "is", "ALB" to "al", "BLR" to "by", "BIH" to "ba",
-    "CYP" to "cy", "LUX" to "lu", "MDA" to "md", "MNE" to "me", "MKD" to "mk",
+    "CYP" to "cy", "CYN" to "xnc", "LUX" to "lu", "MDA" to "md", "MNE" to "me", "MKD" to "mk",
     "AND" to "ad", "LIE" to "li", "MLT" to "mt", "MCO" to "mc", "SMR" to "sm", "VAT" to "va",
     // Africa
     "EGY" to "eg", "ZAF" to "za", "NGA" to "ng", "KEN" to "ke", "MAR" to "ma",

@@ -24,7 +24,7 @@ class CountryRepositoryTest {
         val countries = repository.getAllCountries()
 
         assertTrue(countries.isNotEmpty())
-        assertEquals(countries.size, 212)
+        assertEquals(countries.size, 213)
     }
 
     @Test
@@ -563,6 +563,25 @@ class CountryRepositoryTest {
         assertNotNull("Martinique (mq) should exist", country)
         assertEquals("EUR", country!!.currencyCode)
         assertEquals(Continent.NORTH_AMERICA, country.continent)
+    }
+
+    @Test
+    fun `Northern Cyprus has TRY currency and is in Europe`() {
+        val country = repository.getCountryById("xnc")
+        assertNotNull("Northern Cyprus (xnc) should exist", country)
+        assertEquals("TRY", country!!.currencyCode)
+        assertEquals("Turkish Lira", country.currency)
+        assertEquals(Continent.EUROPE, country.continent)
+        assertTrue(country.exchangeRateToUSD > 0)
+    }
+
+    @Test
+    fun `Northern Ireland has GBP currency and is in Europe`() {
+        val country = repository.getCountryById("xni")
+        assertNotNull("Northern Ireland (xni) should exist", country)
+        assertEquals("GBP", country!!.currencyCode)
+        assertEquals("British Pound", country.currency)
+        assertEquals(Continent.EUROPE, country.continent)
     }
 
     @Test

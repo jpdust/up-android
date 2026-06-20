@@ -12,6 +12,11 @@ class CustomFlagProviderTest {
     }
 
     @Test
+    fun `getFlagDrawable returns drawable for Northern Cyprus`() {
+        assertEquals(R.drawable.flag_xnc, CustomFlagProvider.getFlagDrawable("xnc"))
+    }
+
+    @Test
     fun `getFlagDrawable returns drawable for Northern Ireland`() {
         assertEquals(R.drawable.flag_xni, CustomFlagProvider.getFlagDrawable("xni"))
     }
@@ -37,6 +42,11 @@ class CustomFlagProviderTest {
     }
 
     @Test
+    fun `hasCustomFlag returns true for Northern Cyprus`() {
+        assertTrue(CustomFlagProvider.hasCustomFlag("xnc"))
+    }
+
+    @Test
     fun `hasCustomFlag returns true for Northern Ireland`() {
         assertTrue(CustomFlagProvider.hasCustomFlag("xni"))
     }
@@ -53,7 +63,7 @@ class CustomFlagProviderTest {
 
     @Test
     fun `hasCustomFlag is consistent with getFlagDrawable`() {
-        val countryCodes = listOf("xso", "us", "gb", "fr", "jp", "", "zzz")
+        val countryCodes = listOf("xnc", "xni", "xso", "us", "gb", "fr", "jp", "", "zzz")
         for (code in countryCodes) {
             assertEquals(
                 "hasCustomFlag and getFlagDrawable should agree for '$code'",
