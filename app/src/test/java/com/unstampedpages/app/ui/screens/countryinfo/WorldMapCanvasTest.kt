@@ -3497,6 +3497,52 @@ class HitTestNormalizedPointTest {
     // ── empty inputs ─────────────────────────────────────────────────────
 
     @Test
+    fun `proximity hit with geoId not in geoJsonToRepoId returns null`() {
+        val cx = MercatorProjection.longitudeToX(0f)
+        val cy = MercatorProjection.latitudeToY(0f)
+        val halfNorm = (SMALL_COUNTRY_THRESHOLD_PX * 0.375f) / mapWidth
+        val unknownBounds = CountryBounds(
+            centroidNormX = cx, centroidNormY = cy,
+            minX = cx - halfNorm, maxX = cx + halfNorm,
+            minY = cy - halfNorm, maxY = cy + halfNorm,
+            polygonBounds = listOf(PolygonBounds(cx - halfNorm, cx + halfNorm, cy - halfNorm, cy + halfNorm))
+        )
+        val result = hitTestNormalizedPoint(
+            cx, cy, emptyList(),
+            mapOf("UNKNOWN" to unknownBounds),
+            mapWidth, mapHeight, scale
+        )
+        assertNull(result)
+    }
+
+    @Test
+    fun `ray-cast hit with geoId not in geoJsonToRepoId returns null`() {
+        val geometry = geometryAt("NOTINMAP", triangleAtOrigin)
+        val bounds = mapOf("NOTINMAP" to boundsFor(geometry))
+        val result = hitTestNormalizedPoint(
+            MercatorProjection.longitudeToX(0f),
+            MercatorProjection.latitudeToY(2f),
+            listOf(geometry), bounds, mapWidth, mapHeight, scale
+        )
+        assertNull(result)
+    }
+
+    @Test
+    fun `both proximity and ray-cast miss returns null`() {
+        val farGeometry = geometryAt("FRA", listOf(
+            latLng(80f, 170f), latLng(80f, 175f), latLng(75f, 170f)
+        ))
+        val result = hitTestNormalizedPoint(
+            MercatorProjection.longitudeToX(0f),
+            MercatorProjection.latitudeToY(0f),
+            listOf(farGeometry),
+            mapOf("FRA" to boundsFor(farGeometry)),
+            mapWidth, mapHeight, scale
+        )
+        assertNull(result)
+    }
+
+    @Test
     fun `returns null for empty geometries and empty countryBounds`() {
         val result = hitTestNormalizedPoint(0.5f, 0.5f, emptyList(), emptyMap(), mapWidth, mapHeight, scale)
         assertNull(result)

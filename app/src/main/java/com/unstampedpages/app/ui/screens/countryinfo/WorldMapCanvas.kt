@@ -943,8 +943,7 @@ internal fun buildCountryNames(
             ?: countries[repoId]?.name
             ?: CountryList.countries.find { it.code.equals(repoId, ignoreCase = true) }
                 ?.getLocalizedName(locale)
-            ?: return@forEach
-        put(geoId, name)
+        if (name != null) put(geoId, name)
     }
 }
 
@@ -1884,28 +1883,23 @@ internal fun findCountryAtNormalizedPoint(
     for (geometry in geometries) {
         val bounds = countryBounds[geometry.countryId]
 
-        // Level 1: skip entire geometry if overall bbox misses
-        if (bounds != null &&
-            (normalizedX < bounds.minX || normalizedX > bounds.maxX ||
-             normalizedY < bounds.minY || normalizedY > bounds.maxY)) {
-            continue
-        }
+        if (skipBbox(normalizedX, normalizedY, bounds)) continue
 
         if (checkGeometryPolygons(lat, lng, normalizedX, normalizedY, geometry, bounds?.polygonBounds)) {
-            if (bestId == null) {
+            val area = bounds?.let { it.widthNorm * it.heightNorm } ?: Float.MAX_VALUE
+            if (bestId == null || area < bestArea) {
+                bestArea = area
                 bestId = geometry.countryId
-                bestArea = if (bounds != null) bounds.widthNorm * bounds.heightNorm else Float.MAX_VALUE
-            } else if (bounds != null) {
-                val area = bounds.widthNorm * bounds.heightNorm
-                if (area < bestArea) {
-                    bestArea = area
-                    bestId = geometry.countryId
-                }
             }
         }
     }
     return bestId
 }
+
+private fun skipBbox(normalizedX: Float, normalizedY: Float, bounds: CountryBounds?): Boolean =
+    bounds != null &&
+        (normalizedX < bounds.minX || normalizedX > bounds.maxX ||
+         normalizedY < bounds.minY || normalizedY > bounds.maxY)
 
 /**
  * Check if a lat/lng point is inside a polygon using ray casting.
