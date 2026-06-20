@@ -495,6 +495,16 @@ class WorldMapCanvasTest {
     }
 
     @Test
+    fun `geoJsonToRepoId contains NIR mapping for Northern Ireland`() {
+        assertEquals("xni", geoJsonToRepoId["NIR"])
+    }
+
+    @Test
+    fun `geoJsonToRepoId contains CYN mapping for Northern Cyprus`() {
+        assertEquals("xnc", geoJsonToRepoId["CYN"])
+    }
+
+    @Test
     fun `geoJsonToRepoId returns null for unknown code`() {
         assertNull(geoJsonToRepoId["INVALID"])
     }
@@ -3441,10 +3451,10 @@ class HitTestNormalizedPointTest {
         assertNull(result)
     }
 
-    // ── priority: ray-cast wins over fallback ────────────────────────────
+    // ── priority: dot-marker country wins over ray-cast ───────────────────
 
     @Test
-    fun `ray-cast result wins over nearby fallback candidate`() {
+    fun `nearby dot-marker country wins over ray-cast parent`() {
         // Polygon at origin (ray-cast will hit FRA), plus a dot-marker SYC also nearby
         val fGeom = geometryAt("FRA", triangleAtOrigin)
         val fBounds = boundsFor(fGeom)
@@ -3465,11 +3475,72 @@ class HitTestNormalizedPointTest {
             countryBounds = mapOf("FRA" to fBounds, "SYC" to sycBounds),
             mapWidth = mapWidth, mapHeight = mapHeight, currentScale = scale
         )
-        // FRA wins because ray-cast fires first
+        // SYC wins because proximity to dot-marker countries is checked first
+        assertEquals("sc", result)
+    }
+
+    @Test
+    fun `ray-cast still works when no dot-marker country is nearby`() {
+        val fGeom = geometryAt("FRA", triangleAtOrigin)
+        val fBounds = boundsFor(fGeom)
+
+        val result = hitTestNormalizedPoint(
+            normalizedX = MercatorProjection.longitudeToX(0f),
+            normalizedY = MercatorProjection.latitudeToY(0f),
+            geometries = listOf(fGeom),
+            countryBounds = mapOf("FRA" to fBounds),
+            mapWidth = mapWidth, mapHeight = mapHeight, currentScale = scale
+        )
         assertEquals("fr", result)
     }
 
     // ── empty inputs ─────────────────────────────────────────────────────
+
+    @Test
+    fun `proximity hit with geoId not in geoJsonToRepoId returns null`() {
+        val cx = MercatorProjection.longitudeToX(0f)
+        val cy = MercatorProjection.latitudeToY(0f)
+        val halfNorm = (SMALL_COUNTRY_THRESHOLD_PX * 0.375f) / mapWidth
+        val unknownBounds = CountryBounds(
+            centroidNormX = cx, centroidNormY = cy,
+            minX = cx - halfNorm, maxX = cx + halfNorm,
+            minY = cy - halfNorm, maxY = cy + halfNorm,
+            polygonBounds = listOf(PolygonBounds(cx - halfNorm, cx + halfNorm, cy - halfNorm, cy + halfNorm))
+        )
+        val result = hitTestNormalizedPoint(
+            cx, cy, emptyList(),
+            mapOf("UNKNOWN" to unknownBounds),
+            mapWidth, mapHeight, scale
+        )
+        assertNull(result)
+    }
+
+    @Test
+    fun `ray-cast hit with geoId not in geoJsonToRepoId returns null`() {
+        val geometry = geometryAt("NOTINMAP", triangleAtOrigin)
+        val bounds = mapOf("NOTINMAP" to boundsFor(geometry))
+        val result = hitTestNormalizedPoint(
+            MercatorProjection.longitudeToX(0f),
+            MercatorProjection.latitudeToY(2f),
+            listOf(geometry), bounds, mapWidth, mapHeight, scale
+        )
+        assertNull(result)
+    }
+
+    @Test
+    fun `both proximity and ray-cast miss returns null`() {
+        val farGeometry = geometryAt("FRA", listOf(
+            latLng(80f, 170f), latLng(80f, 175f), latLng(75f, 170f)
+        ))
+        val result = hitTestNormalizedPoint(
+            MercatorProjection.longitudeToX(0f),
+            MercatorProjection.latitudeToY(0f),
+            listOf(farGeometry),
+            mapOf("FRA" to boundsFor(farGeometry)),
+            mapWidth, mapHeight, scale
+        )
+        assertNull(result)
+    }
 
     @Test
     fun `returns null for empty geometries and empty countryBounds`() {
@@ -4608,5 +4679,112 @@ class ComputeVisibleLabelSpecsTest {
     @Test
     fun `determinePanDirection returns up for purely vertical negative movement`() {
         assertEquals("up", determinePanDirection(0f, -200f))
+    }
+}
+
+// =============================================================================
+// CalculateSingleTouchTransform Tests
+// =============================================================================
+
+class CalculateSingleTouchTransformTest {
+
+    private val mapWidth = 1000f
+    private val mapHeight = 500f
+
+    @Test
+    fun `zero pan delta returns same state`() {
+        val initial = TransformState(scale = 2f, panX = 0.1f, panY = 0.1f)
+        val result = calculateSingleTouchTransform(initial, Offset.Zero, mapWidth, mapHeight)
+        assertEquals(initial.panX, result.panX, 0.0001f)
+        assertEquals(initial.panY, result.panY, 0.0001f)
+        assertEquals(initial.scale, result.scale, 0.0001f)
+    }
+
+    @Test
+    fun `positive x pan delta moves panX right`() {
+        val initial = TransformState(scale = 1f, panX = 0f, panY = 0f)
+        val result = calculateSingleTouchTransform(initial, Offset(100f, 0f), mapWidth, mapHeight)
+        assertTrue(result.panX > initial.panX)
+    }
+
+    @Test
+    fun `negative x pan delta moves panX left`() {
+        val initial = TransformState(scale = 1f, panX = 0f, panY = 0f)
+        val result = calculateSingleTouchTransform(initial, Offset(-100f, 0f), mapWidth, mapHeight)
+        assertTrue(result.panX < initial.panX)
+    }
+
+    @Test
+    fun `positive y pan delta moves panY down`() {
+        val initial = TransformState(scale = 2f, panX = 0f, panY = 0f)
+        val result = calculateSingleTouchTransform(initial, Offset(0f, 100f), mapWidth, mapHeight)
+        assertTrue(result.panY > initial.panY)
+    }
+
+    @Test
+    fun `negative y pan delta moves panY up`() {
+        val initial = TransformState(scale = 2f, panX = 0f, panY = 0f)
+        val result = calculateSingleTouchTransform(initial, Offset(0f, -100f), mapWidth, mapHeight)
+        assertTrue(result.panY < initial.panY)
+    }
+
+    @Test
+    fun `panX wraps via normalizeOffsetX`() {
+        val initial = TransformState(scale = 1f, panX = 0.49f, panY = 0f)
+        val result = calculateSingleTouchTransform(initial, Offset(100f, 0f), mapWidth, mapHeight)
+        assertTrue("panX should wrap into [-0.5, 0.5)", result.panX >= -0.5f && result.panX < 0.5f)
+    }
+
+    @Test
+    fun `panY is clamped at scale 1`() {
+        val initial = TransformState(scale = 1f, panX = 0f, panY = 0f)
+        val result = calculateSingleTouchTransform(initial, Offset(0f, 5000f), mapWidth, mapHeight)
+        assertEquals(0f, result.panY, 0.0001f)
+    }
+
+    @Test
+    fun `panY is clamped to vertical bounds when zoomed in`() {
+        val initial = TransformState(scale = 3f, panX = 0f, panY = 0f)
+        val result = calculateSingleTouchTransform(initial, Offset(0f, 100000f), mapWidth, mapHeight)
+        val bounds = calculateVerticalPanBounds(3f, mapHeight)
+        assertEquals(bounds.maxPanY, result.panY, 0.0001f)
+    }
+
+    @Test
+    fun `panY negative clamp when zoomed in`() {
+        val initial = TransformState(scale = 3f, panX = 0f, panY = 0f)
+        val result = calculateSingleTouchTransform(initial, Offset(0f, -100000f), mapWidth, mapHeight)
+        val bounds = calculateVerticalPanBounds(3f, mapHeight)
+        assertEquals(bounds.minPanY, result.panY, 0.0001f)
+    }
+
+    @Test
+    fun `scale is preserved unchanged`() {
+        val initial = TransformState(scale = 5f, panX = 0.1f, panY = 0.05f)
+        val result = calculateSingleTouchTransform(initial, Offset(50f, 50f), mapWidth, mapHeight)
+        assertEquals(initial.scale, result.scale, 0.0001f)
+    }
+
+    @Test
+    fun `higher scale reduces pan distance per pixel`() {
+        val initial = TransformState(scale = 1f, panX = 0f, panY = 0f)
+        val delta = Offset(100f, 0f)
+        val result1x = calculateSingleTouchTransform(initial, delta, mapWidth, mapHeight)
+
+        val initial2x = TransformState(scale = 2f, panX = 0f, panY = 0f)
+        val result2x = calculateSingleTouchTransform(initial2x, delta, mapWidth, mapHeight)
+
+        assertTrue(
+            "Pan distance should be smaller at higher scale",
+            kotlin.math.abs(result2x.panX) < kotlin.math.abs(result1x.panX)
+        )
+    }
+
+    @Test
+    fun `diagonal pan moves both axes`() {
+        val initial = TransformState(scale = 2f, panX = 0f, panY = 0f)
+        val result = calculateSingleTouchTransform(initial, Offset(100f, 100f), mapWidth, mapHeight)
+        assertTrue(result.panX != 0f)
+        assertTrue(result.panY != 0f)
     }
 }

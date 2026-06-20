@@ -6,6 +6,7 @@ import com.unstampedpages.app.R
 object CustomFlagProvider {
 
     private val overrides: Map<String, Int> = mapOf(
+        "xnc" to R.drawable.flag_xnc,
         "xni" to R.drawable.flag_xni,
         "xso" to R.drawable.flag_xso
     )
