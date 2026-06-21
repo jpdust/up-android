@@ -24,7 +24,7 @@ class CountryRepositoryTest {
         val countries = repository.getAllCountries()
 
         assertTrue(countries.isNotEmpty())
-        assertEquals(countries.size, 213)
+        assertEquals(countries.size, 214)
     }
 
     @Test
@@ -573,6 +573,23 @@ class CountryRepositoryTest {
         assertEquals("Turkish Lira", country.currency)
         assertEquals(Continent.EUROPE, country.continent)
         assertTrue(country.exchangeRateToUSD > 0)
+    }
+
+    @Test
+    fun `Macao has MOP currency and is in Asia`() {
+        val country = repository.getCountryById("mo")
+        assertNotNull("Macao (mo) should exist", country)
+        assertEquals("MOP", country!!.currencyCode)
+        assertEquals("Macanese Pataca", country.currency)
+        assertEquals(Continent.ASIA, country.continent)
+        assertTrue(country.exchangeRateToUSD > 0)
+    }
+
+    @Test
+    fun `Macao has its own flag emoji not China flag`() {
+        val country = repository.getCountryById("mo")
+        assertNotNull(country)
+        assertEquals("🇲🇴", country!!.flagEmoji)
     }
 
     @Test

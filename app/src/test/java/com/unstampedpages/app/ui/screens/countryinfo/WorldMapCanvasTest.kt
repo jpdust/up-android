@@ -505,6 +505,16 @@ class WorldMapCanvasTest {
     }
 
     @Test
+    fun `geoJsonToRepoId contains MAC mapping for Macao`() {
+        assertEquals("mo", geoJsonToRepoId["MAC"])
+    }
+
+    @Test
+    fun `geoJsonToRepoId contains GIB mapping for Gibraltar`() {
+        assertEquals("gi", geoJsonToRepoId["GIB"])
+    }
+
+    @Test
     fun `geoJsonToRepoId returns null for unknown code`() {
         assertNull(geoJsonToRepoId["INVALID"])
     }

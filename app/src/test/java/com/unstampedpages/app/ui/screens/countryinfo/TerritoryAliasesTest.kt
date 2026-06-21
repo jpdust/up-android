@@ -220,6 +220,22 @@ class TerritoryAliasesTest {
     }
 
     @Test
+    fun `Macau maps to mo in combined aliases`() {
+        val combined = getCombinedTerritoryAliases(Locale.ENGLISH)
+        val entry = combined.find { it.first == "Macau" }
+        assertNotNull("'Macau' not found in combined aliases", entry)
+        assertEquals("mo", entry!!.second)
+    }
+
+    @Test
+    fun `Macao alias maps to mo in combined aliases`() {
+        val combined = getCombinedTerritoryAliases(Locale.ENGLISH)
+        val entry = combined.find { it.first == "Macao" }
+        assertNotNull("'Macao' not found in combined aliases", entry)
+        assertEquals("mo", entry!!.second)
+    }
+
+    @Test
     fun `French Polynesia maps to fr in combined aliases`() {
         val combined = getCombinedTerritoryAliases(Locale.ENGLISH)
         val entry = combined.find { it.first == "French Polynesia" }
