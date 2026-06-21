@@ -333,8 +333,8 @@ internal val TERRITORY_ALIASES: List<Pair<String, String>> = listOf(
 
     // ── Chinese territories ──────────────────────────────────────────────────
     TerritoryName.HONG_KONG to "cn",
-    TerritoryName.MACAU to "cn",
-    "Macao" to "cn",
+    TerritoryName.MACAU to "mo",
+    "Macao" to "mo",
 
     // ── Chilean territories ──────────────────────────────────────────────────
     "Easter Island" to "cl",

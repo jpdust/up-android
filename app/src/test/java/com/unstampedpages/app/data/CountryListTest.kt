@@ -102,6 +102,27 @@ class CountryListTest {
     }
 
     @Test
+    fun `North Korea uses North Korea as englishName`() {
+        val kp = CountryList.countries.find { it.code == "KP" }
+        assertNotNull(kp)
+        assertEquals("North Korea", kp!!.englishName)
+    }
+
+    @Test
+    fun `South Korea uses South Korea as englishName`() {
+        val kr = CountryList.countries.find { it.code == "KR" }
+        assertNotNull(kr)
+        assertEquals("South Korea", kr!!.englishName)
+    }
+
+    @Test
+    fun `Macao is present in country list`() {
+        val mo = CountryList.countries.find { it.code == "MO" }
+        assertNotNull(mo)
+        assertEquals("Macao", mo!!.englishName)
+    }
+
+    @Test
     fun `Turkey returns Turkey in English locale not Turkiye`() {
         val turkey = CountryList.countries.find { it.code == "TR" }
         assertNotNull(turkey)

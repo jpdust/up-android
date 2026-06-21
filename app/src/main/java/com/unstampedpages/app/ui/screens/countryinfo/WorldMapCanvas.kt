@@ -1522,7 +1522,7 @@ internal val geoJsonToRepoId = mapOf(
     // Finnish territories
     "ALD" to "fi",
     // Chinese territories (HKG already mapped above)
-    "MAC" to "cn",
+    "MAC" to "mo",
     // Other
     "SAH" to "eh",
     "KOS" to "xk"
