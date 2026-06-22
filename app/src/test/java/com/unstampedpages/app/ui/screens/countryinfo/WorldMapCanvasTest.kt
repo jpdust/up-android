@@ -2174,11 +2174,13 @@ class ComputeGeometryBoundsTest {
     }
 
     @Test
-    fun `single polygon label centroid equals overall centroid`() {
+    fun `single polygon label centroid is bbox center of that polygon`() {
         val geometry = com.unstampedpages.app.data.model.CountryGeometry("sq", listOf(squarePolygon))
         val bounds = computeGeometryBounds(geometry)
-        assertEquals(bounds.centroidNormX, bounds.labelCentroidNormX, 0.0001f)
-        assertEquals(bounds.centroidNormY, bounds.labelCentroidNormY, 0.0001f)
+        val expectedX = (bounds.minX + bounds.maxX) / 2f
+        val expectedY = (bounds.minY + bounds.maxY) / 2f
+        assertEquals(expectedX, bounds.labelCentroidNormX, 0.0001f)
+        assertEquals(expectedY, bounds.labelCentroidNormY, 0.0001f)
     }
 
     @Test
@@ -2754,6 +2756,72 @@ class LabelCentroidOverridesTest {
         // Gilbert Islands are near 174°E; normalized X should be > 0.95.
         val (x, _) = LABEL_CENTROID_OVERRIDES.getValue("KIR")
         assertTrue("KIR X $x is not in eastern Pacific (expected > 0.95)", x > 0.95f)
+    }
+
+    // ── Vietnam ─────────────────────────────────────────────────────────────────
+
+    @Test
+    fun `VNM override is present`() {
+        assertTrue(
+            "VNM centroid override missing",
+            LABEL_CENTROID_OVERRIDES.containsKey("VNM")
+        )
+    }
+
+    @Test
+    fun `VNM override X matches longitude 108 east`() {
+        val (x, _) = LABEL_CENTROID_OVERRIDES.getValue("VNM")
+        assertEquals(MercatorProjection.longitudeToX(108f), x, 0.0001f)
+    }
+
+    @Test
+    fun `VNM override Y matches latitude 16 north`() {
+        val (_, y) = LABEL_CENTROID_OVERRIDES.getValue("VNM")
+        assertEquals(MercatorProjection.latitudeToY(16f), y, 0.0001f)
+    }
+
+    // ── Laos ────────────────────────────────────────────────────────────────────
+
+    @Test
+    fun `LAO override is present`() {
+        assertTrue(
+            "LAO centroid override missing",
+            LABEL_CENTROID_OVERRIDES.containsKey("LAO")
+        )
+    }
+
+    @Test
+    fun `LAO override X matches longitude 103_5 east`() {
+        val (x, _) = LABEL_CENTROID_OVERRIDES.getValue("LAO")
+        assertEquals(MercatorProjection.longitudeToX(103.5f), x, 0.0001f)
+    }
+
+    @Test
+    fun `LAO override Y matches latitude 19 north`() {
+        val (_, y) = LABEL_CENTROID_OVERRIDES.getValue("LAO")
+        assertEquals(MercatorProjection.latitudeToY(19f), y, 0.0001f)
+    }
+
+    // ── Thailand ────────────────────────────────────────────────────────────────
+
+    @Test
+    fun `THA override is present`() {
+        assertTrue(
+            "THA centroid override missing",
+            LABEL_CENTROID_OVERRIDES.containsKey("THA")
+        )
+    }
+
+    @Test
+    fun `THA override X matches longitude 101 east`() {
+        val (x, _) = LABEL_CENTROID_OVERRIDES.getValue("THA")
+        assertEquals(MercatorProjection.longitudeToX(101f), x, 0.0001f)
+    }
+
+    @Test
+    fun `THA override Y matches latitude 15 north`() {
+        val (_, y) = LABEL_CENTROID_OVERRIDES.getValue("THA")
+        assertEquals(MercatorProjection.latitudeToY(15f), y, 0.0001f)
     }
 }
 
