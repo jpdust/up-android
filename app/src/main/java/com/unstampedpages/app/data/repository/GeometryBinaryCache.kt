@@ -42,7 +42,7 @@ import java.io.FileOutputStream
 internal object GeometryBinaryCache {
 
     private const val MAGIC = 0x47454F4D
-    internal const val CACHE_VERSION = 7
+    internal const val CACHE_VERSION = 8
     private const val CACHE_FILE         = "geometry_cache.bin"
     private const val CACHE_FILE_LOW_RES = "geometry_cache_110m.bin"
 

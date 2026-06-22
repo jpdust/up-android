@@ -893,7 +893,16 @@ internal val LABEL_CENTROID_OVERRIDES: Map<String, Pair<Float, Float>> by lazy {
         // Vertex-averaging the normalised X coordinates yields a midpoint near Africa.
         // Override to the Gilbert Islands (capital Tarawa, ~174°E / 1.5°S), the main
         // populated group, so the label appears in the central Pacific.
-        "KIR" to (MercatorProjection.longitudeToX(174.0f) to MercatorProjection.latitudeToY(-1.5f))
+        "KIR" to (MercatorProjection.longitudeToX(174.0f) to MercatorProjection.latitudeToY(-1.5f)),
+
+        // Vietnam: thin curved shape — place in the central coastal strip near Da Nang.
+        "VNM" to (MercatorProjection.longitudeToX(108.0f) to MercatorProjection.latitudeToY(16.0f)),
+
+        // Laos: bbox center drifts to the border — place in the central interior.
+        "LAO" to (MercatorProjection.longitudeToX(103.5f) to MercatorProjection.latitudeToY(19.0f)),
+
+        // Thailand: bbox center sits on the western border — place in the central plains.
+        "THA" to (MercatorProjection.longitudeToX(101.0f) to MercatorProjection.latitudeToY(15.0f))
     )
 }
 
@@ -1126,18 +1135,15 @@ internal fun computeGeometryBounds(geometry: CountryGeometry): CountryBounds {
         }
     }
     return if (global.isValid) {
-        // Compute label centroid from the largest polygon so multi-part countries
-        // (e.g. USA, France, NZL) place their label on the main landmass rather
-        // than at the vertex-weighted mean of all territories combined.
-        val labelAcc = BoundsAccumulator()
-        for (point in geometry.polygons[largestPolygonIndex]) {
-            labelAcc.addPoint(MercatorProjection.longitudeToX(point.lng), MercatorProjection.latitudeToY(point.lat))
-        }
+        // Place the label at the bbox center of the largest polygon. This avoids
+        // vertex-density bias that pulls labels toward concave borders on thin/curved
+        // countries (e.g. Vietnam's label drifting over Laos).
+        val lpb = polygonBoundsList[largestPolygonIndex]
         CountryBounds(
             centroidNormX = global.sumX / global.count,
             centroidNormY = global.sumY / global.count,
-            labelCentroidNormX = labelAcc.sumX / labelAcc.count,
-            labelCentroidNormY = labelAcc.sumY / labelAcc.count,
+            labelCentroidNormX = (lpb.minX + lpb.maxX) / 2f,
+            labelCentroidNormY = (lpb.minY + lpb.maxY) / 2f,
             minX = global.minX, maxX = global.maxX,
             minY = global.minY, maxY = global.maxY,
             polygonBounds = polygonBoundsList
