@@ -1,7 +1,9 @@
 package com.unstampedpages.app.ui.screens.countryinfo
 
+import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -10,7 +12,9 @@ import com.newrelic.agent.android.NewRelic
 import com.unstampedpages.app.data.repository.CountryGeometryData
 import com.unstampedpages.app.ui.theme.UnstampedPagesTheme
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -689,5 +693,119 @@ class CountryInfoScreenComposableTest {
     fun countriesLoadedAfterLaunch() {
         launch()
         assertFalse(viewModel.uiState.value.countries.isEmpty())
+    }
+}
+
+// ── Back button handling tests ──────────────────────────────────────────────
+// Uses createAndroidComposeRule to access the activity's OnBackPressedDispatcher.
+
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34], qualifiers = "w1080dp-h2400dp-xxhdpi")
+class CountryInfoScreenBackHandlerTest {
+
+    @get:Rule
+    val composeTestRule = createAndroidComposeRule<ComponentActivity>()
+
+    private lateinit var viewModel: CountryInfoViewModel
+    private var newRelicMock: MockedStatic<NewRelic>? = null
+
+    @Before
+    fun setUp() {
+        CountryGeometryData.isLoaded.value = false
+        viewModel = CountryInfoViewModel()
+        newRelicMock = mockStatic(NewRelic::class.java)
+    }
+
+    @After
+    fun tearDown() {
+        newRelicMock?.close()
+    }
+
+    private fun launch() {
+        composeTestRule.setContent {
+            UnstampedPagesTheme {
+                CountryInfoScreen(viewModel = viewModel)
+            }
+        }
+        composeTestRule.waitForIdle()
+    }
+
+    private fun pressBack() {
+        composeTestRule.activityRule.scenario.onActivity { activity ->
+            activity.onBackPressedDispatcher.onBackPressed()
+        }
+        composeTestRule.waitForIdle()
+    }
+
+    // ── BackHandler: bottom sheet ─────────────────────────────────────────
+
+    @Test
+    fun backPress_closesBottomSheet_whenSheetIsOpen() {
+        launch()
+        composeTestRule.onNodeWithTag("search_bar").performTextInput("France")
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag("search_result_fr").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag("country_detail_sheet").assertExists()
+
+        pressBack()
+
+        assertNull(viewModel.uiState.value.selectedCountry)
+    }
+
+    @Test
+    fun backPress_doesNotNavigateAway_whenSheetIsOpen() {
+        launch()
+        composeTestRule.onNodeWithTag("search_bar").performTextInput("France")
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag("search_result_fr").performClick()
+        composeTestRule.waitForIdle()
+
+        pressBack()
+
+        composeTestRule.onNodeWithTag("countries_screen").assertExists()
+    }
+
+    // ── BackHandler: search focus ────────────────────────────────────────
+
+    @Test
+    fun backPress_clearsFocusAndSearch_whenSearchBarIsFocused() {
+        launch()
+        composeTestRule.onNodeWithTag("search_bar").performTextInput("Jap")
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag("search_results_dropdown").assertExists()
+
+        pressBack()
+
+        assertEquals("", viewModel.uiState.value.searchQuery)
+        assertTrue(viewModel.uiState.value.searchResults.isEmpty())
+    }
+
+    @Test
+    fun backPress_doesNotNavigateAway_whenSearchBarIsFocused() {
+        launch()
+        composeTestRule.onNodeWithTag("search_bar").performClick()
+        composeTestRule.waitForIdle()
+
+        pressBack()
+
+        composeTestRule.onNodeWithTag("countries_screen").assertExists()
+    }
+
+    // ── Priority: sheet back handler wins over search focus ──────────────
+
+    @Test
+    fun backPress_closesSheet_evenWhenSearchWasFocused() {
+        launch()
+        composeTestRule.onNodeWithTag("search_bar").performTextInput("France")
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag("search_result_fr").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag("country_detail_sheet").assertExists()
+
+        pressBack()
+
+        assertNull(viewModel.uiState.value.selectedCountry)
+        composeTestRule.onNodeWithTag("countries_screen").assertExists()
     }
 }

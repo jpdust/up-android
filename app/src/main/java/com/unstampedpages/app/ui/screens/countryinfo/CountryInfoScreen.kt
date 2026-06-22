@@ -2,6 +2,7 @@ package com.unstampedpages.app.ui.screens.countryinfo
 
 import android.app.Activity
 import android.content.pm.ActivityInfo
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -70,6 +71,7 @@ fun CountryInfoScreen(
     var showLegend by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
     var selectedColorMode by remember { mutableStateOf(MapColorMode.DEFAULT) }
+    var isSearchFocused by remember { mutableStateOf(false) }
 
     // Pre-compute state-derived values to reduce complexity
     val hasSearchResults = uiState.searchResults.isNotEmpty()
@@ -89,6 +91,16 @@ fun CountryInfoScreen(
     uiState.selectedCountry?.let {
         displayedCountry = it
         displayedDisplayName = uiState.selectedDisplayName
+    }
+
+    BackHandler(enabled = showSheet) {
+        viewModel.clearSelection()
+        showSheet = false
+    }
+
+    BackHandler(enabled = isSearchFocused && !showSheet) {
+        viewModel.clearSearch()
+        focusManager.clearFocus()
     }
 
     // Lock orientation to portrait for this screen
@@ -111,7 +123,10 @@ fun CountryInfoScreen(
                     viewModel.clearSearch()
                     focusManager.clearFocus()
                 },
-                onFocused = { AppAnalytics.trackCountrySearchFocused() }
+                onFocusChanged = { focused ->
+                    isSearchFocused = focused
+                    if (focused) AppAnalytics.trackCountrySearchFocused()
+                }
             )
 
             // World Map
@@ -292,7 +307,7 @@ private fun CountrySearchBar(
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
     onClearSearch: () -> Unit,
-    onFocused: () -> Unit = {}
+    onFocusChanged: (Boolean) -> Unit = {}
 ) {
     OutlinedTextField(
         value = searchQuery,
@@ -336,7 +351,7 @@ private fun CountrySearchBar(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp)
             .testTag("search_bar")
-            .onFocusChanged { if (it.isFocused) onFocused() }
+            .onFocusChanged { onFocusChanged(it.isFocused) }
     )
 }
 
