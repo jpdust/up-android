@@ -140,6 +140,45 @@ class TerritoryAliasesTest {
         }
     }
 
+    // ==================== US Virgin Islands localization ====================
+
+    @Test
+    fun `VIR returns localized name in Spanish`() {
+        val name = getLocalizedTerritoryName("VIR", Locale.forLanguageTag("es"))
+        assertNotNull(name)
+        assertTrue("Expected Spanish name for VIR, got: $name", name!!.isNotBlank())
+        assertNotEquals("US Virgin Islands", name)
+    }
+
+    @Test
+    fun `VIR returns localized name in French`() {
+        val name = getLocalizedTerritoryName("VIR", Locale.forLanguageTag("fr"))
+        assertNotNull(name)
+        assertTrue("Expected French name for VIR, got: $name", name!!.isNotBlank())
+        assertNotEquals("US Virgin Islands", name)
+    }
+
+    @Test
+    fun `VIR returns localized name in Arabic`() {
+        val name = getLocalizedTerritoryName("VIR", Locale.forLanguageTag("ar"))
+        assertNotNull(name)
+        assertTrue("Expected Arabic name for VIR, got: $name", name!!.isNotBlank())
+    }
+
+    @Test
+    fun `VIR returns localized name in Chinese`() {
+        val name = getLocalizedTerritoryName("VIR", Locale.forLanguageTag("zh"))
+        assertNotNull(name)
+        assertTrue("Expected Chinese name for VIR, got: $name", name!!.isNotBlank())
+    }
+
+    @Test
+    fun `combined aliases include localized US Virgin Islands for Spanish`() {
+        val combined = getCombinedTerritoryAliases(Locale.forLanguageTag("es"))
+        val virAliases = combined.filter { it.second == "us" && it.first.contains("rgen", ignoreCase = true) }
+        assertTrue("Expected Spanish alias for US Virgin Islands in combined list", virAliases.isNotEmpty())
+    }
+
     // ==================== getCombinedTerritoryAliases ====================
 
     @Test

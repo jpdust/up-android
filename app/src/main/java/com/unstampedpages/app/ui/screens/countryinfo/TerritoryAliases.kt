@@ -91,7 +91,6 @@ private object TerritoryName {
     const val GUAM = "Guam"
     const val NORTHERN_MARIANA_ISLANDS = "Northern Mariana Islands"
     const val PUERTO_RICO = "Puerto Rico"
-    const val US_VIRGIN_ISLANDS = "US Virgin Islands"
     const val UNITED_STATES_MINOR_OUTLYING_ISLANDS = "United States Minor Outlying Islands"
     // French territories
     const val FRENCH_GUIANA = "French Guiana"
@@ -188,7 +187,6 @@ private val GEO_ID_ENGLISH_FALLBACK: Map<String, String> = mapOf(
     GeoId.GUM to TerritoryName.GUAM,
     GeoId.MNP to TerritoryName.NORTHERN_MARIANA_ISLANDS,
     GeoId.PRI to TerritoryName.PUERTO_RICO,
-    GeoId.VIR to TerritoryName.US_VIRGIN_ISLANDS,
     GeoId.UMI to TerritoryName.UNITED_STATES_MINOR_OUTLYING_ISLANDS,
     GeoId.GUF to TerritoryName.FRENCH_GUIANA,
     GeoId.MTQ to TerritoryName.MARTINIQUE,
@@ -281,8 +279,6 @@ internal val TERRITORY_ALIASES: List<Pair<String, String>> = listOf(
     TerritoryName.GUAM to "us",
     TerritoryName.NORTHERN_MARIANA_ISLANDS to "us",
     TerritoryName.PUERTO_RICO to "us",
-    TerritoryName.US_VIRGIN_ISLANDS to "us",
-    "United States Virgin Islands" to "us",
     "Hawaii" to "us",
     "Alaska" to "us",
 
