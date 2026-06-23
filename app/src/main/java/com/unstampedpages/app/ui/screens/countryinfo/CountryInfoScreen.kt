@@ -286,6 +286,7 @@ internal fun trackMapColorModeSelected(mode: MapColorMode) {
         MapColorMode.PASSPORT_VALIDITY -> AppAnalytics.trackPassportValidityFilterSelected()
         MapColorMode.YELLOW_FEVER      -> AppAnalytics.trackYellowFeverFilterSelected()
         MapColorMode.MALARIA           -> AppAnalytics.trackMalariaFilterSelected()
+        MapColorMode.TRAFFIC_SIDE      -> AppAnalytics.trackTrafficSideFilterSelected()
     }
 }
 
@@ -440,7 +441,8 @@ private fun MapColorModeSelector(
     )
     val column2Modes = listOf(
         MapColorMode.YELLOW_FEVER,
-        MapColorMode.MALARIA
+        MapColorMode.MALARIA,
+        MapColorMode.TRAFFIC_SIDE
     )
 
     Card(

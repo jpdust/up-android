@@ -58,6 +58,7 @@ object AppAnalytics {
     const val ACTION_FILTER_PASSPORT_VALIDITY = "filterPassportValidity"
     const val ACTION_FILTER_YELLOW_FEVER      = "filterYellowFever"
     const val ACTION_FILTER_MALARIA           = "filterMalaria"
+    const val ACTION_FILTER_TRAFFIC_SIDE     = "filterTrafficSide"
     const val ACTION_LEGEND_OPENED            = "legendOpened"
     const val ACTION_LEGEND_CLOSED        = "legendClosed"
     const val ACTION_SEARCH_FOCUSED       = "searchFocused"
@@ -124,6 +125,8 @@ object AppAnalytics {
 
     /** User selects the Malaria map filter. */
     fun trackMalariaFilterSelected() = recordMapFilter(ACTION_FILTER_MALARIA)
+
+    fun trackTrafficSideFilterSelected() = recordMapFilter(ACTION_FILTER_TRAFFIC_SIDE)
 
     private fun recordMapFilter(action: String) {
         NewRelic.recordCustomEvent(

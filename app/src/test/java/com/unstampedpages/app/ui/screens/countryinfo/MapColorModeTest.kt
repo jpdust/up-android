@@ -6,9 +6,9 @@ import org.junit.Test
 class MapColorModeTest {
 
     @Test
-    fun `MapColorMode has six values`() {
+    fun `MapColorMode has seven values`() {
         val modes = MapColorMode.entries
-        assertEquals(6, modes.size)
+        assertEquals(7, modes.size)
     }
 
     @Test
@@ -50,6 +50,7 @@ class MapColorModeTest {
         assertEquals(MapColorMode.PASSPORT_VALIDITY, modes[3])
         assertEquals(MapColorMode.YELLOW_FEVER, modes[4])
         assertEquals(MapColorMode.MALARIA, modes[5])
+        assertEquals(MapColorMode.TRAFFIC_SIDE, modes[6])
     }
 
     @Test
@@ -103,7 +104,7 @@ class MapColorModeTest {
     }
 
     @Test
-    fun `MapColorMode has four original values plus two health modes`() {
+    fun `MapColorMode has four original values plus health and traffic modes`() {
         val modes = MapColorMode.entries
         assertTrue(modes.contains(MapColorMode.DEFAULT))
         assertTrue(modes.contains(MapColorMode.SECURITY_RISK))
@@ -111,6 +112,7 @@ class MapColorModeTest {
         assertTrue(modes.contains(MapColorMode.PASSPORT_VALIDITY))
         assertTrue(modes.contains(MapColorMode.YELLOW_FEVER))
         assertTrue(modes.contains(MapColorMode.MALARIA))
+        assertTrue(modes.contains(MapColorMode.TRAFFIC_SIDE))
     }
 
     // ==================== Ordinal Tests ====================
@@ -190,20 +192,20 @@ class MapColorModeTest {
     fun `entries can be iterated with forEach`() {
         var count = 0
         MapColorMode.entries.forEach { _ -> count++ }
-        assertEquals(6, count)
+        assertEquals(7, count)
     }
 
     @Test
     fun `entries can be filtered`() {
         val nonDefaultModes = MapColorMode.entries.filter { it != MapColorMode.DEFAULT }
-        assertEquals(5, nonDefaultModes.size)
+        assertEquals(6, nonDefaultModes.size)
         assertFalse(nonDefaultModes.contains(MapColorMode.DEFAULT))
     }
 
     @Test
     fun `entries can be mapped to displayNameResIds`() {
         val resourceIds = MapColorMode.entries.map { it.displayNameResId }
-        assertEquals(6, resourceIds.size)
+        assertEquals(7, resourceIds.size)
         resourceIds.forEach { resId ->
             assertTrue("Resource ID should be non-zero", resId != 0)
         }
@@ -231,9 +233,9 @@ class MapColorModeTest {
     }
 
     @Test
-    fun `non-DEFAULT modes count is 5`() {
+    fun `non-DEFAULT modes count is 6`() {
         val nonDefaultCount = MapColorMode.entries.count { it != MapColorMode.DEFAULT }
-        assertEquals(5, nonDefaultCount)
+        assertEquals(6, nonDefaultCount)
     }
 
     // ==================== Legend-Related Mode Tests ====================
@@ -285,8 +287,8 @@ class MapColorModeTest {
     }
 
     @Test
-    fun `MALARIA is the last mode`() {
-        assertEquals(MapColorMode.MALARIA, MapColorMode.entries.last())
+    fun `TRAFFIC_SIDE is the last mode`() {
+        assertEquals(MapColorMode.TRAFFIC_SIDE, MapColorMode.entries.last())
     }
 
     // ==================== HashCode Tests ====================
@@ -349,6 +351,7 @@ class MapColorModeTest {
                 MapColorMode.PASSPORT_VALIDITY -> "passport"
                 MapColorMode.YELLOW_FEVER -> "yellow_fever"
                 MapColorMode.MALARIA -> "malaria"
+                MapColorMode.TRAFFIC_SIDE -> "traffic_side"
             }
             assertTrue(result.isNotEmpty())
         }
@@ -365,9 +368,10 @@ class MapColorModeTest {
                 MapColorMode.PASSPORT_VALIDITY -> "Shows passport validity colors"
                 MapColorMode.YELLOW_FEVER -> "Shows yellow fever vaccination requirement"
                 MapColorMode.MALARIA -> "Shows malaria risk areas"
+                MapColorMode.TRAFFIC_SIDE -> "Shows left-hand traffic countries"
             }
         }
-        assertEquals(6, descriptions.size)
+        assertEquals(7, descriptions.size)
     }
 
     // ==================== Display Name Resource ID Tests ====================

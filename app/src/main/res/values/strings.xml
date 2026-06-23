@@ -82,9 +82,15 @@
     <string name="map_mode_yellow_fever">Yellow Fever</string>
     <string name="map_mode_malaria">Malaria</string>
 
+    <!-- Map Color Modes - Traffic -->
+    <string name="map_mode_traffic_side">Traffic Side</string>
+
     <!-- Map Legend - Health -->
     <string name="legend_yellow_fever_required">Yellow Fever Vaccination Required</string>
     <string name="legend_malaria_risk">Malaria Vaccine Recommended</string>
+
+    <!-- Map Legend - Traffic -->
+    <string name="legend_drives_left">Drives on the Left</string>
 
     <!-- Checklist Screen -->
     <string name="checklist_empty_title">Your checklist is empty</string>

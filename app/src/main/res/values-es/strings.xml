@@ -60,6 +60,7 @@
     <string name="map_mode_passport_validity">Validez del Pasaporte</string>
     <string name="map_mode_yellow_fever">Fiebre Amarilla</string>
     <string name="map_mode_malaria">Malaria</string>
+    <string name="map_mode_traffic_side">Lado de tráfico</string>
 
     <!-- Map Legend - Safety -->
     <string name="legend_low_risk">Precauciones normales de seguridad</string>
@@ -81,6 +82,7 @@
     <string name="legend_other">Otro</string>
     <string name="legend_yellow_fever_required">Vacunación contra la fiebre amarilla obligatoria</string>
     <string name="legend_malaria_risk">Vacuna contra la malaria recomendada</string>
+    <string name="legend_drives_left">Conduce por la izquierda</string>
 
     <string name="country_map_loading">Cargando detalles del mapa…</string>
 

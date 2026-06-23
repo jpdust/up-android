@@ -199,6 +199,9 @@ class CountriesScreenTest {
             selectMalariaMapMode()
             verifyMalariaMapModeSelected()
 
+            selectTrafficSideMapMode()
+            verifyTrafficSideMapModeSelected()
+
             selectDefaultMapMode()
             verifyDefaultMapModeSelected()
         }
