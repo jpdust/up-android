@@ -60,6 +60,7 @@
     <string name="map_mode_passport_validity">护照有效期</string>
     <string name="map_mode_yellow_fever">黄热病</string>
     <string name="map_mode_malaria">疟疾</string>
+    <string name="map_mode_traffic_side">行车方向</string>
 
     <!-- Map Legend - Safety -->
     <string name="legend_low_risk">采取正常安全预防措施</string>
@@ -81,6 +82,7 @@
     <string name="legend_other">其他</string>
     <string name="legend_yellow_fever_required">需要接种黄热病疫苗</string>
     <string name="legend_malaria_risk">建议接种疟疾疫苗</string>
+    <string name="legend_drives_left">靠左行驶</string>
 
     <string name="country_map_loading">正在加载地图详情…</string>
 

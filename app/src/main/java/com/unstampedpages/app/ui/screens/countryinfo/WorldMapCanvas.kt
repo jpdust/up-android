@@ -104,7 +104,8 @@ enum class MapColorMode(@param:StringRes val displayNameResId: Int) {
     VISA_REQUIREMENTS(R.string.map_mode_visa_requirements),
     PASSPORT_VALIDITY(R.string.map_mode_passport_validity),
     YELLOW_FEVER(R.string.map_mode_yellow_fever),
-    MALARIA(R.string.map_mode_malaria)
+    MALARIA(R.string.map_mode_malaria),
+    TRAFFIC_SIDE(R.string.map_mode_traffic_side)
 }
 
 /**
@@ -806,6 +807,7 @@ private fun computeModeColors(
             mode == MapColorMode.PASSPORT_VALIDITY -> getPassportValidityColor(country?.passportValidity)
             mode == MapColorMode.YELLOW_FEVER && country != null && country.yellowFeverRequired -> Color(0xFFFFEB3B)
             mode == MapColorMode.MALARIA && country != null && country.malariaRisk -> Color(0xFFE53935)
+            mode == MapColorMode.TRAFFIC_SIDE && country != null && country.leftHandTraffic -> Color(0xFF1A237E)
             else -> MapLand
         })
     }
@@ -2175,6 +2177,9 @@ internal fun getLegendItems(colorMode: MapColorMode): List<LegendItem> {
         )
         MapColorMode.MALARIA -> listOf(
             LegendItem(Color(0xFFE53935), R.string.legend_malaria_risk, "legend_item_malaria")
+        )
+        MapColorMode.TRAFFIC_SIDE -> listOf(
+            LegendItem(Color(0xFF1A237E), R.string.legend_drives_left, "legend_item_drives_left")
         )
     }
 }

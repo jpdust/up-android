@@ -61,6 +61,7 @@ class CountriesRobot(private val composeTestRule: ComposeTestRule) {
         composeTestRule.onNodeWithText("Passport Validity").assertIsDisplayed()
         composeTestRule.onNodeWithText("Yellow Fever").assertIsDisplayed()
         composeTestRule.onNodeWithText("Malaria").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Traffic Side").assertIsDisplayed()
         return this
     }
 
@@ -293,6 +294,16 @@ class CountriesRobot(private val composeTestRule: ComposeTestRule) {
         return this
     }
 
+    fun selectTrafficSideMapMode(): CountriesRobot {
+        composeTestRule.onNodeWithTag("map_mode_traffic_side").performClick()
+        composeTestRule.waitForIdle()
+        return this
+    }
+
+    fun verifyTrafficSideMapModeSelected(): CountriesRobot {
+        composeTestRule.onNodeWithTag("map_mode_radio_traffic_side").assertIsSelected()
+        return this
+    }
 
     // ==================== Map Legend ====================
 

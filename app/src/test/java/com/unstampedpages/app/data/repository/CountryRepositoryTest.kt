@@ -602,6 +602,41 @@ class CountryRepositoryTest {
     }
 
     @Test
+    fun `United Kingdom has leftHandTraffic true`() {
+        val country = repository.getCountryById("gb")
+        assertNotNull(country)
+        assertTrue(country!!.leftHandTraffic)
+    }
+
+    @Test
+    fun `Japan has leftHandTraffic true`() {
+        val country = repository.getCountryById("jp")
+        assertNotNull(country)
+        assertTrue(country!!.leftHandTraffic)
+    }
+
+    @Test
+    fun `Australia has leftHandTraffic true`() {
+        val country = repository.getCountryById("au")
+        assertNotNull(country)
+        assertTrue(country!!.leftHandTraffic)
+    }
+
+    @Test
+    fun `United States has leftHandTraffic false`() {
+        val country = repository.getCountryById("us")
+        assertNotNull(country)
+        assertFalse(country!!.leftHandTraffic)
+    }
+
+    @Test
+    fun `France has leftHandTraffic false`() {
+        val country = repository.getCountryById("fr")
+        assertNotNull(country)
+        assertFalse(country!!.leftHandTraffic)
+    }
+
+    @Test
     fun `all seven new territories are present in the repository`() {
         val ids = listOf("ky", "bm", "fk", "gi", "fo", "sh", "mq")
         ids.forEach { id ->

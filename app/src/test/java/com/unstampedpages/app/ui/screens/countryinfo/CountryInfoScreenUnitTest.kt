@@ -109,6 +109,19 @@ class TrackMapColorModeSelectedTest {
             }
         }
     }
+
+    @Test
+    fun `TRAFFIC_SIDE calls trackTrafficSideFilterSelected`() {
+        mockStatic(NewRelic::class.java).use { mock ->
+            trackMapColorModeSelected(MapColorMode.TRAFFIC_SIDE)
+            mock.verify {
+                NewRelic.recordCustomEvent(
+                    "UserAction",
+                    mapOf("screen" to "countries", "action" to "filterTrafficSide")
+                )
+            }
+        }
+    }
 }
 
 // ── CountryInfoScreen — Robolectric + Compose tests ───────────────────────────
@@ -311,10 +324,10 @@ class CountryInfoScreenComposableTest {
     // ── MapColorModeSelector — covers both column lists and all mode rows ─────
 
     @Test
-    fun colorModeSelector_allSixModeRowsExist() {
+    fun colorModeSelector_allSevenModeRowsExist() {
         launch()
         listOf("default", "security_risk", "visa_requirements",
-               "passport_validity", "yellow_fever", "malaria").forEach { name ->
+               "passport_validity", "yellow_fever", "malaria", "traffic_side").forEach { name ->
             composeTestRule.onNodeWithTag("map_mode_$name").assertExists()
         }
     }
@@ -335,6 +348,7 @@ class CountryInfoScreenComposableTest {
         composeTestRule.onNodeWithTag("map_mode_radio_passport_validity").assertIsNotSelected()
         composeTestRule.onNodeWithTag("map_mode_radio_yellow_fever").assertIsNotSelected()
         composeTestRule.onNodeWithTag("map_mode_radio_malaria").assertIsNotSelected()
+        composeTestRule.onNodeWithTag("map_mode_radio_traffic_side").assertIsNotSelected()
     }
 
     @Test
@@ -538,6 +552,7 @@ class CountryInfoScreenComposableTest {
         composeTestRule.onNodeWithTag("map_mode_radio_visa_requirements").assertIsNotSelected()
         composeTestRule.onNodeWithTag("map_mode_radio_yellow_fever").assertIsNotSelected()
         composeTestRule.onNodeWithTag("map_mode_radio_malaria").assertIsNotSelected()
+        composeTestRule.onNodeWithTag("map_mode_radio_traffic_side").assertIsNotSelected()
     }
 
     // ── Malaria analytics — covers the second column's mode rows ─────────────

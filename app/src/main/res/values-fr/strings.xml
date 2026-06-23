@@ -60,6 +60,7 @@
     <string name="map_mode_passport_validity">Validité du Passeport</string>
     <string name="map_mode_yellow_fever">Fièvre jaune</string>
     <string name="map_mode_malaria">Paludisme</string>
+    <string name="map_mode_traffic_side">Sens de circulation</string>
 
     <!-- Map Legend - Safety -->
     <string name="legend_low_risk">Précautions de sécurité normales</string>
@@ -81,6 +82,7 @@
     <string name="legend_other">Autre</string>
     <string name="legend_yellow_fever_required">Vaccination contre la fièvre jaune requise</string>
     <string name="legend_malaria_risk">Vaccin contre le paludisme recommandé</string>
+    <string name="legend_drives_left">Conduite à gauche</string>
 
     <string name="country_map_loading">Chargement des détails de la carte…</string>
 

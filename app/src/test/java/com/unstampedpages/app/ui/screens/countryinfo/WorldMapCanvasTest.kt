@@ -1786,6 +1786,26 @@ class WorldMapCanvasTest {
         )
     }
 
+    // ==================== getLegendItems TRAFFIC_SIDE Tests ====================
+
+    @Test
+    fun `getLegendItems returns 1 item for TRAFFIC_SIDE mode`() {
+        val items = getLegendItems(MapColorMode.TRAFFIC_SIDE)
+        assertEquals(1, items.size)
+    }
+
+    @Test
+    fun `getLegendItems TRAFFIC_SIDE item has navy blue color`() {
+        val items = getLegendItems(MapColorMode.TRAFFIC_SIDE)
+        assertEquals(Color(0xFF1A237E), items[0].color)
+    }
+
+    @Test
+    fun `getLegendItems TRAFFIC_SIDE item has correct test tag`() {
+        val items = getLegendItems(MapColorMode.TRAFFIC_SIDE)
+        assertEquals("legend_item_drives_left", items[0].testTag)
+    }
+
     // ==================== getPassportValidityColor Comprehensive Tests ====================
 
     @Test

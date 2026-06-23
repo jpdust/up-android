@@ -61,6 +61,7 @@
     <string name="map_mode_passport_validity">صلاحية جواز السفر</string>
     <string name="map_mode_yellow_fever">الحمى الصفراء</string>
     <string name="map_mode_malaria">الملاريا</string>
+    <string name="map_mode_traffic_side">جانب المرور</string>
 
     <!-- Map Legend - Safety -->
     <string name="legend_low_risk">احتياطات أمنية عادية</string>
@@ -82,6 +83,7 @@
     <string name="legend_other">أخرى</string>
     <string name="legend_yellow_fever_required">التطعيم ضد الحمى الصفراء مطلوب</string>
     <string name="legend_malaria_risk">يوصى بلقاح الملاريا</string>
+    <string name="legend_drives_left">القيادة على اليسار</string>
 
     <string name="country_map_loading">جارٍ تحميل تفاصيل الخريطة…</string>
 
