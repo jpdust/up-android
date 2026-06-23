@@ -64,6 +64,7 @@ import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -2282,7 +2283,7 @@ private fun MapLegend(
  * Individual legend item showing a color swatch and label
  */
 @Composable
-private fun LegendItemView(
+internal fun LegendItemView(
     item: LegendItem,
     modifier: Modifier = Modifier
 ) {
@@ -2302,6 +2303,7 @@ private fun LegendItemView(
             text = stringResource(item.labelResId),
             fontSize = 10.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 4.dp)
         )
     }
