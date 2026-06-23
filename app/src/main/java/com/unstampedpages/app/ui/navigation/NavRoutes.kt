@@ -18,7 +18,7 @@ import com.unstampedpages.app.analytics.AppAnalytics
 
 sealed class NavRoute(
     val route: String,
-    @StringRes val titleResId: Int,
+    @param:StringRes val titleResId: Int,
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector,
     val analyticsName: String

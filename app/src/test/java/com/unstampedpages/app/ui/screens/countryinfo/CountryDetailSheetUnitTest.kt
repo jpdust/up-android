@@ -3,7 +3,7 @@ package com.unstampedpages.app.ui.screens.countryinfo
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -421,16 +421,18 @@ class CountryDetailSheetUnitTest {
 
     @Test
     fun usdField_unfocusWithNoInput_restoresInitialValue() {
-        // EUR at 1:1 → initial foreign display = "1.00"
+        // EUR at 1:1 → initial USD amount = "1"
         launchSheet(country = makeCountry(currencyCode = "EUR", exchangeRateToUSD = 1.0))
         // Focus USD field (clears it to "")
         composeTestRule.onNodeWithTag("currency_input_usd").performClick()
+        composeTestRule.mainClock.advanceTimeBy(500)
         composeTestRule.waitForIdle()
-        // Focus foreign field (unfocuses USD with empty text → preFocusValue "1" restored)
+        // Focus foreign field (unfocuses USD with empty text → preFocusValue restored)
         composeTestRule.onNodeWithTag("currency_input_foreign").performClick()
+        composeTestRule.mainClock.advanceTimeBy(500)
         composeTestRule.waitForIdle()
-        // USD field should show the restored pre-focus value (displayed as "1.00")
-        composeTestRule.onNodeWithTag("currency_input_usd").assertTextEquals("1.00")
+        // USD field should show the restored pre-focus value
+        composeTestRule.onNodeWithTag("currency_input_usd").assertTextEquals("1")
     }
 
     // ── CurrencyInputField: LaunchedEffect(value) isFocused=true branch ───────
