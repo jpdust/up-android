@@ -12,7 +12,7 @@ data class ChecklistTemplateItem(
 private const val PHONE_CHARGER = "Phone charger"
 
 enum class ChecklistTemplate(
-    @StringRes val displayNameResId: Int,
+    @param:StringRes val displayNameResId: Int,
     val items: List<ChecklistTemplateItem>
 ) {
     BUSINESS_TRIP(

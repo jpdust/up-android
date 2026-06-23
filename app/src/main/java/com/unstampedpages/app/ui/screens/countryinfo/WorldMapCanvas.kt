@@ -97,7 +97,7 @@ import kotlin.math.tan
 /**
  * Color modes for the world map
  */
-enum class MapColorMode(@StringRes val displayNameResId: Int) {
+enum class MapColorMode(@param:StringRes val displayNameResId: Int) {
     DEFAULT(R.string.map_mode_default),
     SECURITY_RISK(R.string.map_mode_security_risk),
     VISA_REQUIREMENTS(R.string.map_mode_visa_requirements),
@@ -2140,7 +2140,7 @@ private fun DrawScope.drawZoomIndicator(scale: Float) {
  */
 internal data class LegendItem(
     val color: Color,
-    @androidx.annotation.StringRes val labelResId: Int,
+    @param:androidx.annotation.StringRes val labelResId: Int,
     val testTag: String
 )
 

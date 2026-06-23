@@ -19,7 +19,7 @@ import com.unstampedpages.app.R
  * Each category has a display name resource and an icon for visual identification.
  */
 enum class ChecklistCategory(
-    @StringRes val displayNameResId: Int,
+    @param:StringRes val displayNameResId: Int,
     val icon: ImageVector,
     val sortOrder: Int
 ) {

@@ -40,8 +40,8 @@ import com.unstampedpages.app.ui.screens.triplog.TripLogScreen
 import com.unstampedpages.app.ui.theme.Secondary
 
 private data class HeaderContent(
-    @StringRes val titleResId: Int,
-    @StringRes val subtitleResId: Int
+    @param:StringRes val titleResId: Int,
+    @param:StringRes val subtitleResId: Int
 )
 
 private fun getHeaderContent(route: String?): HeaderContent? {
