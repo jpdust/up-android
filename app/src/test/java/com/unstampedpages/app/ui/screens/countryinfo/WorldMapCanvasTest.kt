@@ -1789,21 +1789,30 @@ class WorldMapCanvasTest {
     // ==================== getLegendItems TRAFFIC_SIDE Tests ====================
 
     @Test
-    fun `getLegendItems returns 1 item for TRAFFIC_SIDE mode`() {
+    fun `getLegendItems returns 3 items for TRAFFIC_SIDE mode`() {
         val items = getLegendItems(MapColorMode.TRAFFIC_SIDE)
-        assertEquals(1, items.size)
+        assertEquals(3, items.size)
     }
 
     @Test
-    fun `getLegendItems TRAFFIC_SIDE item has navy blue color`() {
+    fun `getLegendItems TRAFFIC_SIDE drives left has navy blue color`() {
         val items = getLegendItems(MapColorMode.TRAFFIC_SIDE)
         assertEquals(Color(0xFF1A237E), items[0].color)
+        assertEquals("legend_item_drives_left", items[0].testTag)
     }
 
     @Test
-    fun `getLegendItems TRAFFIC_SIDE item has correct test tag`() {
+    fun `getLegendItems TRAFFIC_SIDE drives right has light orange color`() {
         val items = getLegendItems(MapColorMode.TRAFFIC_SIDE)
-        assertEquals("legend_item_drives_left", items[0].testTag)
+        assertEquals(Color(0xFFFFCC80), items[1].color)
+        assertEquals("legend_item_drives_right", items[1].testTag)
+    }
+
+    @Test
+    fun `getLegendItems TRAFFIC_SIDE no data has gray color`() {
+        val items = getLegendItems(MapColorMode.TRAFFIC_SIDE)
+        assertEquals(Color(0xFF9E9E9E), items[2].color)
+        assertEquals("legend_item_no_data", items[2].testTag)
     }
 
     // ==================== getPassportValidityColor Comprehensive Tests ====================

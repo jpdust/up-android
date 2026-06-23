@@ -91,6 +91,8 @@
 
     <!-- Map Legend - Traffic -->
     <string name="legend_drives_left">Drives on the Left</string>
+    <string name="legend_drives_right">Drives on the Right</string>
+    <string name="legend_no_data">No Data</string>
 
     <!-- Checklist Screen -->
     <string name="checklist_empty_title">Your checklist is empty</string>

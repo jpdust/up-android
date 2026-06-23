@@ -808,6 +808,8 @@ private fun computeModeColors(
             mode == MapColorMode.YELLOW_FEVER && country != null && country.yellowFeverRequired -> Color(0xFFFFEB3B)
             mode == MapColorMode.MALARIA && country != null && country.malariaRisk -> Color(0xFFE53935)
             mode == MapColorMode.TRAFFIC_SIDE && country != null && country.leftHandTraffic -> Color(0xFF1A237E)
+            mode == MapColorMode.TRAFFIC_SIDE && country != null -> Color(0xFFFFCC80)
+            mode == MapColorMode.TRAFFIC_SIDE -> Color(0xFF9E9E9E)
             else -> MapLand
         })
     }
@@ -2179,7 +2181,9 @@ internal fun getLegendItems(colorMode: MapColorMode): List<LegendItem> {
             LegendItem(Color(0xFFE53935), R.string.legend_malaria_risk, "legend_item_malaria")
         )
         MapColorMode.TRAFFIC_SIDE -> listOf(
-            LegendItem(Color(0xFF1A237E), R.string.legend_drives_left, "legend_item_drives_left")
+            LegendItem(Color(0xFF1A237E), R.string.legend_drives_left, "legend_item_drives_left"),
+            LegendItem(Color(0xFFFFCC80), R.string.legend_drives_right, "legend_item_drives_right"),
+            LegendItem(Color(0xFF9E9E9E), R.string.legend_no_data, "legend_item_no_data")
         )
     }
 }

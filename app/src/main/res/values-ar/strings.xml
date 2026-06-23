@@ -84,6 +84,8 @@
     <string name="legend_yellow_fever_required">التطعيم ضد الحمى الصفراء مطلوب</string>
     <string name="legend_malaria_risk">يوصى بلقاح الملاريا</string>
     <string name="legend_drives_left">القيادة على اليسار</string>
+    <string name="legend_drives_right">القيادة على اليمين</string>
+    <string name="legend_no_data">لا توجد بيانات</string>
 
     <string name="country_map_loading">جارٍ تحميل تفاصيل الخريطة…</string>
 
