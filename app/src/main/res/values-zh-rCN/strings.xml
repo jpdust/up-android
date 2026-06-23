@@ -83,6 +83,8 @@
     <string name="legend_yellow_fever_required">需要接种黄热病疫苗</string>
     <string name="legend_malaria_risk">建议接种疟疾疫苗</string>
     <string name="legend_drives_left">靠左行驶</string>
+    <string name="legend_drives_right">靠右行驶</string>
+    <string name="legend_no_data">无数据</string>
 
     <string name="country_map_loading">正在加载地图详情…</string>
 

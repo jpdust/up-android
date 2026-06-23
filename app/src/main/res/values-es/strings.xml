@@ -83,6 +83,8 @@
     <string name="legend_yellow_fever_required">Vacunación contra la fiebre amarilla obligatoria</string>
     <string name="legend_malaria_risk">Vacuna contra la malaria recomendada</string>
     <string name="legend_drives_left">Conduce por la izquierda</string>
+    <string name="legend_drives_right">Conduce por la derecha</string>
+    <string name="legend_no_data">Sin datos</string>
 
     <string name="country_map_loading">Cargando detalles del mapa…</string>
 
