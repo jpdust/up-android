@@ -24,9 +24,9 @@ java -version
 
 ### Requirements
 - **Java:** 21
-- **Android SDK:** 36 (compile/target), 26 (min)
-- **Gradle:** 8.9.3
-- **Kotlin:** 2.1.20
+- **Android SDK:** 37 (compile), 36 (target), 26 (min)
+- **Gradle:** 9.6.0
+- **Kotlin:** 2.4.0
 
 ## Project Structure
 
@@ -97,12 +97,16 @@ up-android/
 
 ### 2. Country Info (World Map)
 - Interactive canvas-based world map with GeoJSON data
-- Pinch-to-zoom and pan gestures
-- Country tap detection with ray-casting algorithm
+- Pinch-to-zoom and pan gestures with zoom-to-fit on country selection
+- Country tap detection with ray-casting algorithm and proximity fallback for small nations
+- Accent-insensitive country search with prefix-first ranking
+- Custom flag overrides for territories without standard emoji flags (Somaliland, Northern Ireland, Northern Cyprus)
+- Android back button intercepts: closes bottom sheet or clears search focus
+- Map color modes: Default, Security Risk, Visa Requirements, Passport Validity, Yellow Fever, Malaria, Traffic Side
 - Bottom sheet with country details:
-  - Population, currency, exchange rates
-  - Safety level (color-coded)
-  - Power outlet types
+  - Currency with live converter
+  - Safety level (color-coded) with travel advisory linkouts (US, UK, AU, CA)
+  - Visa requirements, passport validity, power outlet types
 
 ### 3. Travel Checklist
 - Add/edit/delete items
@@ -126,9 +130,11 @@ up-android/
 ## Data Sources
 
 ### Local Data
-- **CountryList.kt:** 195 countries with ISO codes
-- **CountryRepository:** 60+ countries with detailed info (population, currency, safety, outlets)
-- **world_geo.json:** GeoJSON country boundaries for map rendering
+- **CountryList.kt:** 200+ countries and territories with ISO codes
+- **CountryRepository:** 210+ countries with detailed info (currency, safety, visa, outlets, traffic side)
+- **world_geo.json:** GeoJSON country boundaries for map rendering (hi-res 10m)
+- **world_geo_110m.json:** Low-res GeoJSON for rendering at low zoom (LOD switching)
+- **CustomFlagProvider.kt:** Drawable flag overrides for territories without emoji flags
 
 ### API (Stub Implementation)
 ```kotlin
@@ -231,23 +237,23 @@ Run with: `./gradlew connectedAndroidTest`
 ## Dependencies
 
 **Core:**
-- androidx.core-ktx:1.12.0
-- androidx.lifecycle-runtime-ktx:2.6.2
+- androidx.core-ktx:1.19.0
+- androidx.lifecycle-runtime-ktx:2.11.0
 
 **Compose:**
-- Compose BOM 2024.01.00
+- Compose BOM 2026.06.00
 - material3, material-icons-extended
-- navigation-compose:2.7.6
+- navigation-compose:2.9.8
 
 **Database:**
-- room-runtime, room-ktx:2.6.1
+- room-runtime, room-ktx:2.8.4
 - room-compiler (KSP)
 
 **Testing:**
 - junit:4.13.2
-- espresso-core:3.5.1
-- room-testing:2.6.1
-- kotlinx-coroutines-test:1.7.3
+- espresso-core:3.7.0
+- robolectric:4.16.1
+- mockito-core:5.23.0
 
 ## Permissions
 - `INTERNET` - For future API communication
