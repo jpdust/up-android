@@ -49,11 +49,12 @@ A travel companion app for Android that helps adventurers track countries visite
 | Tool | Version |
 |------|---------|
 | Java | 21 |
-| Android SDK (compile/target) | 36 |
+| Android SDK (compile) | 37 |
+| Android SDK (target) | 36 |
 | Android SDK (minimum) | 26 (Android 8.0 Oreo) |
-| Gradle | 9.5.1 |
+| Gradle | 9.6.0 |
 | AGP | 9.1.1 |
-| Kotlin | 2.3.21 |
+| Kotlin | 2.4.0 |
 
 ### Build Commands
 
@@ -122,7 +123,7 @@ UI (Composables)
 | Dependency injection | Manual (constructor injection via `ViewModelProvider.Factory`) |
 | Image handling | `ActivityResultContracts` (camera + gallery), `FileProvider` |
 | JSON parsing | Gson (GeoJSON world map) |
-| Build tooling | Gradle 8.9.3 (Kotlin DSL), KSP |
+| Build tooling | Gradle 9.6.0 (Kotlin DSL), KSP |
 | Monitoring | New Relic Mobile SDK 7.7.6 |
 | Code quality | SonarCloud, Android Lint, JaCoCo |
 
