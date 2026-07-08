@@ -1,6 +1,7 @@
 package com.unstampedpages.app.ui.screens.countryinfo
 
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -9,6 +10,10 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import com.newrelic.agent.android.NewRelic
+import com.unstampedpages.app.data.model.Continent
+import com.unstampedpages.app.data.model.Country
+import com.unstampedpages.app.data.model.SafetyLevel
+import com.unstampedpages.app.data.model.VisaRequirement
 import com.unstampedpages.app.data.repository.CountryGeometryData
 import com.unstampedpages.app.ui.theme.UnstampedPagesTheme
 import org.junit.After
@@ -21,7 +26,10 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.MockedStatic
+import org.mockito.Mockito.mock
 import org.mockito.Mockito.mockStatic
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoInteractions
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -822,5 +830,313 @@ class CountryInfoScreenBackHandlerTest {
 
         assertNull(viewModel.uiState.value.selectedCountry)
         composeTestRule.onNodeWithTag("countries_screen").assertExists()
+    }
+}
+
+// ── selectTappedCountry / selectSearchResult / buildCountrySheetAnalytics ────
+// Pure JVM tests for the map-tap, search-selection, and detail-sheet-analytics
+// logic extracted from CountryInfoScreen to keep its cognitive complexity within
+// the allowed limit. NewRelic is mocked statically; FocusManager is a Mockito mock
+// since it is a Compose-provided interface with no meaningful fake implementation.
+
+private fun testCountry(id: String, name: String, currencyCode: String = "TST") = Country(
+    id = id,
+    name = name,
+    safetyLevel = SafetyLevel.NORMAL_SECURITY_PRECAUTIONS,
+    visaRequirement = VisaRequirement.VISA_NOT_REQUIRED,
+    currency = "Test",
+    currencyCode = currencyCode,
+    exchangeRateToUSD = 1.0,
+    outletType = "Type A",
+    continent = Continent.EUROPE,
+    flagEmoji = ""
+)
+
+class SelectTappedCountryTest {
+
+    @Test
+    fun `null countryId does nothing`() {
+        mockStatic(NewRelic::class.java).use { newRelicMock ->
+            val viewModel = CountryInfoViewModel()
+            val focusManager = mock(FocusManager::class.java)
+            var sheetOpened = false
+
+            selectTappedCountry(null, null, viewModel, focusManager, emptyMap()) { sheetOpened = true }
+
+            assertFalse(sheetOpened)
+            assertNull(viewModel.uiState.value.selectedCountry)
+            verifyNoInteractions(focusManager)
+            newRelicMock.verifyNoInteractions()
+        }
+    }
+
+    @Test
+    fun `known countryId selects country, opens sheet, clears focus and search, and tracks map analytics`() {
+        mockStatic(NewRelic::class.java).use { newRelicMock ->
+            val viewModel = CountryInfoViewModel()
+            viewModel.updateSearchQuery("Fra")
+            val focusManager = mock(FocusManager::class.java)
+            var sheetOpened = false
+            val countriesMap = mapOf("fr" to testCountry("fr", "France"))
+
+            selectTappedCountry("fr", null, viewModel, focusManager, countriesMap) { sheetOpened = true }
+
+            assertTrue(sheetOpened)
+            assertEquals("fr", viewModel.uiState.value.selectedCountry?.id)
+            assertEquals("", viewModel.uiState.value.searchQuery)
+            verify(focusManager).clearFocus()
+            newRelicMock.verify {
+                NewRelic.recordCustomEvent(
+                    "UserAction",
+                    mapOf(
+                        "screen" to "countries",
+                        "action" to "countrySelected",
+                        "countryId" to "fr",
+                        "countryName" to "France",
+                        "source" to "map"
+                    )
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `countryId absent from countriesMap falls back to the raw id for analytics name`() {
+        mockStatic(NewRelic::class.java).use { newRelicMock ->
+            val viewModel = CountryInfoViewModel()
+            val focusManager = mock(FocusManager::class.java)
+
+            selectTappedCountry("zz", "Territory Name", viewModel, focusManager, emptyMap()) {}
+
+            assertEquals("Territory Name", viewModel.uiState.value.selectedDisplayName)
+            newRelicMock.verify {
+                NewRelic.recordCustomEvent(
+                    "UserAction",
+                    mapOf(
+                        "screen" to "countries",
+                        "action" to "countrySelected",
+                        "countryId" to "zz",
+                        "countryName" to "zz",
+                        "source" to "map"
+                    )
+                )
+            }
+        }
+    }
+}
+
+class SelectSearchResultTest {
+
+    @Test
+    fun `direct match with null parentCountryName selects country with null displayName`() {
+        mockStatic(NewRelic::class.java).use { newRelicMock ->
+            val viewModel = CountryInfoViewModel()
+            val focusManager = mock(FocusManager::class.java)
+            var sheetOpened = false
+            val suggestion = SearchSuggestion(country = testCountry("fr", "France"), displayName = "France")
+
+            selectSearchResult(suggestion, viewModel, focusManager) { sheetOpened = true }
+
+            assertTrue(sheetOpened)
+            assertEquals("fr", viewModel.uiState.value.selectedCountry?.id)
+            assertNull(viewModel.uiState.value.selectedDisplayName)
+            verify(focusManager).clearFocus()
+            newRelicMock.verify {
+                NewRelic.recordCustomEvent(
+                    "UserAction",
+                    mapOf(
+                        "screen" to "countries",
+                        "action" to "countrySelected",
+                        "countryId" to "fr",
+                        "countryName" to "France",
+                        "source" to "search"
+                    )
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `territory match with non-null parentCountryName selects country with territory displayName`() {
+        mockStatic(NewRelic::class.java).use { newRelicMock ->
+            val viewModel = CountryInfoViewModel()
+            val focusManager = mock(FocusManager::class.java)
+            val suggestion = SearchSuggestion(
+                country = testCountry("fr", "France"),
+                displayName = "Easter Island",
+                parentCountryName = "France"
+            )
+
+            selectSearchResult(suggestion, viewModel, focusManager) {}
+
+            assertEquals("Easter Island", viewModel.uiState.value.selectedDisplayName)
+            newRelicMock.verify {
+                NewRelic.recordCustomEvent(
+                    "UserAction",
+                    mapOf(
+                        "screen" to "countries",
+                        "action" to "countrySelected",
+                        "countryId" to "fr",
+                        "countryName" to "France",
+                        "source" to "search"
+                    )
+                )
+            }
+        }
+    }
+}
+
+class BuildCountrySheetAnalyticsTest {
+
+    @Test
+    fun `null displayedCountry - every callback is a no-op`() {
+        mockStatic(NewRelic::class.java).use { newRelicMock ->
+            val analytics = buildCountrySheetAnalytics(null)
+
+            analytics.onDismissed()
+            analytics.onUsAdvisoryTapped()
+            analytics.onUkAdvisoryTapped()
+            analytics.onCaAdvisoryTapped()
+            analytics.onAuAdvisoryTapped()
+            analytics.onUsdFocused()
+            analytics.onForeignFocused()
+
+            newRelicMock.verifyNoInteractions()
+        }
+    }
+
+    @Test
+    fun `non-null displayedCountry - onDismissed tracks countryDetailDismissed`() {
+        mockStatic(NewRelic::class.java).use { newRelicMock ->
+            buildCountrySheetAnalytics(testCountry("fr", "France")).onDismissed()
+
+            newRelicMock.verify {
+                NewRelic.recordCustomEvent(
+                    "UserAction",
+                    mapOf(
+                        "screen" to "countries",
+                        "action" to "countryInfoDismissed",
+                        "countryId" to "fr",
+                        "countryName" to "France"
+                    )
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `non-null displayedCountry - onUsAdvisoryTapped tracks advisoryUsOpened`() {
+        mockStatic(NewRelic::class.java).use { newRelicMock ->
+            buildCountrySheetAnalytics(testCountry("us", "United States")).onUsAdvisoryTapped()
+
+            newRelicMock.verify {
+                NewRelic.recordCustomEvent(
+                    "UserAction",
+                    mapOf(
+                        "screen" to "countries",
+                        "action" to "advisoryUsOpened",
+                        "countryId" to "us",
+                        "countryName" to "United States"
+                    )
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `non-null displayedCountry - onUkAdvisoryTapped tracks advisoryUkOpened`() {
+        mockStatic(NewRelic::class.java).use { newRelicMock ->
+            buildCountrySheetAnalytics(testCountry("gb", "United Kingdom")).onUkAdvisoryTapped()
+
+            newRelicMock.verify {
+                NewRelic.recordCustomEvent(
+                    "UserAction",
+                    mapOf(
+                        "screen" to "countries",
+                        "action" to "advisoryUkOpened",
+                        "countryId" to "gb",
+                        "countryName" to "United Kingdom"
+                    )
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `non-null displayedCountry - onCaAdvisoryTapped tracks advisoryCaOpened`() {
+        mockStatic(NewRelic::class.java).use { newRelicMock ->
+            buildCountrySheetAnalytics(testCountry("ca", "Canada")).onCaAdvisoryTapped()
+
+            newRelicMock.verify {
+                NewRelic.recordCustomEvent(
+                    "UserAction",
+                    mapOf(
+                        "screen" to "countries",
+                        "action" to "advisoryCaOpened",
+                        "countryId" to "ca",
+                        "countryName" to "Canada"
+                    )
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `non-null displayedCountry - onAuAdvisoryTapped tracks advisoryAuOpened`() {
+        mockStatic(NewRelic::class.java).use { newRelicMock ->
+            buildCountrySheetAnalytics(testCountry("au", "Australia")).onAuAdvisoryTapped()
+
+            newRelicMock.verify {
+                NewRelic.recordCustomEvent(
+                    "UserAction",
+                    mapOf(
+                        "screen" to "countries",
+                        "action" to "advisoryAuOpened",
+                        "countryId" to "au",
+                        "countryName" to "Australia"
+                    )
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `non-null displayedCountry - onUsdFocused tracks usdChanged`() {
+        mockStatic(NewRelic::class.java).use { newRelicMock ->
+            buildCountrySheetAnalytics(testCountry("jp", "Japan", currencyCode = "JPY")).onUsdFocused()
+
+            newRelicMock.verify {
+                NewRelic.recordCustomEvent(
+                    "UserAction",
+                    mapOf(
+                        "screen" to "countries",
+                        "action" to "usdChanged",
+                        "countryId" to "jp",
+                        "countryName" to "Japan",
+                        "currencyCode" to "JPY"
+                    )
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `non-null displayedCountry - onForeignFocused tracks foreignChanged`() {
+        mockStatic(NewRelic::class.java).use { newRelicMock ->
+            buildCountrySheetAnalytics(testCountry("jp", "Japan", currencyCode = "JPY")).onForeignFocused()
+
+            newRelicMock.verify {
+                NewRelic.recordCustomEvent(
+                    "UserAction",
+                    mapOf(
+                        "screen" to "countries",
+                        "action" to "foreignChanged",
+                        "countryId" to "jp",
+                        "countryName" to "Japan",
+                        "currencyCode" to "JPY"
+                    )
+                )
+            }
+        }
     }
 }

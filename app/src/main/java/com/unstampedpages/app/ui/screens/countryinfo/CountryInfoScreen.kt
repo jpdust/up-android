@@ -40,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -139,13 +140,8 @@ fun CountryInfoScreen(
                 WorldMapCanvas(
                     selectedCountryId = uiState.selectedCountry?.id,
                     onCountryTapped = { countryId, displayName ->
-                        countryId?.let {
-                            viewModel.selectCountry(it, displayName)
-                            focusManager.clearFocus()
-                            viewModel.clearSearch()
+                        selectTappedCountry(countryId, displayName, viewModel, focusManager, countriesMap) {
                             showSheet = true
-                            val countryName = countriesMap[it]?.name ?: it
-                            AppAnalytics.trackCountrySelected(it, countryName, AppAnalytics.SOURCE_MAP)
                         }
                     },
                     colorMode = selectedColorMode,
@@ -223,16 +219,9 @@ fun CountryInfoScreen(
         SearchResultsDropdown(
             searchResults = uiState.searchResults,
             onCountrySelected = { suggestion ->
-                val displayName = if (suggestion.parentCountryName != null) suggestion.displayName else null
-                viewModel.selectCountry(suggestion.country.id, displayName)
-                viewModel.clearSearch()
-                focusManager.clearFocus()
-                showSheet = true
-                AppAnalytics.trackCountrySelected(
-                    suggestion.country.id,
-                    suggestion.country.name,
-                    AppAnalytics.SOURCE_SEARCH
-                )
+                selectSearchResult(suggestion, viewModel, focusManager) {
+                    showSheet = true
+                }
             }
         )
 
@@ -245,38 +234,91 @@ fun CountryInfoScreen(
                 showSheet = false
                 viewModel.clearSelection()
             },
-            analytics = CountrySheetAnalytics(
-                onDismissed = {
-                    displayedCountry?.let { c ->
-                        AppAnalytics.trackCountryDetailDismissed(c.id, c.name)
-                    }
-                },
-                onUsAdvisoryTapped = {
-                    displayedCountry?.let { c -> AppAnalytics.trackUsAdvisoryOpened(c.id, c.name) }
-                },
-                onUkAdvisoryTapped = {
-                    displayedCountry?.let { c -> AppAnalytics.trackUkAdvisoryOpened(c.id, c.name) }
-                },
-                onCaAdvisoryTapped = {
-                    displayedCountry?.let { c -> AppAnalytics.trackCaAdvisoryOpened(c.id, c.name) }
-                },
-                onAuAdvisoryTapped = {
-                    displayedCountry?.let { c -> AppAnalytics.trackAuAdvisoryOpened(c.id, c.name) }
-                },
-                onUsdFocused = {
-                    displayedCountry?.let { c ->
-                        AppAnalytics.trackUsdChanged(c.id, c.name, c.currencyCode)
-                    }
-                },
-                onForeignFocused = {
-                    displayedCountry?.let { c ->
-                        AppAnalytics.trackForeignChanged(c.id, c.name, c.currencyCode)
-                    }
-                }
-            )
+            analytics = buildCountrySheetAnalytics(displayedCountry)
         )
     }
 }
+
+/**
+ * Handles a tap on the world map: selects the tapped country (if any), resets search/focus,
+ * requests the detail sheet be shown, and fires map-selection analytics.
+ *
+ * Extracted from [CountryInfoScreen] to keep that composable's cognitive complexity within
+ * the allowed limit.
+ */
+internal fun selectTappedCountry(
+    countryId: String?,
+    displayName: String?,
+    viewModel: CountryInfoViewModel,
+    focusManager: FocusManager,
+    countriesMap: Map<String, Country>,
+    onSheetOpened: () -> Unit
+) {
+    if (countryId == null) return
+    viewModel.selectCountry(countryId, displayName)
+    focusManager.clearFocus()
+    viewModel.clearSearch()
+    onSheetOpened()
+    val countryName = countriesMap[countryId]?.name ?: countryId
+    AppAnalytics.trackCountrySelected(countryId, countryName, AppAnalytics.SOURCE_MAP)
+}
+
+/**
+ * Handles selection of a search-result suggestion: selects the underlying country, resets
+ * search/focus, requests the detail sheet be shown, and fires search-selection analytics.
+ *
+ * Extracted from [CountryInfoScreen] to keep that composable's cognitive complexity within
+ * the allowed limit.
+ */
+internal fun selectSearchResult(
+    suggestion: SearchSuggestion,
+    viewModel: CountryInfoViewModel,
+    focusManager: FocusManager,
+    onSheetOpened: () -> Unit
+) {
+    val displayName = if (suggestion.parentCountryName != null) suggestion.displayName else null
+    viewModel.selectCountry(suggestion.country.id, displayName)
+    viewModel.clearSearch()
+    focusManager.clearFocus()
+    onSheetOpened()
+    AppAnalytics.trackCountrySelected(
+        suggestion.country.id,
+        suggestion.country.name,
+        AppAnalytics.SOURCE_SEARCH
+    )
+}
+
+/**
+ * Builds the analytics callbacks for the country detail sheet, guarding every callback
+ * against a null [displayedCountry].
+ *
+ * Extracted from [CountryInfoScreen] to keep that composable's cognitive complexity within
+ * the allowed limit.
+ */
+internal fun buildCountrySheetAnalytics(displayedCountry: Country?): CountrySheetAnalytics =
+    CountrySheetAnalytics(
+        onDismissed = {
+            displayedCountry?.let { c -> AppAnalytics.trackCountryDetailDismissed(c.id, c.name) }
+        },
+        onUsAdvisoryTapped = {
+            displayedCountry?.let { c -> AppAnalytics.trackUsAdvisoryOpened(c.id, c.name) }
+        },
+        onUkAdvisoryTapped = {
+            displayedCountry?.let { c -> AppAnalytics.trackUkAdvisoryOpened(c.id, c.name) }
+        },
+        onCaAdvisoryTapped = {
+            displayedCountry?.let { c -> AppAnalytics.trackCaAdvisoryOpened(c.id, c.name) }
+        },
+        onAuAdvisoryTapped = {
+            displayedCountry?.let { c -> AppAnalytics.trackAuAdvisoryOpened(c.id, c.name) }
+        },
+        onUsdFocused = {
+            displayedCountry?.let { c -> AppAnalytics.trackUsdChanged(c.id, c.name, c.currencyCode) }
+        },
+        onForeignFocused = {
+            displayedCountry?.let { c -> AppAnalytics.trackForeignChanged(c.id, c.name, c.currencyCode) }
+        }
+    )
 
 internal fun trackMapColorModeSelected(mode: MapColorMode) {
     when (mode) {
