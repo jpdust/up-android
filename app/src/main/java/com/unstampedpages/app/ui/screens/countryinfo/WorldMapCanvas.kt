@@ -957,7 +957,7 @@ internal fun buildCountryNames(
             ?: countries[repoId]?.name
             ?: CountryList.countries.find { it.code.equals(repoId, ignoreCase = true) }
                 ?.getLocalizedName(locale)
-        if (name != null) put(geoId, name)
+        name?.let { put(geoId, it) }
     }
 }
 
