@@ -124,7 +124,7 @@ UI (Composables)
 | Image handling | `ActivityResultContracts` (camera + gallery), `FileProvider` |
 | JSON parsing | Gson (GeoJSON world map) |
 | Build tooling | Gradle 9.8.0 (Kotlin DSL), KSP |
-| Monitoring | New Relic Mobile SDK 7.8.2 |
+| Monitoring | New Relic Mobile SDK 7.7.6 |
 | Code quality | SonarCloud, Android Lint, JaCoCo |
 
 ### Database Schema
@@ -339,8 +339,8 @@ The app integrates **New Relic Mobile** for production monitoring.
 
 | Component | Version |
 |-----------|---------|
-| Gradle plugin (`com.newrelic.agent.android:agent-gradle-plugin`) | `7.8.2` |
-| Android agent SDK (`com.newrelic.agent.android:android-agent`) | `7.8.2` |
+| Gradle plugin (`com.newrelic.agent.android:agent-gradle-plugin`) | `7.7.6` |
+| Android agent SDK (`com.newrelic.agent.android:android-agent`) | `7.7.6` |
 
 ### Initialisation
 
