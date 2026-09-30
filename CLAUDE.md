@@ -25,8 +25,8 @@ java -version
 ### Requirements
 - **Java:** 21
 - **Android SDK:** 37 (compile), 36 (target), 26 (min)
-- **Gradle:** 9.6.0
-- **Kotlin:** 2.4.0
+- **Gradle:** 9.8.0
+- **Kotlin:** 2.4.20
 
 ## Project Structure
 
@@ -237,23 +237,23 @@ Run with: `./gradlew connectedAndroidTest`
 ## Dependencies
 
 **Core:**
-- androidx.core-ktx:1.19.0
+- androidx.core-ktx:1.19.1
 - androidx.lifecycle-runtime-ktx:2.11.0
 
 **Compose:**
-- Compose BOM 2026.06.00
+- Compose BOM 2026.09.00
 - material3, material-icons-extended
-- navigation-compose:2.9.8
+- navigation-compose:2.10.2
 
 **Database:**
-- room-runtime, room-ktx:2.8.4
+- room-runtime, room-ktx:2.8.5
 - room-compiler (KSP)
 
 **Testing:**
 - junit:4.13.2
 - espresso-core:3.7.0
-- robolectric:4.16.1
-- mockito-core:5.23.0
+- robolectric:4.17
+- mockito-core:5.24.0
 
 ## Permissions
 - `INTERNET` - For future API communication

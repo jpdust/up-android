@@ -52,9 +52,9 @@ A travel companion app for Android that helps adventurers track countries visite
 | Android SDK (compile) | 37 |
 | Android SDK (target) | 36 |
 | Android SDK (minimum) | 26 (Android 8.0 Oreo) |
-| Gradle | 9.6.0 |
+| Gradle | 9.8.0 |
 | AGP | 9.1.1 |
-| Kotlin | 2.4.0 |
+| Kotlin | 2.4.20 |
 
 ### Build Commands
 
@@ -119,12 +119,12 @@ UI (Composables)
 | UI | Jetpack Compose, Material 3 |
 | Navigation | Compose Navigation, bottom nav bar |
 | State management | `ViewModel` + `StateFlow` |
-| Local database | Room 2.8.4 with KSP compiler |
+| Local database | Room 2.8.5 with KSP compiler |
 | Dependency injection | Manual (constructor injection via `ViewModelProvider.Factory`) |
 | Image handling | `ActivityResultContracts` (camera + gallery), `FileProvider` |
 | JSON parsing | Gson (GeoJSON world map) |
-| Build tooling | Gradle 9.6.0 (Kotlin DSL), KSP |
-| Monitoring | New Relic Mobile SDK 7.7.6 |
+| Build tooling | Gradle 9.8.0 (Kotlin DSL), KSP |
+| Monitoring | New Relic Mobile SDK 7.8.2 |
 | Code quality | SonarCloud, Android Lint, JaCoCo |
 
 ### Database Schema
@@ -339,8 +339,8 @@ The app integrates **New Relic Mobile** for production monitoring.
 
 | Component | Version |
 |-----------|---------|
-| Gradle plugin (`com.newrelic.agent.android:agent-gradle-plugin`) | `7.7.6` |
-| Android agent SDK (`com.newrelic.agent.android:android-agent`) | `7.7.6` |
+| Gradle plugin (`com.newrelic.agent.android:agent-gradle-plugin`) | `7.8.2` |
+| Android agent SDK (`com.newrelic.agent.android:android-agent`) | `7.8.2` |
 
 ### Initialisation
 
@@ -592,10 +592,6 @@ When adding new dependencies, regenerate the verification metadata:
 ```bash
 ./gradlew :app:dependencies --write-locks
 ```
-
-### Commons IO Pin
-
-The root `build.gradle.kts` explicitly pins `commons-io` to `2.20.0` in both the buildscript classpath and all project configurations. This ensures the SonarQube plugin always gets a version with the `builder()` API (added in 2.7), regardless of what version Android tools request transitively.
 
 ### Build Memory
 
