@@ -44,6 +44,7 @@ json = { group = "org.json", name = "json", version.ref = "json" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
 newrelic-android-agent = { group = "com.newrelic.agent.android", name = "android-agent", version.ref = "newrelic" }
+newrelic-agent-gradle-plugin = { group = "com.newrelic.agent.android", name = "agent-gradle-plugin", version.ref = "newrelic" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 
 # Compose Libraries
